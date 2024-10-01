@@ -47,12 +47,18 @@ typedef struct Button {
 typedef struct Enhancement {
   int count;
   int base_cost;
-
+  int multiplier;
+  float cost_growth;
 } Enhancement;
+
+int Enhancement_cost(const Enhancement *e) { return (int)(e->base_cost * pow(e->cost_growth, e->count)); }
 
 void on_beat_click(Button *);
 void on_life_click(Button *);
 void on_joke_click(Button *);
+void on_cool_click(Button *);
+void on_mine_click(Button *);
+void on_crow_click(Button *);
 
 #define BUTTON_COUNT 8
 static struct {
@@ -61,8 +67,7 @@ static struct {
 
   double time;
   double trigger_time;
-  Enhancement life;
-  Enhancement joke;
+  Enhancement life, joke, cool, mine, crow;
 
   Button buttons[BUTTON_COUNT];
 
@@ -73,14 +78,20 @@ static struct {
 } state = {
     .beat_count = 0,
 
-    .life = {0, 24},
-    .joke = {0, 125},
+    .life = {0, 24, 1, 1.14f},
+    .joke = {0, 125, 5, 1.155f},
+    .cool = {0, 600, 5 * 4, 1.144f},
+    .mine = {0, 3200, 5 * 4 * 3, 1.375f},
+    .crow = {0, 15000, 5 * 4 * 3 * 2, 1.365f},
 
     .buttons =
         {
-            {11, 8, true, on_beat_click, "<00>"},
+            {27, 18, true, on_beat_click, "<00>"},
             {1, 1, false, on_life_click, "life 000(B24)"},
             {2, 1, false, on_joke_click, "joke 000(B125)"},
+            {3, 1, false, on_cool_click, "cool 000(B600)"},
+            {4, 1, false, on_mine_click, "mine 000(B3200)"},
+            {5, 1, false, on_crow_click, "crow 000(B15000)"},
         },
 
     .pass_action =
@@ -108,7 +119,13 @@ void update_beat_count() {
 
   Button *b = &state.buttons[0];
   snprintf(b->caption, sizeof(b->caption), "<%0*lld>", digits, state.beat_count);
-  b->c = 9 - digits / 2;
+  b->c = 19 - digits / 2;
+}
+
+size_t tick_update_count() {
+  return state.life.count * state.life.multiplier + state.joke.count * state.joke.multiplier +
+         state.cool.count * state.cool.multiplier + state.mine.count * state.mine.multiplier +
+         state.crow.count * state.crow.multiplier;
 }
 
 void update_state(double dt) {
@@ -116,38 +133,38 @@ void update_state(double dt) {
 
   if (state.trigger_time <= 0.0) {
     state.trigger_time = 1.0;
-    state.beat_count += state.life.count;
-    state.beat_count += state.joke.count * 4;
+    state.beat_count += tick_update_count();
   } else
     state.trigger_time -= dt;
 
   update_beat_count();
 
-  state.buttons[1].enabled = (int)(state.life.base_cost * pow(1.15, state.life.count)) <= state.beat_count;
-  state.buttons[2].enabled = (int)(state.joke.base_cost * pow(1.15, state.joke.count)) <= state.beat_count;
+  state.buttons[1].enabled = Enhancement_cost(&state.life) <= state.beat_count;
+  state.buttons[2].enabled = Enhancement_cost(&state.joke) <= state.beat_count;
+  state.buttons[3].enabled = Enhancement_cost(&state.cool) <= state.beat_count;
+  state.buttons[4].enabled = Enhancement_cost(&state.mine) <= state.beat_count;
+  state.buttons[5].enabled = Enhancement_cost(&state.crow) <= state.beat_count;
+}
+
+void on_enhancement_click(Enhancement *e, Button *b, const char *n) {
+  int cost = Enhancement_cost(e);
+  if (cost > state.beat_count)
+    return;
+
+  state.beat_count -= cost;
+  e->count++;
+
+  cost = Enhancement_cost(e);
+  snprintf(b->caption, sizeof(b->caption), "%s %03d(B%d)", n, e->count, cost);
 }
 
 void on_beat_click(Button *b) { state.beat_count++; }
-void on_life_click(Button *b) {
-  int cost = (int)(state.life.base_cost * pow(1.15, state.life.count));
-  if (cost > state.beat_count)
-    return;
 
-  state.beat_count -= cost;
-  state.life.count++;
-  cost = (int)(state.life.base_cost * pow(1.15, state.life.count));
-  snprintf(b->caption, sizeof(b->caption), "life %03d(B%d)", state.life.count, cost);
-}
-void on_joke_click(Button *b) {
-  int cost = (int)(state.joke.base_cost * pow(1.15, state.joke.count));
-  if (cost > state.beat_count)
-    return;
-
-  state.beat_count -= cost;
-  state.joke.count++;
-  cost = (int)(state.joke.base_cost * pow(1.15, state.joke.count));
-  snprintf(b->caption, sizeof(b->caption), "joke %03d(B%d)", state.joke.count, cost);
-}
+void on_life_click(Button *b) { on_enhancement_click(&state.life, b, "life"); }
+void on_joke_click(Button *b) { on_enhancement_click(&state.joke, b, "joke"); }
+void on_cool_click(Button *b) { on_enhancement_click(&state.cool, b, "cool"); }
+void on_mine_click(Button *b) { on_enhancement_click(&state.mine, b, "mine"); }
+void on_crow_click(Button *b) { on_enhancement_click(&state.crow, b, "crow"); }
 
 static void init(void) {
   sg_setup(&(sg_desc){
@@ -174,7 +191,7 @@ static void frame(void) {
 
   update_state(sapp_frame_duration());
 
-  sdtx_canvas(sapp_width() * 0.25f, sapp_height() * 0.25f);
+  sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
   sdtx_home();
 
   sdtx_font(FONT_KC853);
@@ -192,19 +209,26 @@ static void frame(void) {
     sdtx_puts(state.buttons[i].caption);
   }
   if (state.life.count > 0) {
-
     sdtx_home();
-    sdtx_origin(8, 12);
+    sdtx_origin(18, 28);
     sdtx_color3b(0x33, 0x33, 0x33);
     sdtx_puts(".  .");
     const float t = (1.0 - state.trigger_time);
     sdtx_color3f(t * t * 0.8, 0.125f + t * t * 0.5, 0.25f + t * t * 0.3f);
     sdtx_home();
-    sdtx_origin(8 + t * 1.5f, 12);
+    sdtx_origin(18 + t * 1.5f, 28);
     sdtx_puts(":");
     sdtx_home();
-    sdtx_origin(11 - t * 1.5f, 12);
+    sdtx_origin(21 - t * 1.5f, 28);
     sdtx_puts(":");
+  }
+
+  if (state.life.count > 0) {
+    sdtx_canvas(sapp_width(), sapp_height());
+    sdtx_home();
+    sdtx_origin(1.0f, 58.0f);
+    sdtx_color3b(0x33, 0x33, 0x33);
+    sdtx_printf("%lld per tick", tick_update_count());
   }
 
   // sdtx_home();
@@ -232,8 +256,8 @@ void events(const sapp_event *e) {
     }
 
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
-    state.mouse_column = (int)e->mouse_x / 4 / 8;
-    state.mouse_line = (int)e->mouse_y / 4 / 8;
+    state.mouse_column = (int)e->mouse_x / 2 / 8;
+    state.mouse_line = (int)e->mouse_y / 2 / 8;
 
   } else if ((e->type == SAPP_EVENTTYPE_KEY_DOWN)) {
     switch (e->key_code) {
