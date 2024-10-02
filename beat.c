@@ -44,14 +44,14 @@ typedef struct Button {
   char caption[32];
 } Button;
 
-typedef struct Enhancement {
+typedef struct Producer {
   int count;
   int base_cost;
   int multiplier;
   float cost_growth;
-} Enhancement;
+} Producer;
 
-int Enhancement_cost(const Enhancement *e) { return (int)(e->base_cost * pow(e->cost_growth, e->count)); }
+int Producer_cost(const Producer *e) { return (int)(e->base_cost * pow(e->cost_growth, e->count)); }
 
 void on_beat_click(Button *);
 void on_life_click(Button *);
@@ -67,7 +67,7 @@ static struct {
 
   double time;
   double trigger_time;
-  Enhancement life, joke, cool, mine, crow;
+  Producer life, joke, cool, mine, crow;
 
   Button buttons[BUTTON_COUNT];
 
@@ -139,22 +139,22 @@ void update_state(double dt) {
 
   update_beat_count();
 
-  state.buttons[1].enabled = Enhancement_cost(&state.life) <= state.beat_count;
-  state.buttons[2].enabled = Enhancement_cost(&state.joke) <= state.beat_count;
-  state.buttons[3].enabled = Enhancement_cost(&state.cool) <= state.beat_count;
-  state.buttons[4].enabled = Enhancement_cost(&state.mine) <= state.beat_count;
-  state.buttons[5].enabled = Enhancement_cost(&state.crow) <= state.beat_count;
+  state.buttons[1].enabled = Producer_cost(&state.life) <= state.beat_count;
+  state.buttons[2].enabled = Producer_cost(&state.joke) <= state.beat_count;
+  state.buttons[3].enabled = Producer_cost(&state.cool) <= state.beat_count;
+  state.buttons[4].enabled = Producer_cost(&state.mine) <= state.beat_count;
+  state.buttons[5].enabled = Producer_cost(&state.crow) <= state.beat_count;
 }
 
-void on_enhancement_click(Enhancement *e, Button *b, const char *n) {
-  int cost = Enhancement_cost(e);
+void on_enhancement_click(Producer *e, Button *b, const char *n) {
+  int cost = Producer_cost(e);
   if (cost > state.beat_count)
     return;
 
   state.beat_count -= cost;
   e->count++;
 
-  cost = Enhancement_cost(e);
+  cost = Producer_cost(e);
   snprintf(b->caption, sizeof(b->caption), "%s %03d(B%d)", n, e->count, cost);
 }
 
