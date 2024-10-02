@@ -1,7 +1,3 @@
-//------------------------------------------------------------------------------
-//  debugtext-sapp.c
-//  Text rendering with sokol_debugtext.h, test builtin fonts.
-//---------------------------------------------------------------------------
 // #include <time.h>
 // #define DR_WAV_IMPLEMENTATION
 // #include "dr/dr_wav.h"
@@ -9,7 +5,6 @@
 #define _POSIX_C_SOURCE 200809L
 #include <sys/stat.h>
 #include <sys/types.h>
-// #include <unistd.h>
 
 #ifdef __TINYC__
 #include <math.h>
@@ -41,10 +36,12 @@ typedef struct Button {
   int l, c;
   bool enabled;
   OnClick on_click;
+  void *click_context;
   char caption[32];
 } Button;
 
 typedef struct Producer {
+  const char *name;
   int count;
   int base_cost;
   int multiplier;
@@ -54,11 +51,7 @@ typedef struct Producer {
 int Producer_cost(const Producer *e) { return (int)(e->base_cost * pow(e->cost_growth, e->count)); }
 
 void on_beat_click(Button *);
-void on_life_click(Button *);
-void on_joke_click(Button *);
-void on_cool_click(Button *);
-void on_mine_click(Button *);
-void on_crow_click(Button *);
+void on_producer_button_click(Button *);
 
 #define BUTTON_COUNT 8
 static struct {
@@ -78,20 +71,20 @@ static struct {
 } state = {
     .beat_count = 0,
 
-    .life = {0, 24, 1, 1.14f},
-    .joke = {0, 125, 5, 1.155f},
-    .cool = {0, 600, 5 * 4, 1.144f},
-    .mine = {0, 3200, 5 * 4 * 3, 1.375f},
-    .crow = {0, 15000, 5 * 4 * 3 * 2, 1.365f},
+    .life = {"life", 0, 24, 1, 1.14f},
+    .joke = {"joke", 0, 125, 5, 1.155f},
+    .cool = {"cool", 0, 600, 5 * 4, 1.144f},
+    .mine = {"mine", 0, 3200, 5 * 4 * 3, 1.375f},
+    .crow = {"crow", 0, 15000, 5 * 4 * 3 * 2, 1.365f},
 
     .buttons =
         {
-            {27, 18, true, on_beat_click, "<00>"},
-            {1, 1, false, on_life_click, "life 000(B24)"},
-            {2, 1, false, on_joke_click, "joke 000(B125)"},
-            {3, 1, false, on_cool_click, "cool 000(B600)"},
-            {4, 1, false, on_mine_click, "mine 000(B3200)"},
-            {5, 1, false, on_crow_click, "crow 000(B15000)"},
+            {27, 18, true, on_beat_click, NULL, "<00>"},
+            {1, 1, false, on_producer_button_click, &state.life, ""},
+            {2, 1, false, on_producer_button_click, &state.joke, ""},
+            {3, 1, false, on_producer_button_click, &state.cool, ""},
+            {4, 1, false, on_producer_button_click, &state.mine, ""},
+            {5, 1, false, on_producer_button_click, &state.crow, ""},
         },
 
     .pass_action =
@@ -146,27 +139,29 @@ void update_state(double dt) {
   state.buttons[5].enabled = Producer_cost(&state.crow) <= state.beat_count;
 }
 
-void on_enhancement_click(Producer *e, Button *b, const char *n) {
-  int cost = Producer_cost(e);
+void update_producer_button_text(Producer *p, Button *b) {
+  snprintf(b->caption, sizeof(b->caption), "%s %03d(B%d)", p->name, p->count, Producer_cost(p));
+}
+
+void on_producer_click(Producer *p, Button *b) {
+  int cost = Producer_cost(p);
   if (cost > state.beat_count)
     return;
 
   state.beat_count -= cost;
-  e->count++;
+  p->count++;
 
-  cost = Producer_cost(e);
-  snprintf(b->caption, sizeof(b->caption), "%s %03d(B%d)", n, e->count, cost);
+  update_producer_button_text(p, b);
 }
 
 void on_beat_click(Button *b) { state.beat_count++; }
-
-void on_life_click(Button *b) { on_enhancement_click(&state.life, b, "life"); }
-void on_joke_click(Button *b) { on_enhancement_click(&state.joke, b, "joke"); }
-void on_cool_click(Button *b) { on_enhancement_click(&state.cool, b, "cool"); }
-void on_mine_click(Button *b) { on_enhancement_click(&state.mine, b, "mine"); }
-void on_crow_click(Button *b) { on_enhancement_click(&state.crow, b, "crow"); }
+void on_producer_button_click(Button *b) { on_producer_click((Producer *)b->click_context, b); }
 
 static void init(void) {
+
+  for (int i = 1; i < 6; ++i)
+    update_producer_button_text((Producer *)state.buttons[i].click_context, &state.buttons[i]);
+
   sg_setup(&(sg_desc){
       .environment = sglue_environment(),
       .logger.func = slog_func,
