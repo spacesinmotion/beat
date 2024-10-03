@@ -45,15 +45,26 @@ typedef struct Producer {
   int count;
   int base_cost;
   int multiplier;
+  int level;
   float cost_growth;
 } Producer;
 
 int Producer_cost(const Producer *e) { return (int)(e->base_cost * pow(e->cost_growth, e->count)); }
 
+typedef struct Enhancement {
+  int number_applied;
+  int base_tick_expect;
+  float tick_expect_growth;
+  int base_cost;
+  float cost_growth;
+  bool selection_active;
+} Enhancement;
+
 void on_beat_click(Button *);
 void on_producer_button_click(Button *);
+void on_enhancement_button_click(Button *);
 
-#define BUTTON_COUNT 8
+#define BUTTON_COUNT 12
 static struct {
   size_t beat_count;
   size_t beat_count_old;
@@ -61,21 +72,30 @@ static struct {
   double time;
   double trigger_time;
   Producer life, joke, cool, mine, crow;
+  Enhancement enhancement;
 
   Button buttons[BUTTON_COUNT];
 
   int mouse_line;
   int mouse_column;
-
-  sg_pass_action pass_action;
 } state = {
     .beat_count = 0,
 
-    .life = {"life", 0, 24, 1, 1.14f},
-    .joke = {"joke", 0, 125, 5, 1.155f},
-    .cool = {"cool", 0, 600, 5 * 4, 1.144f},
-    .mine = {"mine", 0, 3200, 5 * 4 * 3, 1.375f},
-    .crow = {"crow", 0, 15000, 5 * 4 * 3 * 2, 1.365f},
+    .life = {"life", 0, 24, 1, 1, 1.14f},
+    .joke = {"joke", 0, 125, 5, 1, 1.155f},
+    .cool = {"cool", 0, 600, 5 * 4, 1, 1.144f},
+    .mine = {"mine", 0, 3200, 5 * 4 * 3, 1, 1.1375f},
+    .crow = {"crow", 0, 15000, 5 * 4 * 3 * 2, 1, 1.1365f},
+
+    .enhancement =
+        {
+            .number_applied = 0,
+            .base_tick_expect = 275,
+            .tick_expect_growth = 1.95f,
+            .base_cost = 3000,
+            .cost_growth = 1.185f,
+            .selection_active = false,
+        },
 
     .buttons =
         {
@@ -86,16 +106,45 @@ static struct {
             {4, 1, false, on_producer_button_click, &state.mine, ""},
             {5, 1, false, on_producer_button_click, &state.crow, ""},
         },
-
-    .pass_action =
-        {
-            .colors[0] =
-                {
-                    .load_action = SG_LOADACTION_CLEAR,
-                    .clear_value = {0.0f, 0.125f, 0.25f, 1.0f},
-                },
-        },
 };
+
+size_t tick_update_of(const Producer *p) {
+  size_t multiplier = (size_t)(p->multiplier * pow(p->level, 0.85));
+  return p->count * multiplier;
+}
+
+size_t tick_update_count() {
+  return tick_update_of(&state.life) + tick_update_of(&state.joke) + tick_update_of(&state.cool) +
+         tick_update_of(&state.mine) + tick_update_of(&state.crow);
+}
+
+void update_enhancement(Enhancement *e) {
+  if (e->selection_active) {
+    int cost =
+        (int)(state.enhancement.base_cost * pow(state.enhancement.cost_growth, state.enhancement.number_applied));
+    for (int i = 6; i < 9; ++i)
+      state.buttons[i].enabled = cost < state.beat_count;
+    return;
+  }
+
+  size_t tick_update = tick_update_count();
+  size_t min_tick_update = (int)(e->base_tick_expect * pow(e->tick_expect_growth, e->number_applied));
+  if (tick_update < min_tick_update)
+    return;
+
+  e->selection_active = true;
+
+  Producer *all[] = {&state.life, &state.joke, &state.cool, &state.mine, &state.crow};
+  for (int i = 6; i < 9; ++i) {
+    Producer *p = all[rand() % 5];
+    Button *b = &state.buttons[i];
+    *b = (Button){i - 3, 22, false, on_enhancement_button_click, p, ""};
+    snprintf(b->caption, sizeof(b->caption), "more %s", p->name);
+  }
+  // state.buttons[6] = (Button){3, 22, false, on_enhancement_button_click, &state.life, "more life"};
+  // state.buttons[7] = (Button){4, 22, false, on_enhancement_button_click, &state.joke, "more joke"};
+  // state.buttons[8] = (Button){5, 22, false, on_enhancement_button_click, &state.cool, "more cool"};
+}
 
 void update_beat_count() {
   if (state.beat_count_old == state.beat_count)
@@ -115,12 +164,6 @@ void update_beat_count() {
   b->c = 19 - digits / 2;
 }
 
-size_t tick_update_count() {
-  return state.life.count * state.life.multiplier + state.joke.count * state.joke.multiplier +
-         state.cool.count * state.cool.multiplier + state.mine.count * state.mine.multiplier +
-         state.crow.count * state.crow.multiplier;
-}
-
 void update_state(double dt) {
   state.time += dt;
 
@@ -137,6 +180,8 @@ void update_state(double dt) {
   state.buttons[3].enabled = Producer_cost(&state.cool) <= state.beat_count;
   state.buttons[4].enabled = Producer_cost(&state.mine) <= state.beat_count;
   state.buttons[5].enabled = Producer_cost(&state.crow) <= state.beat_count;
+
+  update_enhancement(&state.enhancement);
 }
 
 void update_producer_button_text(Producer *p, Button *b) {
@@ -156,9 +201,22 @@ void on_producer_click(Producer *p, Button *b) {
 
 void on_beat_click(Button *b) { state.beat_count++; }
 void on_producer_button_click(Button *b) { on_producer_click((Producer *)b->click_context, b); }
+void on_enhancement_button_click(Button *b) {
+  int cost = (int)(state.enhancement.base_cost * pow(state.enhancement.cost_growth, state.enhancement.number_applied));
+  if (cost > state.beat_count)
+    return;
+
+  Producer *p = (Producer *)b->click_context;
+  p->level++;
+  state.beat_count -= cost;
+  state.enhancement.number_applied++;
+  state.enhancement.selection_active = false;
+  state.buttons[6] = (Button){};
+  state.buttons[7] = (Button){};
+  state.buttons[8] = (Button){};
+}
 
 static void init(void) {
-
   for (int i = 1; i < 6; ++i)
     update_producer_button_text((Producer *)state.buttons[i].click_context, &state.buttons[i]);
 
@@ -179,7 +237,12 @@ static void init(void) {
 }
 
 bool Button_hovered(const Button *b) {
-  return state.mouse_line == b->l && state.mouse_column >= b->c && state.mouse_column < b->l + strlen(b->caption);
+  return state.mouse_line == b->l && state.mouse_column >= b->c && state.mouse_column < b->c + strlen(b->caption);
+}
+
+void jump_to(int l, int c) {
+  sdtx_home();
+  sdtx_origin((float)c, (float)l);
 }
 
 static void frame(void) {
@@ -187,14 +250,10 @@ static void frame(void) {
   update_state(sapp_frame_duration());
 
   sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
-  sdtx_home();
-
   sdtx_font(FONT_KC853);
-  sdtx_home();
 
   for (int i = 0; i < BUTTON_COUNT && state.buttons[i].caption[0]; ++i) {
-    sdtx_home();
-    sdtx_origin((float)state.buttons[i].c, (float)state.buttons[i].l);
+    jump_to(state.buttons[i].l, state.buttons[i].c);
     if (!state.buttons[i].enabled)
       sdtx_color3b(0x42, 0x53, 0x47);
     else if (Button_hovered(&state.buttons[i]))
@@ -203,6 +262,25 @@ static void frame(void) {
       sdtx_color3b(0xa2, 0xb3, 0xa7);
     sdtx_puts(state.buttons[i].caption);
   }
+
+  if (state.enhancement.selection_active) {
+    jump_to(1, 20);
+    sdtx_color3b(0xa2, 0xb3, 0xa7);
+    int cost =
+        (int)(state.enhancement.base_cost * pow(state.enhancement.cost_growth, state.enhancement.number_applied));
+    sdtx_printf("enhancement (%dB)\n", cost);
+    jump_to(2, 20);
+    sdtx_color3b(0x42, 0x53, 0x47);
+    sdtx_printf("-----------------------)", cost);
+  } else {
+    Enhancement *e = &state.enhancement;
+    size_t tick_update = tick_update_count();
+    size_t min_tick_update = (int)(e->base_tick_expect * pow(e->tick_expect_growth, e->number_applied));
+    jump_to(1, 20);
+    sdtx_color3b(0x42, 0x53, 0x47);
+    sdtx_printf("next level (%d)\n", (int)(min_tick_update - tick_update));
+  }
+
   if (state.life.count > 0) {
     sdtx_home();
     sdtx_origin(18, 28);
@@ -229,9 +307,19 @@ static void frame(void) {
   // sdtx_home();
   // sdtx_origin(0.0f, 14.0f);
   // sdtx_color3b(0x33, 0x33, 0x33);
-  // sdtx_printf("%0.2d:%0.2d", state.mouse_line, state.mouse_column);
+  // sdtx_printf("%0.2d:%0.2d\n", state.mouse_line, state.mouse_column);
 
-  sg_begin_pass(&(sg_pass){.action = state.pass_action, .swapchain = sglue_swapchain()});
+  sg_begin_pass(&(sg_pass){
+      .action =
+          {
+              .colors[0] =
+                  {
+                      .load_action = SG_LOADACTION_CLEAR,
+                      .clear_value = {0.0f, 0.125f, 0.25f, 1.0f},
+                  },
+          },
+      .swapchain = sglue_swapchain(),
+  });
   sdtx_draw();
   sg_end_pass();
   sg_commit();
