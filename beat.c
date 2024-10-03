@@ -90,9 +90,9 @@ static struct {
     .enhancement =
         {
             .number_applied = 0,
-            .base_tick_expect = 275,
+            .base_tick_expect = 50,
             .tick_expect_growth = 1.95f,
-            .base_cost = 3000,
+            .base_cost = 300,
             .cost_growth = 1.185f,
             .selection_active = false,
         },
@@ -134,16 +134,44 @@ void update_enhancement(Enhancement *e) {
 
   e->selection_active = true;
 
-  Producer *all[] = {&state.life, &state.joke, &state.cool, &state.mine, &state.crow};
+  struct WP {
+    Producer *p;
+    float w;
+    bool used;
+  } all[] = {
+      {&state.life}, {&state.joke}, {&state.cool}, {&state.mine}, {&state.crow},
+  };
+  const int count = sizeof(all) / sizeof(struct WP);
+
   for (int i = 6; i < 9; ++i) {
-    Producer *p = all[rand() % 5];
+    all[0].w = all[0].used ? 0.0f : (1000.0f / all[0].p->level);
+    for (int i = 1; i < count; ++i)
+      all[i].w = all[i - 1].w + (all[i].used ? 0.0f : (1000.0f / all[i].p->level));
+
+    if (all[count - 1].w == 0.0)
+      break;
+
+    const float select = ((rand() % 10000) / 10000.0) * all[count - 1].w;
+
+    // for (int i = 0; i < count; ++i)
+    //   printf("%s(%f,%d,%d) ", all[i].p->name, all[i].w, all[i].used, all[i].p->level);
+    // printf("\nselected: %f\n", select);
+
+    struct WP *wp = &all[0];
+    for (int i = 1; i < count; ++i) {
+      if (all[i - 1].w < select && select <= all[i].w) {
+        wp = &all[i];
+        break;
+      }
+    }
+    // printf("-> %s\n", wp->p->name);
+
+    wp->used = true;
     Button *b = &state.buttons[i];
-    *b = (Button){i - 3, 22, false, on_enhancement_button_click, p, ""};
-    snprintf(b->caption, sizeof(b->caption), "more %s", p->name);
+    *b = (Button){i - 3, 22, false, on_enhancement_button_click, wp->p, ""};
+    snprintf(b->caption, sizeof(b->caption), "more %s", wp->p->name);
   }
-  // state.buttons[6] = (Button){3, 22, false, on_enhancement_button_click, &state.life, "more life"};
-  // state.buttons[7] = (Button){4, 22, false, on_enhancement_button_click, &state.joke, "more joke"};
-  // state.buttons[8] = (Button){5, 22, false, on_enhancement_button_click, &state.cool, "more cool"};
+  // printf("\n");
 }
 
 void update_beat_count() {
@@ -347,8 +375,8 @@ int main(int argc, char *argv[]) {
       .frame_cb = frame,
       .cleanup_cb = cleanup,
       .event_cb = events,
-      .width = 640,
-      .height = 480,
+      .width = 800,
+      .height = 600,
       .window_title = "beat",
       .icon.sokol_default = true,
       .logger.func = slog_func,
