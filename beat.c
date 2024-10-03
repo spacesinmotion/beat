@@ -63,6 +63,7 @@ typedef struct Enhancement {
 void on_beat_click(Button *);
 void on_producer_button_click(Button *);
 void on_enhancement_button_click(Button *);
+void on_new_producer_click(Button *);
 
 #define BUTTON_COUNT 12
 static struct {
@@ -90,7 +91,7 @@ static struct {
     .enhancement =
         {
             .number_applied = 0,
-            .base_tick_expect = 50,
+            .base_tick_expect = 10,
             .tick_expect_growth = 1.95f,
             .base_cost = 300,
             .cost_growth = 1.185f,
@@ -99,12 +100,11 @@ static struct {
 
     .buttons =
         {
-            {27, 18, true, on_beat_click, NULL, "<00>"},
-            {1, 1, false, on_producer_button_click, &state.life, ""},
-            {2, 1, false, on_producer_button_click, &state.joke, ""},
-            {3, 1, false, on_producer_button_click, &state.cool, ""},
-            {4, 1, false, on_producer_button_click, &state.mine, ""},
-            {5, 1, false, on_producer_button_click, &state.crow, ""},
+            {27, 18, true, on_beat_click, NULL, "<00>"}, {1, 1, false, on_producer_button_click, &state.life, ""},
+            // {2, 1, false, on_producer_button_click, &state.joke, ""},
+            // {3, 1, false, on_producer_button_click, &state.cool, ""},
+            // {4, 1, false, on_producer_button_click, &state.mine, ""},
+            // {5, 1, false, on_producer_button_click, &state.crow, ""},
         },
 };
 
@@ -135,18 +135,39 @@ void update_enhancement(Enhancement *e) {
   e->selection_active = true;
 
   struct WP {
-    Producer *p;
+    void *context;
+    const char *text;
+    OnClick click;
+    float cw;
     float w;
     bool used;
   } all[] = {
-      {&state.life}, {&state.joke}, {&state.cool}, {&state.mine}, {&state.crow},
+      {&state.joke, "new joke", on_new_producer_click,
+       state.buttons[2].caption[0] || !state.buttons[1].caption[0] ? 0.0 : 1000.0f},
+      {&state.cool, "new cool", on_new_producer_click,
+       state.buttons[3].caption[0] || !state.buttons[2].caption[0] ? 0.0 : 1000.0f},
+      {&state.mine, "new mine", on_new_producer_click,
+       state.buttons[4].caption[0] || !state.buttons[3].caption[0] ? 0.0 : 1000.0f},
+      {&state.crow, "new crow", on_new_producer_click,
+       state.buttons[5].caption[0] || !state.buttons[4].caption[0] ? 0.0 : 1000.0f},
+
+      {&state.life, "more life", on_enhancement_button_click,
+       !state.buttons[1].caption[0] ? 0.0 : (1000.0f / state.life.level)},
+      {&state.joke, "more joke", on_enhancement_button_click,
+       !state.buttons[2].caption[0] ? 0.0 : (1000.0f / state.joke.level)},
+      {&state.cool, "more cool", on_enhancement_button_click,
+       !state.buttons[3].caption[0] ? 0.0 : (1000.0f / state.cool.level)},
+      {&state.mine, "more mine", on_enhancement_button_click,
+       !state.buttons[4].caption[0] ? 0.0 : (1000.0f / state.mine.level)},
+      {&state.crow, "more crow", on_enhancement_button_click,
+       !state.buttons[5].caption[0] ? 0.0 : (1000.0f / state.crow.level)},
   };
   const int count = sizeof(all) / sizeof(struct WP);
 
   for (int i = 6; i < 9; ++i) {
-    all[0].w = all[0].used ? 0.0f : (1000.0f / all[0].p->level);
+    all[0].w = all[0].used ? 0.0f : all[0].cw;
     for (int i = 1; i < count; ++i)
-      all[i].w = all[i - 1].w + (all[i].used ? 0.0f : (1000.0f / all[i].p->level));
+      all[i].w = all[i - 1].w + (all[i].used ? 0.0f : all[i].cw);
 
     if (all[count - 1].w == 0.0)
       break;
@@ -154,7 +175,7 @@ void update_enhancement(Enhancement *e) {
     const float select = ((rand() % 10000) / 10000.0) * all[count - 1].w;
 
     // for (int i = 0; i < count; ++i)
-    //   printf("%s(%f,%d,%d) ", all[i].p->name, all[i].w, all[i].used, all[i].p->level);
+    //   printf("%s(%f,%d) ", all[i].text, all[i].w, all[i].used);
     // printf("\nselected: %f\n", select);
 
     struct WP *wp = &all[0];
@@ -164,12 +185,12 @@ void update_enhancement(Enhancement *e) {
         break;
       }
     }
-    // printf("-> %s\n", wp->p->name);
+    // printf("-> %s\n", wp->text);
 
     wp->used = true;
     Button *b = &state.buttons[i];
-    *b = (Button){i - 3, 22, false, on_enhancement_button_click, wp->p, ""};
-    snprintf(b->caption, sizeof(b->caption), "more %s", wp->p->name);
+    *b = (Button){i - 3, 22, false, wp->click, wp->context, ""};
+    snprintf(b->caption, sizeof(b->caption), "%s", wp->text);
   }
   // printf("\n");
 }
@@ -203,11 +224,11 @@ void update_state(double dt) {
 
   update_beat_count();
 
-  state.buttons[1].enabled = Producer_cost(&state.life) <= state.beat_count;
-  state.buttons[2].enabled = Producer_cost(&state.joke) <= state.beat_count;
-  state.buttons[3].enabled = Producer_cost(&state.cool) <= state.beat_count;
-  state.buttons[4].enabled = Producer_cost(&state.mine) <= state.beat_count;
-  state.buttons[5].enabled = Producer_cost(&state.crow) <= state.beat_count;
+  state.buttons[1].enabled = state.buttons[1].caption[0] && Producer_cost(&state.life) <= state.beat_count;
+  state.buttons[2].enabled = state.buttons[2].caption[0] && Producer_cost(&state.joke) <= state.beat_count;
+  state.buttons[3].enabled = state.buttons[3].caption[0] && Producer_cost(&state.cool) <= state.beat_count;
+  state.buttons[4].enabled = state.buttons[4].caption[0] && Producer_cost(&state.mine) <= state.beat_count;
+  state.buttons[5].enabled = state.buttons[5].caption[0] && Producer_cost(&state.crow) <= state.beat_count;
 
   update_enhancement(&state.enhancement);
 }
@@ -236,6 +257,37 @@ void on_enhancement_button_click(Button *b) {
 
   Producer *p = (Producer *)b->click_context;
   p->level++;
+
+  state.beat_count -= cost;
+  state.enhancement.number_applied++;
+  state.enhancement.selection_active = false;
+  state.buttons[6] = (Button){};
+  state.buttons[7] = (Button){};
+  state.buttons[8] = (Button){};
+}
+
+void on_new_producer_click(Button *b) {
+  int cost = (int)(state.enhancement.base_cost * pow(state.enhancement.cost_growth, state.enhancement.number_applied));
+  if (cost > state.beat_count)
+    return;
+
+  if (b->click_context == &state.life) {
+    state.buttons[1] = (Button){1, 1, false, on_producer_button_click, &state.life, ""};
+    update_producer_button_text((Producer *)state.buttons[1].click_context, &state.buttons[1]);
+  } else if (b->click_context == &state.joke) {
+    state.buttons[2] = (Button){2, 1, false, on_producer_button_click, &state.joke, ""};
+    update_producer_button_text((Producer *)state.buttons[2].click_context, &state.buttons[2]);
+  } else if (b->click_context == &state.cool) {
+    state.buttons[3] = (Button){3, 1, false, on_producer_button_click, &state.cool, ""};
+    update_producer_button_text((Producer *)state.buttons[3].click_context, &state.buttons[3]);
+  } else if (b->click_context == &state.mine) {
+    state.buttons[4] = (Button){4, 1, false, on_producer_button_click, &state.mine, ""};
+    update_producer_button_text((Producer *)state.buttons[4].click_context, &state.buttons[4]);
+  } else if (b->click_context == &state.crow) {
+    state.buttons[5] = (Button){5, 1, false, on_producer_button_click, &state.crow, ""};
+    update_producer_button_text((Producer *)state.buttons[5].click_context, &state.buttons[5]);
+  }
+
   state.beat_count -= cost;
   state.enhancement.number_applied++;
   state.enhancement.selection_active = false;
@@ -245,7 +297,7 @@ void on_enhancement_button_click(Button *b) {
 }
 
 static void init(void) {
-  for (int i = 1; i < 6; ++i)
+  for (int i = 1; i < 2; ++i)
     update_producer_button_text((Producer *)state.buttons[i].click_context, &state.buttons[i]);
 
   sg_setup(&(sg_desc){
@@ -280,7 +332,10 @@ static void frame(void) {
   sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
   sdtx_font(FONT_KC853);
 
-  for (int i = 0; i < BUTTON_COUNT && state.buttons[i].caption[0]; ++i) {
+  for (int i = 0; i < BUTTON_COUNT; ++i) {
+    if (!state.buttons[i].caption[0])
+      continue;
+
     jump_to(state.buttons[i].l, state.buttons[i].c);
     if (!state.buttons[i].enabled)
       sdtx_color3b(0x42, 0x53, 0x47);
@@ -323,11 +378,24 @@ static void frame(void) {
     sdtx_puts(":");
   }
 
+  sdtx_color3b(0x33, 0x33, 0x33);
+  jump_to(0, 0);
+  sdtx_printf("-------------------------------------------------\n");
+  for (int i = 0; i < 7; ++i)
+    sdtx_printf("(                 :                             )\n");
+  sdtx_printf("-------------------------------------------------\n");
+  for (int i = 0; i < 17; ++i)
+    sdtx_printf("(                 :                             )\n");
+  sdtx_printf("-------------------------------------------------\n");
+  sdtx_printf("(                                               )\n");
+  sdtx_printf("(                                               )\n");
+  sdtx_printf("-------------------------------------------------\n");
+
   if (state.life.count > 0) {
     sdtx_canvas(sapp_width(), sapp_height());
     sdtx_home();
-    sdtx_origin(1.0f, 58.0f);
-    sdtx_color3b(0x33, 0x33, 0x33);
+    sdtx_origin(1.0f, 60.0f);
+    sdtx_color3b(0x63, 0x63, 0x63);
     sdtx_printf("%lld per tick", tick_update_count());
   }
 
@@ -348,8 +416,8 @@ static void cleanup(void) {
 
 void events(const sapp_event *e) {
   if (e->type == SAPP_EVENTTYPE_MOUSE_DOWN) {
-    for (int i = 0; i < BUTTON_COUNT && state.buttons[i].caption[0]; ++i) {
-      if (Button_hovered(&state.buttons[i]) && state.buttons[i].on_click)
+    for (int i = 0; i < BUTTON_COUNT; ++i) {
+      if (state.buttons[i].caption[0] && Button_hovered(&state.buttons[i]) && state.buttons[i].on_click)
         state.buttons[i].on_click(&state.buttons[i]);
     }
 
