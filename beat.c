@@ -240,9 +240,9 @@ bool Button_hovered(const Button *b) {
   return state.mouse_line == b->l && state.mouse_column >= b->c && state.mouse_column < b->c + strlen(b->caption);
 }
 
-void jump_to(int l, int c) {
+void jump_to(float l, float c) {
   sdtx_home();
-  sdtx_origin((float)c, (float)l);
+  sdtx_origin(c, l);
 }
 
 static void frame(void) {
@@ -282,17 +282,16 @@ static void frame(void) {
   }
 
   if (state.life.count > 0) {
-    sdtx_home();
-    sdtx_origin(18, 28);
+    jump_to(28, 18);
     sdtx_color3b(0x33, 0x33, 0x33);
     sdtx_puts(".  .");
+
     const float t = (1.0 - state.trigger_time);
     sdtx_color3f(t * t * 0.8, 0.125f + t * t * 0.5, 0.25f + t * t * 0.3f);
-    sdtx_home();
-    sdtx_origin(18 + t * 1.5f, 28);
+    jump_to(28, 18.0f + t * 1.5f);
     sdtx_puts(":");
-    sdtx_home();
-    sdtx_origin(21 - t * 1.5f, 28);
+
+    jump_to(28, 21.0f - t * 1.5f);
     sdtx_puts(":");
   }
 
@@ -304,20 +303,8 @@ static void frame(void) {
     sdtx_printf("%lld per tick", tick_update_count());
   }
 
-  // sdtx_home();
-  // sdtx_origin(0.0f, 14.0f);
-  // sdtx_color3b(0x33, 0x33, 0x33);
-  // sdtx_printf("%0.2d:%0.2d\n", state.mouse_line, state.mouse_column);
-
   sg_begin_pass(&(sg_pass){
-      .action =
-          {
-              .colors[0] =
-                  {
-                      .load_action = SG_LOADACTION_CLEAR,
-                      .clear_value = {0.0f, 0.125f, 0.25f, 1.0f},
-                  },
-          },
+      .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {0.0f, 0.125f, 0.25f, 1.0f}}},
       .swapchain = sglue_swapchain(),
   });
   sdtx_draw();
