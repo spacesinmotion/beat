@@ -35,13 +35,24 @@
 #define FONT_C64 (4)
 #define FONT_ORIC (5)
 
+typedef struct vertex_t {
+  float x, y, z;
+  uint16_t u, v;
+} vertex_t;
+
+typedef struct Buffer {
+  sg_buffer vertices, indices;
+  int num_elements;
+} Buffer;
+
 static struct {
   sg_pipeline pipeline;
 
-  sg_buffer vertices;
-  sg_buffer indices;
+  Buffer tilemap_buffer;
+  Buffer wearisome_buffer;
   sg_image tilemap;
-  sg_sampler tilemap_sampler;
+  sg_image wearisome;
+  sg_sampler pixel_sampler;
 
   double time;
 } state = {};
@@ -67,11 +78,6 @@ sg_image img_load(const char *path) {
 void update_state(double dt) { state.time += dt; }
 
 static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) {}
-
-typedef struct vertex_t {
-  float x, y, z;
-  uint16_t u, v;
-} vertex_t;
 
 // typedef struct fs_params_t {
 //   int lightOn;
@@ -138,6 +144,31 @@ void add_quad(vertex_t *vertices, float x, float y, float w, float h, uint8_t co
   vertices[3] = (vertex_t){x + 0, y + h, 0, (i + 0) * o, (j + 0) * o};
 }
 
+Buffer quad_buffer(float x, float y, float w, float h) {
+  int o = 65535;
+  vertex_t vertices[4] = {
+      {x + 0, y + 0, 0, 0, o}, //
+      {x + w, y + 0, 0, o, o}, //
+      {x + w, y + h, 0, o, 0}, //
+      {x + 0, y + h, 0, 0, 0}, //
+  };
+  uint16_t indices[] = {0, 2, 1, 0, 3, 2};
+
+  return (Buffer){
+      .vertices = sg_make_buffer(&(sg_buffer_desc){
+          .type = SG_BUFFERTYPE_VERTEXBUFFER,
+          .data = SG_RANGE(vertices),
+          .label = "vertex-buffer",
+      }),
+      .indices = sg_make_buffer(&(sg_buffer_desc){
+          .type = SG_BUFFERTYPE_INDEXBUFFER,
+          .data = SG_RANGE(indices),
+          .label = "index-buffer",
+      }),
+      .num_elements = 6,
+  };
+}
+
 bool is_set(uint8_t *map, int i, int j, int w, int h) {
   if (i < 0 || j < 0 || i >= w || j >= h)
     return false;
@@ -153,7 +184,7 @@ uint8_t tile_code(uint8_t *map, int i, int j, int w, int h) {
   return code;
 }
 
-void new_plane() {
+Buffer create_tile_map() {
   uint8_t map[8 * 8] = {
       0, 1, 1, 1, 1, 1, 1, 0, //
       0, 1, 1, 1, 1, 1, 1, 1, //
@@ -187,16 +218,19 @@ void new_plane() {
       ov += 4;
     }
   }
-  state.vertices = sg_make_buffer(&(sg_buffer_desc){
-      .type = SG_BUFFERTYPE_VERTEXBUFFER,
-      .data = SG_RANGE(vertices),
-      .label = "vertex-buffer",
-  });
-  state.indices = sg_make_buffer(&(sg_buffer_desc){
-      .type = SG_BUFFERTYPE_INDEXBUFFER,
-      .data = SG_RANGE(indices),
-      .label = "index-buffer",
-  });
+  return (Buffer){
+      .vertices = sg_make_buffer(&(sg_buffer_desc){
+          .type = SG_BUFFERTYPE_VERTEXBUFFER,
+          .data = SG_RANGE(vertices),
+          .label = "vertex-buffer",
+      }),
+      .indices = sg_make_buffer(&(sg_buffer_desc){
+          .type = SG_BUFFERTYPE_INDEXBUFFER,
+          .data = SG_RANGE(indices),
+          .label = "index-buffer",
+      }),
+      .num_elements = oi,
+  };
 }
 
 static void init(void) {
@@ -298,10 +332,12 @@ static void init(void) {
           },
   });
 
-  new_plane();
+  state.tilemap_buffer = create_tile_map();
+  state.wearisome_buffer = quad_buffer(0, 0, 16, 16);
 
   state.tilemap = img_load("assets/tilemap.png");
-  state.tilemap_sampler = sg_make_sampler(&(sg_sampler_desc){
+  state.wearisome = img_load("assets/wearisome.png");
+  state.pixel_sampler = sg_make_sampler(&(sg_sampler_desc){
       .min_filter = SG_FILTER_NEAREST,
       .mag_filter = SG_FILTER_NEAREST,
       .mipmap_filter = SG_FILTER_NEAREST,
@@ -334,18 +370,30 @@ static void frame(void) {
   sdtx_draw();
 
   sg_apply_pipeline(state.pipeline);
-  Mat4 mvp = mul(orthographic(0.0f, sapp_width() * 0.5f, 0.0f, sapp_height() * 0.5f, -1.0f, 1.0f),
-                 translation3f(128, 64, 0.0f));
-  float x = 1.0f;
-  float color[4] = {x, x, x, 1.0f};
+
+  Mat4 camera = orthographic(0.0f, sapp_width() * 0.35f, 0.0f, sapp_height() * 0.35f, -1.0f, 1.0f);
+  float color[4] = {1, 1, 1, 1};
+
+  Mat4 mvp = mul(camera, translation3f(128 - 8, 64 + 8, 0.0f));
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){mvp.m, sizeof(float[4][4])});
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &(sg_range){color, sizeof(float[4])});
   sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {state.tilemap}, .samplers = {state.tilemap_sampler}},
-      .vertex_buffers = {state.vertices},
-      .index_buffer = state.indices,
+      .fs = {.images = {state.tilemap}, .samplers = {state.pixel_sampler}},
+      .vertex_buffers = {state.tilemap_buffer.vertices},
+      .index_buffer = state.tilemap_buffer.indices,
   });
-  sg_draw(0, 6 * 9 * 9, 1);
+  sg_draw(0, state.tilemap_buffer.num_elements, 1);
+
+  mvp = mul(camera, translation3f(128 + 16 - cos(state.time) * 16, 64, 0.0f));
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){mvp.m, sizeof(float[4][4])});
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &(sg_range){color, sizeof(float[4])});
+
+  sg_apply_bindings(&(sg_bindings){
+      .fs = {.images = {state.wearisome}, .samplers = {state.pixel_sampler}},
+      .vertex_buffers = {state.wearisome_buffer.vertices},
+      .index_buffer = state.wearisome_buffer.indices,
+  });
+  sg_draw(0, state.wearisome_buffer.num_elements, 1);
 
   sg_end_pass();
   sg_commit();
