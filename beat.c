@@ -2,9 +2,15 @@
 // #define DR_WAV_IMPLEMENTATION
 // #include "dr/dr_wav.h"
 
+#include <assert.h>
+#include <stdint.h>
 #define _POSIX_C_SOURCE 200809L
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#define STBI_NO_SIMD
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
 
 #ifdef __TINYC__
 #include <math.h>
@@ -29,277 +35,171 @@
 #define FONT_C64 (4)
 #define FONT_ORIC (5)
 
-typedef struct Button Button;
-typedef void (*OnClick)(Button *);
-
-typedef struct Button {
-  int l, c;
-  bool enabled;
-  OnClick on_click;
-  void *click_context;
-  char caption[32];
-} Button;
-
-typedef struct Producer {
-  const char *name;
-  int count;
-  int base_cost;
-  int multiplier;
-  int level;
-  float cost_growth;
-} Producer;
-
-int Producer_cost(const Producer *e) { return (int)(e->base_cost * pow(e->cost_growth, e->count)); }
-
-typedef struct Enhancement {
-  int number_applied;
-  int base_tick_expect;
-  float tick_expect_growth;
-  int base_cost;
-  float cost_growth;
-  bool selection_active;
-} Enhancement;
-
-void on_beat_click(Button *);
-void on_producer_button_click(Button *);
-void on_enhancement_button_click(Button *);
-void on_new_producer_click(Button *);
-
-#define BUTTON_COUNT 12
 static struct {
-  size_t beat_count;
-  size_t beat_count_old;
+  sg_pipeline pipeline;
+
+  sg_buffer vertices;
+  sg_buffer indices;
+  sg_image tilemap;
+  sg_sampler tilemap_sampler;
 
   double time;
-  double trigger_time;
-  Producer life, joke, cool, mine, crow;
-  Enhancement enhancement;
+} state = {};
 
-  Button buttons[BUTTON_COUNT];
+sg_image img_load(const char *path) {
+  int ww = 0, hh = 0, channel = 0;
 
-  int mouse_line;
-  int mouse_column;
-} state = {
-    .beat_count = 0,
-
-    .life = {"life", 0, 24, 1, 1, 1.14f},
-    .joke = {"joke", 0, 125, 5, 1, 1.155f},
-    .cool = {"cool", 0, 600, 5 * 4, 1, 1.144f},
-    .mine = {"mine", 0, 3200, 5 * 4 * 3, 1, 1.1375f},
-    .crow = {"crow", 0, 15000, 5 * 4 * 3 * 2, 1, 1.1365f},
-
-    .enhancement =
-        {
-            .number_applied = 0,
-            .base_tick_expect = 10,
-            .tick_expect_growth = 1.95f,
-            .base_cost = 300,
-            .cost_growth = 1.185f,
-            .selection_active = false,
-        },
-
-    .buttons =
-        {
-            {27, 18, true, on_beat_click, NULL, "<00>"}, {1, 1, false, on_producer_button_click, &state.life, ""},
-            // {2, 1, false, on_producer_button_click, &state.joke, ""},
-            // {3, 1, false, on_producer_button_click, &state.cool, ""},
-            // {4, 1, false, on_producer_button_click, &state.mine, ""},
-            // {5, 1, false, on_producer_button_click, &state.crow, ""},
-        },
-};
-
-size_t tick_update_of(const Producer *p) {
-  size_t multiplier = (size_t)(p->multiplier * pow(p->level, 0.85));
-  return p->count * multiplier;
-}
-
-size_t tick_update_count() {
-  return tick_update_of(&state.life) + tick_update_of(&state.joke) + tick_update_of(&state.cool) +
-         tick_update_of(&state.mine) + tick_update_of(&state.crow);
-}
-
-void update_enhancement(Enhancement *e) {
-  if (e->selection_active) {
-    int cost =
-        (int)(state.enhancement.base_cost * pow(state.enhancement.cost_growth, state.enhancement.number_applied));
-    for (int i = 6; i < 9; ++i)
-      state.buttons[i].enabled = cost < state.beat_count;
-    return;
+  uint8_t *pixels = stbi_load(path, &ww, &hh, &channel, 4);
+  printf("img: %s (%d,%d,%d)\n", path, ww, hh, channel);
+  if (pixels) {
+    sg_image img = sg_alloc_image();
+    sg_init_image(img, &(sg_image_desc){.width = ww,
+                                        .height = hh,
+                                        .pixel_format = SG_PIXELFORMAT_RGBA8,
+                                        .data = {.subimage[0][0] = {pixels, (ww * hh * 4)}}});
+    stbi_image_free(pixels);
+    return img;
   }
+  assert(false);
+  return (sg_image){};
+}
 
-  size_t tick_update = tick_update_count();
-  size_t min_tick_update = (int)(e->base_tick_expect * pow(e->tick_expect_growth, e->number_applied));
-  if (tick_update < min_tick_update)
-    return;
+void update_state(double dt) { state.time += dt; }
 
-  e->selection_active = true;
+static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) {}
 
-  struct WP {
-    void *context;
-    const char *text;
-    OnClick click;
-    float cw;
-    float w;
-    bool used;
-  } all[] = {
-      {&state.joke, "new joke", on_new_producer_click,
-       state.buttons[2].caption[0] || !state.buttons[1].caption[0] ? 0.0 : 1000.0f},
-      {&state.cool, "new cool", on_new_producer_click,
-       state.buttons[3].caption[0] || !state.buttons[2].caption[0] ? 0.0 : 1000.0f},
-      {&state.mine, "new mine", on_new_producer_click,
-       state.buttons[4].caption[0] || !state.buttons[3].caption[0] ? 0.0 : 1000.0f},
-      {&state.crow, "new crow", on_new_producer_click,
-       state.buttons[5].caption[0] || !state.buttons[4].caption[0] ? 0.0 : 1000.0f},
+typedef struct vertex_t {
+  float x, y, z;
+  uint16_t u, v;
+} vertex_t;
 
-      {&state.life, "more life", on_enhancement_button_click,
-       !state.buttons[1].caption[0] ? 0.0 : (1000.0f / state.life.level)},
-      {&state.joke, "more joke", on_enhancement_button_click,
-       !state.buttons[2].caption[0] ? 0.0 : (1000.0f / state.joke.level)},
-      {&state.cool, "more cool", on_enhancement_button_click,
-       !state.buttons[3].caption[0] ? 0.0 : (1000.0f / state.cool.level)},
-      {&state.mine, "more mine", on_enhancement_button_click,
-       !state.buttons[4].caption[0] ? 0.0 : (1000.0f / state.mine.level)},
-      {&state.crow, "more crow", on_enhancement_button_click,
-       !state.buttons[5].caption[0] ? 0.0 : (1000.0f / state.crow.level)},
-  };
-  const int count = sizeof(all) / sizeof(struct WP);
+// typedef struct fs_params_t {
+//   int lightOn;
+//   float lightDir[3], eye[3];
+//   int textureOn;
+//   float color[4];
+// } fs_params_t;
 
-  for (int i = 6; i < 9; ++i) {
-    all[0].w = all[0].used ? 0.0f : all[0].cw;
-    for (int i = 1; i < count; ++i)
-      all[i].w = all[i - 1].w + (all[i].used ? 0.0f : all[i].cw);
+typedef struct Mat4 {
+  float m[4][4];
+} Mat4;
+Mat4 orthographic(float Left, float Right, float Bottom, float Top, float Near, float Far) {
+  Mat4 O = (Mat4){{
+      {1.0f, 0.0f, 0.0f, 0.0f},
+      {0.0f, 1.0f, 0.0f, 0.0f},
+      {0.0f, 0.0f, 1.0f, 0.0f},
+      {0.0f, 0.0f, 0.0f, 1.0f},
+  }};
 
-    if (all[count - 1].w == 0.0)
-      break;
+  O.m[0][0] = 2.0f / (Right - Left);
+  O.m[1][1] = 2.0f / (Top - Bottom);
+  O.m[2][2] = 2.0f / (Near - Far);
 
-    const float select = ((rand() % 10000) / 10000.0) * all[count - 1].w;
+  O.m[3][0] = (Left + Right) / (Left - Right);
+  O.m[3][1] = (Bottom + Top) / (Bottom - Top);
+  O.m[3][2] = (Far + Near) / (Near - Far);
+  return O;
+}
 
-    // for (int i = 0; i < count; ++i)
-    //   printf("%s(%f,%d) ", all[i].text, all[i].w, all[i].used);
-    // printf("\nselected: %f\n", select);
-
-    struct WP *wp = &all[0];
-    for (int i = 1; i < count; ++i) {
-      if (all[i - 1].w < select && select <= all[i].w) {
-        wp = &all[i];
-        break;
-      }
+Mat4 mul(Mat4 Left, Mat4 Right) {
+  Mat4 Result = {};
+  for (int c = 0; c < 4; ++c) {
+    for (int r = 0; r < 4; ++r) {
+      float Sum = 0.0f;
+      for (int cm = 0; cm < 4; ++cm)
+        Sum += Left.m[cm][r] * Right.m[c][cm];
+      Result.m[c][r] = Sum;
     }
-    // printf("-> %s\n", wp->text);
-
-    wp->used = true;
-    Button *b = &state.buttons[i];
-    *b = (Button){i - 3, 22, false, wp->click, wp->context, ""};
-    snprintf(b->caption, sizeof(b->caption), "%s", wp->text);
   }
-  // printf("\n");
+  return Result;
 }
 
-void update_beat_count() {
-  if (state.beat_count_old == state.beat_count)
-    return;
+Mat4 translation3f(float x, float y, float z) {
+  Mat4 tr = {};
+  tr.m[0][0] = tr.m[1][1] = tr.m[2][2] = tr.m[3][3] = 1.0f;
+  tr.m[3][0] = x;
+  tr.m[3][1] = y;
+  tr.m[3][2] = z;
+  return tr;
+}
 
-  int digits = 0;
-  size_t c = state.beat_count;
-  while (c > 0) {
-    digits += 2;
-    c /= 100;
+void add_quad(vertex_t *vertices, float x, float y, float w, float h, uint8_t code) {
+  static int lu[16][2] = {
+      {0, 3}, {0, 0}, {1, 3}, {3, 0}, {0, 2}, {2, 3}, {1, 0}, {1, 1},
+      {3, 3}, {3, 2}, {0, 1}, {2, 0}, {1, 2}, {3, 1}, {2, 2}, {2, 1},
+  };
+  const int i = lu[code][0];
+  const int j = lu[code][1];
+  assert(i < 4 && j < 4);
+  int o = 65535 / 4;
+  vertices[0] = (vertex_t){x + 0, y + 0, 0, (i + 0) * o, (j + 1) * o};
+  vertices[1] = (vertex_t){x + w, y + 0, 0, (i + 1) * o, (j + 1) * o};
+  vertices[2] = (vertex_t){x + w, y + h, 0, (i + 1) * o, (j + 0) * o};
+  vertices[3] = (vertex_t){x + 0, y + h, 0, (i + 0) * o, (j + 0) * o};
+}
+
+bool is_set(uint8_t *map, int i, int j, int w, int h) {
+  if (i < 0 || j < 0 || i >= w || j >= h)
+    return false;
+  return map[j * h + i] != 0;
+}
+
+uint8_t tile_code(uint8_t *map, int i, int j, int w, int h) {
+  uint8_t code = 0;
+  code += is_set(map, i + 0, j + 0, w, h) * 1;
+  code += is_set(map, i + 1, j + 0, w, h) * 2;
+  code += is_set(map, i + 1, j + 1, w, h) * 4;
+  code += is_set(map, i + 0, j + 1, w, h) * 8;
+  return code;
+}
+
+void new_plane() {
+  uint8_t map[8 * 8] = {
+      0, 1, 1, 1, 1, 1, 1, 0, //
+      0, 1, 1, 1, 1, 1, 1, 1, //
+      0, 1, 1, 1, 1, 1, 0, 1, //
+      1, 1, 1, 1, 0, 1, 1, 1, //
+      0, 1, 1, 0, 1, 1, 1, 1, //
+      1, 1, 1, 0, 1, 1, 1, 1, //
+      0, 1, 0, 1, 1, 1, 1, 0, //
+      0, 0, 0, 0, 1, 1, 0, 0, //
+  };
+
+  vertex_t vertices[4 * 9 * 9];
+  uint16_t indices[6 * 9 * 9];
+  int ov = 0, oi = 0;
+  for (int i = -1; i < 8; ++i) {
+    for (int j = -1; j < 8; ++j) {
+      uint8_t tc = tile_code(map, i, j, 8, 8);
+      if (tc == 0)
+        continue;
+      // printf("code %d %d %d\n", i, j, (int)tc);
+      float x = i * 16.0f;
+      float y = j * 16.0f;
+      add_quad(&vertices[ov], x, y, 16, 16, tc);
+      // = {0, 2, 1, 0, 3, 2};
+      indices[oi++] = ov + 0;
+      indices[oi++] = ov + 2;
+      indices[oi++] = ov + 1;
+      indices[oi++] = ov + 0;
+      indices[oi++] = ov + 3;
+      indices[oi++] = ov + 2;
+      ov += 4;
+    }
   }
-  if (digits < 2)
-    digits = 2;
-
-  Button *b = &state.buttons[0];
-  snprintf(b->caption, sizeof(b->caption), "<%0*lld>", digits, state.beat_count);
-  b->c = 19 - digits / 2;
-}
-
-void update_state(double dt) {
-  state.time += dt;
-
-  if (state.trigger_time <= 0.0) {
-    state.trigger_time = 1.0;
-    state.beat_count += tick_update_count();
-  } else
-    state.trigger_time -= dt;
-
-  update_beat_count();
-
-  state.buttons[1].enabled = state.buttons[1].caption[0] && Producer_cost(&state.life) <= state.beat_count;
-  state.buttons[2].enabled = state.buttons[2].caption[0] && Producer_cost(&state.joke) <= state.beat_count;
-  state.buttons[3].enabled = state.buttons[3].caption[0] && Producer_cost(&state.cool) <= state.beat_count;
-  state.buttons[4].enabled = state.buttons[4].caption[0] && Producer_cost(&state.mine) <= state.beat_count;
-  state.buttons[5].enabled = state.buttons[5].caption[0] && Producer_cost(&state.crow) <= state.beat_count;
-
-  update_enhancement(&state.enhancement);
-}
-
-void update_producer_button_text(Producer *p, Button *b) {
-  snprintf(b->caption, sizeof(b->caption), "%s %03d(B%d)", p->name, p->count, Producer_cost(p));
-}
-
-void on_producer_click(Producer *p, Button *b) {
-  int cost = Producer_cost(p);
-  if (cost > state.beat_count)
-    return;
-
-  state.beat_count -= cost;
-  p->count++;
-
-  update_producer_button_text(p, b);
-}
-
-void on_beat_click(Button *b) { state.beat_count++; }
-void on_producer_button_click(Button *b) { on_producer_click((Producer *)b->click_context, b); }
-void on_enhancement_button_click(Button *b) {
-  int cost = (int)(state.enhancement.base_cost * pow(state.enhancement.cost_growth, state.enhancement.number_applied));
-  if (cost > state.beat_count)
-    return;
-
-  Producer *p = (Producer *)b->click_context;
-  p->level++;
-
-  state.beat_count -= cost;
-  state.enhancement.number_applied++;
-  state.enhancement.selection_active = false;
-  state.buttons[6] = (Button){};
-  state.buttons[7] = (Button){};
-  state.buttons[8] = (Button){};
-}
-
-void on_new_producer_click(Button *b) {
-  int cost = (int)(state.enhancement.base_cost * pow(state.enhancement.cost_growth, state.enhancement.number_applied));
-  if (cost > state.beat_count)
-    return;
-
-  if (b->click_context == &state.life) {
-    state.buttons[1] = (Button){1, 1, false, on_producer_button_click, &state.life, ""};
-    update_producer_button_text((Producer *)state.buttons[1].click_context, &state.buttons[1]);
-  } else if (b->click_context == &state.joke) {
-    state.buttons[2] = (Button){2, 1, false, on_producer_button_click, &state.joke, ""};
-    update_producer_button_text((Producer *)state.buttons[2].click_context, &state.buttons[2]);
-  } else if (b->click_context == &state.cool) {
-    state.buttons[3] = (Button){3, 1, false, on_producer_button_click, &state.cool, ""};
-    update_producer_button_text((Producer *)state.buttons[3].click_context, &state.buttons[3]);
-  } else if (b->click_context == &state.mine) {
-    state.buttons[4] = (Button){4, 1, false, on_producer_button_click, &state.mine, ""};
-    update_producer_button_text((Producer *)state.buttons[4].click_context, &state.buttons[4]);
-  } else if (b->click_context == &state.crow) {
-    state.buttons[5] = (Button){5, 1, false, on_producer_button_click, &state.crow, ""};
-    update_producer_button_text((Producer *)state.buttons[5].click_context, &state.buttons[5]);
-  }
-
-  state.beat_count -= cost;
-  state.enhancement.number_applied++;
-  state.enhancement.selection_active = false;
-  state.buttons[6] = (Button){};
-  state.buttons[7] = (Button){};
-  state.buttons[8] = (Button){};
+  state.vertices = sg_make_buffer(&(sg_buffer_desc){
+      .type = SG_BUFFERTYPE_VERTEXBUFFER,
+      .data = SG_RANGE(vertices),
+      .label = "vertex-buffer",
+  });
+  state.indices = sg_make_buffer(&(sg_buffer_desc){
+      .type = SG_BUFFERTYPE_INDEXBUFFER,
+      .data = SG_RANGE(indices),
+      .label = "index-buffer",
+  });
 }
 
 static void init(void) {
-  for (int i = 1; i < 2; ++i)
-    update_producer_button_text((Producer *)state.buttons[i].click_context, &state.buttons[i]);
-
   sg_setup(&(sg_desc){
       .environment = sglue_environment(),
       .logger.func = slog_func,
@@ -314,10 +214,101 @@ static void init(void) {
                 [FONT_ORIC] = sdtx_font_oric()},
       .logger.func = slog_func,
   });
-}
 
-bool Button_hovered(const Button *b) {
-  return state.mouse_line == b->l && state.mouse_column >= b->c && state.mouse_column < b->c + strlen(b->caption);
+  saudio_setup(&(saudio_desc){
+      .sample_rate = 44100, .num_channels = 2, .stream_userdata_cb = audio_cb,
+      // .user_data = game,
+  });
+
+  const char *vs = "#version 330\n"
+                   "\n"
+                   "uniform mat4 mvp;\n"
+                   "\n"
+                   "layout(location=0) in vec4 position;\n"
+                   "layout(location=1) in vec2 texcoord;\n"
+                   "\n"
+                   "out vec2 uv;\n"
+                   "\n"
+                   "void main() {\n"
+                   "  gl_Position = mvp * position;\n"
+                   "  uv = texcoord;\n"
+                   "}\n";
+
+  const char *fs = "#version 330\n"
+                   "\n"
+                   "uniform sampler2D tex;\n"
+                   "uniform vec4 color;\n"
+                   "\n"
+                   "in vec2 uv;\n"
+                   "\n"
+                   "out vec4 frag_color;\n"
+                   "\n"
+                   "void main() {\n"
+                   "  vec4 c = texture(tex, uv);\n"
+                   "  frag_color = color * c;\n"
+                   //  "  frag_color = vec4(vec3(color) * v, 1.0);\n"
+                   "}\n";
+
+  sg_shader shader = sg_make_shader(&(sg_shader_desc){
+      .attrs = {{.name = "position"}, {.name = "texcoord"}},
+      .vs = {.source = vs,
+             .uniform_blocks = {{.size = sizeof(float[4][4]),
+                                 .layout = SG_UNIFORMLAYOUT_NATIVE,
+                                 .uniforms = {{"mvp", SG_UNIFORMTYPE_MAT4, 1}}}}},
+      .fs =
+          {
+              .source = fs,
+              .uniform_blocks = {{.size = sizeof(float[4]),
+                                  .layout = SG_UNIFORMLAYOUT_NATIVE,
+                                  .uniforms = {{"color", SG_UNIFORMTYPE_FLOAT4, 1}}}},
+              .images[0] = {.used = true, .image_type = SG_IMAGETYPE_2D, .sample_type = SG_IMAGESAMPLETYPE_FLOAT},
+              .samplers[0] = {.used = true, .sampler_type = SG_SAMPLERTYPE_FILTERING},
+              .image_sampler_pairs[0] = {.used = true, .image_slot = 0, .sampler_slot = 0, .glsl_name = "tex"},
+          },
+  });
+
+  state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+      .shader = shader,
+      .layout =
+          (sg_vertex_layout_state){.buffers = {{.stride = (int)sizeof(vertex_t)}},
+                                   .attrs =
+                                       {
+                                           {.offset = (int)offsetof(vertex_t, x), .format = SG_VERTEXFORMAT_FLOAT3},
+                                           {.offset = (int)offsetof(vertex_t, u), .format = SG_VERTEXFORMAT_USHORT2N},
+                                       }},
+      .index_type = SG_INDEXTYPE_UINT16,
+      .cull_mode = SG_CULLMODE_BACK,
+      .color_count = 1,
+      .colors = {{
+          .pixel_format = SG_PIXELFORMAT_RGBA8,
+          .write_mask = SG_COLORMASK_RGBA,
+          .blend =
+              {
+                  .enabled = true,
+                  .src_factor_rgb = SG_BLENDFACTOR_ONE,
+                  .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                  .src_factor_alpha = SG_BLENDFACTOR_ONE,
+                  .dst_factor_alpha = SG_BLENDFACTOR_ZERO,
+              },
+      }},
+      .depth =
+          {
+              .compare = SG_COMPAREFUNC_LESS_EQUAL,
+              .write_enabled = true,
+          },
+  });
+
+  new_plane();
+
+  state.tilemap = img_load("assets/tilemap.png");
+  state.tilemap_sampler = sg_make_sampler(&(sg_sampler_desc){
+      .min_filter = SG_FILTER_NEAREST,
+      .mag_filter = SG_FILTER_NEAREST,
+      .mipmap_filter = SG_FILTER_NEAREST,
+      .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+      .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+      .label = "tilemap_sampler",
+  });
 }
 
 void jump_to(float l, float c) {
@@ -326,84 +317,36 @@ void jump_to(float l, float c) {
 }
 
 static void frame(void) {
-
   update_state(sapp_frame_duration());
 
   sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
   sdtx_font(FONT_KC853);
 
-  for (int i = 0; i < BUTTON_COUNT; ++i) {
-    if (!state.buttons[i].caption[0])
-      continue;
-
-    jump_to(state.buttons[i].l, state.buttons[i].c);
-    if (!state.buttons[i].enabled)
-      sdtx_color3b(0x42, 0x53, 0x47);
-    else if (Button_hovered(&state.buttons[i]))
-      sdtx_color3b(0xf4, 0x43, 0x36);
-    else
-      sdtx_color3b(0xa2, 0xb3, 0xa7);
-    sdtx_puts(state.buttons[i].caption);
-  }
-
-  if (state.enhancement.selection_active) {
-    jump_to(1, 20);
-    sdtx_color3b(0xa2, 0xb3, 0xa7);
-    int cost =
-        (int)(state.enhancement.base_cost * pow(state.enhancement.cost_growth, state.enhancement.number_applied));
-    sdtx_printf("enhancement (%dB)\n", cost);
-    jump_to(2, 20);
-    sdtx_color3b(0x42, 0x53, 0x47);
-    sdtx_printf("-----------------------)", cost);
-  } else {
-    Enhancement *e = &state.enhancement;
-    size_t tick_update = tick_update_count();
-    size_t min_tick_update = (int)(e->base_tick_expect * pow(e->tick_expect_growth, e->number_applied));
-    jump_to(1, 20);
-    sdtx_color3b(0x42, 0x53, 0x47);
-    sdtx_printf("next level (%d)\n", (int)(min_tick_update - tick_update));
-  }
-
-  if (state.life.count > 0) {
-    jump_to(28, 18);
-    sdtx_color3b(0x33, 0x33, 0x33);
-    sdtx_puts(".  .");
-
-    const float t = (1.0 - state.trigger_time);
-    sdtx_color3f(t * t * 0.8, 0.125f + t * t * 0.5, 0.25f + t * t * 0.3f);
-    jump_to(28, 18.0f + t * 1.5f);
-    sdtx_puts(":");
-
-    jump_to(28, 21.0f - t * 1.5f);
-    sdtx_puts(":");
-  }
-
-  sdtx_color3b(0x33, 0x33, 0x33);
   jump_to(0, 0);
-  sdtx_printf("-------------------------------------------------\n");
-  for (int i = 0; i < 7; ++i)
-    sdtx_printf("(                 :                             )\n");
-  sdtx_printf("-------------------------------------------------\n");
-  for (int i = 0; i < 17; ++i)
-    sdtx_printf("(                 :                             )\n");
-  sdtx_printf("-------------------------------------------------\n");
-  sdtx_printf("(                                               )\n");
-  sdtx_printf("(                                               )\n");
-  sdtx_printf("-------------------------------------------------\n");
-
-  if (state.life.count > 0) {
-    sdtx_canvas(sapp_width(), sapp_height());
-    sdtx_home();
-    sdtx_origin(1.0f, 60.0f);
-    sdtx_color3b(0x63, 0x63, 0x63);
-    sdtx_printf("%lld per tick", tick_update_count());
-  }
+  sdtx_color3b(0x42, 0x53, 0x47);
+  sdtx_printf("%f", state.time);
 
   sg_begin_pass(&(sg_pass){
       .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {0.0f, 0.125f, 0.25f, 1.0f}}},
       .swapchain = sglue_swapchain(),
   });
+
   sdtx_draw();
+
+  sg_apply_pipeline(state.pipeline);
+  Mat4 mvp = mul(orthographic(0.0f, sapp_width() * 0.5f, 0.0f, sapp_height() * 0.5f, -1.0f, 1.0f),
+                 translation3f(128, 64, 0.0f));
+  float x = 1.0f;
+  float color[4] = {x, x, x, 1.0f};
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){mvp.m, sizeof(float[4][4])});
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &(sg_range){color, sizeof(float[4])});
+  sg_apply_bindings(&(sg_bindings){
+      .fs = {.images = {state.tilemap}, .samplers = {state.tilemap_sampler}},
+      .vertex_buffers = {state.vertices},
+      .index_buffer = state.indices,
+  });
+  sg_draw(0, 6 * 9 * 9, 1);
+
   sg_end_pass();
   sg_commit();
 }
@@ -416,19 +359,12 @@ static void cleanup(void) {
 
 void events(const sapp_event *e) {
   if (e->type == SAPP_EVENTTYPE_MOUSE_DOWN) {
-    for (int i = 0; i < BUTTON_COUNT; ++i) {
-      if (state.buttons[i].caption[0] && Button_hovered(&state.buttons[i]) && state.buttons[i].on_click)
-        state.buttons[i].on_click(&state.buttons[i]);
-    }
 
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
-    state.mouse_column = (int)e->mouse_x / 2 / 8;
-    state.mouse_line = (int)e->mouse_y / 2 / 8;
 
   } else if ((e->type == SAPP_EVENTTYPE_KEY_DOWN)) {
     switch (e->key_code) {
     case SAPP_KEYCODE_SPACE:
-      on_beat_click(&state.buttons[0]);
       break;
     default:
       break;
@@ -437,7 +373,6 @@ void events(const sapp_event *e) {
 }
 
 int main(int argc, char *argv[]) {
-
   sapp_run(&(sapp_desc){
       .init_cb = init,
       .frame_cb = frame,
@@ -445,7 +380,7 @@ int main(int argc, char *argv[]) {
       .event_cb = events,
       .width = 800,
       .height = 600,
-      .window_title = "beat",
+      .window_title = "a 2D thing",
       .icon.sokol_default = true,
       .logger.func = slog_func,
   });
