@@ -59,7 +59,8 @@ static struct {
   sg_sampler pixel_sampler;
 
   double time;
-} state = {};
+  int wearisome_frame;
+} state = {0};
 
 sg_image img_load(const char *path) {
   int ww = 0, hh = 0, channel = 0;
@@ -425,7 +426,13 @@ static void frame(void) {
       .vertex_buffers = {state.wearisome_buffer.vertices},
       .index_buffer = state.wearisome_buffer.indices,
   });
-  sg_draw(6 * (((int)(state.time) % 2)), 6, 1);
+
+  int frame = (int)(state.time * 4);
+  if (frame % 32 > 29)
+    state.wearisome_frame = 1;
+  else
+    state.wearisome_frame = 0;
+  sg_draw(6 * state.wearisome_frame, 6, 1);
 
   sg_end_pass();
   sg_commit();
