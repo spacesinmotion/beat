@@ -272,6 +272,8 @@ static void init(void) {
                    "\n"
                    "uniform sampler2D tex;\n"
                    "uniform vec4 color;\n"
+                   "uniform float noise;\n"
+                   "uniform int rand;\n"
                    "\n"
                    "in vec2 uv;\n"
                    "\n"
@@ -279,27 +281,42 @@ static void init(void) {
                    "\n"
                    "void main() {\n"
                    "  vec4 c = texture(tex, uv);\n"
-                   "  frag_color = color * c;\n"
-                   //  "  frag_color = vec4(vec3(color) * v, 1.0);\n"
+                   "  int xx = int(uv.x * 64)/2 * 1024 * 17;\n"
+                   "  int yy = int(uv.y * 64)/2 * 128 * 57;\n"
+                   "  float n = c.a * noise * ((((rand ^ xx ^ yy) % 2000) - 1000)/1000.0);\n"
+                   "  if (noise > 0)\n"
+                   "    frag_color = color * c + vec4(n,n,n, c.a);\n"
+                   "  else\n"
+                   "    frag_color = color * c;\n"
                    "}\n";
 
-  sg_shader shader = sg_make_shader(&(sg_shader_desc){
-      .attrs = {{.name = "position"}, {.name = "texcoord"}},
-      .vs = {.source = vs,
-             .uniform_blocks = {{.size = sizeof(float[4][4]),
-                                 .layout = SG_UNIFORMLAYOUT_NATIVE,
-                                 .uniforms = {{"mvp", SG_UNIFORMTYPE_MAT4, 1}}}}},
-      .fs =
-          {
-              .source = fs,
-              .uniform_blocks = {{.size = sizeof(float[4]),
-                                  .layout = SG_UNIFORMLAYOUT_NATIVE,
-                                  .uniforms = {{"color", SG_UNIFORMTYPE_FLOAT4, 1}}}},
-              .images[0] = {.used = true, .image_type = SG_IMAGETYPE_2D, .sample_type = SG_IMAGESAMPLETYPE_FLOAT},
-              .samplers[0] = {.used = true, .sampler_type = SG_SAMPLERTYPE_FILTERING},
-              .image_sampler_pairs[0] = {.used = true, .image_slot = 0, .sampler_slot = 0, .glsl_name = "tex"},
-          },
-  });
+  sg_shader
+      shader =
+          sg_make_shader(
+              &(sg_shader_desc){
+                  .attrs = {{.name = "position"}, {.name = "texcoord"}},
+                  .vs = {.source = vs,
+                         .uniform_blocks = {{.size = sizeof(float[4][4]),
+                                             .layout = SG_UNIFORMLAYOUT_NATIVE,
+                                             .uniforms = {{"mvp", SG_UNIFORMTYPE_MAT4, 1}}}}},
+                  .fs =
+                      {
+                          .source = fs,
+                          .uniform_blocks = {{.size = sizeof(float[4]),
+                                              .layout = SG_UNIFORMLAYOUT_NATIVE,
+                                              .uniforms =
+                                                  {
+                                                      {"color", SG_UNIFORMTYPE_FLOAT4, 1},
+                                                      {"noise", SG_UNIFORMTYPE_FLOAT, 1},
+                                                      {"rand", SG_UNIFORMTYPE_INT, 1},
+                                                  }}},
+                          .images[0] =
+                              {.used = true, .image_type = SG_IMAGETYPE_2D, .sample_type = SG_IMAGESAMPLETYPE_FLOAT},
+                          .samplers[0] = {.used = true, .sampler_type = SG_SAMPLERTYPE_FILTERING},
+                          .image_sampler_pairs[0] =
+                              {.used = true, .image_slot = 0, .sampler_slot = 0, .glsl_name = "tex"},
+                      },
+              });
 
   state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
       .shader = shader,
@@ -372,11 +389,16 @@ static void frame(void) {
   sg_apply_pipeline(state.pipeline);
 
   Mat4 camera = orthographic(0.0f, sapp_width() * 0.35f, 0.0f, sapp_height() * 0.35f, -1.0f, 1.0f);
-  float color[4] = {1, 1, 1, 1};
+
+  struct {
+    float color[4];
+    float noise;
+    int rand;
+  } fs_param = {{1, 1, 1, 1}, 0.004f, rand()};
 
   Mat4 mvp = mul(camera, translation3f(128 - 8, 64 + 8, 0.0f));
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){mvp.m, sizeof(float[4][4])});
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &(sg_range){color, sizeof(float[4])});
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_param));
   sg_apply_bindings(&(sg_bindings){
       .fs = {.images = {state.tilemap}, .samplers = {state.pixel_sampler}},
       .vertex_buffers = {state.tilemap_buffer.vertices},
@@ -384,9 +406,10 @@ static void frame(void) {
   });
   sg_draw(0, state.tilemap_buffer.num_elements, 1);
 
-  mvp = mul(camera, translation3f(128 + 16 - cos(state.time) * 16, 64, 0.0f));
+  mvp = mul(camera, translation3f(128, 64, 0.0f));
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){mvp.m, sizeof(float[4][4])});
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &(sg_range){color, sizeof(float[4])});
+  fs_param.noise = 0.1f;
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_param));
 
   sg_apply_bindings(&(sg_bindings){
       .fs = {.images = {state.wearisome}, .samplers = {state.pixel_sampler}},
