@@ -21,11 +21,14 @@
 #define SOKOL_GLCORE
 #define SOKOL_DEBUGTEXT_IMPL
 
+#include "sokol_gfx.h"
+
 #include "sokol_app.h"
 #include "sokol_audio.h"
-#include "sokol_gfx.h"
+
 #include "sokol_glue.h"
 #include "sokol_log.h"
+
 #include "util/sokol_debugtext.h"
 
 #define FONT_KC853 (0)
@@ -79,13 +82,6 @@ void update_state(double dt) { state.time += dt; }
 
 static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) {}
 
-// typedef struct fs_params_t {
-//   int lightOn;
-//   float lightDir[3], eye[3];
-//   int textureOn;
-//   float color[4];
-// } fs_params_t;
-
 typedef struct Mat4 {
   float m[4][4];
 } Mat4;
@@ -129,30 +125,30 @@ Mat4 translation3f(float x, float y, float z) {
   return tr;
 }
 
-void add_quad(vertex_t *vertices, float x, float y, float w, float h, uint8_t code) {
-  static int lu[16][2] = {
-      {0, 3}, {0, 0}, {1, 3}, {3, 0}, {0, 2}, {2, 3}, {1, 0}, {1, 1},
-      {3, 3}, {3, 2}, {0, 1}, {2, 0}, {1, 2}, {3, 1}, {2, 2}, {2, 1},
-  };
-  const int i = lu[code][0];
-  const int j = lu[code][1];
-  assert(i < 4 && j < 4);
-  int o = 65535 / 4;
-  vertices[0] = (vertex_t){x + 0, y + 0, 0, (i + 0) * o, (j + 1) * o};
-  vertices[1] = (vertex_t){x + w, y + 0, 0, (i + 1) * o, (j + 1) * o};
-  vertices[2] = (vertex_t){x + w, y + h, 0, (i + 1) * o, (j + 0) * o};
-  vertices[3] = (vertex_t){x + 0, y + h, 0, (i + 0) * o, (j + 0) * o};
+typedef struct Rect {
+  float x, y, w, h;
+} Rect;
+
+typedef struct SubImage {
+  int i, j, ni, nj;
+} SubImage;
+
+void add_quad(vertex_t *vertices, Rect r, SubImage img) {
+  const int i = img.i;
+  const int j = img.j;
+  const int oi = 65535 / img.ni;
+  const int oj = 65535 / img.nj;
+  vertices[0] = (vertex_t){r.x + 0, r.y + 0, 0, (i + 0) * oi, (j + 1) * oj};
+  vertices[1] = (vertex_t){r.x + r.w, r.y + 0, 0, (i + 1) * oi, (j + 1) * oj};
+  vertices[2] = (vertex_t){r.x + r.w, r.y + r.h, 0, (i + 1) * oi, (j + 0) * oj};
+  vertices[3] = (vertex_t){r.x + 0, r.y + r.h, 0, (i + 0) * oi, (j + 0) * oj};
 }
 
 Buffer quad_buffer(float x, float y, float w, float h) {
-  int o = 65535;
-  vertex_t vertices[4] = {
-      {x + 0, y + 0, 0, 0, o}, //
-      {x + w, y + 0, 0, o, o}, //
-      {x + w, y + h, 0, o, 0}, //
-      {x + 0, y + h, 0, 0, 0}, //
-  };
-  uint16_t indices[] = {0, 2, 1, 0, 3, 2};
+  vertex_t vertices[8];
+  add_quad(vertices, (Rect){x, y, w, h}, (SubImage){0, 0, 2, 2});
+  add_quad(&vertices[4], (Rect){x, y, w, h}, (SubImage){1, 0, 2, 2});
+  uint16_t indices[] = {0, 2, 1, 0, 3, 2, 4 + 0, 4 + 2, 4 + 1, 4 + 0, 4 + 3, 4 + 2};
 
   return (Buffer){
       .vertices = sg_make_buffer(&(sg_buffer_desc){
@@ -165,7 +161,7 @@ Buffer quad_buffer(float x, float y, float w, float h) {
           .data = SG_RANGE(indices),
           .label = "index-buffer",
       }),
-      .num_elements = 6,
+      .num_elements = 6 * 2,
   };
 }
 
@@ -196,6 +192,11 @@ Buffer create_tile_map() {
       0, 0, 0, 0, 1, 1, 0, 0, //
   };
 
+  static int lu[16][2] = {
+      {0, 3}, {0, 0}, {1, 3}, {3, 0}, {0, 2}, {2, 3}, {1, 0}, {1, 1},
+      {3, 3}, {3, 2}, {0, 1}, {2, 0}, {1, 2}, {3, 1}, {2, 2}, {2, 1},
+  };
+
   vertex_t vertices[4 * 9 * 9];
   uint16_t indices[6 * 9 * 9];
   int ov = 0, oi = 0;
@@ -207,7 +208,7 @@ Buffer create_tile_map() {
       // printf("code %d %d %d\n", i, j, (int)tc);
       float x = i * 16.0f;
       float y = j * 16.0f;
-      add_quad(&vertices[ov], x, y, 16, 16, tc);
+      add_quad(&vertices[ov], (Rect){x, y, 16, 16}, (SubImage){lu[tc][0], lu[tc][1], 4, 4});
       // = {0, 2, 1, 0, 3, 2};
       indices[oi++] = ov + 0;
       indices[oi++] = ov + 2;
@@ -416,7 +417,7 @@ static void frame(void) {
       .vertex_buffers = {state.wearisome_buffer.vertices},
       .index_buffer = state.wearisome_buffer.indices,
   });
-  sg_draw(0, state.wearisome_buffer.num_elements, 1);
+  sg_draw(6 * (((int)(state.time) % 2)), 6, 1);
 
   sg_end_pass();
   sg_commit();
