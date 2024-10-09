@@ -18,6 +18,7 @@
 #define sinf sin
 #endif
 
+#define SOKOL_NO_ENTRY
 #define SOKOL_GLCORE
 #define SOKOL_DEBUGTEXT_IMPL
 
@@ -80,7 +81,14 @@ sg_image img_load(const char *path) {
 
 void update_state(double dt) { state.time += dt; }
 
-static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) {}
+static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) {
+  (void)ud;
+  for (int i = 0; i < num_frames; ++i) {
+    for (int j = 0; j < num_channels; ++j) {
+      buffer[i * num_channels + j] = 0.0f;
+    }
+  }
+}
 
 typedef struct Mat4 {
   float m[4][4];
@@ -104,7 +112,7 @@ Mat4 orthographic(float Left, float Right, float Bottom, float Top, float Near, 
 }
 
 Mat4 mul(Mat4 Left, Mat4 Right) {
-  Mat4 Result = {};
+  Mat4 Result = {.m = {{0.0f}}};
   for (int c = 0; c < 4; ++c) {
     for (int r = 0; r < 4; ++r) {
       float Sum = 0.0f;
@@ -303,7 +311,7 @@ static void init(void) {
                   .fs =
                       {
                           .source = fs,
-                          .uniform_blocks = {{.size = sizeof(float[4]),
+                          .uniform_blocks = {{.size = sizeof(float[5]) + sizeof(int),
                                               .layout = SG_UNIFORMLAYOUT_NATIVE,
                                               .uniforms =
                                                   {
@@ -444,7 +452,7 @@ void events(const sapp_event *e) {
   }
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   sapp_run(&(sapp_desc){
       .init_cb = init,
       .frame_cb = frame,
