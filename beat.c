@@ -32,6 +32,8 @@
 
 #include "util/sokol_debugtext.h"
 
+#include "math/Mat4.h"
+
 #define FONT_KC853 (0)
 #define FONT_KC854 (1)
 #define FONT_Z1013 (2)
@@ -89,49 +91,6 @@ static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) 
       buffer[i * num_channels + j] = 0.0f;
     }
   }
-}
-
-typedef struct Mat4 {
-  float m[4][4];
-} Mat4;
-Mat4 orthographic(float Left, float Right, float Bottom, float Top, float Near, float Far) {
-  Mat4 O = (Mat4){{
-      {1.0f, 0.0f, 0.0f, 0.0f},
-      {0.0f, 1.0f, 0.0f, 0.0f},
-      {0.0f, 0.0f, 1.0f, 0.0f},
-      {0.0f, 0.0f, 0.0f, 1.0f},
-  }};
-
-  O.m[0][0] = 2.0f / (Right - Left);
-  O.m[1][1] = 2.0f / (Top - Bottom);
-  O.m[2][2] = 2.0f / (Near - Far);
-
-  O.m[3][0] = (Left + Right) / (Left - Right);
-  O.m[3][1] = (Bottom + Top) / (Bottom - Top);
-  O.m[3][2] = (Far + Near) / (Near - Far);
-  return O;
-}
-
-Mat4 mul(Mat4 Left, Mat4 Right) {
-  Mat4 Result = {.m = {{0.0f}}};
-  for (int c = 0; c < 4; ++c) {
-    for (int r = 0; r < 4; ++r) {
-      float Sum = 0.0f;
-      for (int cm = 0; cm < 4; ++cm)
-        Sum += Left.m[cm][r] * Right.m[c][cm];
-      Result.m[c][r] = Sum;
-    }
-  }
-  return Result;
-}
-
-Mat4 translation3f(float x, float y, float z) {
-  Mat4 tr = {};
-  tr.m[0][0] = tr.m[1][1] = tr.m[2][2] = tr.m[3][3] = 1.0f;
-  tr.m[3][0] = x;
-  tr.m[3][1] = y;
-  tr.m[3][2] = z;
-  return tr;
 }
 
 typedef struct Rect {
@@ -398,7 +357,7 @@ static void frame(void) {
 
   sg_apply_pipeline(state.pipeline);
 
-  Mat4 camera = orthographic(0.0f, sapp_width() * 0.35f, 0.0f, sapp_height() * 0.35f, -1.0f, 1.0f);
+  Mat4 camera = Mat4_orthographic(0.0f, sapp_width() * 0.45f, 0.0f, sapp_height() * 0.45f, -1.0f, 1.0f);
 
   struct {
     float color[4];
@@ -406,7 +365,7 @@ static void frame(void) {
     int rand;
   } fs_param = {{1, 1, 1, 1}, 0.004f, rand()};
 
-  Mat4 mvp = mul(camera, translation3f(128 - 8, 64 + 8, 0.0f));
+  Mat4 mvp = Mat4_mul(camera, Mat4_translation3f(128 - 8, 64 + 8, 0.0f));
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){mvp.m, sizeof(float[4][4])});
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_param));
   sg_apply_bindings(&(sg_bindings){
@@ -416,7 +375,7 @@ static void frame(void) {
   });
   sg_draw(0, state.tilemap_buffer.num_elements, 1);
 
-  mvp = mul(camera, translation3f(128, 64, 0.0f));
+  mvp = Mat4_mul(camera, Mat4_translation3f(128, 64, 0.0f));
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){mvp.m, sizeof(float[4][4])});
   fs_param.noise = 0.1f;
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_param));
