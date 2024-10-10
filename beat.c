@@ -112,21 +112,34 @@ void add_quad(vertex_t *vertices, Rect r, SubImage img) {
   vertices[3] = (vertex_t){r.x + 0, r.y + r.h, 0, (i + 0) * oi, (j + 0) * oj};
 }
 
-Buffer quad_buffer(float x, float y, float w, float h) {
-  vertex_t vertices[8];
-  add_quad(vertices, (Rect){x, y, w, h}, (SubImage){0, 0, 2, 2});
-  add_quad(&vertices[4], (Rect){x, y, w, h}, (SubImage){1, 0, 2, 2});
-  uint16_t indices[] = {0, 2, 1, 0, 3, 2, 4 + 0, 4 + 2, 4 + 1, 4 + 0, 4 + 3, 4 + 2};
+Buffer quad_animation_buffer(float x, float y, float w, float h, int ni, int nj) {
+  vertex_t vertices[4 * ni * nj];
+  uint16_t indices[6 * ni * nj];
+  int ov = 0;
+  int oi = 0;
+  for (int i = 0; i < ni; ++i) {
+    for (int j = 0; j < nj; ++j) {
+      add_quad(&vertices[ov], (Rect){x, y, w, h}, (SubImage){j, i, ni, nj});
+      indices[oi + 0] = ov + 0;
+      indices[oi + 1] = ov + 2;
+      indices[oi + 2] = ov + 1;
+      indices[oi + 3] = ov + 0;
+      indices[oi + 4] = ov + 3;
+      indices[oi + 5] = ov + 2;
+      ov += 4;
+      oi += 6;
+    }
+  }
 
   return (Buffer){
       .vertices = sg_make_buffer(&(sg_buffer_desc){
           .type = SG_BUFFERTYPE_VERTEXBUFFER,
-          .data = SG_RANGE(vertices),
+          .data = (sg_range){vertices, sizeof(vertex_t) * 4 * ni * nj},
           .label = "vertex-buffer",
       }),
       .indices = sg_make_buffer(&(sg_buffer_desc){
           .type = SG_BUFFERTYPE_INDEXBUFFER,
-          .data = SG_RANGE(indices),
+          .data = (sg_range){indices, sizeof(uint16_t) * 6 * ni * nj},
           .label = "index-buffer",
       }),
       .num_elements = 6 * 2,
@@ -148,7 +161,7 @@ uint8_t tile_code(uint8_t *map, int i, int j, int w, int h) {
   return code;
 }
 
-Buffer create_tile_map() {
+Buffer create_tile_map_buffer() {
   uint8_t map[8 * 8] = {
       0, 1, 1, 1, 1, 1, 1, 0, //
       0, 1, 1, 1, 1, 1, 1, 1, //
@@ -318,8 +331,8 @@ static void init(void) {
           },
   });
 
-  state.tilemap_buffer = create_tile_map();
-  state.wearisome_buffer = quad_buffer(0, 0, 16, 16);
+  state.tilemap_buffer = create_tile_map_buffer();
+  state.wearisome_buffer = quad_animation_buffer(0, 0, 16, 16, 2, 2);
 
   state.tilemap = img_load("assets/tilemap.png");
   state.wearisome = img_load("assets/wearisome.png");
