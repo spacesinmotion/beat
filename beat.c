@@ -32,7 +32,7 @@
 
 #include "util/sokol_debugtext.h"
 
-#include "math/Mat4.h"
+#include "math/Vec2.h"
 
 #define FONT_KC853 (0)
 #define FONT_KC854 (1)
@@ -42,7 +42,7 @@
 #define FONT_ORIC (5)
 
 typedef struct vertex_t {
-  float x, y, z;
+  Vec2 p;
   uint16_t u, v;
 } vertex_t;
 
@@ -106,10 +106,10 @@ void add_quad(vertex_t *vertices, Rect r, SubImage img) {
   const int j = img.j;
   const int oi = 65535 / img.ni;
   const int oj = 65535 / img.nj;
-  vertices[0] = (vertex_t){r.x + 0, r.y + 0, 0, (i + 0) * oi, (j + 1) * oj};
-  vertices[1] = (vertex_t){r.x + r.w, r.y + 0, 0, (i + 1) * oi, (j + 1) * oj};
-  vertices[2] = (vertex_t){r.x + r.w, r.y + r.h, 0, (i + 1) * oi, (j + 0) * oj};
-  vertices[3] = (vertex_t){r.x + 0, r.y + r.h, 0, (i + 0) * oi, (j + 0) * oj};
+  vertices[0] = (vertex_t){(Vec2){r.x + 0, r.y + 0}, (i + 0) * oi, (j + 1) * oj};
+  vertices[1] = (vertex_t){(Vec2){r.x + r.w, r.y + 0}, (i + 1) * oi, (j + 1) * oj};
+  vertices[2] = (vertex_t){(Vec2){r.x + r.w, r.y + r.h}, (i + 1) * oi, (j + 0) * oj};
+  vertices[3] = (vertex_t){(Vec2){r.x + 0, r.y + r.h}, (i + 0) * oi, (j + 0) * oj};
 }
 
 Buffer quad_animation_buffer(float x, float y, float w, float h, int ni, int nj) {
@@ -215,6 +215,16 @@ Buffer create_tile_map_buffer() {
   };
 }
 
+typedef struct vs_param_t {
+  Vec2 to_screen_scale, scale, pan;
+} vs_param_t;
+
+typedef struct fs_param_t {
+  float color[4];
+  float noise;
+  int rand;
+} fs_param_t;
+
 static void init(void) {
   sg_setup(&(sg_desc){
       .environment = sglue_environment(),
@@ -238,15 +248,20 @@ static void init(void) {
 
   const char *vs = "#version 330\n"
                    "\n"
-                   "uniform mat4 mvp;\n"
+                   "uniform vec2 to_screen_scale;\n"
+                   "uniform vec2 scale;\n"
+                   "uniform vec2 pan;\n"
                    "\n"
                    "layout(location=0) in vec4 position;\n"
                    "layout(location=1) in vec2 texcoord;\n"
                    "\n"
+                   "out vec2 p;\n"
                    "out vec2 uv;\n"
                    "\n"
                    "void main() {\n"
-                   "  gl_Position = mvp * position;\n"
+                   //  "  gl_Position = mvp * position;\n"
+                   "  p = position.xy + pan;\n"
+                   "  gl_Position = vec4(p.x * to_screen_scale.x - 1, p.y * to_screen_scale.y - 1, 0, 1);\n"
                    "  uv = texcoord;\n"
                    "}\n";
 
@@ -257,34 +272,39 @@ static void init(void) {
                    "uniform float noise;\n"
                    "uniform int rand;\n"
                    "\n"
+                   "in vec2 p;\n"
                    "in vec2 uv;\n"
                    "\n"
                    "out vec4 frag_color;\n"
                    "\n"
                    "void main() {\n"
                    "  vec4 c = texture(tex, uv);\n"
+                   "  float row = (int(p.x) % 16 == 0) ? 0.9 : 1.0;\n"
+                   "  float col = (int(p.y) % 16 == 0) ? 0.9 : 1.0;\n"
                    "  int xx = int(uv.x * 64)/2 * 1024 * 17;\n"
                    "  int yy = int(uv.y * 64)/2 * 128 * 57;\n"
                    "  float n = c.a * noise * ((((rand ^ xx ^ yy) % 2000) - 1000)/1000.0);\n"
-                   "  if (noise > 0)\n"
-                   "    frag_color = color * c + vec4(n,n,n, c.a);\n"
-                   "  else\n"
-                   "    frag_color = color * c;\n"
+                   "  frag_color = min(row,col) * color * c + vec4(n, n, n, c.a);\n"
                    "}\n";
 
   sg_shader shader = sg_make_shader(&(sg_shader_desc){
       .attrs = {{.name = "position"}, {.name = "texcoord"}},
       .vs = {.source = vs,
              .uniform_blocks = {{
-                 .size = sizeof(float[4][4]),
+                 .size = sizeof(vs_param_t),
                  .layout = SG_UNIFORMLAYOUT_NATIVE,
-                 .uniforms = {{"mvp", SG_UNIFORMTYPE_MAT4, 1}},
+                 .uniforms =
+                     {
+                         {"to_screen_scale", SG_UNIFORMTYPE_FLOAT2, 1},
+                         {"scale", SG_UNIFORMTYPE_FLOAT2, 1},
+                         {"pan", SG_UNIFORMTYPE_FLOAT2, 1},
+                     },
              }}},
       .fs =
           {
               .source = fs,
               .uniform_blocks = {{
-                  .size = sizeof(float[5]) + sizeof(int),
+                  .size = sizeof(fs_param_t),
                   .layout = SG_UNIFORMLAYOUT_NATIVE,
                   .uniforms =
                       {
@@ -302,12 +322,14 @@ static void init(void) {
   state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
       .shader = shader,
       .layout =
-          (sg_vertex_layout_state){.buffers = {{.stride = (int)sizeof(vertex_t)}},
-                                   .attrs =
-                                       {
-                                           {.offset = (int)offsetof(vertex_t, x), .format = SG_VERTEXFORMAT_FLOAT3},
-                                           {.offset = (int)offsetof(vertex_t, u), .format = SG_VERTEXFORMAT_USHORT2N},
-                                       }},
+          (sg_vertex_layout_state){
+              .buffers = {{.stride = (int)sizeof(vertex_t)}},
+              .attrs =
+                  {
+                      {.offset = (int)offsetof(vertex_t, p), .format = SG_VERTEXFORMAT_FLOAT2},
+                      {.offset = (int)offsetof(vertex_t, u), .format = SG_VERTEXFORMAT_USHORT2N},
+                  },
+          },
       .index_type = SG_INDEXTYPE_UINT16,
       .cull_mode = SG_CULLMODE_BACK,
       .color_count = 1,
@@ -369,16 +391,15 @@ static void frame(void) {
 
   sg_apply_pipeline(state.pipeline);
 
-  Mat4 camera = Mat4_orthographic(0.0f, sapp_width() * 0.45f, 0.0f, sapp_height() * 0.45f, -1.0f, 1.0f);
+  Vec2 scene_v = {128.0f, 64.0f};
+  vs_param_t vs_param = {
+      {2.0f / sapp_width() * 2.0, 2.0f / sapp_height() * 2.0},
+      {1.0f, 1.0f},
+      {scene_v.x - 8, scene_v.y + 8},
+  };
+  fs_param_t fs_param = {{1, 1, 1, 1}, 0.004f, rand()};
 
-  struct {
-    float color[4];
-    float noise;
-    int rand;
-  } fs_param = {{1, 1, 1, 1}, 0.004f, rand()};
-
-  Mat4 mvp = Mat4_mul(camera, Mat4_translation3f(128 - 8, 64 + 8, 0.0f));
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){mvp.m, sizeof(float[4][4])});
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_param));
   sg_apply_bindings(&(sg_bindings){
       .fs = {.images = {state.tilemap}, .samplers = {state.pixel_sampler}},
@@ -387,8 +408,8 @@ static void frame(void) {
   });
   sg_draw(0, state.tilemap_buffer.num_elements, 1);
 
-  mvp = Mat4_mul(camera, Mat4_translation3f(128, 64, 0.0f));
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){mvp.m, sizeof(float[4][4])});
+  vs_param.pan = v_add(scene_v, (Vec2){16 + 16 * sin(state.time), 0.0f});
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_param));
   fs_param.noise = 0.1f;
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_param));
 
