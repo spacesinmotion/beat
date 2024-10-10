@@ -272,33 +272,32 @@ static void init(void) {
                    "    frag_color = color * c;\n"
                    "}\n";
 
-  sg_shader
-      shader =
-          sg_make_shader(
-              &(sg_shader_desc){
-                  .attrs = {{.name = "position"}, {.name = "texcoord"}},
-                  .vs = {.source = vs,
-                         .uniform_blocks = {{.size = sizeof(float[4][4]),
-                                             .layout = SG_UNIFORMLAYOUT_NATIVE,
-                                             .uniforms = {{"mvp", SG_UNIFORMTYPE_MAT4, 1}}}}},
-                  .fs =
+  sg_shader shader = sg_make_shader(&(sg_shader_desc){
+      .attrs = {{.name = "position"}, {.name = "texcoord"}},
+      .vs = {.source = vs,
+             .uniform_blocks = {{
+                 .size = sizeof(float[4][4]),
+                 .layout = SG_UNIFORMLAYOUT_NATIVE,
+                 .uniforms = {{"mvp", SG_UNIFORMTYPE_MAT4, 1}},
+             }}},
+      .fs =
+          {
+              .source = fs,
+              .uniform_blocks = {{
+                  .size = sizeof(float[5]) + sizeof(int),
+                  .layout = SG_UNIFORMLAYOUT_NATIVE,
+                  .uniforms =
                       {
-                          .source = fs,
-                          .uniform_blocks = {{.size = sizeof(float[5]) + sizeof(int),
-                                              .layout = SG_UNIFORMLAYOUT_NATIVE,
-                                              .uniforms =
-                                                  {
-                                                      {"color", SG_UNIFORMTYPE_FLOAT4, 1},
-                                                      {"noise", SG_UNIFORMTYPE_FLOAT, 1},
-                                                      {"rand", SG_UNIFORMTYPE_INT, 1},
-                                                  }}},
-                          .images[0] =
-                              {.used = true, .image_type = SG_IMAGETYPE_2D, .sample_type = SG_IMAGESAMPLETYPE_FLOAT},
-                          .samplers[0] = {.used = true, .sampler_type = SG_SAMPLERTYPE_FILTERING},
-                          .image_sampler_pairs[0] =
-                              {.used = true, .image_slot = 0, .sampler_slot = 0, .glsl_name = "tex"},
+                          {"color", SG_UNIFORMTYPE_FLOAT4, 1},
+                          {"noise", SG_UNIFORMTYPE_FLOAT, 1},
+                          {"rand", SG_UNIFORMTYPE_INT, 1},
                       },
-              });
+              }},
+              .images[0] = {.used = true, .image_type = SG_IMAGETYPE_2D, .sample_type = SG_IMAGESAMPLETYPE_FLOAT},
+              .samplers[0] = {.used = true, .sampler_type = SG_SAMPLERTYPE_FILTERING},
+              .image_sampler_pairs[0] = {.used = true, .image_slot = 0, .sampler_slot = 0, .glsl_name = "tex"},
+          },
+  });
 
   state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
       .shader = shader,
