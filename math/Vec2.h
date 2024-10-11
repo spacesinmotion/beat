@@ -1,7 +1,5 @@
-
-
-#ifndef MAT4
-#define MAT4
+#ifndef VEC2
+#define VEC2
 
 typedef struct Vec2 {
   float x, y;
