@@ -62,6 +62,12 @@ typedef struct fs_param_t {
   int rand;
 } fs_param_t;
 
+typedef struct Game Game;
+typedef void (*SceneDrawCB)(Game *, void *);
+
+typedef struct GameScene {
+} GameScene;
+
 typedef struct Game {
   sg_pipeline pipeline;
 
@@ -72,14 +78,73 @@ typedef struct Game {
   } render;
 
   Buffer tilemap_buffer;
-  Buffer wearisome_buffer;
+  Buffer animation_buffer_4x4;
   sg_image tilemap;
   sg_image wearisome;
   sg_sampler pixel_sampler;
 
+  SceneDrawCB draw_scene;
+  void *scene;
+
   double time;
   int wearisome_frame;
 } Game;
+
+static void d_color(Game *game, float r, float g, float b, float a) {
+  game->render.fs_param.color[0] = r;
+  game->render.fs_param.color[1] = g;
+  game->render.fs_param.color[2] = b;
+  game->render.fs_param.color[3] = a;
+}
+static void d_noise(Game *game, float n) { game->render.fs_param.noise = n; }
+
+static void d_buffer(Game *g, Buffer buffer, sg_image img, Vec2 pan) {
+  g->render.vs_param.pan = v_add(g->render.camera, pan);
+
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
+  sg_apply_bindings(&(sg_bindings){
+      .fs = {.images = {img}, .samplers = {g->pixel_sampler}},
+      .vertex_buffers = {buffer.vertices},
+      .index_buffer = buffer.indices,
+  });
+  sg_draw(0, buffer.num_elements, 1);
+}
+
+static void d_object(Game *g, Buffer buffer, sg_image tex, Vec2 pan, int frame) {
+  g->render.vs_param.pan = v_add(g->render.camera, pan);
+
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
+  sg_apply_bindings(&(sg_bindings){
+      .fs = {.images = {tex}, .samplers = {g->pixel_sampler}},
+      .vertex_buffers = {buffer.vertices},
+      .index_buffer = buffer.indices,
+  });
+
+  sg_draw(6 * frame, 6, 1);
+}
+
+void GameScene_draw(Game *g, GameScene *scene) {
+  (void)scene;
+
+  d_noise(g, 0.01f);
+  d_buffer(g, g->tilemap_buffer, g->tilemap, (Vec2){-8, 8});
+
+  int frame = (int)(g->time * 4);
+  if (frame % 32 > 29)
+    g->wearisome_frame = 1;
+  else
+    g->wearisome_frame = 0;
+  d_noise(g, 0.1f);
+  d_color(g, 0.01f * sin(g->time * 20) + 0.9f, 1.0f, 1.0f, 1.0f);
+  d_object(g, g->animation_buffer_4x4, g->wearisome, (Vec2){16 + (int)(16 * sin(g->time)), 0.0f}, g->wearisome_frame);
+}
+
+void GameScene_init(Game *g) {
+  g->scene = gc_malloc(&gc, sizeof(GameScene));
+  g->draw_scene = (SceneDrawCB)GameScene_draw;
+}
 
 sg_image img_load(const char *path) {
   int ww = 0, hh = 0, channel = 0;
@@ -230,9 +295,7 @@ Buffer create_tile_map_buffer() {
   };
 }
 
-static void init(void *ud) {
-  Game *g = (Game *)ud;
-
+static void Game_init(Game *g) {
   g->render.vs_param = (vs_param_t){
       {2.0f / sapp_width() * 2.0, 2.0f / sapp_height() * 2.0},
       {1.0f, 1.0f},
@@ -368,7 +431,7 @@ static void init(void *ud) {
   });
 
   g->tilemap_buffer = create_tile_map_buffer();
-  g->wearisome_buffer = quad_animation_buffer(0, 0, 16, 16, 2, 2);
+  g->animation_buffer_4x4 = quad_animation_buffer(0, 0, 16, 16, 2, 2);
 
   g->tilemap = img_load("assets/tilemap.png");
   g->wearisome = img_load("assets/wearisome.png");
@@ -380,6 +443,8 @@ static void init(void *ud) {
       .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
       .label = "tilemap_sampler",
   });
+
+  GameScene_init(g);
 }
 
 void jump_to(float l, float c) {
@@ -387,44 +452,7 @@ void jump_to(float l, float c) {
   sdtx_origin(c, l);
 }
 
-static void d_color(Game *game, float r, float g, float b, float a) {
-  game->render.fs_param.color[0] = r;
-  game->render.fs_param.color[1] = g;
-  game->render.fs_param.color[2] = b;
-  game->render.fs_param.color[3] = a;
-}
-static void d_noise(Game *game, float n) { game->render.fs_param.noise = n; }
-
-static void d_buffer(Game *g, Buffer buffer, sg_image img, Vec2 pan) {
-  g->render.vs_param.pan = v_add(g->render.camera, pan);
-
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
-  sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {img}, .samplers = {g->pixel_sampler}},
-      .vertex_buffers = {buffer.vertices},
-      .index_buffer = buffer.indices,
-  });
-  sg_draw(0, buffer.num_elements, 1);
-}
-
-static void d_object(Game *g, Buffer buffer, sg_image tex, Vec2 pan, int frame) {
-  g->render.vs_param.pan = v_add(g->render.camera, pan);
-
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
-  sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {tex}, .samplers = {g->pixel_sampler}},
-      .vertex_buffers = {buffer.vertices},
-      .index_buffer = buffer.indices,
-  });
-
-  sg_draw(6 * frame, 6, 1);
-}
-
-static void frame(void *ud) {
-  Game *g = (Game *)ud;
-
+static void Game_frame(Game *g) {
   update_state(g, sapp_frame_duration());
 
   sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
@@ -444,24 +472,15 @@ static void frame(void *ud) {
   sg_apply_pipeline(g->pipeline);
   g->render.fs_param.rand = rand();
 
-  d_noise(g, 0.01f);
-  d_buffer(g, g->tilemap_buffer, g->tilemap, (Vec2){-8, 8});
-
-  int frame = (int)(g->time * 4);
-  if (frame % 32 > 29)
-    g->wearisome_frame = 1;
-  else
-    g->wearisome_frame = 0;
-  d_noise(g, 0.1f);
-  d_color(g, 0.01f * sin(g->time * 20) + 0.9f, 1.0f, 1.0f, 1.0f);
-  d_object(g, g->wearisome_buffer, g->wearisome, (Vec2){16 + (int)(16 * sin(g->time)), 0.0f}, g->wearisome_frame);
+  if (g->draw_scene && g->scene)
+    g->draw_scene(g, g->scene);
 
   sg_end_pass();
   sg_commit();
 }
 
-static void cleanup(void *ud) {
-  (void)ud;
+static void Game_cleanup(Game *g) {
+  (void)g;
   // Game *g = (Game *)ud;
 
   sdtx_shutdown();
@@ -469,10 +488,8 @@ static void cleanup(void *ud) {
   sg_shutdown();
 }
 
-static void events(const sapp_event *e, void *ud) {
-  (void)ud;
-  // Game *g = (Game *)ud;
-
+static void Game_handel_events(const sapp_event *e, Game *g) {
+  (void)g;
   if (e->type == SAPP_EVENTTYPE_MOUSE_DOWN) {
 
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
@@ -493,10 +510,10 @@ int main(int argc, char *argv[]) {
 
   Game g = (Game){0};
   sapp_run(&(sapp_desc){
-      .init_userdata_cb = init,
-      .frame_userdata_cb = frame,
-      .cleanup_userdata_cb = cleanup,
-      .event_userdata_cb = events,
+      .init_userdata_cb = (void (*)(void *))Game_init,
+      .frame_userdata_cb = (void (*)(void *))Game_frame,
+      .cleanup_userdata_cb = (void (*)(void *))Game_cleanup,
+      .event_userdata_cb = (void (*)(const sapp_event *, void *))Game_handel_events,
       .user_data = &g,
       .width = 800,
       .height = 600,
