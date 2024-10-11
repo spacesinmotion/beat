@@ -32,6 +32,7 @@
 
 #include "util/sokol_debugtext.h"
 
+#include "gc/gc.h"
 #include "math/Vec2.h"
 
 #define FONT_KC853 (0)
@@ -51,8 +52,24 @@ typedef struct Buffer {
   int num_elements;
 } Buffer;
 
-static struct {
+typedef struct vs_param_t {
+  Vec2 to_screen_scale, scale, pan;
+} vs_param_t;
+
+typedef struct fs_param_t {
+  float color[4];
+  float noise;
+  int rand;
+} fs_param_t;
+
+typedef struct Game {
   sg_pipeline pipeline;
+
+  struct {
+    vs_param_t vs_param;
+    fs_param_t fs_param;
+    Vec2 camera;
+  } render;
 
   Buffer tilemap_buffer;
   Buffer wearisome_buffer;
@@ -62,7 +79,7 @@ static struct {
 
   double time;
   int wearisome_frame;
-} state = {0};
+} Game;
 
 sg_image img_load(const char *path) {
   int ww = 0, hh = 0, channel = 0;
@@ -82,7 +99,7 @@ sg_image img_load(const char *path) {
   return (sg_image){};
 }
 
-void update_state(double dt) { state.time += dt; }
+void update_state(Game *state, double dt) { state->time += dt; }
 
 static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) {
   (void)ud;
@@ -186,11 +203,9 @@ Buffer create_tile_map_buffer() {
       uint8_t tc = tile_code(map, i, j, 8, 8);
       if (tc == 0)
         continue;
-      // printf("code %d %d %d\n", i, j, (int)tc);
       float x = i * 16.0f;
       float y = j * 16.0f;
       add_quad(&vertices[ov], (Rect){x, y, 16, 16}, (SubImage){lu[tc][0], lu[tc][1], 4, 4});
-      // = {0, 2, 1, 0, 3, 2};
       indices[oi++] = ov + 0;
       indices[oi++] = ov + 2;
       indices[oi++] = ov + 1;
@@ -215,17 +230,17 @@ Buffer create_tile_map_buffer() {
   };
 }
 
-typedef struct vs_param_t {
-  Vec2 to_screen_scale, scale, pan;
-} vs_param_t;
+static void init(void *ud) {
+  Game *g = (Game *)ud;
 
-typedef struct fs_param_t {
-  float color[4];
-  float noise;
-  int rand;
-} fs_param_t;
+  g->render.vs_param = (vs_param_t){
+      {2.0f / sapp_width() * 2.0, 2.0f / sapp_height() * 2.0},
+      {1.0f, 1.0f},
+      {0.0f, 0.0f},
+  };
+  g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0.0, 0};
+  g->render.camera = (Vec2){128.0f, 64.0f};
 
-static void init(void) {
   sg_setup(&(sg_desc){
       .environment = sglue_environment(),
       .logger.func = slog_func,
@@ -319,7 +334,7 @@ static void init(void) {
           },
   });
 
-  state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+  g->pipeline = sg_make_pipeline(&(sg_pipeline_desc){
       .shader = shader,
       .layout =
           (sg_vertex_layout_state){
@@ -352,12 +367,12 @@ static void init(void) {
           },
   });
 
-  state.tilemap_buffer = create_tile_map_buffer();
-  state.wearisome_buffer = quad_animation_buffer(0, 0, 16, 16, 2, 2);
+  g->tilemap_buffer = create_tile_map_buffer();
+  g->wearisome_buffer = quad_animation_buffer(0, 0, 16, 16, 2, 2);
 
-  state.tilemap = img_load("assets/tilemap.png");
-  state.wearisome = img_load("assets/wearisome.png");
-  state.pixel_sampler = sg_make_sampler(&(sg_sampler_desc){
+  g->tilemap = img_load("assets/tilemap.png");
+  g->wearisome = img_load("assets/wearisome.png");
+  g->pixel_sampler = sg_make_sampler(&(sg_sampler_desc){
       .min_filter = SG_FILTER_NEAREST,
       .mag_filter = SG_FILTER_NEAREST,
       .mipmap_filter = SG_FILTER_NEAREST,
@@ -372,15 +387,52 @@ void jump_to(float l, float c) {
   sdtx_origin(c, l);
 }
 
-static void frame(void) {
-  update_state(sapp_frame_duration());
+static void d_color(Game *game, float r, float g, float b, float a) {
+  game->render.fs_param.color[0] = r;
+  game->render.fs_param.color[1] = g;
+  game->render.fs_param.color[2] = b;
+  game->render.fs_param.color[3] = a;
+}
+static void d_noise(Game *game, float n) { game->render.fs_param.noise = n; }
+
+static void d_buffer(Game *g, Buffer buffer, sg_image img, Vec2 pan) {
+  g->render.vs_param.pan = v_add(g->render.camera, pan);
+
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
+  sg_apply_bindings(&(sg_bindings){
+      .fs = {.images = {img}, .samplers = {g->pixel_sampler}},
+      .vertex_buffers = {buffer.vertices},
+      .index_buffer = buffer.indices,
+  });
+  sg_draw(0, buffer.num_elements, 1);
+}
+
+static void d_object(Game *g, Buffer buffer, sg_image tex, Vec2 pan, int frame) {
+  g->render.vs_param.pan = v_add(g->render.camera, pan);
+
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
+  sg_apply_bindings(&(sg_bindings){
+      .fs = {.images = {tex}, .samplers = {g->pixel_sampler}},
+      .vertex_buffers = {buffer.vertices},
+      .index_buffer = buffer.indices,
+  });
+
+  sg_draw(6 * frame, 6, 1);
+}
+
+static void frame(void *ud) {
+  Game *g = (Game *)ud;
+
+  update_state(g, sapp_frame_duration());
 
   sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
   sdtx_font(FONT_KC853);
 
   jump_to(0, 0);
   sdtx_color3b(0x42, 0x53, 0x47);
-  sdtx_printf("%f", state.time);
+  sdtx_printf("%f", g->time);
 
   sg_begin_pass(&(sg_pass){
       .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {0.0f, 0.125f, 0.25f, 1.0f}}},
@@ -389,54 +441,38 @@ static void frame(void) {
 
   sdtx_draw();
 
-  sg_apply_pipeline(state.pipeline);
+  sg_apply_pipeline(g->pipeline);
+  g->render.fs_param.rand = rand();
 
-  Vec2 scene_v = {128.0f, 64.0f};
-  vs_param_t vs_param = {
-      {2.0f / sapp_width() * 2.0, 2.0f / sapp_height() * 2.0},
-      {1.0f, 1.0f},
-      {scene_v.x - 8, scene_v.y + 8},
-  };
-  fs_param_t fs_param = {{1, 1, 1, 1}, 0.004f, rand()};
+  d_noise(g, 0.01f);
+  d_buffer(g, g->tilemap_buffer, g->tilemap, (Vec2){-8, 8});
 
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_param));
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_param));
-  sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {state.tilemap}, .samplers = {state.pixel_sampler}},
-      .vertex_buffers = {state.tilemap_buffer.vertices},
-      .index_buffer = state.tilemap_buffer.indices,
-  });
-  sg_draw(0, state.tilemap_buffer.num_elements, 1);
-
-  vs_param.pan = v_add(scene_v, (Vec2){16 + 16 * sin(state.time), 0.0f});
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_param));
-  fs_param.noise = 0.1f;
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_param));
-
-  sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {state.wearisome}, .samplers = {state.pixel_sampler}},
-      .vertex_buffers = {state.wearisome_buffer.vertices},
-      .index_buffer = state.wearisome_buffer.indices,
-  });
-
-  int frame = (int)(state.time * 4);
+  int frame = (int)(g->time * 4);
   if (frame % 32 > 29)
-    state.wearisome_frame = 1;
+    g->wearisome_frame = 1;
   else
-    state.wearisome_frame = 0;
-  sg_draw(6 * state.wearisome_frame, 6, 1);
+    g->wearisome_frame = 0;
+  d_noise(g, 0.1f);
+  d_color(g, 0.01f * sin(g->time * 20) + 0.9f, 1.0f, 1.0f, 1.0f);
+  d_object(g, g->wearisome_buffer, g->wearisome, (Vec2){16 + (int)(16 * sin(g->time)), 0.0f}, g->wearisome_frame);
 
   sg_end_pass();
   sg_commit();
 }
 
-static void cleanup(void) {
+static void cleanup(void *ud) {
+  (void)ud;
+  // Game *g = (Game *)ud;
+
   sdtx_shutdown();
   saudio_shutdown();
   sg_shutdown();
 }
 
-void events(const sapp_event *e) {
+static void events(const sapp_event *e, void *ud) {
+  (void)ud;
+  // Game *g = (Game *)ud;
+
   if (e->type == SAPP_EVENTTYPE_MOUSE_DOWN) {
 
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
@@ -451,12 +487,17 @@ void events(const sapp_event *e) {
   }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+  gc_start(&gc, &argc);
+  (void)argv;
+
+  Game g = (Game){0};
   sapp_run(&(sapp_desc){
-      .init_cb = init,
-      .frame_cb = frame,
-      .cleanup_cb = cleanup,
-      .event_cb = events,
+      .init_userdata_cb = init,
+      .frame_userdata_cb = frame,
+      .cleanup_userdata_cb = cleanup,
+      .event_userdata_cb = events,
+      .user_data = &g,
       .width = 800,
       .height = 600,
       .window_title = "a 2D thing",
@@ -464,5 +505,6 @@ int main() {
       .logger.func = slog_func,
   });
 
+  gc_stop(&gc);
   return 0;
 }
