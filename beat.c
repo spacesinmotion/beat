@@ -270,7 +270,7 @@ Buffer create_tile_map_buffer() {
         continue;
       float x = i * 16.0f;
       float y = j * 16.0f;
-      add_quad(&vertices[ov], (Rect){x, y, 16, 16}, (SubImage){lu[tc][0], lu[tc][1], 4, 4});
+      add_quad(&vertices[ov], (Rect){{x, y}, {16, 16}}, (SubImage){lu[tc][0], lu[tc][1], 4, 4});
       indices[oi++] = ov + 0;
       indices[oi++] = ov + 2;
       indices[oi++] = ov + 1;

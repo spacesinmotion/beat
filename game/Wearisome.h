@@ -55,6 +55,12 @@ static void Wearisome_leave(Wearisome *w, Game *g) {
   w->highlight = false;
 }
 
+static void Wearisome_click(Wearisome *w, Game *g, int button) {
+  (void)g;
+  (void)button;
+  w->highlight = !w->highlight;
+}
+
 SceneObjectTable Wearisome_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)Wearisome_dead,
     .update = (SceneObjectUpdateCB)Wearisome_update,
@@ -62,6 +68,7 @@ SceneObjectTable Wearisome_table = (SceneObjectTable){
     .mouse_hit = (SceneObjectMouseHitCB)Wearisome_mouse_hit,
     .enter = (SceneObjectEnterCB)Wearisome_enter,
     .leave = (SceneObjectLeaveCB)Wearisome_leave,
+    .click = (SceneObjectClickCB)Wearisome_click,
 };
 Wearisome *Wearisome_init(Game *g, GameScene *gs, Vec2 pos) {
   Wearisome *w = gc_malloc(&gc, sizeof(Wearisome));
