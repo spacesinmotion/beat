@@ -1,10 +1,10 @@
 
+#include "Wearisome.h"
 #include "game/Game.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
 #include "gc/gc.h"
-
-#include "Wearisome.h"
+#include "math/Vec2.h"
 
 typedef struct SceneObjectVec {
   SceneObject *data;
@@ -42,7 +42,7 @@ void GameScene_update(GameScene *gs, Game *g, float dt) {
 
 void GameScene_draw(GameScene *gs, Game *g) {
   d_noise(g, 0.01f);
-  d_buffer(g, d_tilemap_buffer(g), gs->tilemap_img, (Vec2){-8, 8});
+  d_buffer(g, d_tilemap_buffer(g), gs->tilemap_img, (Vec2){8, 8});
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_draw(&gs->scene_objects.data[i], g);
@@ -56,7 +56,10 @@ void GameScene_init(Game *g) {
       .tilemap_img = g_image(g, Img_tilemap),
   };
 
-  Wearisome_init(g, gs);
+  Wearisome_init(g, gs, (Vec2){1 * 16, 0});
+  Wearisome_init(g, gs, (Vec2){2 * 16, 0});
+  Wearisome_init(g, gs, (Vec2){3 * 16, 0});
+  Wearisome_init(g, gs, (Vec2){4 * 16, 0});
 
   game_set_scene(g, (Scene){
                         .context = gs,

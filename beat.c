@@ -228,7 +228,7 @@ Buffer quad_animation_buffer(float x, float y, float w, float h, int ni, int nj)
 bool is_set(uint8_t *map, int i, int j, int w, int h) {
   if (i < 0 || j < 0 || i >= w || j >= h)
     return false;
-  return map[j * h + i] != 0;
+  return map[j * w + i] != 0;
 }
 
 uint8_t tile_code(uint8_t *map, int i, int j, int w, int h) {
@@ -241,15 +241,21 @@ uint8_t tile_code(uint8_t *map, int i, int j, int w, int h) {
 }
 
 Buffer create_tile_map_buffer() {
-  uint8_t map[8 * 8] = {
-      0, 1, 1, 1, 1, 1, 1, 0, //
-      0, 1, 1, 1, 1, 1, 1, 1, //
-      0, 1, 1, 1, 1, 1, 0, 1, //
-      1, 1, 1, 1, 0, 1, 1, 1, //
-      0, 1, 1, 0, 1, 1, 1, 1, //
-      1, 1, 1, 0, 1, 1, 1, 1, //
-      0, 1, 0, 1, 1, 1, 1, 0, //
-      0, 0, 0, 0, 1, 1, 0, 0, //
+#define ni 20
+#define nj 12
+  uint8_t map[ni * nj] = {
+      0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, //
+      0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
+      0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, //
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, //
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, //
+      0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, //
+      0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, //
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, //
+      1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, //
+      1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, //
+      0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, //
+      0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, //
   };
 
   static int lu[16][2] = {
@@ -257,12 +263,12 @@ Buffer create_tile_map_buffer() {
       {3, 3}, {3, 2}, {0, 1}, {2, 0}, {1, 2}, {3, 1}, {2, 2}, {2, 1},
   };
 
-  vertex_t vertices[4 * 9 * 9];
-  uint16_t indices[6 * 9 * 9];
+  vertex_t vertices[4 * (ni + 1) * (nj + 1)];
+  uint16_t indices[6 * (ni + 1) * (nj + 1)];
   int ov = 0, oi = 0;
-  for (int i = -1; i < 8; ++i) {
-    for (int j = -1; j < 8; ++j) {
-      uint8_t tc = tile_code(map, i, j, 8, 8);
+  for (int i = -1; i < ni; ++i) {
+    for (int j = -1; j < nj; ++j) {
+      uint8_t tc = tile_code(map, i, j, ni, nj);
       if (tc == 0)
         continue;
       float x = i * 16.0f;
@@ -299,7 +305,7 @@ static void Game_init(Game *g) {
       {0.0f, 0.0f},
   };
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0.0, 0};
-  g->render.camera = (Vec2){128.0f, 64.0f};
+  g->render.camera = (Vec2){32.0f, 32.0f};
 
   sg_setup(&(sg_desc){
       .environment = sglue_environment(),
@@ -438,7 +444,7 @@ static void Game_init(Game *g) {
       .mipmap_filter = SG_FILTER_NEAREST,
       .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
       .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-      .label = "tilemap_sampler",
+      .label = "pixel_sampler",
   });
 
   GameScene_init(g);

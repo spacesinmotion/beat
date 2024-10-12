@@ -22,13 +22,14 @@ bool Wearisome_dead(Wearisome *w) {
 }
 
 void Wearisome_update(Wearisome *w, Game *g, float dt) {
+  (void)dt;
+
   const float time = Game_time(g);
   const int frame = (int)(time * 4);
   if (frame % 32 > 29)
     w->frame = 1;
   else
     w->frame = 0;
-  w->position = (Vec2){16 + (int)(16 * sin(time)), 0.0f};
 }
 void Wearisome_draw(Wearisome *w, Game *g) {
   const float time = Game_time(g);
@@ -42,12 +43,14 @@ SceneObjectTable Wearisome_table = (SceneObjectTable){
     .update = (SceneObjectUpdateCB)Wearisome_update,
     .draw = (SceneObjectDrawCB)Wearisome_draw,
 };
-void Wearisome_init(Game *g, GameScene *gs) {
+Wearisome *Wearisome_init(Game *g, GameScene *gs, Vec2 pos) {
   Wearisome *w = gc_malloc(&gc, sizeof(Wearisome));
   *w = (Wearisome){
       .texture = g_image(g, Img_wearisome),
+      .position = pos,
   };
   GameScene_add_object(gs, (SceneObject){.context = w, &Wearisome_table});
+  return w;
 }
 
 #endif
