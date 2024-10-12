@@ -45,9 +45,15 @@ static bool Wearisome_mouse_hit(Wearisome *w, Vec2 mp) {
   return Rect_contains((Rect){w->position, (Vec2){16, 16}}, mp);
 }
 
-static void Wearisome_enter(Wearisome *w, Game *g) { w->highlight = true; }
+static void Wearisome_enter(Wearisome *w, Game *g) {
+  (void)g;
+  w->highlight = true;
+}
 
-static void Wearisome_leave(Wearisome *w, Game *g) { w->highlight = false; }
+static void Wearisome_leave(Wearisome *w, Game *g) {
+  (void)g;
+  w->highlight = false;
+}
 
 SceneObjectTable Wearisome_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)Wearisome_dead,
