@@ -1,13 +1,15 @@
 #ifndef WEARISOME
 #define WEARISOME
 
-#include "SceneObject.h"
+#include "game/Game.h"
+#include "game/GameScene.h"
+#include "game/SceneObject.h"
+#include "game/assets.h"
 #include "gc/gc.h"
 #include <math.h>
 
-#include "GameScene.h"
-
 typedef struct Wearisome {
+  const sg_image *texture;
   int frame;
 } Wearisome;
 
@@ -26,7 +28,7 @@ void Wearisome_draw(Wearisome *w, Game *g) {
 
   d_noise(g, 0.1f);
   d_color(g, 0.01f * sin(time * 20) + 0.9f, 1.0f, 1.0f, 1.0f);
-  d_object(g, d_animation_buffer(g), d_animation_image(g), (Vec2){16 + (int)(16 * sin(time)), 0.0f}, w->frame);
+  d_object(g, d_animation_buffer(g), w->texture, (Vec2){16 + (int)(16 * sin(time)), 0.0f}, w->frame);
 }
 
 SceneObjectTable Wearisome_table = (SceneObjectTable){
@@ -37,7 +39,9 @@ SceneObjectTable Wearisome_table = (SceneObjectTable){
 
 void Wearisome_init(Game *g, GameScene *gs) {
   Wearisome *w = gc_malloc(&gc, sizeof(Wearisome));
-  *w = (Wearisome){0};
+  *w = (Wearisome){
+      .texture = g_image(g, Img_wearisome),
+  };
   GameScene_add_object(gs, (SceneObject){w, &Wearisome_table});
 }
 

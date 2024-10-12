@@ -2,6 +2,7 @@
 // #define DR_WAV_IMPLEMENTATION
 // #include "dr/dr_wav.h"
 
+#include "game/assets.h"
 #include <assert.h>
 #include <stdint.h>
 #define _POSIX_C_SOURCE 200809L
@@ -64,6 +65,11 @@ typedef struct fs_param_t {
   int rand;
 } fs_param_t;
 
+typedef struct Assets {
+  sg_image tilemap;
+  sg_image wearisome;
+} Assets;
+
 typedef struct Game {
   sg_pipeline pipeline;
 
@@ -75,10 +81,11 @@ typedef struct Game {
 
   Buffer tilemap_buffer;
   Buffer animation_buffer_4x4;
-  sg_image tilemap;
-  sg_image wearisome;
   sg_sampler pixel_sampler;
 
+  sg_image images[NB_Img];
+
+  SceneUpdateCB update_scene;
   SceneDrawCB draw_scene;
   void *scene;
 
@@ -93,10 +100,7 @@ void game_set_scene(Game *g, SceneDrawCB draw, void *scene) {
 float Game_time(Game *g) { return g->time; }
 
 const Buffer *d_tilemap_buffer(Game *g) { return &g->tilemap_buffer; }
-const sg_image *d_tilemap_image(Game *g) { return &g->tilemap; }
-
 const Buffer *d_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
-const sg_image *d_animation_image(Game *g) { return &g->wearisome; }
 
 void d_color(Game *game, float r, float g, float b, float a) {
   game->render.fs_param.color[0] = r;
@@ -151,7 +155,18 @@ sg_image img_load(const char *path) {
   return (sg_image){};
 }
 
-void update_state(Game *state, double dt) { state->time += dt; }
+const sg_image *g_image(Game *g, Image img) {
+  if (g->images[img].id == 0)
+    g->images[img] = img_load(image_paths[img]);
+  return &g->images[img];
+}
+
+void update_state(Game *g, double dt) {
+  g->time += dt;
+
+  if (g->update_scene)
+    g->update_scene(g, g->scene);
+}
 
 static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) {
   (void)ud;
@@ -422,8 +437,6 @@ static void Game_init(Game *g) {
   g->tilemap_buffer = create_tile_map_buffer();
   g->animation_buffer_4x4 = quad_animation_buffer(0, 0, 16, 16, 2, 2);
 
-  g->tilemap = img_load("assets/tilemap.png");
-  g->wearisome = img_load("assets/wearisome.png");
   g->pixel_sampler = sg_make_sampler(&(sg_sampler_desc){
       .min_filter = SG_FILTER_NEAREST,
       .mag_filter = SG_FILTER_NEAREST,

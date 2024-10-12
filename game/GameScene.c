@@ -1,5 +1,6 @@
 
 #include "game/SceneObject.h"
+#include "game/assets.h"
 #include "gc/gc.h"
 
 #include "Wearisome.h"
@@ -29,26 +30,27 @@ void SceneObjectVec_filter_dead(SceneObjectVec *vec) {
 
 typedef struct GameScene {
   SceneObjectVec scene_objects;
+  const sg_image *tilemap_img;
 } GameScene;
 
-void GameScene_draw(Game *g, GameScene *scene) {
-  (void)scene;
-
+void GameScene_draw(Game *g, GameScene *gs) {
   d_noise(g, 0.01f);
-  d_buffer(g, d_tilemap_buffer(g), d_tilemap_image(g), (Vec2){-8, 8});
+  d_buffer(g, d_tilemap_buffer(g), gs->tilemap_img, (Vec2){-8, 8});
 
-  for (int i = 0; i < scene->scene_objects.len; ++i)
-    SceneObject_update(&scene->scene_objects.data[i], g);
-  SceneObjectVec_filter_dead(&scene->scene_objects);
-  for (int i = 0; i < scene->scene_objects.len; ++i)
-    SceneObject_draw(&scene->scene_objects.data[i], g);
+  for (int i = 0; i < gs->scene_objects.len; ++i)
+    SceneObject_update(&gs->scene_objects.data[i], g);
+  SceneObjectVec_filter_dead(&gs->scene_objects);
+  for (int i = 0; i < gs->scene_objects.len; ++i)
+    SceneObject_draw(&gs->scene_objects.data[i], g);
 }
 
 void GameScene_add_object(GameScene *gs, SceneObject so) { SceneObjectVec_push(&gs->scene_objects, so); }
 
 void GameScene_init(Game *g) {
   GameScene *gs = gc_malloc(&gc, sizeof(GameScene));
-  *gs = (GameScene){0};
+  *gs = (GameScene){
+      .tilemap_img = g_image(g, Img_tilemap),
+  };
 
   Wearisome_init(g, gs);
 

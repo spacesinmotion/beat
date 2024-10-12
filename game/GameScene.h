@@ -7,7 +7,6 @@
 typedef struct GameScene GameScene;
 void GameScene_init(Game *g);
 
-void GameScene_draw(Game *g, GameScene *scene);
 void GameScene_add_object(GameScene *gs, SceneObject so);
 
 #endif
