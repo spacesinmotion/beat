@@ -85,17 +85,12 @@ typedef struct Game {
 
   sg_image images[NB_Img];
 
-  SceneUpdateCB update_scene;
-  SceneDrawCB draw_scene;
-  void *scene;
+  Scene scene;
 
   double time;
 } Game;
 
-void game_set_scene(Game *g, SceneDrawCB draw, void *scene) {
-  g->draw_scene = draw;
-  g->scene = scene;
-}
+void game_set_scene(Game *g, Scene scene) { g->scene = scene; }
 
 float Game_time(Game *g) { return g->time; }
 
@@ -164,8 +159,8 @@ const sg_image *g_image(Game *g, Image img) {
 void update_state(Game *g, double dt) {
   g->time += dt;
 
-  if (g->update_scene)
-    g->update_scene(g, g->scene);
+  if (g->scene.update)
+    g->scene.update(g->scene.context, g, dt);
 }
 
 static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) {
@@ -474,8 +469,8 @@ static void Game_frame(Game *g) {
   sg_apply_pipeline(g->pipeline);
   g->render.fs_param.rand = rand();
 
-  if (g->draw_scene && g->scene)
-    g->draw_scene(g, g->scene);
+  if (g->scene.draw)
+    g->scene.draw(g->scene.context, g);
 
   sg_end_pass();
   sg_commit();

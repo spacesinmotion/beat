@@ -8,10 +8,15 @@ typedef struct sg_image sg_image;
 typedef struct Buffer Buffer;
 
 typedef struct Game Game;
-typedef void (*SceneDrawCB)(Game *, void *);
-typedef void (*SceneUpdateCB)(Game *, void *);
 
-void game_set_scene(Game *g, SceneDrawCB, void *scene);
+typedef void (*SceneUpdateCB)(void *, Game *, float);
+typedef void (*SceneDrawCB)(void *, Game *);
+typedef struct Scene {
+  void *context;
+  SceneUpdateCB update;
+  SceneDrawCB draw;
+} Scene;
+void game_set_scene(Game *g, Scene scene);
 
 float Game_time(Game *g);
 

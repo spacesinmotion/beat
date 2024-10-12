@@ -1,4 +1,5 @@
 
+#include "game/Game.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
 #include "gc/gc.h"
@@ -33,7 +34,9 @@ typedef struct GameScene {
   const sg_image *tilemap_img;
 } GameScene;
 
-void GameScene_draw(Game *g, GameScene *gs) {
+void GameScene_update(GameScene *gs, Game *g, float dt) {}
+
+void GameScene_draw(GameScene *gs, Game *g) {
   d_noise(g, 0.01f);
   d_buffer(g, d_tilemap_buffer(g), gs->tilemap_img, (Vec2){-8, 8});
 
@@ -54,5 +57,9 @@ void GameScene_init(Game *g) {
 
   Wearisome_init(g, gs);
 
-  game_set_scene(g, (SceneDrawCB)GameScene_draw, gs);
+  game_set_scene(g, (Scene){
+                        .context = gs,
+                        .update = (SceneUpdateCB)GameScene_update,
+                        .draw = (SceneDrawCB)GameScene_draw,
+                    });
 }
