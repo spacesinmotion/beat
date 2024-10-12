@@ -32,6 +32,8 @@ void SceneObjectVec_filter_dead(SceneObjectVec *vec) {
 typedef struct GameScene {
   SceneObjectVec scene_objects;
   const sg_image *tilemap_img;
+
+  SceneObject under_mouse;
 } GameScene;
 
 void GameScene_update(GameScene *gs, Game *g, float dt) {
@@ -46,6 +48,23 @@ void GameScene_draw(GameScene *gs, Game *g) {
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_draw(&gs->scene_objects.data[i], g);
+}
+
+void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp) {
+
+  SceneObject new_under_mouse = (SceneObject){0};
+  for (int i = gs->scene_objects.len - 1; i >= 0; --i)
+    if (SceneObject_mouse_hit(&gs->scene_objects.data[i], mp)) {
+      new_under_mouse = gs->scene_objects.data[i];
+      break;
+    }
+
+  if (new_under_mouse.context == gs->under_mouse.context)
+    return;
+
+  SceneObject_leave(&gs->under_mouse, g);
+  gs->under_mouse = new_under_mouse;
+  SceneObject_enter(&gs->under_mouse, g);
 }
 
 void GameScene_add_object(GameScene *gs, SceneObject so) { SceneObjectVec_push(&gs->scene_objects, so); }
@@ -65,5 +84,6 @@ void GameScene_init(Game *g) {
                         .context = gs,
                         .update = (SceneUpdateCB)GameScene_update,
                         .draw = (SceneDrawCB)GameScene_draw,
+                        .mouse_move = (SceneMouseMoveCB)GameScene_mouse_move,
                     });
 }

@@ -487,12 +487,19 @@ static void Game_cleanup(Game *g) {
   sg_shutdown();
 }
 
+static Vec2 to_scene(Game *g, float x, float y) {
+  return v_sub(v_diff((Vec2){x, sapp_height() - y}, 2.0f), g->render.camera);
+}
+
 static void Game_handel_events(const sapp_event *e, Game *g) {
-  (void)g;
+
   if (e->type == SAPP_EVENTTYPE_MOUSE_DOWN) {
+    if (g->scene.mouse_click)
+      g->scene.mouse_click(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y), e->mouse_button);
 
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
-
+    if (g->scene.mouse_move)
+      g->scene.mouse_move(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y));
   } else if ((e->type == SAPP_EVENTTYPE_KEY_DOWN)) {
     switch (e->key_code) {
     case SAPP_KEYCODE_SPACE:
