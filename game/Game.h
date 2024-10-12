@@ -1,8 +1,6 @@
 #ifndef GAME
 #define GAME
 
-#include "gc/gc.h"
-
 #include "math/Vec2.h"
 
 typedef struct sg_image sg_image;
