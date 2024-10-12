@@ -34,15 +34,16 @@ typedef struct GameScene {
   const sg_image *tilemap_img;
 } GameScene;
 
-void GameScene_update(GameScene *gs, Game *g, float dt) {}
+void GameScene_update(GameScene *gs, Game *g, float dt) {
+  for (int i = 0; i < gs->scene_objects.len; ++i)
+    SceneObject_update(&gs->scene_objects.data[i], g, dt);
+  SceneObjectVec_filter_dead(&gs->scene_objects);
+}
 
 void GameScene_draw(GameScene *gs, Game *g) {
   d_noise(g, 0.01f);
   d_buffer(g, d_tilemap_buffer(g), gs->tilemap_img, (Vec2){-8, 8});
 
-  for (int i = 0; i < gs->scene_objects.len; ++i)
-    SceneObject_update(&gs->scene_objects.data[i], g);
-  SceneObjectVec_filter_dead(&gs->scene_objects);
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_draw(&gs->scene_objects.data[i], g);
 }
