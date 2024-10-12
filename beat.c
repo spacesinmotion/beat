@@ -34,6 +34,7 @@
 #include "util/sokol_debugtext.h"
 
 #include "gc/gc.h"
+#include "math/Rect.h"
 #include "math/Vec2.h"
 
 #include "game/GameScene.h"
@@ -172,10 +173,6 @@ static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) 
   }
 }
 
-typedef struct Rect {
-  float x, y, w, h;
-} Rect;
-
 typedef struct SubImage {
   int i, j, ni, nj;
 } SubImage;
@@ -185,10 +182,10 @@ void add_quad(vertex_t *vertices, Rect r, SubImage img) {
   const int j = img.j;
   const int oi = 65535 / img.ni;
   const int oj = 65535 / img.nj;
-  vertices[0] = (vertex_t){(Vec2){r.x + 0, r.y + 0}, (i + 0) * oi, (j + 1) * oj};
-  vertices[1] = (vertex_t){(Vec2){r.x + r.w, r.y + 0}, (i + 1) * oi, (j + 1) * oj};
-  vertices[2] = (vertex_t){(Vec2){r.x + r.w, r.y + r.h}, (i + 1) * oi, (j + 0) * oj};
-  vertices[3] = (vertex_t){(Vec2){r.x + 0, r.y + r.h}, (i + 0) * oi, (j + 0) * oj};
+  vertices[0] = (vertex_t){(Vec2){r.pos.x + 0, r.pos.y + 0}, (i + 0) * oi, (j + 1) * oj};
+  vertices[1] = (vertex_t){(Vec2){r.pos.x + r.size.x, r.pos.y + 0}, (i + 1) * oi, (j + 1) * oj};
+  vertices[2] = (vertex_t){(Vec2){r.pos.x + r.size.x, r.pos.y + r.size.y}, (i + 1) * oi, (j + 0) * oj};
+  vertices[3] = (vertex_t){(Vec2){r.pos.x + 0, r.pos.y + r.size.y}, (i + 0) * oi, (j + 0) * oj};
 }
 
 Buffer quad_animation_buffer(float x, float y, float w, float h, int ni, int nj) {
@@ -198,7 +195,7 @@ Buffer quad_animation_buffer(float x, float y, float w, float h, int ni, int nj)
   int oi = 0;
   for (int i = 0; i < ni; ++i) {
     for (int j = 0; j < nj; ++j) {
-      add_quad(&vertices[ov], (Rect){x, y, w, h}, (SubImage){j, i, ni, nj});
+      add_quad(&vertices[ov], (Rect){{x, y}, {w, h}}, (SubImage){j, i, ni, nj});
       indices[oi + 0] = ov + 0;
       indices[oi + 1] = ov + 2;
       indices[oi + 2] = ov + 1;
