@@ -34,7 +34,7 @@ void MoveMarker_update(MoveMarker *mm, Game *g, float dt) {
 void MoveMarker_draw(MoveMarker *mm, Game *g) {
   d_noise(g, 0.0 * (mm->highlight ? 0.5f : 0.2f));
   d_color(g, (Color){mm->highlight ? 1.0f : 0.5f, 0.7f, 0.8f, 1.0f});
-  d_object(g, d_animation_buffer(g), mm->texture, mm->position, (int)(Game_time(g) * 8) % 4);
+  d_object(g, d_animation_buffer(g), mm->texture, v_add(mm->position, (Vec2){0, 5}), (int)(Game_time(g) * 8) % 4);
 }
 
 static bool MoveMarker_mouse_hit(MoveMarker *mm, Vec2 mp) {

@@ -38,13 +38,15 @@ void Wearisome_update(Wearisome *w, Game *g, float dt) {
 void Wearisome_draw(Wearisome *w, Game *g) {
   const float time = Game_time(g);
 
+  Vec2 p = v_add(w->position, (Vec2){0, 5});
+
   d_noise(g, 0.0f);
   d_color(g, alphaf(w->color, w->highlight ? 0.9f : (w->active ? 0.8f : 0.4f)));
-  d_object(g, d_animation_buffer(g), w->marker, w->position, (int)w->frame % 4);
+  d_object(g, d_animation_buffer(g), w->marker, p, (int)w->frame % 4);
 
   d_noise(g, w->highlight ? 0.3 : 0.1f);
   d_color(g, (Color){0.01f * sin(time * 20) + 0.9f, 1.0f, 1.0f, 1.0f});
-  d_object(g, d_animation_buffer(g), w->texture, w->position, ((int)w->frame % 16 > 14) ? 1 : 0);
+  d_object(g, d_animation_buffer(g), w->texture, p, ((int)w->frame % 16 > 14) ? 1 : 0);
 }
 
 static bool Wearisome_mouse_hit(Wearisome *w, Vec2 mp) {
