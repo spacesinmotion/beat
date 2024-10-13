@@ -20,9 +20,7 @@ static inline Color blue() { return rgb(0, 0, 255); }
 //   }
 // }
 
-// fn alpha(c Color, a i32) Color {
-//   return Color { c.r, c.g, c.b, a }
-// }
+static inline Color alphaf(Color c, float a) { return (Color){c.r, c.g, c.b, a}; }
 
 // fn vec4(c Color) Vec4 {
 //   return Vec4 { c.r as f32 / 255.0f, c.g as f32 / 255.0f, c.b as f32 / 255.0f, c.a as f32 / 255.0f, }

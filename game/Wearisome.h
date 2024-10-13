@@ -10,6 +10,7 @@
 #include "math/Vec2.h"
 
 #include <math.h>
+#include <stdlib.h>
 
 typedef struct Wearisome {
   const sg_image *texture;
@@ -17,7 +18,7 @@ typedef struct Wearisome {
 
   Color color;
   Vec2 position;
-  int frame;
+  float frame;
   bool highlight;
 } Wearisome;
 
@@ -29,19 +30,18 @@ bool Wearisome_dead(Wearisome *w) {
 void Wearisome_update(Wearisome *w, Game *g, float dt) {
   (void)dt;
 
-  const float time = Game_time(g);
-  w->frame = (int)(time * 8);
+  w->frame += (dt * 8);
 }
 void Wearisome_draw(Wearisome *w, Game *g) {
   const float time = Game_time(g);
 
   d_noise(g, 0.0f);
-  d_color(g, w->color);
-  d_object(g, d_animation_buffer(g), w->marker, w->position, w->frame % 4);
+  d_color(g, alphaf(w->color, w->highlight ? 0.9f : 0.4f));
+  d_object(g, d_animation_buffer(g), w->marker, w->position, (int)w->frame % 4);
 
-  d_noise(g, w->highlight ? 0.9 : 0.1f);
+  d_noise(g, w->highlight ? 0.3 : 0.1f);
   d_color(g, (Color){0.01f * sin(time * 20) + 0.9f, 1.0f, 1.0f, 1.0f});
-  d_object(g, d_animation_buffer(g), w->texture, w->position, (w->frame % 16 > 14) ? 1 : 0);
+  d_object(g, d_animation_buffer(g), w->texture, w->position, ((int)w->frame % 16 > 14) ? 1 : 0);
 }
 
 static bool Wearisome_mouse_hit(Wearisome *w, Vec2 mp) {
@@ -80,6 +80,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Vec2 pos, Color col) {
       .marker = g_image(g, Img_marker),
       .position = pos,
       .color = col,
+      .frame = rand(),
   };
   GameScene_add_object(gs, (SceneObject){.context = w, &Wearisome_table});
   return w;

@@ -364,7 +364,7 @@ static void Game_init(Game *g) {
                    "  int xx = int(uv.x * 64)/2 * 1024 * 17;\n"
                    "  int yy = int(uv.y * 64)/2 * 128 * 57;\n"
                    "  float n = c.a * noise * ((((rand ^ xx ^ yy) % 2000) - 1000)/1000.0);\n"
-                   "  frag_color = min(row,col) * color * c + vec4(n, n, n, c.a);\n"
+                   "  frag_color =  vec4((min(row,col) * vec3(color) * vec3(c)) + vec3(n), color.a * c.a);\n"
                    "}\n";
 
   sg_shader shader = sg_make_shader(&(sg_shader_desc){
@@ -419,10 +419,10 @@ static void Game_init(Game *g) {
           .blend =
               {
                   .enabled = true,
-                  .src_factor_rgb = SG_BLENDFACTOR_ONE,
+                  .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
                   .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-                  .src_factor_alpha = SG_BLENDFACTOR_ONE,
-                  .dst_factor_alpha = SG_BLENDFACTOR_ZERO,
+                  .src_factor_alpha = SG_BLENDFACTOR_SRC_ALPHA,
+                  .dst_factor_alpha = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
               },
       }},
       .depth =
