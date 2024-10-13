@@ -358,7 +358,7 @@ static void Game_init(Game *g) {
                    "out vec4 frag_color;\n"
                    "\n"
                    "void main() {\n"
-                   "  vec4 c = texture(tex, uv);\n"
+                   "  vec4 c = texture(tex, uv) * vec4(vec3(1.25),1.0);\n"
                    "  float row = (int(p.x) % 16 == 0) ? 0.9 : 1.0;\n"
                    "  float col = (int(p.y) % 16 == 0) ? 0.9 : 1.0;\n"
                    "  int xx = int(uv.x * 64)/2 * 1024 * 17;\n"
