@@ -5,6 +5,8 @@
 #include "math/Color.h"
 #include "math/Vec2.h"
 
+#include <stdbool.h>
+
 typedef struct sg_image sg_image;
 typedef struct Buffer Buffer;
 
@@ -35,5 +37,7 @@ void d_noise(Game *game, float n);
 
 void d_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan);
 void d_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, int frame);
+
+bool map_is_set(int i, int j);
 
 #endif

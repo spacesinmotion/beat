@@ -3,6 +3,7 @@
 
 #include "game/Game.h"
 #include "game/GameScene.h"
+#include "game/MoveMarker.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
 #include "gc/gc.h"
@@ -60,10 +61,23 @@ static void Wearisome_leave(Wearisome *w, Game *g) {
   w->highlight = false;
 }
 
+static bool Wearisome_still_activate(Wearisome *w) { return w->active && !Wearisome_dead(w); }
+static void Wearisome_move(Wearisome *w, Vec2 p) { w->position = p; }
 static void Wearisome_activate(Wearisome *w, Game *g, GameScene *gs) {
   (void)g;
   (void)gs;
   w->active = true;
+
+  int mi = (int)(w->position.x / 16.0f);
+  int mj = (int)(w->position.y / 16.0f);
+
+  for (int i = mi - 3; i <= mi + 3; ++i)
+    for (int j = mj - 3; j <= mj + 3; ++j) {
+      if ((i == mi && j == mj) || !map_is_set(i, j))
+        continue;
+      MoveMarker_init(g, gs, (Vec2){i * 16.0f, j * 16.0f}, w, (MoveMarkerContextActiveCB)Wearisome_still_activate,
+                      (MoveMarkerContextMoveCB)Wearisome_move);
+    }
 }
 
 static void Wearisome_deactivate(Wearisome *w, Game *g, GameScene *gs) {
