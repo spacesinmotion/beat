@@ -32,7 +32,7 @@ bool Wearisome_dead(Wearisome *w) {
 void Wearisome_update(Wearisome *w, Game *g, float dt) {
   (void)g;
 
-  w->frame += (dt * 8);
+  w->frame += (dt * 8.0f);
 }
 
 void Wearisome_draw(Wearisome *w, Game *g) {
@@ -44,9 +44,9 @@ void Wearisome_draw(Wearisome *w, Game *g) {
   d_color(g, alphaf(w->color, w->highlight ? 0.9f : (w->active ? 0.8f : 0.4f)));
   d_object(g, d_animation_buffer(g), w->marker, p, (int)w->frame % 4);
 
-  d_noise(g, w->highlight ? 0.3 : 0.1f);
+  d_noise(g, w->highlight ? 0.1 : 0.01f);
   d_color(g, (Color){0.01f * sin(time * 20) + 0.9f, 1.0f, 1.0f, 1.0f});
-  d_object(g, d_animation_buffer(g), w->texture, p, ((int)w->frame % 16 > 14) ? 1 : 0);
+  d_object(g, d_animation_buffer(g), w->texture, p, (int)w->frame % 4);
 }
 
 static bool Wearisome_mouse_hit(Wearisome *w, Vec2 mp) {
@@ -105,7 +105,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Vec2 pos, Color col) {
       .marker = g_image(g, Img_marker),
       .position = pos,
       .color = col,
-      .frame = rand(),
+      .frame = rand() % 52,
   };
   GameScene_add_object(gs, (SceneObject){.context = w, &Wearisome_table});
   return w;

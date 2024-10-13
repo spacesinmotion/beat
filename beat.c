@@ -5,6 +5,7 @@
 #include "game/assets.h"
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #define _POSIX_C_SOURCE 200809L
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -464,7 +465,8 @@ static void Game_frame(Game *g) {
 
   jump_to(0, 0);
   sdtx_color3b(0x42, 0x53, 0x47);
-  sdtx_printf("%f", g->time);
+  sdtx_printf("%f\n", g->time);
+  sdtx_printf("%f\n", sapp_frame_duration());
 
   sg_begin_pass(&(sg_pass){
       .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {0.0f, 0.125f, 0.25f, 1.0f}}},

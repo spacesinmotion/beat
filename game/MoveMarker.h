@@ -9,8 +9,6 @@
 #include "math/Rect.h"
 #include "math/Vec2.h"
 
-#include <math.h>
-
 typedef bool (*MoveMarkerContextActiveCB)(void *);
 typedef void (*MoveMarkerContextMoveCB)(void *, Vec2);
 typedef struct MoveMarker {
