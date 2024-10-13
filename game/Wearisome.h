@@ -20,6 +20,7 @@ typedef struct Wearisome {
   Vec2 position;
   float frame;
   bool highlight;
+  bool active;
 } Wearisome;
 
 bool Wearisome_dead(Wearisome *w) {
@@ -28,15 +29,16 @@ bool Wearisome_dead(Wearisome *w) {
 }
 
 void Wearisome_update(Wearisome *w, Game *g, float dt) {
-  (void)dt;
+  (void)g;
 
   w->frame += (dt * 8);
 }
+
 void Wearisome_draw(Wearisome *w, Game *g) {
   const float time = Game_time(g);
 
   d_noise(g, 0.0f);
-  d_color(g, alphaf(w->color, w->highlight ? 0.9f : 0.4f));
+  d_color(g, alphaf(w->color, w->highlight ? 0.9f : (w->active ? 0.8f : 0.4f)));
   d_object(g, d_animation_buffer(g), w->marker, w->position, (int)w->frame % 4);
 
   d_noise(g, w->highlight ? 0.3 : 0.1f);
@@ -58,10 +60,16 @@ static void Wearisome_leave(Wearisome *w, Game *g) {
   w->highlight = false;
 }
 
-static void Wearisome_click(Wearisome *w, Game *g, int button) {
+static void Wearisome_activate(Wearisome *w, Game *g, GameScene *gs) {
   (void)g;
-  (void)button;
-  w->highlight = !w->highlight;
+  (void)gs;
+  w->active = true;
+}
+
+static void Wearisome_deactivate(Wearisome *w, Game *g, GameScene *gs) {
+  (void)g;
+  (void)gs;
+  w->active = false;
 }
 
 SceneObjectTable Wearisome_table = (SceneObjectTable){
@@ -71,7 +79,8 @@ SceneObjectTable Wearisome_table = (SceneObjectTable){
     .mouse_hit = (SceneObjectMouseHitCB)Wearisome_mouse_hit,
     .enter = (SceneObjectEnterCB)Wearisome_enter,
     .leave = (SceneObjectLeaveCB)Wearisome_leave,
-    .click = (SceneObjectClickCB)Wearisome_click,
+    .activate = (SceneObjectActivateCB)Wearisome_activate,
+    .deactivate = (SceneObjectDeactivateCB)Wearisome_deactivate,
 };
 Wearisome *Wearisome_init(Game *g, GameScene *gs, Vec2 pos, Color col) {
   Wearisome *w = gc_malloc(&gc, sizeof(Wearisome));

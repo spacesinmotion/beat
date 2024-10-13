@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 typedef struct SceneObject SceneObject;
+typedef struct GameScene GameScene;
 
 typedef bool (*SceneObjectDeadCB)(SceneObject *);
 typedef void (*SceneObjectUpdateCB)(SceneObject *, Game *, float);
@@ -13,7 +14,9 @@ typedef void (*SceneObjectDrawCB)(SceneObject *, Game *);
 typedef bool (*SceneObjectMouseHitCB)(SceneObject *, Vec2);
 typedef void (*SceneObjectEnterCB)(SceneObject *, Game *);
 typedef void (*SceneObjectLeaveCB)(SceneObject *, Game *);
-typedef void (*SceneObjectClickCB)(SceneObject *, Game *, int);
+typedef void (*SceneObjectActivateCB)(SceneObject *, Game *, GameScene *);
+typedef void (*SceneObjectDeactivateCB)(SceneObject *, Game *, GameScene *);
+typedef void (*SceneObjectClickCB)(SceneObject *, Game *, GameScene *, int);
 
 typedef struct SceneObjectTable {
   SceneObjectDeadCB dead;
@@ -22,6 +25,8 @@ typedef struct SceneObjectTable {
   SceneObjectMouseHitCB mouse_hit;
   SceneObjectEnterCB enter;
   SceneObjectLeaveCB leave;
+  SceneObjectActivateCB activate;
+  SceneObjectDeactivateCB deactivate;
   SceneObjectClickCB click;
 } SceneObjectTable;
 
@@ -58,8 +63,18 @@ static inline void SceneObject_leave(SceneObject *so, Game *g) {
     so->table->leave(so->context, g);
 }
 
-static inline void SceneObject_click(SceneObject *so, Game *g, int button) {
+static inline void SceneObject_activate(SceneObject *so, Game *g, GameScene *gs) {
+  if (so->context && so->table->activate)
+    so->table->activate(so->context, g, gs);
+}
+
+static inline void SceneObject_deactivate(SceneObject *so, Game *g, GameScene *gs) {
+  if (so->context && so->table->deactivate)
+    so->table->deactivate(so->context, g, gs);
+}
+
+static inline void SceneObject_click(SceneObject *so, Game *g, GameScene *gs, int button) {
   if (so->context && so->table->click)
-    so->table->click(so->context, g, button);
+    so->table->click(so->context, g, gs, button);
 }
 #endif

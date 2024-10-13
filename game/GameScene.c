@@ -25,6 +25,7 @@ void SceneObjectVec_filter_dead(SceneObjectVec *vec) {
     if (!vec->data[i].table->dead(vec->data[i].context))
       continue;
     vec->data[i] = vec->data[vec->len - 1];
+    vec->data[vec->len - 1] = (SceneObject){NULL, NULL};
     --vec->len;
   }
 }
@@ -34,12 +35,17 @@ typedef struct GameScene {
   const sg_image *tilemap_img;
 
   SceneObject under_mouse;
+  SceneObject active;
 } GameScene;
 
 void GameScene_update(GameScene *gs, Game *g, float dt) {
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_update(&gs->scene_objects.data[i], g, dt);
   SceneObjectVec_filter_dead(&gs->scene_objects);
+  if (SceneObject_dead(&gs->active))
+    gs->active = (SceneObject){NULL, NULL};
+  if (SceneObject_dead(&gs->under_mouse))
+    gs->under_mouse = (SceneObject){NULL, NULL};
 }
 
 void GameScene_draw(GameScene *gs, Game *g) {
@@ -70,7 +76,14 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp) {
 
 void GameScene_click(GameScene *gs, Game *g, Vec2 mp, int button) {
   (void)mp;
-  SceneObject_click(&gs->under_mouse, g, button);
+
+  if (gs->under_mouse.context != gs->active.context) {
+    SceneObject_deactivate(&gs->active, g, gs);
+    gs->active = gs->under_mouse;
+    SceneObject_activate(&gs->active, g, gs);
+  }
+
+  SceneObject_click(&gs->under_mouse, g, gs, button);
 }
 
 void GameScene_add_object(GameScene *gs, SceneObject so) { SceneObjectVec_push(&gs->scene_objects, so); }
