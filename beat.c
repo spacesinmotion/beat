@@ -366,7 +366,9 @@ static void Game_init(Game *g) {
                    "  int xx = int(uv.x * 64)/2 * 1024 * 17;\n"
                    "  int yy = int(uv.y * 64)/2 * 128 * 57;\n"
                    "  float n = c.a * noise * ((((rand ^ xx ^ yy) % 2000) - 1000)/1000.0);\n"
-                   "  frag_color =  vec4((min(row,col) * vec3(color) * vec3(c)) + vec3(n), color.a * c.a);\n"
+                   "  vec3 cc = (min(row,col) * vec3(color) * vec3(c)) + vec3(n);\n"
+                   "  float ca = color.a * c.a;\n"
+                   "  frag_color = vec4(cc * ca, ca);\n"
                    "}\n";
 
   sg_shader shader = sg_make_shader(&(sg_shader_desc){
