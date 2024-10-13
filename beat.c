@@ -98,11 +98,11 @@ float Game_time(Game *g) { return g->time; }
 const Buffer *d_tilemap_buffer(Game *g) { return &g->tilemap_buffer; }
 const Buffer *d_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
 
-void d_color(Game *game, float r, float g, float b, float a) {
-  game->render.fs_param.color[0] = r;
-  game->render.fs_param.color[1] = g;
-  game->render.fs_param.color[2] = b;
-  game->render.fs_param.color[3] = a;
+void d_color(Game *game, Color c) {
+  game->render.fs_param.color[0] = c.r;
+  game->render.fs_param.color[1] = c.g;
+  game->render.fs_param.color[2] = c.b;
+  game->render.fs_param.color[3] = c.a;
 }
 void d_noise(Game *game, float n) { game->render.fs_param.noise = n; }
 

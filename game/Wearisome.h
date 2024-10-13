@@ -13,7 +13,9 @@
 
 typedef struct Wearisome {
   const sg_image *texture;
+  const sg_image *marker;
 
+  Color color;
   Vec2 position;
   int frame;
   bool highlight;
@@ -28,17 +30,18 @@ void Wearisome_update(Wearisome *w, Game *g, float dt) {
   (void)dt;
 
   const float time = Game_time(g);
-  const int frame = (int)(time * 4);
-  if (frame % 32 > 29)
-    w->frame = 1;
-  else
-    w->frame = 0;
+  w->frame = (int)(time * 8);
 }
 void Wearisome_draw(Wearisome *w, Game *g) {
   const float time = Game_time(g);
+
+  d_noise(g, 0.0f);
+  d_color(g, w->color);
+  d_object(g, d_animation_buffer(g), w->marker, w->position, w->frame % 4);
+
   d_noise(g, w->highlight ? 0.9 : 0.1f);
-  d_color(g, 0.01f * sin(time * 20) + 0.9f, 1.0f, 1.0f, 1.0f);
-  d_object(g, d_animation_buffer(g), w->texture, w->position, w->frame);
+  d_color(g, (Color){0.01f * sin(time * 20) + 0.9f, 1.0f, 1.0f, 1.0f});
+  d_object(g, d_animation_buffer(g), w->texture, w->position, (w->frame % 16 > 14) ? 1 : 0);
 }
 
 static bool Wearisome_mouse_hit(Wearisome *w, Vec2 mp) {
@@ -70,11 +73,13 @@ SceneObjectTable Wearisome_table = (SceneObjectTable){
     .leave = (SceneObjectLeaveCB)Wearisome_leave,
     .click = (SceneObjectClickCB)Wearisome_click,
 };
-Wearisome *Wearisome_init(Game *g, GameScene *gs, Vec2 pos) {
+Wearisome *Wearisome_init(Game *g, GameScene *gs, Vec2 pos, Color col) {
   Wearisome *w = gc_malloc(&gc, sizeof(Wearisome));
   *w = (Wearisome){
       .texture = g_image(g, Img_wearisome),
+      .marker = g_image(g, Img_marker),
       .position = pos,
+      .color = col,
   };
   GameScene_add_object(gs, (SceneObject){.context = w, &Wearisome_table});
   return w;

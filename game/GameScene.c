@@ -80,10 +80,10 @@ void GameScene_init(Game *g) {
       .tilemap_img = g_image(g, Img_tilemap),
   };
 
-  Wearisome_init(g, gs, (Vec2){1 * 16, 0});
-  Wearisome_init(g, gs, (Vec2){2 * 16, 0});
-  Wearisome_init(g, gs, (Vec2){3 * 16, 0});
-  Wearisome_init(g, gs, (Vec2){4 * 16, 0});
+  Wearisome_init(g, gs, (Vec2){1 * 16, 0}, rgb(191, 69, 38));
+  Wearisome_init(g, gs, (Vec2){2 * 16, 0}, rgb(77, 143, 30));
+  Wearisome_init(g, gs, (Vec2){3 * 16, 0}, rgb(35, 87, 150));
+  Wearisome_init(g, gs, (Vec2){4 * 16, 0}, rgb(138, 34, 120));
 
   game_set_scene(g, (Scene){
                         .context = gs,
