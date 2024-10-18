@@ -19,6 +19,7 @@ typedef struct Wearisome {
 
   Color color;
   Vec2 position;
+  Vec2 destination;
   float frame;
   bool highlight;
   bool active;
@@ -33,6 +34,7 @@ void Wearisome_update(Wearisome *w, Game *g, float dt) {
   (void)g;
 
   w->frame += (dt * 8.0f);
+  w->position = v_lerp_about(w->position, w->destination, dt * 24.0f);
 }
 
 void Wearisome_draw(Wearisome *w, Game *g) {
@@ -46,7 +48,10 @@ void Wearisome_draw(Wearisome *w, Game *g) {
 
   d_noise(g, w->highlight ? 0.1 : 0.01f);
   d_color(g, (Color){0.01f * sin(time * 20) + 0.9f, 1.0f, 1.0f, 1.0f});
-  d_object(g, d_animation_buffer(g), w->texture, p, (int)w->frame % 4);
+  if (v_eq(w->position, w->destination))
+    d_object(g, d_animation_buffer(g), w->texture, p, 4 + (int)w->frame % 8);
+  else
+    d_object(g, d_animation_buffer(g), w->texture, p, (int)w->frame % 4);
 }
 
 static bool Wearisome_mouse_hit(Wearisome *w, Vec2 mp) {
@@ -64,7 +69,7 @@ static void Wearisome_leave(Wearisome *w, Game *g) {
 }
 
 static bool Wearisome_still_activate(Wearisome *w) { return w->active && !Wearisome_dead(w); }
-static void Wearisome_move(Wearisome *w, Vec2 p) { w->position = p; }
+static void Wearisome_move(Wearisome *w, Vec2 p) { w->destination = p; }
 static void Wearisome_activate(Wearisome *w, Game *g, GameScene *gs) {
   (void)g;
   (void)gs;
@@ -104,6 +109,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Vec2 pos, Color col) {
       .texture = g_image(g, Img_wearisome),
       .marker = g_image(g, Img_marker),
       .position = pos,
+      .destination = pos,
       .color = col,
       .frame = rand() % 52,
   };

@@ -1,6 +1,11 @@
 // #include <time.h>
 // #define DR_WAV_IMPLEMENTATION
 // #include "dr/dr_wav.h"
+#ifdef __TINYC__
+#include <math.h>
+#define fmodf fmod
+#define sinf sin
+#endif
 
 #include "game/assets.h"
 #include <assert.h>
@@ -13,12 +18,6 @@
 #define STBI_NO_SIMD
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
-
-#ifdef __TINYC__
-#include <math.h>
-#define fmodf fmod
-#define sinf sin
-#endif
 
 #define SOKOL_NO_ENTRY
 #define SOKOL_GLCORE
@@ -438,7 +437,7 @@ static void Game_init(Game *g) {
   });
 
   g->tilemap_buffer = create_tile_map_buffer();
-  g->animation_buffer_4x4 = quad_animation_buffer(0, 0, 16, 16, 2, 2);
+  g->animation_buffer_4x4 = quad_animation_buffer(0, 0, 16, 16, 4, 4);
 
   g->pixel_sampler = sg_make_sampler(&(sg_sampler_desc){
       .min_filter = SG_FILTER_NEAREST,
@@ -469,7 +468,7 @@ static void Game_frame(Game *g) {
   sdtx_printf("%f\n", sapp_frame_duration());
 
   sg_begin_pass(&(sg_pass){
-      .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {0.0f, 0.125f, 0.25f, 1.0f}}},
+      .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {0.5f, 0.625f, 0.75f, 1.0f}}},
       .swapchain = sglue_swapchain(),
   });
 
