@@ -5,14 +5,18 @@ typedef enum Image {
   Img_tilemap = 0,
   Img_wearisome,
   Img_marker,
+  Img_street,
+  Img_house,
 
   NB_Img,
 } Image;
 
 static const char *image_paths[NB_Img] = {
-    "assets/tilemap.png",
-    "assets/wearisome.png",
-    "assets/marker.png",
+    "assets/tilemap.png",   //
+    "assets/wearisome.png", //
+    "assets/marker.png",    //
+    "assets/street.png",    //
+    "assets/house.png",     //
 };
 
 #endif

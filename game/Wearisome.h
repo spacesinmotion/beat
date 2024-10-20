@@ -33,7 +33,7 @@ bool Wearisome_dead(Wearisome *w) {
 void Wearisome_update(Wearisome *w, Game *g, float dt) {
   (void)g;
 
-  w->frame += (dt * 8.0f);
+  w->frame += (dt * 12.0f);
   w->position = v_lerp_about(w->position, w->destination, dt * 24.0f);
 }
 
@@ -42,15 +42,15 @@ void Wearisome_draw(Wearisome *w, Game *g) {
 
   Vec2 p = v_add(w->position, (Vec2){0, 5});
 
-  d_noise(g, 0.0f);
-  d_color(g, alphaf(w->color, w->highlight ? 0.9f : (w->active ? 0.8f : 0.4f)));
-  d_object(g, d_animation_buffer(g), w->marker, p, (int)w->frame % 4);
+  // d_noise(g, 0.0f);
+  // d_color(g, alphaf(w->color, w->highlight ? 0.9f : (w->active ? 0.8f : 0.4f)));
+  // d_object(g, d_animation_buffer(g), w->marker, p, (int)w->frame % 4);
 
   d_noise(g, w->highlight ? 0.1 : 0.01f);
   d_color(g, (Color){0.01f * sin(time * 20) + 0.9f, 1.0f, 1.0f, 1.0f});
-  if (v_eq(w->position, w->destination))
-    d_object(g, d_animation_buffer(g), w->texture, p, 4 + (int)w->frame % 8);
-  else
+  // if (v_eq(w->position, w->destination))
+  //   d_object(g, d_animation_buffer(g), w->texture, p, 4 + (int)w->frame % 8);
+  // else
     d_object(g, d_animation_buffer(g), w->texture, p, (int)w->frame % 4);
 }
 

@@ -2,6 +2,7 @@
 #include "Wearisome.h"
 #include "game/Game.h"
 #include "game/SceneObject.h"
+#include "game/StreetMap.h"
 #include "game/assets.h"
 #include "gc/gc.h"
 #include "math/Vec2.h"
@@ -33,6 +34,8 @@ void SceneObjectVec_filter_dead(SceneObjectVec *vec) {
 typedef struct GameScene {
   SceneObjectVec scene_objects;
   const sg_image *tilemap_img;
+  const sg_image *marker;
+  Vec2 mp;
 
   SceneObject under_mouse;
   SceneObject active;
@@ -53,11 +56,16 @@ void GameScene_draw(GameScene *gs, Game *g) {
   d_color(g, white());
   d_buffer(g, d_tilemap_buffer(g), gs->tilemap_img, (Vec2){8, 8});
 
+  d_noise(g, 0.0f);
+  d_color(g, red());
+  d_object(g, d_animation_buffer(g), gs->marker, gs->mp, 0);
+
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_draw(&gs->scene_objects.data[i], g);
 }
 
 void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp) {
+  gs->mp = (Vec2){((int)(mp.x / 16.0f)) * 16.0f, ((int)(mp.y / 16.0f)) * 16.0f};
 
   SceneObject new_under_mouse = (SceneObject){0};
   for (int i = gs->scene_objects.len - 1; i >= 0; --i)
@@ -92,7 +100,9 @@ void GameScene_init(Game *g) {
   GameScene *gs = gc_malloc(&gc, sizeof(GameScene));
   *gs = (GameScene){
       .tilemap_img = g_image(g, Img_tilemap),
+      .marker = g_image(g, Img_marker),
   };
+  StreetMap_init(g, gs);
 
   Wearisome_init(g, gs, (Vec2){1 * 16, 0}, rgb(231, 69, 38));
   Wearisome_init(g, gs, (Vec2){2 * 16, 0}, rgb(77, 213, 30));

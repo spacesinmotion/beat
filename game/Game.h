@@ -38,6 +38,7 @@ void d_noise(Game *game, float n);
 void d_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan);
 void d_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, int frame);
 
+int map_key(int i, int j);
 bool map_is_set(int i, int j);
 
 #endif
