@@ -22,17 +22,31 @@ bool StreetMap_dead(StreetMap *sm) {
   return false;
 }
 
+int street_tex_for(int i, int j) {
+  int k = 0;
+  if (map_key(i + 1, j) == 2)
+    k += 1;
+  if (map_key(i, j + 1) == 2)
+    k += 2;
+  if (map_key(i - 1, j) == 2)
+    k += 4;
+  if (map_key(i, j - 1) == 2)
+    k += 8;
+  return k;
+}
+
 void StreetMap_draw(StreetMap *sm, Game *g) {
   d_noise(g, 0.0f);
   d_color(g, white());
 
-  // const int nii = 20;
-  // const int njj = 16;
-  // for (int i = -1; i < nii; ++i) {
-  //   for (int j = -1; j < njj; ++j) {
-  //     d_object(g, d_animation_buffer(g), sm->texture, (Vec2){i * 16, j * 16}, 0);
-  //   }
-  // }
+  const int nii = 20;
+  const int njj = 16;
+  for (int i = -1; i < nii; ++i) {
+    for (int j = -1; j < njj; ++j) {
+      if (map_key(i, j) == 2)
+        d_object(g, d_animation_buffer(g), sm->texture, (Vec2){i * 16, j * 16}, street_tex_for(i, j));
+    }
+  }
 }
 
 SceneObjectTable StreetMap_table = (SceneObjectTable){

@@ -83,7 +83,9 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp) {
 }
 
 void GameScene_click(GameScene *gs, Game *g, Vec2 mp, int button) {
-  (void)mp;
+  int i = mp.x / 16.0f;
+  int j = mp.y / 16.0f;
+  set_map_key(i, j, 2);
 
   if (gs->under_mouse.context != gs->active.context) {
     SceneObject_deactivate(&gs->active, g, gs);

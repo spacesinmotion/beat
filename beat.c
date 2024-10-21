@@ -263,6 +263,11 @@ int map_key(int i, int j) {
     return 0;
   return map[j * ni + i];
 }
+void set_map_key(int i, int j, int k) {
+  if (i < 0 || j < 0 || i >= ni || j >= nj)
+    return;
+  map[j * ni + i] = k;
+}
 
 bool map_is_set(int i, int j) { return is_set(map, i, j, ni, nj); }
 

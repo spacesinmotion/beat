@@ -39,6 +39,8 @@ void d_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan);
 void d_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, int frame);
 
 int map_key(int i, int j);
+void set_map_key(int i, int j, int k);
+
 bool map_is_set(int i, int j);
 
 #endif
