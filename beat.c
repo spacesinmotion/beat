@@ -594,12 +594,11 @@ bool str_ends_with(const char *str, const char *suffix) {
 
 void export_svg__with_inkscape(const char *fp, void *ud) {
   char call[2048];
-  (void)ud;
 
-  if (!str_ends_with(fp, ".svg"))
+  if (!ud || !str_ends_with(fp, ".svg"))
     return;
 
-  sprintf(call, "%s --export-type=png -d 192 %s", "inkscape", fp);
+  sprintf(call, "%s --export-type=png -d 192 %s", (const char *)ud, fp);
   printf("%s\n", call);
   system(call);
 }
