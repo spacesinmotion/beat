@@ -1,6 +1,9 @@
 // #include <time.h>
 // #define DR_WAV_IMPLEMENTATION
 // #include "dr/dr_wav.h"
+#include <stdlib.h>
+#include <string.h>
+
 #ifdef __TINYC__
 #include <math.h>
 #define fmodf fmod
@@ -10,7 +13,9 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
+#ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
+#endif
 #include <dirent.h>
 #endif
 
@@ -587,17 +592,27 @@ bool str_ends_with(const char *str, const char *suffix) {
   return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
 
-void printFilePathOfType(const char *fp, void *ud) {
+void export_svg__with_inkscape(const char *fp, void *ud) {
+  char call[2048];
   (void)ud;
-  if (str_ends_with(fp, (const char *)ud))
-    printf("%s\n", fp);
+
+  if (!str_ends_with(fp, ".svg"))
+    return;
+
+  sprintf(call, "%s --export-type=png -d 192 %s", "inkscape", fp);
+  printf("%s\n", call);
+  system(call);
 }
 
 int main(int argc, char *argv[]) {
   (void)argv;
   gc_start(&gc, &argc);
 
-  eachFileIn("assets", printFilePathOfType, ".svg");
+  for (int i = 0; i < argc - 1; ++i)
+    if (strcmp(argv[i], "--export-svg") == 0) {
+      eachFileIn("assets", export_svg__with_inkscape, argv[i + 1]);
+      return 0;
+    }
 
   Game g = (Game){0};
   sapp_run(&(sapp_desc){
