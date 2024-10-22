@@ -7,6 +7,8 @@
 #define sinf sin
 #endif
 
+#include <windows.h>
+
 #include "game/assets.h"
 #include <assert.h>
 #include <stdint.h>
@@ -528,9 +530,52 @@ static void Game_handel_events(const sapp_event *e, Game *g) {
   }
 }
 
+typedef void (*dirCB)(const char *p, void *ud);
+void eachFileIn(const char *sDir, dirCB cb, void *ud) {
+  WIN32_FIND_DATA fdFile;
+  HANDLE hFind = NULL;
+
+  char sPath[2048];
+  sprintf(sPath, "%s\\*.*", sDir);
+
+  if ((hFind = FindFirstFile(sPath, &fdFile)) == INVALID_HANDLE_VALUE)
+    return;
+
+  do {
+    if (strcmp(fdFile.cFileName, ".") == 0 || strcmp(fdFile.cFileName, "..") == 0 ||
+        (fdFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+      continue;
+
+    // Build up our file path using the passed in
+    //   [sDir] and the file/foldername we just found:
+    sprintf(sPath, "%s/%s", sDir, fdFile.cFileName);
+    cb(sPath, ud);
+  } while (FindNextFile(hFind, &fdFile)); // Find the next file.
+
+  FindClose(hFind); // Always, Always, clean things up!
+}
+
+bool str_ends_with(const char *str, const char *suffix) {
+  if (!str || !suffix)
+    return 0;
+  size_t lenstr = strlen(str);
+  size_t lensuffix = strlen(suffix);
+  if (lensuffix > lenstr)
+    return 0;
+  return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
+
+void printFilePathOfType(const char *fp, void *ud) {
+  (void)ud;
+  if (str_ends_with(fp, (const char *)ud))
+    printf("%s\n", fp);
+}
+
 int main(int argc, char *argv[]) {
-  gc_start(&gc, &argc);
   (void)argv;
+  gc_start(&gc, &argc);
+
+  eachFileIn("assets", printFilePathOfType, ".svg");
 
   Game g = (Game){0};
   sapp_run(&(sapp_desc){
