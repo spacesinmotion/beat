@@ -7,7 +7,12 @@
 #define sinf sin
 #endif
 
+#ifdef _WIN32
 #include <windows.h>
+#else
+#define _DEFAULT_SOURCE
+#include <dirent.h>
+#endif
 
 #include "game/assets.h"
 #include <assert.h>
@@ -532,10 +537,12 @@ static void Game_handel_events(const sapp_event *e, Game *g) {
 
 typedef void (*dirCB)(const char *p, void *ud);
 void eachFileIn(const char *sDir, dirCB cb, void *ud) {
+  char sPath[2048];
+
+#ifdef _WIN32
   WIN32_FIND_DATA fdFile;
   HANDLE hFind = NULL;
 
-  char sPath[2048];
   sprintf(sPath, "%s\\*.*", sDir);
 
   if ((hFind = FindFirstFile(sPath, &fdFile)) == INVALID_HANDLE_VALUE)
@@ -553,6 +560,21 @@ void eachFileIn(const char *sDir, dirCB cb, void *ud) {
   } while (FindNextFile(hFind, &fdFile)); // Find the next file.
 
   FindClose(hFind); // Always, Always, clean things up!
+#else
+  DIR *dir;
+  struct dirent *ent;
+  if ((dir = opendir(sDir)) != NULL) {
+    /* print all the files and directories within directory */
+    while ((ent = readdir(dir)) != NULL) {
+      if (ent->d_type != DT_REG)
+        continue;
+      sprintf(sPath, "%s/%s", sDir, ent->d_name);
+      cb(sPath, ud);
+    }
+    closedir(dir);
+  } else {
+  }
+#endif
 }
 
 bool str_ends_with(const char *str, const char *suffix) {
