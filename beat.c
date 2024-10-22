@@ -106,6 +106,7 @@ typedef struct Game {
 void game_set_scene(Game *g, Scene scene) { g->scene = scene; }
 
 float Game_time(Game *g) { return g->time; }
+int Game_frame(Game *g) { return (int)(g->time * 8.0f); }
 
 const Buffer *d_tilemap_buffer(Game *g) { return &g->tilemap_buffer; }
 const Buffer *d_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
@@ -481,7 +482,7 @@ void jump_to(float l, float c) {
   sdtx_origin(c, l);
 }
 
-static void Game_frame(Game *g) {
+static void Game_draw(Game *g) {
   update_state(g, sapp_frame_duration());
 
   sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
@@ -616,7 +617,7 @@ int main(int argc, char *argv[]) {
   Game g = (Game){0};
   sapp_run(&(sapp_desc){
       .init_userdata_cb = (void (*)(void *))Game_init,
-      .frame_userdata_cb = (void (*)(void *))Game_frame,
+      .frame_userdata_cb = (void (*)(void *))Game_draw,
       .cleanup_userdata_cb = (void (*)(void *))Game_cleanup,
       .event_userdata_cb = (void (*)(const sapp_event *, void *))Game_handel_events,
       .user_data = &g,

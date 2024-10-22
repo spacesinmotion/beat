@@ -26,6 +26,7 @@ typedef struct Scene {
 void game_set_scene(Game *g, Scene scene);
 
 float Game_time(Game *g);
+int Game_frame(Game *g);
 
 const Buffer *d_tilemap_buffer(Game *g);
 const Buffer *d_animation_buffer(Game *g);

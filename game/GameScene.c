@@ -58,7 +58,7 @@ void GameScene_draw(GameScene *gs, Game *g) {
 
   d_noise(g, 0.0f);
   d_color(g, red());
-  d_object(g, d_animation_buffer(g), gs->marker, gs->mp, ((int)(Game_time(g) * 8)) % 4);
+  d_object(g, d_animation_buffer(g), gs->marker, gs->mp, Game_frame(g) % 4);
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_draw(&gs->scene_objects.data[i], g);
