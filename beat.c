@@ -376,14 +376,12 @@ static void Game_init(Game *g) {
                    "\n"
                    "void main() {\n"
                    "  vec4 c = texture(tex, uv) * vec4(vec3(1.0),1.0);\n"
-                   "  float row = 1.0; //(int(p.x) % 16 == 0) ? 0.9 : 1.0;\n"
-                   "  float col = 1.0; //(int(p.y) % 16 == 0) ? 0.9 : 1.0;\n"
                    "  int xx = int(uv.x * 64)/2 * 1024 * 17;\n"
                    "  int yy = int(uv.y * 64)/2 * 128 * 57;\n"
                    "  float n = c.a * noise * ((((rand ^ xx ^ yy) % 2000) - 1000)/1000.0);\n"
-                   "  vec3 cc = (min(row,col) * vec3(color) * vec3(c)) + vec3(n);\n"
+                   "  vec3 cc = (vec3(color) * vec3(c)) + vec3(n);\n"
                    "  float ca = color.a * c.a;\n"
-                   "  frag_color = vec4(cc * ca, ca);\n"
+                   "  frag_color = vec4(cc, ca);\n"
                    "}\n";
 
   sg_shader shader = sg_make_shader(&(sg_shader_desc){
@@ -455,8 +453,8 @@ static void Game_init(Game *g) {
   g->animation_buffer_4x4 = quad_animation_buffer(0, 0, 16, 16, 4, 4);
 
   g->pixel_sampler = sg_make_sampler(&(sg_sampler_desc){
-      .min_filter = SG_FILTER_NEAREST,
-      .mag_filter = SG_FILTER_NEAREST,
+      .min_filter = SG_FILTER_LINEAR,
+      .mag_filter = SG_FILTER_LINEAR,
       .mipmap_filter = SG_FILTER_NEAREST,
       .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
       .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
