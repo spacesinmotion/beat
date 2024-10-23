@@ -20,6 +20,7 @@ typedef struct Scene {
   void *context;
   SceneUpdateCB update;
   SceneDrawCB draw;
+  SceneDrawCB draw_overlay;
   SceneMouseMoveCB mouse_move;
   SceneMouseCB mouse_down;
   SceneMouseCB mouse_up;

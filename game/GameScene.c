@@ -64,6 +64,14 @@ void GameScene_draw(GameScene *gs, Game *g) {
     SceneObject_draw(&gs->scene_objects.data[i], g);
 }
 
+void GameScene_draw_overlay(GameScene *gs, Game *g) {
+  d_noise(g, 0.0f);
+  d_color(g, blue());
+  for (int i = 0; i < 10; ++i) {
+    d_object(g, d_animation_buffer(g), gs->marker, (Vec2){4 + i * 16, 4}, i % 4);
+  }
+}
+
 void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp) {
   gs->mp = (Vec2){((int)(mp.x / 16.0f)) * 16.0f, ((int)(mp.y / 16.0f)) * 16.0f};
 
@@ -114,6 +122,7 @@ void GameScene_init(Game *g) {
                         .context = gs,
                         .update = (SceneUpdateCB)GameScene_update,
                         .draw = (SceneDrawCB)GameScene_draw,
+                        .draw_overlay = (SceneDrawCB)GameScene_draw_overlay,
                         .mouse_move = (SceneMouseMoveCB)GameScene_mouse_move,
                         .mouse_down = (SceneMouseCB)GameScene_down,
                     });

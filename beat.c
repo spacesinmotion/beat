@@ -69,7 +69,7 @@ typedef struct Buffer {
 } Buffer;
 
 typedef struct vs_param_t {
-  Vec2 to_screen_scale, scale, pan;
+  Vec2 to_screen_scale, pan;
 } vs_param_t;
 
 typedef struct fs_param_t {
@@ -89,8 +89,8 @@ typedef struct Game {
   struct {
     vs_param_t vs_param;
     fs_param_t fs_param;
-    Vec2 camera;
-    float scale;
+    Vec2 camera_pan;
+    float camera_scale;
   } render;
 
   Buffer tilemap_buffer;
@@ -121,7 +121,7 @@ void d_color(Game *game, Color c) {
 void d_noise(Game *game, float n) { game->render.fs_param.noise = n; }
 
 void d_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan) {
-  g->render.vs_param.pan = v_add(g->render.camera, pan);
+  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
 
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
@@ -134,7 +134,7 @@ void d_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan) {
 }
 
 void d_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, int frame) {
-  g->render.vs_param.pan = v_add(g->render.camera, pan);
+  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
 
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
@@ -327,12 +327,11 @@ Buffer create_tile_map_buffer() {
 }
 
 static void Game_init(Game *g) {
-  g->render.camera = (Vec2){32.0f, 32.0f};
-  g->render.scale = 2.0f;
+  g->render.camera_pan = (Vec2){32.0f, 32.0f};
+  g->render.camera_scale = 2.0f;
   g->render.vs_param = (vs_param_t){
-      {2.0f / sapp_width() * g->render.scale, 2.0f / sapp_height() * g->render.scale},
+      {2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale},
       {1.0f, 1.0f},
-      {0.0f, 0.0f},
   };
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0.0, 0};
 
@@ -361,7 +360,6 @@ static void Game_init(Game *g) {
   const char *vs = "#version 330\n"
                    "\n"
                    "uniform vec2 to_screen_scale;\n"
-                   "uniform vec2 scale;\n"
                    "uniform vec2 pan;\n"
                    "\n"
                    "layout(location=0) in vec4 position;\n"
@@ -408,7 +406,6 @@ static void Game_init(Game *g) {
                  .uniforms =
                      {
                          {"to_screen_scale", SG_UNIFORMTYPE_FLOAT2, 1},
-                         {"scale", SG_UNIFORMTYPE_FLOAT2, 1},
                          {"pan", SG_UNIFORMTYPE_FLOAT2, 1},
                      },
              }}},
@@ -505,8 +502,19 @@ static void Game_draw(Game *g) {
   sg_apply_pipeline(g->pipeline);
   g->render.fs_param.rand = rand();
 
-  if (g->scene.draw)
+  if (g->scene.draw) {
+    g->render.vs_param.to_screen_scale =
+        (Vec2){2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale};
     g->scene.draw(g->scene.context, g);
+  }
+
+  if (g->scene.draw_overlay) {
+    Vec2 pan = g->render.camera_pan;
+    g->render.vs_param.to_screen_scale = (Vec2){2.0f / sapp_width() * 2.0, 2.0f / sapp_height() * 2.0};
+    g->render.camera_pan = (Vec2){0.0f, 0.0};
+    g->scene.draw_overlay(g->scene.context, g);
+    g->render.camera_pan = pan;
+  }
 
   sg_end_pass();
   sg_commit();
@@ -521,28 +529,32 @@ static void Game_cleanup(Game *g) {
 }
 
 static Vec2 to_scene(Game *g, float x, float y) {
-  return v_sub(v_diff((Vec2){x, sapp_height() - y}, g->render.scale), g->render.camera);
+  return v_sub(v_diff((Vec2){x, sapp_height() - y}, g->render.camera_scale), g->render.camera_pan);
 }
 
 bool mid_down = false;
 static void Game_handel_events(const sapp_event *e, Game *g) {
+  if (e->type == SAPP_EVENTTYPE_MOUSE_SCROLL) {
+    Vec2 mp_b = to_scene(g, e->mouse_x, e->mouse_y);
+    g->render.camera_scale += e->scroll_y * 0.1f;
+    Vec2 mp_a = to_scene(g, e->mouse_x, e->mouse_y);
+    g->render.camera_pan = v_add(g->render.camera_pan, v_sub(mp_a, mp_b));
 
-  if (e->type == SAPP_EVENTTYPE_MOUSE_DOWN) {
+  } else if (e->type == SAPP_EVENTTYPE_MOUSE_DOWN) {
     if (e->mouse_button == 2)
       mid_down = true;
 
     if (g->scene.mouse_down)
       g->scene.mouse_down(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y), e->mouse_button);
-
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_UP) {
     if (e->mouse_button == 2)
       mid_down = false;
     if (g->scene.mouse_up)
       g->scene.mouse_up(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y), e->mouse_button);
-
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
     if (mid_down)
-      g->render.camera = v_add(g->render.camera, v_diff((Vec2){e->mouse_dx, -e->mouse_dy}, g->render.scale));
+      g->render.camera_pan =
+          v_add(g->render.camera_pan, v_diff((Vec2){e->mouse_dx, -e->mouse_dy}, g->render.camera_scale));
     if (g->scene.mouse_move)
       g->scene.mouse_move(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y));
   } else if ((e->type == SAPP_EVENTTYPE_KEY_DOWN)) {
