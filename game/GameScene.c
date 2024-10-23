@@ -5,6 +5,7 @@
 #include "game/StreetMap.h"
 #include "game/assets.h"
 #include "gc/gc.h"
+#include "math/Rect.h"
 #include "math/Vec2.h"
 
 typedef struct SceneObjectVec {
@@ -39,6 +40,8 @@ typedef struct GameScene {
 
   SceneObject under_mouse;
   SceneObject active;
+
+  int menu_under_mouse;
 } GameScene;
 
 void GameScene_update(GameScene *gs, Game *g, float dt) {
@@ -56,24 +59,33 @@ void GameScene_draw(GameScene *gs, Game *g) {
   d_color(g, white());
   d_buffer(g, d_tilemap_buffer(g), gs->tilemap_img, (Vec2){8, 8});
 
-  d_noise(g, 0.0f);
-  d_color(g, red());
-  d_object(g, d_animation_buffer(g), gs->marker, gs->mp, Game_frame(g) % 4);
+  if (gs->menu_under_mouse < 0) {
+    d_noise(g, 0.0f);
+    d_color(g, red());
+    d_object(g, d_animation_buffer(g), gs->marker, gs->mp, Game_frame(g) % 4);
+  }
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_draw(&gs->scene_objects.data[i], g);
 }
 
 void GameScene_draw_overlay(GameScene *gs, Game *g) {
-  d_noise(g, 0.0f);
-  d_color(g, blue());
   for (int i = 0; i < 10; ++i) {
-    d_object(g, d_animation_buffer(g), gs->marker, (Vec2){4 + i * 16, 4}, i % 4);
+    d_noise(g, i == gs->menu_under_mouse ? 0.3f : 0.0f);
+    d_color(g, i == gs->menu_under_mouse ? red() : blue());
+    d_object(g, d_animation_buffer(g), gs->marker, (Vec2){4 + i * 16, 4},
+             i == gs->menu_under_mouse ? Game_frame(g) % 4 : i % 4);
   }
 }
 
-void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp) {
+void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   gs->mp = (Vec2){((int)(mp.x / 16.0f)) * 16.0f, ((int)(mp.y / 16.0f)) * 16.0f};
+
+  gs->menu_under_mouse = -1;
+  for (int i = 0; i < 10; ++i) {
+    if (Rect_contains((Rect){(Vec2){4 + i * 16, 4}, (Vec2){16, 16}}, op))
+      gs->menu_under_mouse = i;
+  }
 
   SceneObject new_under_mouse = (SceneObject){0};
   for (int i = gs->scene_objects.len - 1; i >= 0; --i)
@@ -90,7 +102,7 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp) {
   SceneObject_enter(&gs->under_mouse, g);
 }
 
-void GameScene_down(GameScene *gs, Game *g, Vec2 mp, int button) {
+void GameScene_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   if (button == 0)
     set_map_key((int)(mp.x / 16.0f), (int)(mp.y / 16.0f), 2);
 
@@ -110,6 +122,7 @@ void GameScene_init(Game *g) {
   *gs = (GameScene){
       .tilemap_img = g_image(g, Img_tilemap),
       .marker = g_image(g, Img_marker),
+      .menu_under_mouse = -1,
   };
   StreetMap_init(g, gs);
 
