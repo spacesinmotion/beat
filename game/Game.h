@@ -15,13 +15,14 @@ typedef struct Game Game;
 typedef void (*SceneUpdateCB)(void *, Game *, float);
 typedef void (*SceneDrawCB)(void *, Game *);
 typedef void (*SceneMouseMoveCB)(void *, Game *, Vec2);
-typedef void (*SceneClickCB)(void *, Game *, Vec2, int);
+typedef void (*SceneMouseCB)(void *, Game *, Vec2, int);
 typedef struct Scene {
   void *context;
   SceneUpdateCB update;
   SceneDrawCB draw;
   SceneMouseMoveCB mouse_move;
-  SceneClickCB mouse_click;
+  SceneMouseCB mouse_down;
+  SceneMouseCB mouse_up;
 } Scene;
 void game_set_scene(Game *g, Scene scene);
 

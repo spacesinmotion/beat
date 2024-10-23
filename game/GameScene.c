@@ -82,18 +82,17 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp) {
   SceneObject_enter(&gs->under_mouse, g);
 }
 
-void GameScene_click(GameScene *gs, Game *g, Vec2 mp, int button) {
-  int i = mp.x / 16.0f;
-  int j = mp.y / 16.0f;
-  set_map_key(i, j, 2);
+void GameScene_down(GameScene *gs, Game *g, Vec2 mp, int button) {
+  if (button == 0)
+    set_map_key((int)(mp.x / 16.0f), (int)(mp.y / 16.0f), 2);
 
-  if (gs->under_mouse.context != gs->active.context) {
-    SceneObject_deactivate(&gs->active, g, gs);
-    gs->active = gs->under_mouse;
-    SceneObject_activate(&gs->active, g, gs);
-  }
+  // if (gs->under_mouse.context != gs->active.context) {
+  //   SceneObject_deactivate(&gs->active, g, gs);
+  //   gs->active = gs->under_mouse;
+  //   SceneObject_activate(&gs->active, g, gs);
+  // }
 
-  SceneObject_click(&gs->under_mouse, g, gs, button);
+  // SceneObject_click(&gs->under_mouse, g, gs, button);
 }
 
 void GameScene_add_object(GameScene *gs, SceneObject so) { SceneObjectVec_push(&gs->scene_objects, so); }
@@ -116,6 +115,6 @@ void GameScene_init(Game *g) {
                         .update = (SceneUpdateCB)GameScene_update,
                         .draw = (SceneDrawCB)GameScene_draw,
                         .mouse_move = (SceneMouseMoveCB)GameScene_mouse_move,
-                        .mouse_click = (SceneClickCB)GameScene_click,
+                        .mouse_down = (SceneMouseCB)GameScene_down,
                     });
 }

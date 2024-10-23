@@ -90,6 +90,7 @@ typedef struct Game {
     vs_param_t vs_param;
     fs_param_t fs_param;
     Vec2 camera;
+    float scale;
   } render;
 
   Buffer tilemap_buffer;
@@ -326,13 +327,14 @@ Buffer create_tile_map_buffer() {
 }
 
 static void Game_init(Game *g) {
+  g->render.camera = (Vec2){32.0f, 32.0f};
+  g->render.scale = 2.0f;
   g->render.vs_param = (vs_param_t){
-      {2.0f / sapp_width() * 2.0, 2.0f / sapp_height() * 2.0},
+      {2.0f / sapp_width() * g->render.scale, 2.0f / sapp_height() * g->render.scale},
       {1.0f, 1.0f},
       {0.0f, 0.0f},
   };
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0.0, 0};
-  g->render.camera = (Vec2){32.0f, 32.0f};
 
   sg_setup(&(sg_desc){
       .environment = sglue_environment(),
@@ -519,16 +521,28 @@ static void Game_cleanup(Game *g) {
 }
 
 static Vec2 to_scene(Game *g, float x, float y) {
-  return v_sub(v_diff((Vec2){x, sapp_height() - y}, 2.0f), g->render.camera);
+  return v_sub(v_diff((Vec2){x, sapp_height() - y}, g->render.scale), g->render.camera);
 }
 
+bool mid_down = false;
 static void Game_handel_events(const sapp_event *e, Game *g) {
 
   if (e->type == SAPP_EVENTTYPE_MOUSE_DOWN) {
-    if (g->scene.mouse_click)
-      g->scene.mouse_click(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y), e->mouse_button);
+    if (e->mouse_button == 2)
+      mid_down = true;
+
+    if (g->scene.mouse_down)
+      g->scene.mouse_down(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y), e->mouse_button);
+
+  } else if (e->type == SAPP_EVENTTYPE_MOUSE_UP) {
+    if (e->mouse_button == 2)
+      mid_down = false;
+    if (g->scene.mouse_up)
+      g->scene.mouse_up(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y), e->mouse_button);
 
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
+    if (mid_down)
+      g->render.camera = v_add(g->render.camera, v_diff((Vec2){e->mouse_dx, -e->mouse_dy}, g->render.scale));
     if (g->scene.mouse_move)
       g->scene.mouse_move(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y));
   } else if ((e->type == SAPP_EVENTTYPE_KEY_DOWN)) {
