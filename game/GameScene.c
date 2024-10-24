@@ -35,6 +35,7 @@ void SceneObjectVec_filter_dead(SceneObjectVec *vec) {
 typedef struct GameScene {
   SceneObjectVec scene_objects;
   const sg_image *tilemap_img;
+  const sg_image *menubar_img;
   const sg_image *marker;
   Vec2 mp;
 
@@ -70,6 +71,11 @@ void GameScene_draw(GameScene *gs, Game *g) {
 }
 
 void GameScene_draw_overlay(GameScene *gs, Game *g) {
+  d_noise(g, 0.0f);
+  d_color(g, white());
+  for (int i = 0; i < 10; ++i) {
+    d_object(g, d_animation_buffer(g), gs->menubar_img, (Vec2){4 + i * 16, 4}, i % 16);
+  }
   for (int i = 0; i < 10; ++i) {
     d_noise(g, i == gs->menu_under_mouse ? 0.3f : 0.0f);
     d_color(g, i == gs->menu_under_mouse ? red() : blue());
@@ -102,7 +108,7 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   SceneObject_enter(&gs->under_mouse, g);
 }
 
-void GameScene_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
+void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   if (button == 0)
     set_map_key((int)(mp.x / 16.0f), (int)(mp.y / 16.0f), 2);
 
@@ -121,6 +127,7 @@ void GameScene_init(Game *g) {
   GameScene *gs = gc_malloc(&gc, sizeof(GameScene));
   *gs = (GameScene){
       .tilemap_img = g_image(g, Img_tilemap),
+      .menubar_img = g_image(g, Img_menubar),
       .marker = g_image(g, Img_marker),
       .menu_under_mouse = -1,
   };
@@ -137,6 +144,6 @@ void GameScene_init(Game *g) {
                         .draw = (SceneDrawCB)GameScene_draw,
                         .draw_overlay = (SceneDrawCB)GameScene_draw_overlay,
                         .mouse_move = (SceneMouseMoveCB)GameScene_mouse_move,
-                        .mouse_down = (SceneMouseCB)GameScene_down,
+                        .mouse_down = (SceneMouseCB)GameScene_mouse_down,
                     });
 }

@@ -11,7 +11,9 @@
 #endif
 
 #ifdef _WIN32
+#ifndef CLANGD_ANALYSIS
 #include <windows.h>
+#endif
 #else
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
@@ -580,7 +582,12 @@ typedef void (*dirCB)(const char *p, void *ud);
 void eachFileIn(const char *sDir, dirCB cb, void *ud) {
   char sPath[2048];
 
-#ifdef _WIN32
+#ifdef CLANGD_ANALYSIS
+  (void)sDir;
+  (void)cb;
+  (void)ud;
+  (void)sPath;
+#elif _WIN32
   WIN32_FIND_DATA fdFile;
   HANDLE hFind = NULL;
 
