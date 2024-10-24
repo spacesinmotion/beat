@@ -43,6 +43,7 @@ typedef struct GameScene {
   SceneObject active;
 
   int menu_under_mouse;
+  int menu_selected;
 } GameScene;
 
 void GameScene_update(GameScene *gs, Game *g, float dt) {
@@ -78,7 +79,7 @@ void GameScene_draw_overlay(GameScene *gs, Game *g) {
   }
   for (int i = 0; i < 10; ++i) {
     d_noise(g, i == gs->menu_under_mouse ? 0.3f : 0.0f);
-    d_color(g, i == gs->menu_under_mouse ? red() : blue());
+    d_color(g, i == gs->menu_under_mouse ? red() : (gs->menu_selected == i ? green() : blue()));
     d_object(g, d_animation_buffer(g), gs->marker, (Vec2){4 + i * 16, 4},
              i == gs->menu_under_mouse ? Game_frame(g) % 4 : i % 4);
   }
@@ -109,8 +110,11 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
 }
 
 void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
-  if (button == 0)
-    set_map_key((int)(mp.x / 16.0f), (int)(mp.y / 16.0f), 2);
+  if (button == 0) {
+    if (gs->menu_under_mouse < 0)
+      set_map_key((int)(mp.x / 16.0f), (int)(mp.y / 16.0f), 2);
+    gs->menu_selected = gs->menu_under_mouse;
+  }
 
   // if (gs->under_mouse.context != gs->active.context) {
   //   SceneObject_deactivate(&gs->active, g, gs);
@@ -130,6 +134,7 @@ void GameScene_init(Game *g) {
       .menubar_img = g_image(g, Img_menubar),
       .marker = g_image(g, Img_marker),
       .menu_under_mouse = -1,
+      .menu_selected = -1,
   };
   StreetMap_init(g, gs);
 
