@@ -44,6 +44,8 @@ typedef struct GameScene {
 
   int menu_under_mouse;
   int menu_selected;
+
+  StreetMap *maze;
 } GameScene;
 
 void GameScene_update(GameScene *gs, Game *g, float dt) {
@@ -111,9 +113,10 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
 
 void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   if (button == 0) {
-    if (gs->menu_under_mouse < 0)
-      set_map_key((int)(mp.x / 16.0f), (int)(mp.y / 16.0f), 2);
-    gs->menu_selected = gs->menu_under_mouse;
+    // if (gs->menu_under_mouse < 0)
+    //   set_map_key((int)(mp.x / 16.0f), (int)(mp.y / 16.0f), 2);
+    // gs->menu_selected = gs->menu_under_mouse;
+    StreetMap_maze_step(gs->maze);
   }
 
   // if (gs->under_mouse.context != gs->active.context) {
@@ -136,7 +139,7 @@ void GameScene_init(Game *g) {
       .menu_under_mouse = -1,
       .menu_selected = -1,
   };
-  StreetMap_init(g, gs);
+  gs->maze = StreetMap_init(g, gs);
 
   Wearisome_init(g, gs, (Vec2){1 * 16, 0}, rgb(231, 69, 38));
   Wearisome_init(g, gs, (Vec2){2 * 16, 0}, rgb(77, 213, 30));

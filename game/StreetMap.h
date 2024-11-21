@@ -13,8 +13,12 @@
 #include <math.h>
 #include <stdlib.h>
 
+#define nii 20
+#define njj 16
 typedef struct StreetMap {
   const sg_image *texture;
+  int maze_dir[nii][njj];
+  int oi, oj;
 } StreetMap;
 
 bool StreetMap_dead(StreetMap *sm) {
@@ -39,13 +43,44 @@ void StreetMap_draw(StreetMap *sm, Game *g) {
   d_noise(g, 0.0f);
   d_color(g, white());
 
-  const int nii = 20;
-  const int njj = 16;
-  for (int i = -1; i < nii; ++i) {
-    for (int j = -1; j < njj; ++j) {
-      if (map_key(i, j) == 2)
-        d_object(g, d_animation_buffer(g), sm->texture, (Vec2){i * 16, j * 16}, street_tex_for(i, j));
+  for (int i = 0; i < nii; ++i) {
+    for (int j = 0; j < njj; ++j) {
+      if (i > 0 && sm->maze_dir[i - 1][j] == 0)
+        d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 2);
+      if (i < nii - 1 && sm->maze_dir[i + 1][j] == 2)
+        d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0);
+      if (j > 0 && sm->maze_dir[i][j - 1] == 1)
+        d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 3);
+      if (j < nii - 1 && sm->maze_dir[i][j + 1] == 3)
+        d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 1);
+      d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 4);
+      d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), sm->maze_dir[i][j]);
+      d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 8 + sm->maze_dir[i][j]);
     }
+  }
+}
+
+void StreetMap_maze_step(StreetMap *sm) {
+  for (int i = 0; i < 100; ++i) {
+    const int d = rand() % 4;
+    int noi = sm->oi, noj = sm->oj;
+    if (d == 0)
+      noi++;
+    else if (d == 1)
+      noj++;
+    else if (d == 2)
+      noi--;
+    else if (d == 3)
+      noj--;
+
+    if (noi < 0 || noj < 0 || noi >= nii || noj >= njj)
+      continue;
+
+    sm->maze_dir[sm->oi][sm->oj] = d;
+    sm->oi = noi;
+    sm->oj = noj;
+    sm->maze_dir[sm->oi][sm->oj] = 4;
+    return;
   }
 }
 
@@ -56,8 +91,20 @@ SceneObjectTable StreetMap_table = (SceneObjectTable){
 StreetMap *StreetMap_init(Game *g, GameScene *gs) {
   StreetMap *sm = gc_malloc(&gc, sizeof(StreetMap));
   *sm = (StreetMap){
-      .texture = g_image(g, Img_street),
+      .texture = g_image(g, Img_maze_pointer),
+      .oi = nii - 1,
+      .oj = njj - 1,
   };
+
+  for (int i = 0; i < nii; ++i) {
+    for (int j = 0; j < njj; ++j) {
+      sm->maze_dir[i][j] = i + 1 == nii ? 1 : 0;
+    }
+  }
+  sm->maze_dir[sm->oi][sm->oj] = 4;
+  for (int i = 0; i < 5000; ++i)
+    StreetMap_maze_step(sm);
+
   GameScene_add_object(gs, (SceneObject){.context = sm, &StreetMap_table});
   return sm;
 }

@@ -662,7 +662,7 @@ int main(int argc, char *argv[]) {
       .user_data = &g,
       .width = 800,
       .height = 600,
-      .window_title = "mini click",
+      .window_title = "trapped again",
       .icon.sokol_default = true,
       .logger.func = slog_func,
   });
