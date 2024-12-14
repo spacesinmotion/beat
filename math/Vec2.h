@@ -4,6 +4,9 @@
 #include <math.h>
 #include <stdbool.h>
 
+static inline float f_max(float a, float b) { return a < b ? b : a; }
+static inline float f_min(float a, float b) { return a < b ? a : b; }
+
 typedef struct Vec2 {
   float x, y;
 } Vec2;
@@ -21,6 +24,7 @@ static inline Vec2 v_diff(Vec2 a, float v) { return (Vec2){a.x / v, a.y / v}; }
 static inline Vec2 v_lerp(Vec2 a, Vec2 b, float t) { return (Vec2){a.x + (b.x - a.x) * t, a.y + (b.y - b.x) * t}; }
 
 static inline float v_length(Vec2 a) { return sqrt(a.x * a.x + a.y * a.y); }
+static inline float v_distance(Vec2 a, Vec2 b) { return v_length(v_sub(b, a)); }
 static inline Vec2 v_normalized(Vec2 a) {
   const float l = v_length(a);
   return (l == 0.0f) ? (Vec2){0.0f, 0.0f} : v_diff(a, l);

@@ -104,23 +104,23 @@ typedef struct Game {
   double time;
 } Game;
 
-void game_set_scene(Game *g, Scene scene) { g->scene = scene; }
+void g_set_scene(Game *g, Scene scene) { g->scene = scene; }
 
-float Game_time(Game *g) { return g->time; }
-int Game_frame(Game *g) { return (int)(g->time * 8.0f); }
+float g_time(Game *g) { return g->time; }
+int g_frame(Game *g) { return (int)(g->time * 8.0f); }
 
-const Buffer *d_tilemap_buffer(Game *g) { return &g->tilemap_buffer; }
-const Buffer *d_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
+const Buffer *g_tilemap_buffer(Game *g) { return &g->tilemap_buffer; }
+const Buffer *g_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
 
-void d_color(Game *game, Color c) {
+void g_color(Game *game, Color c) {
   game->render.fs_param.color[0] = c.r;
   game->render.fs_param.color[1] = c.g;
   game->render.fs_param.color[2] = c.b;
   game->render.fs_param.color[3] = c.a;
 }
-void d_noise(Game *game, float n) { game->render.fs_param.noise = n; }
+void g_noise(Game *game, float n) { game->render.fs_param.noise = n; }
 
-void d_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan) {
+void g_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan) {
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
 
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
@@ -133,7 +133,7 @@ void d_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan) {
   sg_draw(0, buffer->num_elements, 1);
 }
 
-void d_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, int frame) {
+void g_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, int frame) {
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
 
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
@@ -171,7 +171,7 @@ const sg_image *g_image(Game *g, Image img) {
   return &g->images[img];
 }
 
-void update_state(Game *g, double dt) {
+void Game_update_state(Game *g, double dt) {
   g->time += dt;
 
   if (g->scene.update)
@@ -477,32 +477,18 @@ static void Game_init(Game *g) {
   GameScene_init(g);
 }
 
-void jump_to(float l, float c) {
-  sdtx_home();
-  sdtx_origin(c, l);
-}
-
-static void Game_draw(Game *g) {
-  update_state(g, sapp_frame_duration());
-
-  sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
+void Game_update_console(Game *g) {
+  sdtx_canvas(sapp_width(), sapp_height());
   sdtx_font(FONT_KC853);
 
-  jump_to(0, 0);
+  sdtx_home();
+  sdtx_origin(0, 0);
   sdtx_color3b(0x42, 0x53, 0x47);
-  sdtx_printf("%f\n", g->time);
+  sdtx_printf("%f\n", g_time(g));
   sdtx_printf("%f\n", sapp_frame_duration());
+}
 
-  sg_begin_pass(&(sg_pass){
-      .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {0.5f, 0.625f, 0.75f, 1.0f}}},
-      .swapchain = sglue_swapchain(),
-  });
-
-  sdtx_draw();
-
-  sg_apply_pipeline(g->pipeline);
-  g->render.fs_param.rand = rand();
-
+void Game_draw_scene(Game *g) {
   if (g->scene.draw) {
     g->render.vs_param.to_screen_scale =
         (Vec2){2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale};
@@ -517,6 +503,23 @@ static void Game_draw(Game *g) {
     g->scene.draw_overlay(g->scene.context, g);
     g->render.camera_pan = pan;
   }
+}
+
+static void Game_draw(Game *g) {
+  Game_update_state(g, sapp_frame_duration());
+
+  Game_update_console(g);
+
+  sg_begin_pass(&(sg_pass){
+      .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {0.5f, 0.625f, 0.75f, 1.0f}}},
+      .swapchain = sglue_swapchain(),
+  });
+
+  sg_apply_pipeline(g->pipeline);
+  g->render.fs_param.rand = rand();
+
+  Game_draw_scene(g);
+  sdtx_draw();
 
   sg_end_pass();
   sg_commit();

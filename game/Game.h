@@ -25,21 +25,21 @@ typedef struct Scene {
   SceneMouseCB mouse_down;
   SceneMouseCB mouse_up;
 } Scene;
-void game_set_scene(Game *g, Scene scene);
+void g_set_scene(Game *g, Scene scene);
 
-float Game_time(Game *g);
-int Game_frame(Game *g);
+float g_time(Game *g);
+int g_frame(Game *g);
 
-const Buffer *d_tilemap_buffer(Game *g);
-const Buffer *d_animation_buffer(Game *g);
+const Buffer *g_tilemap_buffer(Game *g);
+const Buffer *g_animation_buffer(Game *g);
 
 const sg_image *g_image(Game *g, Image i);
 
-void d_color(Game *game, Color c);
-void d_noise(Game *game, float n);
+void g_color(Game *game, Color c);
+void g_noise(Game *game, float n);
 
-void d_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan);
-void d_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, int frame);
+void g_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan);
+void g_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, int frame);
 
 int map_key(int i, int j);
 void set_map_key(int i, int j, int k);

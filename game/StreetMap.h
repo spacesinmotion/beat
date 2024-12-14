@@ -40,22 +40,22 @@ int street_tex_for(int i, int j) {
 }
 
 void StreetMap_draw(StreetMap *sm, Game *g) {
-  d_noise(g, 0.0f);
-  d_color(g, white());
+  g_noise(g, 0.0f);
+  g_color(g, white());
 
   for (int i = 0; i < nii; ++i) {
     for (int j = 0; j < njj; ++j) {
       if (i > 0 && sm->maze_dir[i - 1][j] == 0)
-        d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 2);
+        g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 2);
       if (i < nii - 1 && sm->maze_dir[i + 1][j] == 2)
-        d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0);
+        g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0);
       if (j > 0 && sm->maze_dir[i][j - 1] == 1)
-        d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 3);
+        g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 3);
       if (j < nii - 1 && sm->maze_dir[i][j + 1] == 3)
-        d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 1);
-      d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 4);
-      d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), sm->maze_dir[i][j]);
-      d_object(g, d_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 8 + sm->maze_dir[i][j]);
+        g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 1);
+      g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 4);
+      g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), sm->maze_dir[i][j]);
+      g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 8 + sm->maze_dir[i][j]);
     }
   }
 }
