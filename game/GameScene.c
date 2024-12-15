@@ -42,7 +42,7 @@ void GameScene_draw(GameScene *gs, Game *g) {
   if (gs->menu_under_mouse < 0) {
     g_noise(g, 0.0f);
     g_color(g, red());
-    g_object(g, g_animation_buffer(g), gs->marker, gs->mp, g_frame(g) % 4);
+    g_object(g, g_animation_buffer(g), gs->marker, gs->mp, 0.0f, g_frame(g) % 4);
   }
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
@@ -53,12 +53,12 @@ void GameScene_draw_overlay(GameScene *gs, Game *g) {
   g_noise(g, 0.0f);
   g_color(g, white());
   for (int i = 0; i < 10; ++i) {
-    g_object(g, g_animation_buffer(g), gs->menubar_img, (Vec2){4 + i * 16, 4}, i % 16);
+    g_object(g, g_animation_buffer(g), gs->menubar_img, (Vec2){4 + i * 16, 4}, 0.0f, i % 16);
   }
   for (int i = 0; i < 10; ++i) {
     g_noise(g, i == gs->menu_under_mouse ? 0.3f : 0.0f);
     g_color(g, i == gs->menu_under_mouse ? red() : (gs->menu_selected == i ? green() : blue()));
-    g_object(g, g_animation_buffer(g), gs->marker, (Vec2){4 + i * 16, 4},
+    g_object(g, g_animation_buffer(g), gs->marker, (Vec2){4 + i * 16, 4}, 0.0f,
              i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4);
   }
 }
@@ -94,8 +94,8 @@ void GameScene_init(Game *g) {
       .menu_selected = -1,
   };
 
-  Wearisome_init(g, gs, (Vec2){1 * 16, 1 * 16}, rgb(231, 69, 38));
-  Wearisome_init(g, gs, (Vec2){18 * 16, 14 * 16}, rgb(77, 213, 30));
+  Wearisome_init(g, gs, (Vec2){18 * 16, 14 * 16}, Evil);
+  Wearisome_init(g, gs, (Vec2){1 * 16, 1 * 16}, Good);
 
   g_set_scene(g, (Scene){
                      .context = gs,

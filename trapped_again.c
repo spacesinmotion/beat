@@ -69,6 +69,7 @@ typedef struct Buffer {
 
 typedef struct vs_param_t {
   Vec2 to_screen_scale, pan;
+  float rot;
 } vs_param_t;
 
 typedef struct fs_param_t {
@@ -133,8 +134,9 @@ void g_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan) {
   sg_draw(0, buffer->num_elements, 1);
 }
 
-void g_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, int frame) {
+void g_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, float rot, int frame) {
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
+  g->render.vs_param.rot = rot;
 
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
@@ -362,6 +364,7 @@ static void Game_init(Game *g) {
                    "\n"
                    "uniform vec2 to_screen_scale;\n"
                    "uniform vec2 pan;\n"
+                   "uniform float rot;\n"
                    "\n"
                    "layout(location=0) in vec4 position;\n"
                    "layout(location=1) in vec2 texcoord;\n"
@@ -369,9 +372,16 @@ static void Game_init(Game *g) {
                    "out vec2 p;\n"
                    "out vec2 uv;\n"
                    "\n"
+                   "vec2 rotate(vec2 v, float a) {\n"
+                   "	float s = sin(a);\n"
+                   "	float c = cos(a);\n"
+                   "	mat2 m = mat2(c, -s, s, c);\n"
+                   "	return m * v;\n"
+                   "}\n"
+                   "\n"
                    "void main() {\n"
                    //  "  gl_Position = mvp * position;\n"
-                   "  p = position.xy + pan;\n"
+                   "  p = rotate(position.xy, rot) + pan;\n"
                    "  gl_Position = vec4(p.x * to_screen_scale.x - 1, p.y * to_screen_scale.y - 1, 0, 1);\n"
                    "  uv = texcoord;\n"
                    "}\n";
@@ -408,6 +418,7 @@ static void Game_init(Game *g) {
                      {
                          {"to_screen_scale", SG_UNIFORMTYPE_FLOAT2, 1},
                          {"pan", SG_UNIFORMTYPE_FLOAT2, 1},
+                         {"rot", SG_UNIFORMTYPE_FLOAT, 1},
                      },
              }}},
       .fs =
@@ -463,7 +474,7 @@ static void Game_init(Game *g) {
   });
 
   g->tilemap_buffer = create_tile_map_buffer();
-  g->animation_buffer_4x4 = quad_animation_buffer(0, 0, 16, 16, 4, 4);
+  g->animation_buffer_4x4 = quad_animation_buffer(-8, -8, 16, 16, 4, 4);
 
   g->pixel_sampler = sg_make_sampler(&(sg_sampler_desc){
       .min_filter = SG_FILTER_LINEAR,
