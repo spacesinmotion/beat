@@ -1,7 +1,9 @@
 
 #include "game/GameScene.h"
 #include "game/Game.h"
+#include "game/Level.h"
 #include "game/SceneObject.h"
+#include "game/StreetMap.h"
 #include "game/Wearisome.h"
 #include "game/assets.h"
 #include "gc/gc.h"
@@ -45,6 +47,8 @@ void GameScene_draw(GameScene *gs, Game *g) {
     g_object(g, g_animation_buffer(g), gs->marker, gs->mp, 0.0f, g_frame(g) % 4);
   }
 
+  StreetMap_draw(gs->street_map, g);
+
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_draw(&gs->scene_objects.data[i], g);
 }
@@ -64,7 +68,7 @@ void GameScene_draw_overlay(GameScene *gs, Game *g) {
 }
 
 void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
-  (void *)g;
+  (void)g;
   gs->mp = (Vec2){((int)(mp.x / 16.0f)) * 16.0f, ((int)(mp.y / 16.0f)) * 16.0f};
 
   gs->menu_under_mouse = -1;
@@ -92,7 +96,16 @@ void GameScene_init(Game *g) {
       .marker = g_image(g, Img_marker),
       .menu_under_mouse = -1,
       .menu_selected = -1,
+      .level = gc_malloc(&gc, sizeof(Level)),
   };
+
+  for (int i = 0; i < LEVEL_WIDTH; ++i) {
+    for (int j = 0; j < LEVEL_HEIGHT; ++j) {
+      level_set_tile(gs->level, i, j, 0);
+    }
+  }
+
+  gs->street_map = StreetMap_init(g, gs);
 
   Wearisome_init(g, gs, (Vec2){18 * 16, 14 * 16}, Evil);
   Wearisome_init(g, gs, (Vec2){1 * 16, 1 * 16}, Good);

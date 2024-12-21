@@ -4,6 +4,9 @@
 #include <math.h>
 #include <stdbool.h>
 
+static inline int i_max(int a, int b) { return a < b ? b : a; }
+static inline int i_min(int a, int b) { return a < b ? a : b; }
+
 static inline float f_max(float a, float b) { return a < b ? b : a; }
 static inline float f_min(float a, float b) { return a < b ? a : b; }
 

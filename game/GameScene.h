@@ -4,6 +4,9 @@
 #include "Game.h"
 #include "SceneObject.h"
 
+typedef struct Level Level;
+typedef struct StreetMap StreetMap;
+
 typedef struct SceneObjectVec {
   SceneObject *data;
   int len, cap;
@@ -19,6 +22,8 @@ typedef struct GameScene {
   int menu_under_mouse;
   int menu_selected;
 
+  Level *level;
+  StreetMap *street_map;
 } GameScene;
 
 typedef struct GameScene GameScene;
