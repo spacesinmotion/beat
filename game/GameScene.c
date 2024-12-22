@@ -86,8 +86,8 @@ bool reached_goal(GameScene *gs, int i, int j) {
   (void)gs;
   return i == stop.x && j == stop.y;
 }
-bool movable(GameScene *gs, int i, int j) { return Level_tile(gs->level, i, j) > 0; }
-void mark_path(GameScene *gs, int i, int j) { Level_set_tile(gs->level, i, j, 4); }
+bool movable(GameScene *gs, int i, int j) { return Level_movable(gs->level, i, j); }
+void mark_path(GameScene *gs, int i, int j) { Level_set_tile(gs->level, i, j, T_Path); }
 
 void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   (void)g;
@@ -105,10 +105,9 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
         gs->r.w = gs->r.h = 0;
       }
     } else if (gs->menu_selected == 0) {
-      Level_set_tile(gs->level, gs->r.x, gs->r.y, 2);
+      Level_set_movable(gs->level, gs->r.x, gs->r.y, true);
     } else {
-      int8_t t = Level_tile(gs->level, gs->r.x, gs->r.y);
-      if (t != 0) {
+      if (Level_movable(gs->level, gs->r.x, gs->r.y)) {
         if (start.x < 0) {
           Level_clear_paths(gs->level);
           start = (Point){gs->r.x, gs->r.y};
@@ -123,7 +122,7 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
               });
           start = (Point){-1, -1};
         }
-        Level_set_tile(gs->level, gs->r.x, gs->r.y, 3);
+        Level_set_tile(gs->level, gs->r.x, gs->r.y, T_PathStartEnd);
       }
     }
   }

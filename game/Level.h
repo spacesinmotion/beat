@@ -10,6 +10,17 @@
 #define LEVEL_WIDTH 48
 #define LEVEL_HEIGHT 32
 
+typedef enum TileType {
+  T_None = 0,
+  T_CityCenter,
+  T_House,
+
+  T_Path,
+  T_PathStartEnd,
+
+  T_Movable = 1 << 7,
+} TileType;
+
 typedef struct Level {
   uint8_t tiles[LEVEL_WIDTH][LEVEL_HEIGHT];
 } Level;
@@ -30,17 +41,32 @@ bool Level_validR(Level *level, Recti r) {
   return true;
 }
 
-uint8_t Level_tile(Level *level, int x, int y) { return Level_valid(level, x, y) ? level->tiles[x][y] : 0; }
-void Level_set_tile(Level *level, int x, int y, uint8_t tile) {
+bool Level_movable(Level *level, int x, int y) {
+  return Level_valid(level, x, y) && ((level->tiles[x][y] & T_Movable) == T_Movable);
+}
+void Level_set_movable(Level *level, int x, int y, bool movable) {
+  if (Level_valid(level, x, y)) {
+    if (movable)
+      level->tiles[x][y] |= T_Movable;
+    else
+      level->tiles[x][y] &= ~T_Movable;
+  }
+}
+
+TileType Level_tile(Level *level, int x, int y) {
+  return Level_valid(level, x, y) ? (TileType)(level->tiles[x][y] & ~T_Movable) : T_None;
+}
+void Level_set_tile(Level *level, int x, int y, TileType tile) {
   if (Level_valid(level, x, y))
-    level->tiles[x][y] = tile;
+    level->tiles[x][y] = Level_movable(level, x, y) ? tile | T_Movable : tile;
 }
 
 void Level_clear_paths(Level *level) {
   for (int i = 0; i < LEVEL_WIDTH; ++i) {
     for (int j = 0; j < LEVEL_HEIGHT; ++j) {
-      if (level->tiles[i][j] > 0)
-        level->tiles[i][j] = 2;
+      TileType t = Level_tile(level, i, j);
+      if (t == T_Path || t == T_PathStartEnd)
+        Level_set_tile(level, i, j, T_None);
     }
   }
 }

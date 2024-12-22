@@ -25,13 +25,13 @@ bool StreetMap_dead(StreetMap *sm) {
 
 int street_tex_for(StreetMap *sm, int i, int j) {
   int k = 0;
-  if (Level_tile(sm->level, i + 1, j) != 0)
+  if (Level_movable(sm->level, i + 1, j))
     k += 1;
-  if (Level_tile(sm->level, i, j + 1) != 0)
+  if (Level_movable(sm->level, i, j + 1))
     k += 2;
-  if (Level_tile(sm->level, i - 1, j) != 0)
+  if (Level_movable(sm->level, i - 1, j))
     k += 4;
-  if (Level_tile(sm->level, i, j - 1) != 0)
+  if (Level_movable(sm->level, i, j - 1))
     k += 8;
   return k;
 }
@@ -41,15 +41,15 @@ void StreetMap_draw(StreetMap *sm, Game *g) {
 
   for (int i = 0; i < LEVEL_WIDTH; ++i) {
     for (int j = 0; j < LEVEL_WIDTH; ++j) {
-      uint8_t tc = Level_tile(sm->level, i, j);
-      if (tc == 0)
+      if (!Level_movable(sm->level, i, j))
         continue;
-      if (tc == 2)
-        g_color(g, white());
-      else if (tc == 3)
+      TileType tc = Level_tile(sm->level, i, j);
+      if (tc == T_PathStartEnd)
         g_color(g, red());
-      else if (tc == 4)
+      else if (tc == T_Path)
         g_color(g, rgb(194, 130, 130));
+      else
+        g_color(g, white());
 
       g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0.0f,
                street_tex_for(sm, i, j));
@@ -87,14 +87,14 @@ StreetMap *StreetMap_init(Game *g, GameScene *gs) {
     if (n > 0) {
       if (rand() % 2 == 0) {
         for (int i = i_min(last_y, next_y); i <= i_max(last_y, next_y); ++i)
-          Level_set_tile(sm->level, i_min(last_x, next_x), i, 2);
+          Level_set_movable(sm->level, i_min(last_x, next_x), i, true);
         for (int i = i_min(last_x, next_x); i <= i_max(last_x, next_x); ++i)
-          Level_set_tile(sm->level, i, last_x < next_x ? next_y : last_y, 2);
+          Level_set_movable(sm->level, i, last_x < next_x ? next_y : last_y, true);
       } else {
         for (int i = i_min(last_x, next_x); i <= i_max(last_x, next_x); ++i)
-          Level_set_tile(sm->level, i, i_min(last_y, next_y), 2);
+          Level_set_movable(sm->level, i, i_min(last_y, next_y), true);
         for (int i = i_min(last_y, next_y); i <= i_max(last_y, next_y); ++i)
-          Level_set_tile(sm->level, last_y < next_y ? next_x : last_x, i, 2);
+          Level_set_movable(sm->level, last_y < next_y ? next_x : last_x, i, true);
       }
     }
     last_x = next_x;

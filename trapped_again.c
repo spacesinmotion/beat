@@ -659,7 +659,6 @@ void export_svg__with_inkscape(const char *fp, void *ud) {
 }
 
 int main(int argc, char *argv[]) {
-  (void)argv;
   gc_start(&gc, &argc);
 
   for (int i = 0; i < argc - 1; ++i)
