@@ -46,7 +46,7 @@ void GameScene_draw(GameScene *gs, Game *g) {
   if (gs->menu_under_mouse < 0 && Level_validR(gs->level, gs->r)) {
     if (gs->r.h > 0 && gs->r.w > 0) {
       g_noise(g, 0.0f);
-      g_color(g, white());
+      g_color(g, rgb(130, 130, 194));
       g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), gs->tilemap_img, Level_to_vec(gs->r.x, gs->r.y));
     }
     g_noise(g, 0.0f);

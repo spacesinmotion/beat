@@ -325,7 +325,7 @@ const Buffer *g_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
 
 static void Game_init(Game *g) {
   g->render.camera_pan = (Vec2){32.0f, 32.0f};
-  g->render.camera_scale = 1.0f;
+  g->render.camera_scale = 2.0f;
   g->render.overlay_scale = 2.0f;
   g->render.vs_param = (vs_param_t){
       {2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale},
