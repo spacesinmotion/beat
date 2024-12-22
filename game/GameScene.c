@@ -6,7 +6,6 @@
 #include "game/Marketplace.h"
 #include "game/SceneObject.h"
 #include "game/StreetMap.h"
-#include "game/Wearisome.h"
 #include "game/assets.h"
 #include "gc/gc.h"
 #include "math/Rect.h"
@@ -157,9 +156,6 @@ void GameScene_init(Game *g) {
 
   Level_init(gs->level);
   gs->street_map = StreetMap_init(g, gs);
-
-  Wearisome_init(g, gs, (Vec2){18 * 16, 14 * 16}, Evil);
-  Wearisome_init(g, gs, (Vec2){1 * 16, 1 * 16}, Good);
 
   g_set_scene(g, (Scene){
                      .context = gs,

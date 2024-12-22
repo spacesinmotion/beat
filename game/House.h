@@ -3,6 +3,7 @@
 
 #include "game/GameScene.h"
 #include "game/Level.h"
+#include "game/Wearisome.h"
 #include "game/assets.h"
 #include "gc/gc.h"
 
@@ -53,7 +54,10 @@ House *House_init(Game *g, GameScene *gs, Point p) {
   };
 
   Level_set_tileR(gs->level, (Recti){p.x, p.y, 2, 2}, T_House);
-  GameScene_add_object(gs, (SceneObject){.context = w, &House_table});
+  GameScene_add_object(gs, (SceneObject){w, &House_table});
+
+  Wearisome_init(g, gs, Level_to_vecP(p));
+
   return w;
 }
 #endif // HOUSE_H
