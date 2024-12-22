@@ -83,6 +83,11 @@ typedef struct Assets {
   sg_image wearisome;
 } Assets;
 
+typedef struct TileRectBuffer {
+  Buffer buffer;
+  int w, h;
+} TileRectBuffer;
+
 typedef struct Game {
   sg_pipeline pipeline;
 
@@ -94,7 +99,7 @@ typedef struct Game {
     float overlay_scale;
   } render;
 
-  Buffer tilemap_buffer;
+  TileRectBuffer tilerect_buffer[16];
   Buffer animation_buffer_4x4;
   sg_sampler pixel_sampler;
 
@@ -110,7 +115,26 @@ void g_set_scene(Game *g, Scene scene) { g->scene = scene; }
 float g_time(Game *g) { return g->time; }
 int g_frame(Game *g) { return (int)(g->time * 8.0f); }
 
-const Buffer *g_tilemap_buffer(Game *g) { return &g->tilemap_buffer; }
+Buffer create_tile_rect_buffer(int ni, int nj);
+
+const Buffer *g_tilerect_buffer(Game *g, int w, int h) {
+  TileRectBuffer *tb = NULL;
+  for (int i = 0; i < 16; ++i) {
+    if (g->tilerect_buffer[i].w == w && g->tilerect_buffer[i].h == h)
+      return &g->tilerect_buffer[i].buffer;
+    if (g->tilerect_buffer[i].w == 0 && g->tilerect_buffer[i].h == 0) {
+      tb = &g->tilerect_buffer[i];
+      break;
+    }
+  }
+  if (tb) {
+    tb->buffer = create_tile_rect_buffer(w, h);
+    tb->w = w;
+    tb->h = h;
+  }
+
+  return tb ? &tb->buffer : NULL;
+}
 const Buffer *g_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
 
 void g_color(Game *game, Color c) {
@@ -238,56 +262,22 @@ Buffer quad_animation_buffer(float x, float y, float w, float h, int ni, int nj)
   };
 }
 
-bool is_set(uint8_t *map, int i, int j, int w, int h) {
+bool is_set(int i, int j, int w, int h) {
   if (i < 0 || j < 0 || i >= w || j >= h)
     return false;
-  return map[j * w + i] != 0;
+  return true;
 }
 
-uint8_t tile_code(uint8_t *map, int i, int j, int w, int h) {
+uint8_t tile_code(int i, int j, int w, int h) {
   uint8_t code = 0;
-  code += is_set(map, i + 0, j + 0, w, h) * 1;
-  code += is_set(map, i + 1, j + 0, w, h) * 2;
-  code += is_set(map, i + 1, j + 1, w, h) * 4;
-  code += is_set(map, i + 0, j + 1, w, h) * 8;
+  code += is_set(i + 0, j + 0, w, h) * 1;
+  code += is_set(i + 1, j + 0, w, h) * 2;
+  code += is_set(i + 1, j + 1, w, h) * 4;
+  code += is_set(i + 0, j + 1, w, h) * 8;
   return code;
 }
 
-#define ni 20
-#define nj 16
-uint8_t map[ni * nj] = {
-    0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //
-    0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, //
-};
-
-int map_key(int i, int j) {
-  if (i < 0 || j < 0 || i >= ni || j >= nj)
-    return 0;
-  return map[j * ni + i];
-}
-void set_map_key(int i, int j, int k) {
-  if (i < 0 || j < 0 || i >= ni || j >= nj)
-    return;
-  map[j * ni + i] = k;
-}
-
-bool map_is_set(int i, int j) { return is_set(map, i, j, ni, nj); }
-
-Buffer create_tile_map_buffer() {
+Buffer create_tile_rect_buffer(int ni, int nj) {
   static int lu[16][2] = {
       {0, 3}, {0, 0}, {1, 3}, {3, 0}, {0, 2}, {2, 3}, {1, 0}, {1, 1},
       {3, 3}, {3, 2}, {0, 1}, {2, 0}, {1, 2}, {3, 1}, {2, 2}, {2, 1},
@@ -298,7 +288,7 @@ Buffer create_tile_map_buffer() {
   int ov = 0, oi = 0;
   for (int i = -1; i < ni; ++i) {
     for (int j = -1; j < nj; ++j) {
-      uint8_t tc = tile_code(map, i, j, ni, nj);
+      uint8_t tc = tile_code(i, j, ni, nj);
       if (tc == 0)
         continue;
       float x = i * 16.0f;
@@ -316,12 +306,12 @@ Buffer create_tile_map_buffer() {
   return (Buffer){
       .vertices = sg_make_buffer(&(sg_buffer_desc){
           .type = SG_BUFFERTYPE_VERTEXBUFFER,
-          .data = SG_RANGE(vertices),
+          .data = (sg_range){vertices, sizeof(vertex_t) * 4 * (ni + 1) * (nj + 1)},
           .label = "vertex-buffer",
       }),
       .indices = sg_make_buffer(&(sg_buffer_desc){
           .type = SG_BUFFERTYPE_INDEXBUFFER,
-          .data = SG_RANGE(indices),
+          .data = (sg_range){indices, sizeof(uint16_t) * 6 * (ni + 1) * (nj + 1)},
           .label = "index-buffer",
       }),
       .num_elements = oi,
@@ -474,7 +464,7 @@ static void Game_init(Game *g) {
           },
   });
 
-  g->tilemap_buffer = create_tile_map_buffer();
+  memset(g->tilerect_buffer, 0, sizeof(g->tilerect_buffer));
   g->animation_buffer_4x4 = quad_animation_buffer(-8, -8, 16, 16, 4, 4);
 
   g->pixel_sampler = sg_make_sampler(&(sg_sampler_desc){

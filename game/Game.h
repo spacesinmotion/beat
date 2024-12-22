@@ -30,7 +30,7 @@ void g_set_scene(Game *g, Scene scene);
 float g_time(Game *g);
 int g_frame(Game *g);
 
-const Buffer *g_tilemap_buffer(Game *g);
+const Buffer *g_tilerect_buffer(Game *g, int w, int h);
 const Buffer *g_animation_buffer(Game *g);
 
 const sg_image *g_image(Game *g, Image i);
