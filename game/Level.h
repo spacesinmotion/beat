@@ -1,6 +1,8 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
+#include "math/Rect.h"
+#include "math/Vec2.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -14,15 +16,24 @@ typedef struct Level {
 
 void Level_init(Level *level) { memset(level->tiles, 0, sizeof(level->tiles)); }
 
-uint8_t Level_tile(Level *level, int x, int y) {
-  if (x < 0 || x >= LEVEL_WIDTH || y < 0 || y >= LEVEL_HEIGHT)
-    return 0;
-  return level->tiles[x][y];
+bool Level_valid(Level *level, int x, int y) {
+  (void)level;
+  return x >= 0 && x < LEVEL_WIDTH && y >= 0 && y < LEVEL_HEIGHT;
 }
+
+bool Level_validP(Level *level, Point p) { return Level_valid(level, p.x, p.y); }
+bool Level_validR(Level *level, Recti r) {
+  for (int i = r.x; i < r.x + r.w; ++i)
+    for (int j = r.y; j < r.y + r.h; ++j)
+      if (!Level_valid(level, i, j))
+        return false;
+  return true;
+}
+
+uint8_t Level_tile(Level *level, int x, int y) { return Level_valid(level, x, y) ? level->tiles[x][y] : 0; }
 void Level_set_tile(Level *level, int x, int y, uint8_t tile) {
-  if (x < 0 || x >= LEVEL_WIDTH || y < 0 || y >= LEVEL_HEIGHT)
-    return;
-  level->tiles[x][y] = tile;
+  if (Level_valid(level, x, y))
+    level->tiles[x][y] = tile;
 }
 
 void Level_clear_paths(Level *level) {
@@ -34,9 +45,7 @@ void Level_clear_paths(Level *level) {
   }
 }
 
-typedef struct {
-  int x, y;
-} Point;
+Vec2 Level_to_vec(int i, int j) { return (Vec2){i * 16.0f, j * 16.0f}; }
 
 typedef struct {
   Point points[LEVEL_WIDTH * LEVEL_HEIGHT];

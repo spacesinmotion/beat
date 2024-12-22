@@ -523,7 +523,7 @@ static void Game_draw(Game *g) {
   Game_update_console(g);
 
   sg_begin_pass(&(sg_pass){
-      .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {0.5f, 0.625f, 0.75f, 1.0f}}},
+      .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {0.1f, 0.1f, 0.15f, 1.0f}}},
       .swapchain = sglue_swapchain(),
   });
 

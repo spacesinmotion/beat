@@ -3,6 +3,7 @@
 
 #include "Game.h"
 #include "SceneObject.h"
+#include "math/Rect.h"
 
 typedef struct Level Level;
 typedef struct StreetMap StreetMap;
@@ -17,7 +18,7 @@ typedef struct GameScene {
   const sg_image *tilemap_img;
   const sg_image *menubar_img;
   const sg_image *marker;
-  Vec2 mp;
+  Recti r;
 
   int menu_under_mouse;
   int menu_selected;

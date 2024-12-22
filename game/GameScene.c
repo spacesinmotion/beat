@@ -47,10 +47,12 @@ void GameScene_draw(GameScene *gs, Game *g) {
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_draw(&gs->scene_objects.data[i], g);
 
-  if (gs->menu_under_mouse < 0) {
+  if (gs->menu_under_mouse < 0 && Level_validR(gs->level, gs->r)) {
     g_noise(g, 0.0f);
     g_color(g, red());
-    g_object(g, g_animation_buffer(g), gs->marker, gs->mp, 0.0f, g_frame(g) % 4);
+    for (int i = gs->r.x; i < gs->r.x + gs->r.w; ++i)
+      for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
+        g_object(g, g_animation_buffer(g), gs->marker, Level_to_vec(i, j), 0.0f, g_frame(g) % 4);
   }
 }
 
@@ -69,7 +71,8 @@ void GameScene_draw_overlay(GameScene *gs, Game *g) {
 
 void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   (void)g;
-  gs->mp = (Vec2){((int)((mp.x + 8) / 16.0f)) * 16.0f, ((int)((mp.y + 8) / 16.0f)) * 16.0f};
+  gs->r.x = (int)((mp.x + 8) / 16.0f);
+  gs->r.y = (int)((mp.y + 8) / 16.0f);
 
   gs->menu_under_mouse = -1;
   for (int i = 0; i < 10; ++i)
@@ -88,19 +91,29 @@ void mark_path(GameScene *gs, int i, int j) { Level_set_tile(gs->level, i, j, 4)
 
 void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   (void)g;
+  (void)mp;
   (void)op;
 
   if (button == 0) {
-    if (gs->menu_under_mouse < 0) {
-      int i = (int)((mp.x + 8) / 16.0f);
-      int j = (int)((mp.y + 8) / 16.0f);
-      int8_t t = Level_tile(gs->level, i, j);
+    if (gs->menu_under_mouse >= 0) {
+      gs->menu_selected = gs->menu_under_mouse;
+      if (gs->menu_selected == 0) {
+        gs->r.w = gs->r.h = 1;
+      } else if (gs->menu_selected == 1) {
+        gs->r.w = gs->r.h = 2;
+      } else {
+        gs->r.w = gs->r.h = 0;
+      }
+    } else if (gs->menu_selected == 0) {
+      Level_set_tile(gs->level, gs->r.x, gs->r.y, 2);
+    } else {
+      int8_t t = Level_tile(gs->level, gs->r.x, gs->r.y);
       if (t != 0) {
         if (start.x < 0) {
           Level_clear_paths(gs->level);
-          start = (Point){i, j};
+          start = (Point){gs->r.x, gs->r.y};
         } else {
-          stop = (Point){i, j};
+          stop = (Point){gs->r.x, gs->r.y};
           bfs(gs->level, start.x, start.y,
               (SearchHandle){
                   gs,
@@ -110,10 +123,9 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
               });
           start = (Point){-1, -1};
         }
-        Level_set_tile(gs->level, i, j, 3);
+        Level_set_tile(gs->level, gs->r.x, gs->r.y, 3);
       }
     }
-    gs->menu_selected = gs->menu_under_mouse;
   }
 }
 
@@ -121,14 +133,14 @@ void GameScene_add_object(GameScene *gs, SceneObject so) { SceneObjectVec_push(&
 
 void GameScene_init(Game *g) {
   GameScene *gs = gc_malloc(&gc, sizeof(GameScene));
-  *gs = (GameScene){
-      .tilemap_img = g_image(g, Img_tilemap),
-      .menubar_img = g_image(g, Img_menubar),
-      .marker = g_image(g, Img_marker),
-      .menu_under_mouse = -1,
-      .menu_selected = -1,
-      .level = gc_malloc(&gc, sizeof(Level)),
-  };
+  *gs = (GameScene){.scene_objects = (SceneObjectVec){NULL, 0, 0},
+                    .tilemap_img = g_image(g, Img_tilemap),
+                    .menubar_img = g_image(g, Img_menubar),
+                    .marker = g_image(g, Img_marker),
+                    .menu_under_mouse = -1,
+                    .menu_selected = 0,
+                    .level = gc_malloc(&gc, sizeof(Level)),
+                    .r = (Recti){-1, -1, 1, 1}};
 
   Level_init(gs->level);
   gs->street_map = StreetMap_init(g, gs);
