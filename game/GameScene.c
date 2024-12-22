@@ -1,7 +1,9 @@
 
 #include "game/GameScene.h"
 #include "game/Game.h"
+#include "game/House.h"
 #include "game/Level.h"
+#include "game/Marketplace.h"
 #include "game/SceneObject.h"
 #include "game/StreetMap.h"
 #include "game/Wearisome.h"
@@ -46,7 +48,7 @@ void GameScene_draw(GameScene *gs, Game *g) {
   if (gs->menu_under_mouse < 0 && Level_validR(gs->level, gs->r)) {
     if (gs->r.h > 0 && gs->r.w > 0) {
       g_noise(g, 0.0f);
-      g_color(g, rgb(130, 130, 194));
+      g_color(g, gs->preview);
       g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), gs->tilemap_img, Level_to_vec(gs->r.x, gs->r.y));
     }
     g_noise(g, 0.0f);
@@ -99,16 +101,25 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
     if (gs->menu_under_mouse >= 0) {
       gs->menu_selected = gs->menu_under_mouse;
       if (gs->menu_selected == 0) {
+        gs->preview = Street_color();
         gs->r.w = gs->r.h = 1;
       } else if (gs->menu_selected == 1) {
-        gs->r.w = 3;
-        gs->r.h = 2;
+        gs->preview = House_color();
+        gs->r.w = gs->r.h = 2;
+      } else if (gs->menu_selected == 2) {
+        gs->preview = Marketplace_color();
+        gs->r.w = 4;
+        gs->r.h = 3;
       } else {
         gs->r.w = gs->r.h = 0;
       }
     } else if (gs->menu_selected == 0) {
       Level_set_movable(gs->level, gs->r.x, gs->r.y, true);
       StreetMap_update(gs->street_map);
+    } else if (gs->menu_selected == 1) {
+      House_init(g, gs, (Point){gs->r.x, gs->r.y});
+    } else if (gs->menu_selected == 2) {
+      Marketplace_init(g, gs, (Point){gs->r.x, gs->r.y});
     } else {
       if (Level_movable(gs->level, gs->r.x, gs->r.y)) {
         if (start.x < 0) {

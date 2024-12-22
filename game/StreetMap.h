@@ -18,6 +18,8 @@ typedef struct StreetMap {
   Buffer *street_tile_map;
 } StreetMap;
 
+Color Street_color() { return rgb(204, 204, 204); }
+
 bool StreetMap_dead(StreetMap *sm) {
   (void)sm;
   return false;
@@ -44,7 +46,7 @@ int street_tex_for(StreetMap *sm, int i, int j) {
 
 void StreetMap_draw(StreetMap *sm, Game *g) {
   g_noise(g, 0.0f);
-  g_color(g, rgb(204, 204, 204));
+  g_color(g, Street_color());
   g_buffer(g, sm->street_tile_map, g_image(g, Img_tilemap), (Vec2){0, 0});
 
   for (int i = 0; i < LEVEL_WIDTH; ++i) {

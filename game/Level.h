@@ -12,7 +12,7 @@
 
 typedef enum TileType {
   T_None = 0,
-  T_CityCenter,
+  T_Marketplace,
   T_House,
 
   T_Path,
@@ -60,6 +60,11 @@ void Level_set_tile(Level *level, int x, int y, TileType tile) {
   if (Level_valid(level, x, y))
     level->tiles[x][y] = Level_movable(level, x, y) ? tile | T_Movable : tile;
 }
+void Level_set_tileR(Level *level, Recti r, TileType tile) {
+  for (int i = r.x; i < r.x + r.w; ++i)
+    for (int j = r.y; j < r.y + r.h; ++j)
+      Level_set_tile(level, i, j, tile);
+}
 
 void Level_clear_paths(Level *level) {
   for (int i = 0; i < LEVEL_WIDTH; ++i) {
@@ -72,6 +77,7 @@ void Level_clear_paths(Level *level) {
 }
 
 Vec2 Level_to_vec(int i, int j) { return (Vec2){i * 16.0f, j * 16.0f}; }
+Vec2 Level_to_vecP(Point p) { return Level_to_vec(p.x, p.y); }
 
 typedef struct {
   Point points[LEVEL_WIDTH * LEVEL_HEIGHT];

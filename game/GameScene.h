@@ -18,6 +18,8 @@ typedef struct GameScene {
   const sg_image *tilemap_img;
   const sg_image *menubar_img;
   const sg_image *marker;
+
+  Color preview;
   Recti r;
 
   int menu_under_mouse;
