@@ -115,28 +115,6 @@ void g_set_scene(Game *g, Scene scene) { g->scene = scene; }
 float g_time(Game *g) { return g->time; }
 int g_frame(Game *g) { return (int)(g->time * 8.0f); }
 
-Buffer create_tile_rect_buffer(int ni, int nj);
-
-const Buffer *g_tilerect_buffer(Game *g, int w, int h) {
-  TileRectBuffer *tb = NULL;
-  for (int i = 0; i < 16; ++i) {
-    if (g->tilerect_buffer[i].w == w && g->tilerect_buffer[i].h == h)
-      return &g->tilerect_buffer[i].buffer;
-    if (g->tilerect_buffer[i].w == 0 && g->tilerect_buffer[i].h == 0) {
-      tb = &g->tilerect_buffer[i];
-      break;
-    }
-  }
-  if (tb) {
-    tb->buffer = create_tile_rect_buffer(w, h);
-    tb->w = w;
-    tb->h = h;
-  }
-
-  return tb ? &tb->buffer : NULL;
-}
-const Buffer *g_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
-
 void g_color(Game *game, Color c) {
   game->render.fs_param.color[0] = c.r;
   game->render.fs_param.color[1] = c.g;
@@ -262,22 +240,16 @@ Buffer quad_animation_buffer(float x, float y, float w, float h, int ni, int nj)
   };
 }
 
-bool is_set(int i, int j, int w, int h) {
-  if (i < 0 || j < 0 || i >= w || j >= h)
-    return false;
-  return true;
-}
-
-uint8_t tile_code(int i, int j, int w, int h) {
+typedef bool (*IsSetCB)(void *data, int i, int j);
+uint8_t tile_code(int i, int j, IsSetCB is_set, void *data) {
   uint8_t code = 0;
-  code += is_set(i + 0, j + 0, w, h) * 1;
-  code += is_set(i + 1, j + 0, w, h) * 2;
-  code += is_set(i + 1, j + 1, w, h) * 4;
-  code += is_set(i + 0, j + 1, w, h) * 8;
+  code += is_set(data, i + 0, j + 0) * 1;
+  code += is_set(data, i + 1, j + 0) * 2;
+  code += is_set(data, i + 1, j + 1) * 4;
+  code += is_set(data, i + 0, j + 1) * 8;
   return code;
 }
-
-Buffer create_tile_rect_buffer(int ni, int nj) {
+Buffer create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
   static int lu[16][2] = {
       {0, 3}, {0, 0}, {1, 3}, {3, 0}, {0, 2}, {2, 3}, {1, 0}, {1, 1},
       {3, 3}, {3, 2}, {0, 1}, {2, 0}, {1, 2}, {3, 1}, {2, 2}, {2, 1},
@@ -288,7 +260,7 @@ Buffer create_tile_rect_buffer(int ni, int nj) {
   int ov = 0, oi = 0;
   for (int i = -1; i < ni; ++i) {
     for (int j = -1; j < nj; ++j) {
-      uint8_t tc = tile_code(i, j, ni, nj);
+      uint8_t tc = tile_code(i, j, is_set, data);
       if (tc == 0)
         continue;
       float x = i * 16.0f;
@@ -317,6 +289,33 @@ Buffer create_tile_rect_buffer(int ni, int nj) {
       .num_elements = oi,
   };
 }
+
+bool rect_is_set(Recti *r, int i, int j) {
+  if (i < 0 || j < 0 || i >= r->w || j >= r->h)
+    return false;
+  return true;
+}
+
+const Buffer *g_tilerect_buffer(Game *g, int w, int h) {
+  TileRectBuffer *tb = NULL;
+  for (int i = 0; i < 16; ++i) {
+    if (g->tilerect_buffer[i].w == w && g->tilerect_buffer[i].h == h)
+      return &g->tilerect_buffer[i].buffer;
+    if (g->tilerect_buffer[i].w == 0 && g->tilerect_buffer[i].h == 0) {
+      tb = &g->tilerect_buffer[i];
+      break;
+    }
+  }
+  if (tb) {
+    tb->buffer = create_tile_rect_buffer(w, h, (IsSetCB)rect_is_set, &(Recti){0, 0, w, h});
+    tb->w = w;
+    tb->h = h;
+  }
+
+  return tb ? &tb->buffer : NULL;
+}
+
+const Buffer *g_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
 
 static void Game_init(Game *g) {
   g->render.camera_pan = (Vec2){32.0f, 32.0f};
