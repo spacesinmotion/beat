@@ -14,18 +14,18 @@ typedef struct Level {
 
 void Level_init(Level *level) { memset(level->tiles, 0, sizeof(level->tiles)); }
 
-uint8_t level_tile(Level *level, int x, int y) {
+uint8_t Level_tile(Level *level, int x, int y) {
   if (x < 0 || x >= LEVEL_WIDTH || y < 0 || y >= LEVEL_HEIGHT)
     return 0;
   return level->tiles[x][y];
 }
-void level_set_tile(Level *level, int x, int y, uint8_t tile) {
+void Level_set_tile(Level *level, int x, int y, uint8_t tile) {
   if (x < 0 || x >= LEVEL_WIDTH || y < 0 || y >= LEVEL_HEIGHT)
     return;
   level->tiles[x][y] = tile;
 }
 
-void level_clear_paths(Level *level) {
+void Level_clear_paths(Level *level) {
   for (int i = 0; i < LEVEL_WIDTH; ++i) {
     for (int j = 0; j < LEVEL_HEIGHT; ++j) {
       if (level->tiles[i][j] > 0)

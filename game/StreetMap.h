@@ -25,13 +25,13 @@ bool StreetMap_dead(StreetMap *sm) {
 
 int street_tex_for(StreetMap *sm, int i, int j) {
   int k = 0;
-  if (level_tile(sm->level, i + 1, j) != 0)
+  if (Level_tile(sm->level, i + 1, j) != 0)
     k += 1;
-  if (level_tile(sm->level, i, j + 1) != 0)
+  if (Level_tile(sm->level, i, j + 1) != 0)
     k += 2;
-  if (level_tile(sm->level, i - 1, j) != 0)
+  if (Level_tile(sm->level, i - 1, j) != 0)
     k += 4;
-  if (level_tile(sm->level, i, j - 1) != 0)
+  if (Level_tile(sm->level, i, j - 1) != 0)
     k += 8;
   return k;
 }
@@ -41,7 +41,7 @@ void StreetMap_draw(StreetMap *sm, Game *g) {
 
   for (int i = 0; i < LEVEL_WIDTH; ++i) {
     for (int j = 0; j < LEVEL_WIDTH; ++j) {
-      uint8_t tc = level_tile(sm->level, i, j);
+      uint8_t tc = Level_tile(sm->level, i, j);
       if (tc == 0)
         continue;
       if (tc == 2)
@@ -118,21 +118,21 @@ StreetMap *StreetMap_init(Game *g, GameScene *gs) {
 
     for (int i = x; i < x + width && i < LEVEL_WIDTH; ++i) {
       for (int j = y; j < y + height && j < LEVEL_HEIGHT; ++j) {
-        level_set_tile(sm->level, i, j, 2);
+        Level_set_tile(sm->level, i, j, 2);
       }
     }
 
     if (n > 0) {
       if (rand() % 2 == 0) {
         for (int i = i_min(last_y, next_y); i < i_max(last_y, next_y); ++i)
-          level_set_tile(sm->level, i_min(last_x, next_x), i, 2);
+          Level_set_tile(sm->level, i_min(last_x, next_x), i, 2);
         for (int i = i_min(last_x, next_x); i < i_max(last_x, next_x); ++i)
-          level_set_tile(sm->level, i, last_x < next_x ? next_y : last_y, 2);
+          Level_set_tile(sm->level, i, last_x < next_x ? next_y : last_y, 2);
       } else {
         for (int i = i_min(last_x, next_x); i < i_max(last_x, next_x); ++i)
-          level_set_tile(sm->level, i, i_min(last_y, next_y), 2);
+          Level_set_tile(sm->level, i, i_min(last_y, next_y), 2);
         for (int i = i_min(last_y, next_y); i < i_max(last_y, next_y); ++i)
-          level_set_tile(sm->level, last_y < next_y ? next_x : last_x, i, 2);
+          Level_set_tile(sm->level, last_y < next_y ? next_x : last_x, i, 2);
       }
     }
     last_x = next_x;
