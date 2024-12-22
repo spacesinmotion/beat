@@ -330,7 +330,7 @@ Buffer create_tile_map_buffer() {
 
 static void Game_init(Game *g) {
   g->render.camera_pan = (Vec2){32.0f, 32.0f};
-  g->render.camera_scale = 2.0f;
+  g->render.camera_scale = 1.0f;
   g->render.overlay_scale = 2.0f;
   g->render.vs_param = (vs_param_t){
       {2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale},
@@ -674,8 +674,8 @@ int main(int argc, char *argv[]) {
       .cleanup_userdata_cb = (void (*)(void *))Game_cleanup,
       .event_userdata_cb = (void (*)(const sapp_event *, void *))Game_handel_events,
       .user_data = &g,
-      .width = 800,
-      .height = 600,
+      .width = 1024,
+      .height = 690,
       .window_title = "trapped again",
       .icon.sokol_default = true,
       .logger.func = slog_func,

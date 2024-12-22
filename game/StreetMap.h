@@ -15,9 +15,7 @@
 #define njj 16
 typedef struct StreetMap {
   const sg_image *texture;
-  // int maze_dir[nii][njj];
   Level *level;
-  // int oi, oj;
 } StreetMap;
 
 bool StreetMap_dead(StreetMap *sm) {
@@ -27,26 +25,32 @@ bool StreetMap_dead(StreetMap *sm) {
 
 int street_tex_for(StreetMap *sm, int i, int j) {
   int k = 0;
-  if (level_tile(sm->level, i + 1, j) == 2)
+  if (level_tile(sm->level, i + 1, j) != 0)
     k += 1;
-  if (level_tile(sm->level, i, j + 1) == 2)
+  if (level_tile(sm->level, i, j + 1) != 0)
     k += 2;
-  if (level_tile(sm->level, i - 1, j) == 2)
+  if (level_tile(sm->level, i - 1, j) != 0)
     k += 4;
-  if (level_tile(sm->level, i, j - 1) == 2)
+  if (level_tile(sm->level, i, j - 1) != 0)
     k += 8;
   return k;
 }
 
 void StreetMap_draw(StreetMap *sm, Game *g) {
   g_noise(g, 0.0f);
-  g_color(g, white());
 
   for (int i = 0; i < LEVEL_WIDTH; ++i) {
     for (int j = 0; j < LEVEL_WIDTH; ++j) {
       uint8_t tc = level_tile(sm->level, i, j);
-      if (tc != 2)
+      if (tc == 0)
         continue;
+      if (tc == 2)
+        g_color(g, white());
+      else if (tc == 3)
+        g_color(g, red());
+      else if (tc == 4)
+        g_color(g, rgb(194, 130, 130));
+
       g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0.0f,
                street_tex_for(sm, i, j));
 
@@ -98,15 +102,9 @@ void StreetMap_draw(StreetMap *sm, Game *g) {
 StreetMap *StreetMap_init(Game *g, GameScene *gs) {
   StreetMap *sm = gc_malloc(&gc, sizeof(StreetMap));
   *sm = (StreetMap){
-      .texture = g_image(g, Img_street), .level = gs->level,
-      // .oi = nii - 1,
-      // .oj = njj - 1,
+      .texture = g_image(g, Img_street),
+      .level = gs->level,
   };
-
-  for (int i = 0; i < LEVEL_WIDTH; ++i) {
-    level_set_tile(sm->level, i, 0, 2);
-    level_set_tile(sm->level, i, LEVEL_HEIGHT - 1, 2);
-  }
 
   int last_x = 2, last_y = 2;
   for (int n = 0; n < 13; ++n) {

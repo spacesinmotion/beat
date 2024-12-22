@@ -9,6 +9,7 @@
 #include "gc/gc.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
+#include <stdint.h>
 
 void SceneObjectVec_push(SceneObjectVec *vec, SceneObject so) {
   if (vec->len + 1 > vec->cap) {
@@ -39,18 +40,18 @@ void GameScene_update(GameScene *gs, Game *g, float dt) {
 void GameScene_draw(GameScene *gs, Game *g) {
   g_noise(g, 0.0f);
   g_color(g, white());
-  g_buffer(g, g_tilemap_buffer(g), gs->tilemap_img, (Vec2){8, 8});
+  // g_buffer(g, g_tilemap_buffer(g), gs->tilemap_img, (Vec2){8, 8});
+
+  StreetMap_draw(gs->street_map, g);
+
+  for (int i = 0; i < gs->scene_objects.len; ++i)
+    SceneObject_draw(&gs->scene_objects.data[i], g);
 
   if (gs->menu_under_mouse < 0) {
     g_noise(g, 0.0f);
     g_color(g, red());
     g_object(g, g_animation_buffer(g), gs->marker, gs->mp, 0.0f, g_frame(g) % 4);
   }
-
-  StreetMap_draw(gs->street_map, g);
-
-  for (int i = 0; i < gs->scene_objects.len; ++i)
-    SceneObject_draw(&gs->scene_objects.data[i], g);
 }
 
 void GameScene_draw_overlay(GameScene *gs, Game *g) {
@@ -69,7 +70,7 @@ void GameScene_draw_overlay(GameScene *gs, Game *g) {
 
 void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   (void)g;
-  gs->mp = (Vec2){((int)(mp.x / 16.0f)) * 16.0f, ((int)(mp.y / 16.0f)) * 16.0f};
+  gs->mp = (Vec2){((int)((mp.x + 8) / 16.0f)) * 16.0f, ((int)((mp.y + 8) / 16.0f)) * 16.0f};
 
   gs->menu_under_mouse = -1;
   for (int i = 0; i < 10; ++i) {
@@ -78,10 +79,36 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   }
 }
 
+Point start = (Point){-1, -1};
+Point stop = (Point){-1, -1};
+bool reached_goal(GameScene *gs, int i, int j) { return i == stop.x && j == stop.y; }
+bool movable(GameScene *gs, int i, int j) { return level_tile(gs->level, i, j) > 0; }
+void mark_path(GameScene *gs, int i, int j) { level_set_tile(gs->level, i, j, 4); }
+
 void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   if (button == 0) {
-    if (gs->menu_under_mouse < 0)
-      set_map_key((int)(mp.x / 16.0f), (int)(mp.y / 16.0f), 2);
+    if (gs->menu_under_mouse < 0) {
+      int i = (int)((mp.x + 8) / 16.0f);
+      int j = (int)((mp.y + 8) / 16.0f);
+      int8_t t = level_tile(gs->level, i, j);
+      if (t != 0) {
+        if (start.x < 0) {
+          level_clear_paths(gs->level);
+          start = (Point){i, j};
+        } else {
+          stop = (Point){i, j};
+          bfs(gs->level, start.x, start.y,
+              (SearchHandle){
+                  gs,
+                  (CanMoveCB)movable,
+                  (GoalReachedCB)reached_goal,
+                  (PathCB)mark_path,
+              });
+          start = (Point){-1, -1};
+        }
+        level_set_tile(gs->level, i, j, 3);
+      }
+    }
     gs->menu_selected = gs->menu_under_mouse;
   }
 }
@@ -99,12 +126,7 @@ void GameScene_init(Game *g) {
       .level = gc_malloc(&gc, sizeof(Level)),
   };
 
-  for (int i = 0; i < LEVEL_WIDTH; ++i) {
-    for (int j = 0; j < LEVEL_HEIGHT; ++j) {
-      level_set_tile(gs->level, i, j, 0);
-    }
-  }
-
+  Level_init(gs->level);
   gs->street_map = StreetMap_init(g, gs);
 
   Wearisome_init(g, gs, (Vec2){18 * 16, 14 * 16}, Evil);
