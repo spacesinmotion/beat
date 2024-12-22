@@ -84,7 +84,7 @@ typedef struct Assets {
 } Assets;
 
 typedef struct TileRectBuffer {
-  Buffer buffer;
+  Buffer *buffer;
   int w, h;
 } TileRectBuffer;
 
@@ -239,8 +239,6 @@ Buffer quad_animation_buffer(float x, float y, float w, float h, int ni, int nj)
       .num_elements = 6 * 2,
   };
 }
-
-typedef bool (*IsSetCB)(void *data, int i, int j);
 uint8_t tile_code(int i, int j, IsSetCB is_set, void *data) {
   uint8_t code = 0;
   code += is_set(data, i + 0, j + 0) * 1;
@@ -249,7 +247,7 @@ uint8_t tile_code(int i, int j, IsSetCB is_set, void *data) {
   code += is_set(data, i + 0, j + 1) * 8;
   return code;
 }
-Buffer create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
+Buffer *create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
   static int lu[16][2] = {
       {0, 3}, {0, 0}, {1, 3}, {3, 0}, {0, 2}, {2, 3}, {1, 0}, {1, 1},
       {3, 3}, {3, 2}, {0, 1}, {2, 0}, {1, 2}, {3, 1}, {2, 2}, {2, 1},
@@ -275,7 +273,8 @@ Buffer create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
       ov += 4;
     }
   }
-  return (Buffer){
+  Buffer *b = (Buffer *)gc_malloc(&gc, sizeof(Buffer));
+  *b = (Buffer){
       .vertices = sg_make_buffer(&(sg_buffer_desc){
           .type = SG_BUFFERTYPE_VERTEXBUFFER,
           .data = (sg_range){vertices, sizeof(vertex_t) * 4 * (ni + 1) * (nj + 1)},
@@ -288,6 +287,13 @@ Buffer create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
       }),
       .num_elements = oi,
   };
+  return b;
+}
+
+void Buffer_free(Buffer *b) {
+  sg_destroy_buffer(b->vertices);
+  sg_destroy_buffer(b->indices);
+  gc_free(&gc, b);
 }
 
 bool rect_is_set(Recti *r, int i, int j) {
@@ -300,7 +306,7 @@ const Buffer *g_tilerect_buffer(Game *g, int w, int h) {
   TileRectBuffer *tb = NULL;
   for (int i = 0; i < 16; ++i) {
     if (g->tilerect_buffer[i].w == w && g->tilerect_buffer[i].h == h)
-      return &g->tilerect_buffer[i].buffer;
+      return g->tilerect_buffer[i].buffer;
     if (g->tilerect_buffer[i].w == 0 && g->tilerect_buffer[i].h == 0) {
       tb = &g->tilerect_buffer[i];
       break;
@@ -312,7 +318,7 @@ const Buffer *g_tilerect_buffer(Game *g, int w, int h) {
     tb->h = h;
   }
 
-  return tb ? &tb->buffer : NULL;
+  return tb ? tb->buffer : NULL;
 }
 
 const Buffer *g_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }

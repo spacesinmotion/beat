@@ -108,6 +108,7 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
       }
     } else if (gs->menu_selected == 0) {
       Level_set_movable(gs->level, gs->r.x, gs->r.y, true);
+      StreetMap_update(gs->street_map);
     } else {
       if (Level_movable(gs->level, gs->r.x, gs->r.y)) {
         if (start.x < 0) {

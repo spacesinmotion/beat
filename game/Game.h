@@ -10,6 +10,10 @@
 typedef struct sg_image sg_image;
 typedef struct Buffer Buffer;
 
+typedef bool (*IsSetCB)(void *data, int i, int j);
+Buffer *create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data);
+void Buffer_free(Buffer *b);
+
 typedef struct Game Game;
 
 typedef void (*SceneUpdateCB)(void *, Game *, float);
