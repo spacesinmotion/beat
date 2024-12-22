@@ -53,47 +53,9 @@ void StreetMap_draw(StreetMap *sm, Game *g) {
 
       g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0.0f,
                street_tex_for(sm, i, j));
-
-      // if (i > 0 && sm->maze_dir[i - 1][j] == 0)
-      //   g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0.0f, 2);
-      // if (i < nii - 1 && sm->maze_dir[i + 1][j] == 2)
-      //   g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0.0f, 0);
-      // if (j > 0 && sm->maze_dir[i][j - 1] == 1)
-      //   g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0.0f, 3);
-      // if (j < nii - 1 && sm->maze_dir[i][j + 1] == 3)
-      //   g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0.0f, 1);
-      // g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0.0f, 4);
-      // g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0.0f,
-      // sm->maze_dir[i][j]); g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f),
-      // 0.0f,
-      //          8 + sm->maze_dir[i][j]);
     }
   }
 }
-
-// void StreetMap_maze_step(StreetMap *sm) {
-//   for (int i = 0; i < 100; ++i) {
-//     const int d = rand() % 4;
-//     int noi = sm->oi, noj = sm->oj;
-//     if (d == 0)
-//       noi++;
-//     else if (d == 1)
-//       noj++;
-//     else if (d == 2)
-//       noi--;
-//     else if (d == 3)
-//       noj--;
-
-//     if (noi < 0 || noj < 0 || noi >= nii || noj >= njj)
-//       continue;
-
-//     sm->maze_dir[sm->oi][sm->oj] = d;
-//     sm->oi = noi;
-//     sm->oj = noj;
-//     sm->maze_dir[sm->oi][sm->oj] = 4;
-//     return;
-//   }
-// }
 
 // SceneObjectTable StreetMap_table = (SceneObjectTable){
 //     .dead = (SceneObjectDeadCB)StreetMap_dead,
@@ -138,16 +100,6 @@ StreetMap *StreetMap_init(Game *g, GameScene *gs) {
     last_x = next_x;
     last_y = next_y;
   }
-  // for (int i = 0; i < nii; ++i) {
-  //   for (int j = 0; j < njj; ++j) {
-  //     sm->maze_dir[i][j] = i + 1 == nii ? 1 : 0;
-  //   }
-  // }
-  // sm->maze_dir[sm->oi][sm->oj] = 4;
-  // for (int i = 0; i < 5000; ++i)
-  //   StreetMap_maze_step(sm);
-
-  // GameScene_add_object(gs, (SceneObject){.context = sm, &StreetMap_table});
   return sm;
 }
 

@@ -57,13 +57,12 @@ void GameScene_draw(GameScene *gs, Game *g) {
 void GameScene_draw_overlay(GameScene *gs, Game *g) {
   g_noise(g, 0.0f);
   g_color(g, white());
-  for (int i = 0; i < 10; ++i) {
-    g_object(g, g_animation_buffer(g), gs->menubar_img, (Vec2){4 + i * 16, 4}, 0.0f, i % 16);
-  }
+  for (int i = 0; i < 10; ++i)
+    g_object(g, g_animation_buffer(g), gs->menubar_img, (Vec2){8 + 4 + i * 16, 8 + 4}, 0.0f, i % 16);
   for (int i = 0; i < 10; ++i) {
     g_noise(g, i == gs->menu_under_mouse ? 0.3f : 0.0f);
     g_color(g, i == gs->menu_under_mouse ? red() : (gs->menu_selected == i ? green() : blue()));
-    g_object(g, g_animation_buffer(g), gs->marker, (Vec2){4 + i * 16, 4}, 0.0f,
+    g_object(g, g_animation_buffer(g), gs->marker, (Vec2){8 + 4 + i * 16, 8 + 4}, 0.0f,
              i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4);
   }
 }
@@ -73,19 +72,24 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   gs->mp = (Vec2){((int)((mp.x + 8) / 16.0f)) * 16.0f, ((int)((mp.y + 8) / 16.0f)) * 16.0f};
 
   gs->menu_under_mouse = -1;
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 10; ++i)
     if (Rect_contains((Rect){(Vec2){4 + i * 16, 4}, (Vec2){16, 16}}, op))
       gs->menu_under_mouse = i;
-  }
 }
 
 Point start = (Point){-1, -1};
 Point stop = (Point){-1, -1};
-bool reached_goal(GameScene *gs, int i, int j) { return i == stop.x && j == stop.y; }
+bool reached_goal(GameScene *gs, int i, int j) {
+  (void)gs;
+  return i == stop.x && j == stop.y;
+}
 bool movable(GameScene *gs, int i, int j) { return Level_tile(gs->level, i, j) > 0; }
 void mark_path(GameScene *gs, int i, int j) { Level_set_tile(gs->level, i, j, 4); }
 
 void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
+  (void)g;
+  (void)op;
+
   if (button == 0) {
     if (gs->menu_under_mouse < 0) {
       int i = (int)((mp.x + 8) / 16.0f);

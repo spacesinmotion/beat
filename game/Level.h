@@ -63,6 +63,8 @@ typedef struct SearchHandle {
 } SearchHandle;
 
 bool bfs(Level *level, int start_x, int start_y, SearchHandle handle) {
+  (void)level;
+
   Point predecessor[LEVEL_WIDTH][LEVEL_HEIGHT];
   memset(predecessor, -1, sizeof(predecessor));
 

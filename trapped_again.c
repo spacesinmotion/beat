@@ -335,6 +335,7 @@ static void Game_init(Game *g) {
   g->render.vs_param = (vs_param_t){
       {2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale},
       {1.0f, 1.0f},
+      0.0f,
   };
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0.0, 0};
 
