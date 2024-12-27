@@ -50,13 +50,6 @@
 
 #include "game/GameScene.h"
 
-#define FONT_KC853 (0)
-#define FONT_KC854 (1)
-#define FONT_Z1013 (2)
-#define FONT_CPC (3)
-#define FONT_C64 (4)
-#define FONT_ORIC (5)
-
 typedef struct vertex_t {
   Vec2 p;
   uint16_t u, v;
@@ -355,12 +348,7 @@ static void Game_init(Game *g) {
   });
 
   sdtx_setup(&(sdtx_desc_t){
-      .fonts = {[FONT_KC853] = sdtx_font_kc853(),
-                [FONT_KC854] = sdtx_font_kc854(),
-                [FONT_Z1013] = sdtx_font_z1013(),
-                [FONT_CPC] = sdtx_font_cpc(),
-                [FONT_C64] = sdtx_font_c64(),
-                [FONT_ORIC] = sdtx_font_oric()},
+      .fonts = {sdtx_font_kc853()},
       .logger.func = slog_func,
   });
 
@@ -492,7 +480,6 @@ static void Game_init(Game *g) {
 
 void Game_update_console(Game *g) {
   sdtx_canvas(sapp_width(), sapp_height());
-  sdtx_font(FONT_KC853);
 
   sdtx_home();
   sdtx_origin(0, 0);
