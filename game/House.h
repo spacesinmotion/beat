@@ -11,6 +11,9 @@ typedef struct House {
   const sg_image *texture;
   const Buffer *buffer;
   Point location;
+
+  Wearisome *wearisome;
+  bool wearisomeat_home;
 } House;
 
 Color House_color() { return rgb(87, 163, 106); }
@@ -30,6 +33,18 @@ void House_update(House *h, Game *g, GameScene *gs, float dt) {
   (void)g;
   (void)gs;
   (void)dt;
+
+  if (h->wearisomeat_home) {
+    int options[8][2] = {{-1, 0}, {-1, 1}, {2, 0}, {2, 1}, {0, -1}, {1, -1}, {0, 2}, {1, 2}};
+    for (int i = 0; i < 8; ++i) {
+      int ii = h->location.x + options[i][0];
+      int jj = h->location.y + options[i][1];
+      if (Level_movable(gs->level, ii, jj)) {
+        h->wearisomeat_home = false;
+        h->wearisome->destination = Level_to_vecP((Point){ii, jj});
+      }
+    }
+  }
 }
 
 void House_draw(House *h, Game *g) {
@@ -51,12 +66,14 @@ House *House_init(Game *g, GameScene *gs, Point p) {
       .texture = g_image(g, Img_tilemap),
       .buffer = g_tilerect_buffer(g, 2, 2),
       .location = p,
+      .wearisome = NULL,
+      .wearisomeat_home = true,
   };
 
   Level_set_tileR(gs->level, (Recti){p.x, p.y, 2, 2}, T_House);
   GameScene_add_object(gs, (SceneObject){w, &House_table});
 
-  Wearisome_init(g, gs, Level_to_vecP(p));
+  w->wearisome = Wearisome_init(g, gs, Level_to_vecP(p));
 
   return w;
 }

@@ -6,12 +6,13 @@
 #include "game/SceneObject.h"
 #include "game/assets.h"
 #include "gc/gc.h"
-#include "math.h"
 #include "math/Circ.h"
 #include "math/Vec2.h"
-#include "math/random.h"
 
-#include <float.h>
+typedef struct PathPoint {
+  Vec2 p;
+  struct PathPoint *next;
+} PathPoint;
 
 typedef struct Wearisome {
   const sg_image *texture;
@@ -19,6 +20,8 @@ typedef struct Wearisome {
 
   Vec2 position;
   Vec2 destination;
+
+  PathPoint *path;
 } Wearisome;
 
 bool Wearisome_dead(Wearisome *w) {
@@ -30,6 +33,10 @@ Circle Wearisome_circle(Wearisome *w) { return (Circle){w->position, 8.0f}; }
 
 void Wearisome_update(Wearisome *w, Game *g, GameScene *gs, float dt) {
   (void)g;
+  if (w->path && v_eq(w->position, w->destination)) {
+    w->destination = w->path->p;
+    w->path = w->path->next;
+  }
   w->position = v_lerp_about(w->position, w->destination, dt * 32.0);
 }
 void Wearisome_draw(Wearisome *w, Game *g) {
@@ -56,6 +63,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Vec2 pos) {
       .weapon = g_image(g, Img_weapons),
       .position = pos,
       .destination = pos,
+      .path = NULL,
   };
   GameScene_add_object(gs, (SceneObject){.context = w, &Wearisome_table});
   return w;

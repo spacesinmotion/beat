@@ -7,6 +7,7 @@
 
 typedef struct Level Level;
 typedef struct StreetMap StreetMap;
+typedef struct Wearisome Wearisome;
 
 typedef struct SceneObjectVec {
   SceneObject *data;
@@ -27,6 +28,8 @@ typedef struct GameScene {
 
   Level *level;
   StreetMap *street_map;
+
+  Wearisome *w;
 } GameScene;
 
 typedef struct GameScene GameScene;

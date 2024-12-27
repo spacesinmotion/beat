@@ -82,6 +82,7 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
       gs->menu_under_mouse = i;
 }
 
+PathPoint *path = NULL;
 Point start = (Point){-1, -1};
 Point stop = (Point){-1, -1};
 bool reached_goal(GameScene *gs, int i, int j) {
@@ -89,7 +90,12 @@ bool reached_goal(GameScene *gs, int i, int j) {
   return i == stop.x && j == stop.y;
 }
 bool movable(GameScene *gs, int i, int j) { return Level_movable(gs->level, i, j); }
-void mark_path(GameScene *gs, int i, int j) { Level_set_tile(gs->level, i, j, T_Path); }
+void mark_path(GameScene *gs, int i, int j) {
+  PathPoint *pp = gc_malloc(&gc, sizeof(PathPoint));
+  *pp = (PathPoint){Level_to_vec(i, j), path};
+  path = pp;
+  Level_set_tile(gs->level, i, j, T_Path);
+}
 
 void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   (void)g;
@@ -124,6 +130,7 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
         if (start.x < 0) {
           Level_clear_paths(gs->level);
           start = (Point){gs->r.x, gs->r.y};
+          gs->w->position = gs->w->destination = Level_to_vecP(start);
         } else {
           stop = (Point){gs->r.x, gs->r.y};
           bfs(gs->level, start.x, start.y,
@@ -134,6 +141,8 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
                   (PathCB)mark_path,
               });
           start = (Point){-1, -1};
+          gs->w->path = path;
+          path = NULL;
         }
         Level_set_tile(gs->level, gs->r.x, gs->r.y, T_PathStartEnd);
       }
@@ -156,6 +165,8 @@ void GameScene_init(Game *g) {
 
   Level_init(gs->level);
   gs->street_map = StreetMap_init(g, gs);
+
+  gs->w = Wearisome_init(g, gs, (Vec2){0, 0});
 
   g_set_scene(g, (Scene){
                      .context = gs,
