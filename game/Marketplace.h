@@ -22,9 +22,8 @@ Circle Marketplace_circle(Marketplace *mp) {
   return (Circle){0};
 }
 
-void Marketplace_update(Marketplace *mp, Game *g, GameScene *gs, float dt) {
+void Marketplace_update(Marketplace *mp, GameScene *gs, float dt) {
   (void)mp;
-  (void)g;
   (void)gs;
   (void)dt;
 }

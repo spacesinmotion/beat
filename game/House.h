@@ -26,10 +26,7 @@ Circle House_circle(House *h) {
   return (Circle){0};
 }
 
-void House_update(House *h, Game *g, GameScene *gs, float dt) {
-  (void)h;
-  (void)g;
-  (void)gs;
+void House_update(House *h, GameScene *gs, float dt) {
   (void)dt;
 
   if (h->wearisomeat_home) {

@@ -32,6 +32,7 @@ void SceneObjectVec_filter_dead(SceneObjectVec *vec) {
 }
 
 void GameScene_update(GameScene *gs, Game *g, float dt) {
+  (void)g;
   gs->daytime += dt / 60.0f;
   if (gs->daytime > 1.0f) {
     gs->daytime -= 1.0f;
@@ -39,7 +40,7 @@ void GameScene_update(GameScene *gs, Game *g, float dt) {
   }
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
-    SceneObject_update(&gs->scene_objects.data[i], g, gs, dt);
+    SceneObject_update(&gs->scene_objects.data[i], gs, dt);
 
   SceneObjectVec_filter_dead(&gs->scene_objects);
 }

@@ -27,8 +27,7 @@ bool Wearisome_dead(Wearisome *w) {
 
 Circle Wearisome_circle(Wearisome *w) { return (Circle){w->position, 8.0f}; }
 
-void Wearisome_update(Wearisome *w, Game *g, GameScene *gs, float dt) {
-  (void)g;
+void Wearisome_update(Wearisome *w, GameScene *gs, float dt) {
   (void)gs;
   if (w->path && v_eq(w->position, w->destination)) {
     w->destination = w->path->p;

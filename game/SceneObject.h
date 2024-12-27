@@ -12,7 +12,7 @@ typedef struct GameScene GameScene;
 
 typedef bool (*SceneObjectDeadCB)(const SceneObject *);
 typedef Circle (*SceneObjectCircle)(const SceneObject *);
-typedef void (*SceneObjectUpdateCB)(SceneObject *, Game *, GameScene *, float);
+typedef void (*SceneObjectUpdateCB)(SceneObject *, GameScene *, float);
 typedef void (*SceneObjectDrawCB)(SceneObject *, Game *);
 
 typedef struct SceneObjectTable {
@@ -40,9 +40,9 @@ static inline Circle SceneObject_circle(const SceneObject *so) {
   return so->table->circle(so->context);
 }
 
-static inline void SceneObject_update(SceneObject *so, Game *g, GameScene *gs, float dt) {
+static inline void SceneObject_update(SceneObject *so, GameScene *gs, float dt) {
   if (so->context && so->table->update)
-    so->table->update(so->context, g, gs, dt);
+    so->table->update(so->context, gs, dt);
 }
 
 static inline void SceneObject_draw(SceneObject *so, Game *g) {
