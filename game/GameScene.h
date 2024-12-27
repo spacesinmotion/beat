@@ -19,6 +19,10 @@ typedef struct GameScene {
   const sg_image *house_map_img;
   const sg_image *menubar_img;
   const sg_image *marker;
+  const sg_image *overlay_img;
+
+  float daytime;
+  int day;
 
   Color preview;
   Recti r;

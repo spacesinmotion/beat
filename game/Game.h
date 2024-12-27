@@ -3,6 +3,7 @@
 
 #include "game/assets.h"
 #include "math/Color.h"
+#include "math/Rect.h"
 #include "math/Vec2.h"
 
 #include <stdbool.h>
@@ -33,6 +34,8 @@ void g_set_scene(Game *g, Scene scene);
 
 float g_time(Game *g);
 int g_frame(Game *g);
+
+Point g_viewport(Game *g);
 
 const Buffer *g_tilerect_buffer(Game *g, int w, int h);
 const Buffer *g_animation_buffer(Game *g);

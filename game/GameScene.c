@@ -8,6 +8,7 @@
 #include "game/StreetMap.h"
 #include "game/assets.h"
 #include "gc/gc.h"
+#include "math.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
 
@@ -31,6 +32,12 @@ void SceneObjectVec_filter_dead(SceneObjectVec *vec) {
 }
 
 void GameScene_update(GameScene *gs, Game *g, float dt) {
+  gs->daytime += dt / 60.0f;
+  if (gs->daytime > 1.0f) {
+    gs->daytime -= 1.0f;
+    gs->day++;
+  }
+
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_update(&gs->scene_objects.data[i], g, gs, dt);
 
@@ -69,6 +76,12 @@ void GameScene_draw_overlay(GameScene *gs, Game *g) {
     g_object(g, g_animation_buffer(g), gs->marker, (Vec2){8 + 4 + i * 16, 8 + 4}, 0.0f,
              i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4);
   }
+
+  Point vp = g_viewport(g);
+  Vec2 clock_pos = (Vec2){vp.x - 16.0f, vp.y - 16.0f};
+  g_color(g, gs->daytime > 0.75 ? red() : white());
+  g_object(g, g_animation_buffer(g), gs->overlay_img, clock_pos, -gs->daytime * M_PI * 2.0f, 0);
+  g_object(g, g_animation_buffer(g), gs->overlay_img, clock_pos, 0.0f, 1);
 }
 
 void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
@@ -158,6 +171,7 @@ void GameScene_init(Game *g) {
                     .house_map_img = g_image(g, Img_house_map),
                     .menubar_img = g_image(g, Img_menubar),
                     .marker = g_image(g, Img_marker),
+                    .overlay_img = g_image(g, Img_overlay_images),
                     .menu_under_mouse = -1,
                     .menu_selected = 0,
                     .level = gc_malloc(&gc, sizeof(Level)),
