@@ -48,7 +48,7 @@ void GameScene_draw(GameScene *gs, Game *g) {
     if (gs->r.h > 0 && gs->r.w > 0) {
       g_noise(g, 0.0f);
       g_color(g, gs->preview);
-      g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), gs->tilemap_img, Level_to_vec(gs->r.x, gs->r.y));
+      g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), gs->house_map_img, Level_to_vec(gs->r.x, gs->r.y));
     }
     g_noise(g, 0.0f);
     g_color(g, red());
@@ -155,7 +155,7 @@ void GameScene_add_object(GameScene *gs, SceneObject so) { SceneObjectVec_push(&
 void GameScene_init(Game *g) {
   GameScene *gs = gc_malloc(&gc, sizeof(GameScene));
   *gs = (GameScene){.scene_objects = (SceneObjectVec){NULL, 0, 0},
-                    .tilemap_img = g_image(g, Img_tilemap),
+                    .house_map_img = g_image(g, Img_house_map),
                     .menubar_img = g_image(g, Img_menubar),
                     .marker = g_image(g, Img_marker),
                     .menu_under_mouse = -1,

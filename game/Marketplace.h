@@ -47,7 +47,7 @@ static SceneObjectTable Marketplace_table = (SceneObjectTable){
 Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
   Marketplace *w = gc_malloc(&gc, sizeof(Marketplace));
   *w = (Marketplace){
-      .texture = g_image(g, Img_tilemap),
+      .texture = g_image(g, Img_house_map),
       .buffer = g_tilerect_buffer(g, 4, 3),
       .location = p,
   };

@@ -16,7 +16,7 @@ typedef struct SceneObjectVec {
 
 typedef struct GameScene {
   SceneObjectVec scene_objects;
-  const sg_image *tilemap_img;
+  const sg_image *house_map_img;
   const sg_image *menubar_img;
   const sg_image *marker;
 

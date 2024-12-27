@@ -63,7 +63,7 @@ static SceneObjectTable House_table = (SceneObjectTable){
 House *House_init(Game *g, GameScene *gs, Point p) {
   House *w = gc_malloc(&gc, sizeof(House));
   *w = (House){
-      .texture = g_image(g, Img_tilemap),
+      .texture = g_image(g, Img_house_map),
       .buffer = g_tilerect_buffer(g, 2, 2),
       .location = p,
       .wearisome = NULL,
