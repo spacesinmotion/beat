@@ -7,8 +7,8 @@
 #include "gc/gc.h"
 
 typedef struct Marketplace {
-  const sg_image *texture;
-  const Buffer *buffer;
+  G_Image texture;
+  G_Object buffer;
   Point location;
 } Marketplace;
 

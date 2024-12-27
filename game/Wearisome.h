@@ -15,8 +15,8 @@ typedef struct PathPoint {
 } PathPoint;
 
 typedef struct Wearisome {
-  const sg_image *texture;
-  const sg_image *weapon;
+  G_Image texture;
+  G_Image weapon;
 
   Vec2 position;
   Vec2 destination;

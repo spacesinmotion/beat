@@ -1,4 +1,5 @@
-
+#ifndef COLOR
+#define COLOR
 
 typedef struct Color {
   float r, g, b, a;
@@ -37,3 +38,5 @@ static inline Color alphaf(Color c, float a) { return (Color){c.r, c.g, c.b, a};
 // fn disabled_color() Color {
 //   return rgb(99, 99, 99)
 // }
+
+#endif

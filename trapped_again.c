@@ -62,11 +62,6 @@ typedef struct vertex_t {
   uint16_t u, v;
 } vertex_t;
 
-typedef struct Buffer {
-  sg_buffer vertices, indices;
-  int num_elements;
-} Buffer;
-
 typedef struct vs_param_t {
   Vec2 to_screen_scale, pan;
   float rot;
@@ -85,7 +80,7 @@ typedef struct Assets {
 } Assets;
 
 typedef struct TileRectBuffer {
-  Buffer *buffer;
+  G_Object buffer;
   int w, h;
 } TileRectBuffer;
 
@@ -101,10 +96,10 @@ typedef struct Game {
   } render;
 
   TileRectBuffer tilerect_buffer[16];
-  Buffer animation_buffer_4x4;
+  G_Object animation_buffer_4x4;
   sg_sampler pixel_sampler;
 
-  sg_image images[NB_Img];
+  G_Image images[NB_Img];
 
   Scene scene;
 
@@ -128,7 +123,7 @@ void g_color(Game *game, Color c) {
 }
 void g_noise(Game *game, float n) { game->render.fs_param.noise = n; }
 
-void g_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan) {
+void g_buffer(Game *g, G_Object buffer, G_Image tex, Vec2 pan) {
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = 0.0f;
   g->render.vs_param.scale = 1.0f;
@@ -136,14 +131,14 @@ void g_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan) {
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
   sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {*img}, .samplers = {g->pixel_sampler}},
-      .vertex_buffers = {buffer->vertices},
-      .index_buffer = buffer->indices,
+      .fs = {.images = {{tex.id}}, .samplers = {g->pixel_sampler}},
+      .vertex_buffers = {{buffer.vertices}},
+      .index_buffer = {buffer.indices},
   });
-  sg_draw(0, buffer->num_elements, 1);
+  sg_draw(0, buffer.num_elements, 1);
 }
 
-void g_objectRS(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan, float rot, float scale) {
+void g_objectRS(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan, float rot, float scale) {
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = rot;
   g->render.vs_param.scale = scale;
@@ -151,21 +146,21 @@ void g_objectRS(Game *g, const Buffer *buffer, const sg_image *tex, int frame, V
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
   sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {*tex}, .samplers = {g->pixel_sampler}},
-      .vertex_buffers = {buffer->vertices},
-      .index_buffer = buffer->indices,
+      .fs = {.images = {{tex.id}}, .samplers = {g->pixel_sampler}},
+      .vertex_buffers = {{buffer.vertices}},
+      .index_buffer = {buffer.indices},
   });
 
   sg_draw(6 * frame, 6, 1);
 }
 
-void g_objectR(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan, float rot) {
+void g_objectR(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan, float rot) {
   g_objectRS(g, buffer, tex, frame, pan, rot, 1.0f);
 }
-void g_objectS(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan, float scale) {
+void g_objectS(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan, float scale) {
   g_objectRS(g, buffer, tex, frame, pan, 0.0, scale);
 }
-void g_object(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan) {
+void g_object(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan) {
   g_objectRS(g, buffer, tex, frame, pan, 0.0f, 1.0f);
 }
 
@@ -187,10 +182,10 @@ sg_image img_load(const char *path) {
   return (sg_image){};
 }
 
-const sg_image *g_image(Game *g, Image img) {
+G_Image g_image(Game *g, Image img) {
   if (g->images[img].id == 0)
-    g->images[img] = img_load(image_paths[img]);
-  return &g->images[img];
+    g->images[img].id = img_load(image_paths[img]).id;
+  return g->images[img];
 }
 
 void Game_update_state(Game *g, double dt) {
@@ -224,7 +219,7 @@ void add_quad(vertex_t *vertices, Rect r, SubImage img) {
   vertices[3] = (vertex_t){(Vec2){r.pos.x + 0, r.pos.y + r.size.y}, (i + 0) * oi, (j + 0) * oj};
 }
 
-Buffer quad_animation_buffer(float x, float y, float w, float h, int ni, int nj) {
+G_Object quad_animation_buffer(float x, float y, float w, float h, int ni, int nj) {
   vertex_t vertices[4 * ni * nj];
   uint16_t indices[6 * ni * nj];
   int ov = 0;
@@ -243,17 +238,19 @@ Buffer quad_animation_buffer(float x, float y, float w, float h, int ni, int nj)
     }
   }
 
-  return (Buffer){
+  return (G_Object){
       .vertices = sg_make_buffer(&(sg_buffer_desc){
-          .type = SG_BUFFERTYPE_VERTEXBUFFER,
-          .data = (sg_range){vertices, sizeof(vertex_t) * 4 * ni * nj},
-          .label = "vertex-buffer",
-      }),
+                                     .type = SG_BUFFERTYPE_VERTEXBUFFER,
+                                     .data = (sg_range){vertices, sizeof(vertex_t) * 4 * ni * nj},
+                                     .label = "vertex-buffer",
+                                 })
+                      .id,
       .indices = sg_make_buffer(&(sg_buffer_desc){
-          .type = SG_BUFFERTYPE_INDEXBUFFER,
-          .data = (sg_range){indices, sizeof(uint16_t) * 6 * ni * nj},
-          .label = "index-buffer",
-      }),
+                                    .type = SG_BUFFERTYPE_INDEXBUFFER,
+                                    .data = (sg_range){indices, sizeof(uint16_t) * 6 * ni * nj},
+                                    .label = "index-buffer",
+                                })
+                     .id,
       .num_elements = 6 * 2,
   };
 }
@@ -265,7 +262,7 @@ uint8_t tile_code(int i, int j, IsSetCB is_set, void *data) {
   code += is_set(data, i + 0, j + 1) * 8;
   return code;
 }
-Buffer *create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
+G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
   static int lu[16][2] = {
       {0, 3}, {0, 0}, {1, 3}, {3, 0}, {0, 2}, {2, 3}, {1, 0}, {1, 1},
       {3, 3}, {3, 2}, {0, 1}, {2, 0}, {1, 2}, {3, 1}, {2, 2}, {2, 1},
@@ -291,27 +288,29 @@ Buffer *create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
       ov += 4;
     }
   }
-  Buffer *b = (Buffer *)gc_malloc(&gc, sizeof(Buffer));
-  *b = (Buffer){
+  return (G_Object){
       .vertices = sg_make_buffer(&(sg_buffer_desc){
-          .type = SG_BUFFERTYPE_VERTEXBUFFER,
-          .data = (sg_range){vertices, sizeof(vertex_t) * 4 * (ni + 1) * (nj + 1)},
-          .label = "vertex-buffer",
-      }),
+                                     .type = SG_BUFFERTYPE_VERTEXBUFFER,
+                                     .data = (sg_range){vertices, sizeof(vertex_t) * 4 * (ni + 1) * (nj + 1)},
+                                     .label = "vertex-buffer",
+                                 })
+                      .id,
       .indices = sg_make_buffer(&(sg_buffer_desc){
-          .type = SG_BUFFERTYPE_INDEXBUFFER,
-          .data = (sg_range){indices, sizeof(uint16_t) * 6 * (ni + 1) * (nj + 1)},
-          .label = "index-buffer",
-      }),
+                                    .type = SG_BUFFERTYPE_INDEXBUFFER,
+                                    .data = (sg_range){indices, sizeof(uint16_t) * 6 * (ni + 1) * (nj + 1)},
+                                    .label = "index-buffer",
+                                })
+                     .id,
       .num_elements = oi,
   };
-  return b;
 }
 
-void Buffer_free(Buffer *b) {
-  sg_destroy_buffer(b->vertices);
-  sg_destroy_buffer(b->indices);
-  gc_free(&gc, b);
+bool G_Object_valid(const G_Object *b) { return b->vertices > 0 && b->indices > 0 && b->num_elements > 0; }
+
+void G_Object_free(G_Object *b) {
+  sg_destroy_buffer((sg_buffer){b->vertices});
+  sg_destroy_buffer((sg_buffer){b->indices});
+  b->vertices = b->indices = b->num_elements = 0;
 }
 
 bool rect_is_set(Recti *r, int i, int j) {
@@ -320,7 +319,7 @@ bool rect_is_set(Recti *r, int i, int j) {
   return true;
 }
 
-const Buffer *g_tilerect_buffer(Game *g, int w, int h) {
+G_Object g_tilerect_buffer(Game *g, int w, int h) {
   TileRectBuffer *tb = NULL;
   for (int i = 0; i < 16; ++i) {
     if (g->tilerect_buffer[i].w == w && g->tilerect_buffer[i].h == h)
@@ -336,10 +335,10 @@ const Buffer *g_tilerect_buffer(Game *g, int w, int h) {
     tb->h = h;
   }
 
-  return tb ? tb->buffer : NULL;
+  return tb ? tb->buffer : (G_Object){0, 0, 0};
 }
 
-const Buffer *g_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
+G_Object g_animation_buffer(Game *g) { return g->animation_buffer_4x4; }
 
 static void Game_init(Game *g) {
   g->render.camera_pan = (Vec2){32.0f, 32.0f};

@@ -12,10 +12,10 @@
 #include <stdlib.h>
 
 typedef struct StreetMap {
-  const sg_image *texture;
+  G_Image texture;
   Level *level;
 
-  Buffer *street_tile_map;
+  G_Object street_tile_map;
 } StreetMap;
 
 Color Street_color() { return rgb(204, 204, 204); }
@@ -26,8 +26,8 @@ bool StreetMap_dead(StreetMap *sm) {
 }
 
 void StreetMap_update(StreetMap *sm) {
-  if (sm->street_tile_map)
-    Buffer_free(sm->street_tile_map);
+  if (G_Object_valid(&sm->street_tile_map))
+    G_Object_free(&sm->street_tile_map);
   sm->street_tile_map = create_tile_rect_buffer(LEVEL_WIDTH, LEVEL_HEIGHT, (IsSetCB)Level_movable, sm->level);
 }
 

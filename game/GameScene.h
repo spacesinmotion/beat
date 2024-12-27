@@ -16,10 +16,10 @@ typedef struct SceneObjectVec {
 
 typedef struct GameScene {
   SceneObjectVec scene_objects;
-  const sg_image *house_map_img;
-  const sg_image *menubar_img;
-  const sg_image *marker;
-  const sg_image *overlay_img;
+  G_Image house_map_img;
+  G_Image menubar_img;
+  G_Image marker;
+  G_Image overlay_img;
 
   float daytime;
   int day;

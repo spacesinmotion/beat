@@ -4,12 +4,11 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/Wearisome.h"
-#include "game/assets.h"
 #include "gc/gc.h"
 
 typedef struct House {
-  const sg_image *texture;
-  const Buffer *buffer;
+  G_Image texture;
+  G_Object buffer;
   Point location;
 
   Wearisome *wearisome;
