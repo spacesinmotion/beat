@@ -45,7 +45,7 @@ void g_objectR(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan, float
 void g_objectS(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan, float scale);
 void g_object(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan);
 
-void *g_malloc(Game *g,size_t size);
-void *g_realloc(Game *g,void *ptr, size_t size);
+void *g_malloc(Game *g, size_t size);
+void *g_realloc(Game *g, void *ptr, size_t size);
 
 #endif

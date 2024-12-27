@@ -3,28 +3,21 @@
 
 #include "Game.h"
 #include "math/Circ.h"
+
 #include <assert.h>
 #include <stdbool.h>
 
 typedef struct SceneObject SceneObject;
 typedef struct GameScene GameScene;
 
-typedef enum Faction {
-  Neutral,
-  Good,
-  Evil,
-} Faction;
-
 typedef bool (*SceneObjectDeadCB)(const SceneObject *);
 typedef Circle (*SceneObjectCircle)(const SceneObject *);
-typedef Faction (*SceneObjectFaction)(const SceneObject *);
 typedef void (*SceneObjectUpdateCB)(SceneObject *, Game *, GameScene *, float);
 typedef void (*SceneObjectDrawCB)(SceneObject *, Game *);
 
 typedef struct SceneObjectTable {
   SceneObjectDeadCB dead;
   SceneObjectCircle circle;
-  SceneObjectFaction faction;
   SceneObjectUpdateCB update;
   SceneObjectDrawCB draw;
 } SceneObjectTable;
@@ -45,10 +38,6 @@ static inline bool SceneObject_dead(const SceneObject *so) {
 static inline Circle SceneObject_circle(const SceneObject *so) {
   assert(so->context && so->table->circle);
   return so->table->circle(so->context);
-}
-
-static inline Faction SceneObject_faction(const SceneObject *so) {
-  return so->context && so->table->faction ? so->table->faction(so->context) : Neutral;
 }
 
 static inline void SceneObject_update(SceneObject *so, Game *g, GameScene *gs, float dt) {
