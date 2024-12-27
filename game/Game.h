@@ -6,6 +6,7 @@
 #include "game/assets.h"
 #include "math/Color.h"
 #include "math/Rect.h"
+#include "math/Vec2.h"
 
 #include "Scene.h"
 
@@ -36,7 +37,6 @@ G_Object g_animation_buffer(Game *g);
 G_Image g_image(Game *g, Image i);
 
 void g_color(Game *game, Color c);
-void g_noise(Game *game, float n);
 
 void g_buffer(Game *g, G_Object buffer, G_Image tex, Vec2 pan);
 

@@ -47,8 +47,6 @@ void House_update(House *h, Game *g, GameScene *gs, float dt) {
 }
 
 void House_draw(House *h, Game *g) {
-  (void)g;
-  g_noise(g, 0.0f);
   g_color(g, House_color());
   g_buffer(g, h->buffer, h->texture, Level_to_vecP(h->location));
 }

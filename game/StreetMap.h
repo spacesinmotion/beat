@@ -1,7 +1,6 @@
 #ifndef STREETMAP
 #define STREETMAP
 
-#include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/SceneObject.h"
@@ -45,7 +44,6 @@ int street_tex_for(StreetMap *sm, int i, int j) {
 }
 
 void StreetMap_draw(StreetMap *sm, Game *g) {
-  g_noise(g, 0.0f);
   g_color(g, Street_color());
   g_buffer(g, sm->street_tile_map, g_image(g, Img_tilemap), (Vec2){0, 0});
 
@@ -73,7 +71,7 @@ StreetMap *StreetMap_init(Game *g, GameScene *gs) {
   *sm = (StreetMap){
       .texture = g_image(g, Img_street),
       .level = gs->level,
-      .street_tile_map = NULL,
+      .street_tile_map = {0},
   };
 
   int last_x = 2, last_y = 2;

@@ -32,8 +32,6 @@ void Marketplace_update(Marketplace *mp, Game *g, GameScene *gs, float dt) {
 }
 
 void Marketplace_draw(Marketplace *mp, Game *g) {
-  (void)g;
-  g_noise(g, 0.0f);
   g_color(g, Marketplace_color());
   g_buffer(g, mp->buffer, mp->texture, Level_to_vecP(mp->location));
 }

@@ -70,8 +70,6 @@ typedef struct vs_param_t {
 
 typedef struct fs_param_t {
   float color[4];
-  float noise;
-  int rand;
 } fs_param_t;
 
 typedef struct Assets {
@@ -121,7 +119,6 @@ void g_color(Game *game, Color c) {
   game->render.fs_param.color[2] = c.b;
   game->render.fs_param.color[3] = c.a;
 }
-void g_noise(Game *game, float n) { game->render.fs_param.noise = n; }
 
 void g_buffer(Game *g, G_Object buffer, G_Image tex, Vec2 pan) {
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
@@ -350,7 +347,7 @@ static void Game_init(Game *g) {
       0.0f,
       1.0f,
   };
-  g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0.0, 0};
+  g->render.fs_param = (fs_param_t){{1, 1, 1, 1}};
 
   sg_setup(&(sg_desc){
       .environment = sglue_environment(),
@@ -406,8 +403,6 @@ static void Game_init(Game *g) {
                    "\n"
                    "uniform sampler2D tex;\n"
                    "uniform vec4 color;\n"
-                   "uniform float noise;\n"
-                   "uniform int rand;\n"
                    "\n"
                    "in vec2 p;\n"
                    "in vec2 uv;\n"
@@ -416,12 +411,7 @@ static void Game_init(Game *g) {
                    "\n"
                    "void main() {\n"
                    "  vec4 c = texture(tex, uv) * vec4(vec3(1.0),1.0);\n"
-                   "  int xx = int(uv.x * 64)/2 * 1024 * 17;\n"
-                   "  int yy = int(uv.y * 64)/2 * 128 * 57;\n"
-                   "  float n = c.a * noise * ((((rand ^ xx ^ yy) % 2000) - 1000)/1000.0);\n"
-                   "  vec3 cc = (vec3(color) * vec3(c)) + vec3(n);\n"
-                   "  float ca = color.a * c.a;\n"
-                   "  frag_color = vec4(cc, ca);\n"
+                   "  frag_color = vec4(vec3(color) * vec3(c), color.a * c.a);\n"
                    "}\n";
 
   sg_shader shader = sg_make_shader(&(sg_shader_desc){
@@ -444,12 +434,7 @@ static void Game_init(Game *g) {
               .uniform_blocks = {{
                   .size = sizeof(fs_param_t),
                   .layout = SG_UNIFORMLAYOUT_NATIVE,
-                  .uniforms =
-                      {
-                          {"color", SG_UNIFORMTYPE_FLOAT4, 1},
-                          {"noise", SG_UNIFORMTYPE_FLOAT, 1},
-                          {"rand", SG_UNIFORMTYPE_INT, 1},
-                      },
+                  .uniforms = {{"color", SG_UNIFORMTYPE_FLOAT4, 1}},
               }},
               .images[0] = {.used = true, .image_type = SG_IMAGETYPE_2D, .sample_type = SG_IMAGESAMPLETYPE_FLOAT},
               .samplers[0] = {.used = true, .sampler_type = SG_SAMPLERTYPE_FILTERING},
@@ -544,8 +529,6 @@ static void Game_draw(Game *g) {
   });
 
   sg_apply_pipeline(g->pipeline);
-  g->render.fs_param.rand = rand();
-
   Game_draw_scene(g);
   sdtx_draw();
 

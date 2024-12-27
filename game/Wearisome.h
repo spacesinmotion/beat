@@ -33,15 +33,15 @@ Circle Wearisome_circle(Wearisome *w) { return (Circle){w->position, 8.0f}; }
 
 void Wearisome_update(Wearisome *w, Game *g, GameScene *gs, float dt) {
   (void)g;
+  (void)gs;
   if (w->path && v_eq(w->position, w->destination)) {
     w->destination = w->path->p;
     w->path = w->path->next;
   }
   w->position = v_lerp_about(w->position, w->destination, dt * 32.0);
 }
-void Wearisome_draw(Wearisome *w, Game *g) {
-  g_noise(g, 0.01f);
 
+void Wearisome_draw(Wearisome *w, Game *g) {
   g_color(g, white());
   g_objectS(g, g_animation_buffer(g), w->weapon, 0, v_add(w->position, (Vec2){8, 4}), 2.0f);
 

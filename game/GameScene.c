@@ -53,11 +53,9 @@ void GameScene_draw(GameScene *gs, Game *g) {
 
   if (gs->menu_under_mouse < 0 && Level_validR(gs->level, gs->r)) {
     if (gs->r.h > 0 && gs->r.w > 0) {
-      g_noise(g, 0.0f);
       g_color(g, gs->preview);
       g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), gs->house_map_img, Level_to_vec(gs->r.x, gs->r.y));
     }
-    g_noise(g, 0.0f);
     g_color(g, red());
     for (int i = gs->r.x; i < gs->r.x + gs->r.w; ++i)
       for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
@@ -66,12 +64,10 @@ void GameScene_draw(GameScene *gs, Game *g) {
 }
 
 void GameScene_draw_overlay(GameScene *gs, Game *g) {
-  g_noise(g, 0.0f);
   g_color(g, white());
   for (int i = 0; i < 10; ++i)
     g_object(g, g_animation_buffer(g), gs->menubar_img, i % 16, (Vec2){8 + 4 + i * 16, 8 + 4});
   for (int i = 0; i < 10; ++i) {
-    g_noise(g, i == gs->menu_under_mouse ? 0.3f : 0.0f);
     g_color(g, i == gs->menu_under_mouse ? red() : (gs->menu_selected == i ? green() : blue()));
     g_object(g, g_animation_buffer(g), gs->marker, i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4,
              (Vec2){8 + 4 + i * 16, 8 + 4});
