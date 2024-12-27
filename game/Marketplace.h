@@ -4,7 +4,6 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/assets.h"
-#include "gc/gc.h"
 
 typedef struct Marketplace {
   G_Image texture;
@@ -43,7 +42,7 @@ static SceneObjectTable Marketplace_table = (SceneObjectTable){
     .draw = (SceneObjectDrawCB)Marketplace_draw,
 };
 Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
-  Marketplace *w = gc_malloc(&gc, sizeof(Marketplace));
+  Marketplace *w = g_malloc(g, sizeof(Marketplace));
   *w = (Marketplace){
       .texture = g_image(g, Img_house_map),
       .buffer = g_tilerect_buffer(g, 4, 3),

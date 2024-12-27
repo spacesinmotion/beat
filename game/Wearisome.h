@@ -5,7 +5,6 @@
 #include "game/GameScene.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
-#include "gc/gc.h"
 #include "math/Circ.h"
 #include "math/Vec2.h"
 
@@ -57,7 +56,7 @@ SceneObjectTable Wearisome_table = (SceneObjectTable){
     .draw = (SceneObjectDrawCB)Wearisome_draw,
 };
 Wearisome *Wearisome_init(Game *g, GameScene *gs, Vec2 pos) {
-  Wearisome *w = gc_malloc(&gc, sizeof(Wearisome));
+  Wearisome *w = g_malloc(g, sizeof(Wearisome));
   *w = (Wearisome){
       .texture = g_image(g, Img_wearisome),
       .weapon = g_image(g, Img_weapons),

@@ -5,7 +5,6 @@
 #include "game/Level.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
-#include "gc/gc.h"
 #include "math/Vec2.h"
 
 #include <stdlib.h>
@@ -67,7 +66,7 @@ void StreetMap_draw(StreetMap *sm, Game *g) {
 //     .draw = (SceneObjectDrawCB)StreetMap_draw,
 // };
 StreetMap *StreetMap_init(Game *g, GameScene *gs) {
-  StreetMap *sm = gc_malloc(&gc, sizeof(StreetMap));
+  StreetMap *sm = g_malloc(g, sizeof(StreetMap));
   *sm = (StreetMap){
       .texture = g_image(g, Img_street),
       .level = gs->level,

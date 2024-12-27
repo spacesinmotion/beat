@@ -162,7 +162,7 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
 void GameScene_add_object(GameScene *gs, SceneObject so) { SceneObjectVec_push(&gs->scene_objects, so); }
 
 void GameScene_init(Game *g) {
-  GameScene *gs = gc_malloc(&gc, sizeof(GameScene));
+  GameScene *gs = g_malloc(g, sizeof(GameScene));
   *gs = (GameScene){.scene_objects = (SceneObjectVec){NULL, 0, 0},
                     .house_map_img = g_image(g, Img_house_map),
                     .menubar_img = g_image(g, Img_menubar),
@@ -170,7 +170,7 @@ void GameScene_init(Game *g) {
                     .overlay_img = g_image(g, Img_overlay_images),
                     .menu_under_mouse = -1,
                     .menu_selected = 0,
-                    .level = gc_malloc(&gc, sizeof(Level)),
+                    .level = g_malloc(g, sizeof(Level)),
                     .r = (Recti){-1, -1, 1, 1}};
 
   Level_init(gs->level);

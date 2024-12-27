@@ -50,6 +50,15 @@
 
 #include "game/GameScene.h"
 
+void *g_malloc(Game *g, size_t size) {
+  (void)g;
+  return gc_malloc(&gc, size);
+}
+void *g_realloc(Game *g, void *ptr, size_t size) {
+  (void)g;
+  return gc_realloc(&gc, ptr, size);
+}
+
 typedef struct vertex_t {
   Vec2 p;
   uint16_t u, v;
@@ -491,14 +500,14 @@ void Game_update_console(Game *g) {
 void Game_draw_scene(Game *g) {
   if (g->scene.draw) {
     g->render.vs_param.to_screen_scale =
-        (Vec2){2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale};
+        (Vec2){2.0f / sapp_widthf() * g->render.camera_scale, 2.0f / sapp_heightf() * g->render.camera_scale};
     g->scene.draw(g->scene.context, g);
   }
 
   if (g->scene.draw_overlay) {
     Vec2 pan = g->render.camera_pan;
     g->render.vs_param.to_screen_scale =
-        (Vec2){2.0f / sapp_width() * g->render.overlay_scale, 2.0f / sapp_height() * g->render.overlay_scale};
+        (Vec2){2.0f / sapp_widthf() * g->render.overlay_scale, 2.0f / sapp_heightf() * g->render.overlay_scale};
     g->render.camera_pan = (Vec2){0.0f, 0.0};
     g->scene.draw_overlay(g->scene.context, g);
     g->render.camera_pan = pan;

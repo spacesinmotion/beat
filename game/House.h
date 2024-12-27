@@ -4,7 +4,6 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/Wearisome.h"
-#include "gc/gc.h"
 
 typedef struct House {
   G_Image texture;
@@ -58,7 +57,7 @@ static SceneObjectTable House_table = (SceneObjectTable){
     .draw = (SceneObjectDrawCB)House_draw,
 };
 House *House_init(Game *g, GameScene *gs, Point p) {
-  House *w = gc_malloc(&gc, sizeof(House));
+  House *w = g_malloc(g, sizeof(House));
   *w = (House){
       .texture = g_image(g, Img_house_map),
       .buffer = g_tilerect_buffer(g, 2, 2),
