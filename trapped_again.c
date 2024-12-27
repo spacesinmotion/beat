@@ -70,6 +70,7 @@ typedef struct Buffer {
 typedef struct vs_param_t {
   Vec2 to_screen_scale, pan;
   float rot;
+  float scale;
 } vs_param_t;
 
 typedef struct fs_param_t {
@@ -129,6 +130,8 @@ void g_noise(Game *game, float n) { game->render.fs_param.noise = n; }
 
 void g_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan) {
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
+  g->render.vs_param.rot = 0.0f;
+  g->render.vs_param.scale = 1.0f;
 
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
@@ -140,9 +143,10 @@ void g_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan) {
   sg_draw(0, buffer->num_elements, 1);
 }
 
-void g_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, float rot, int frame) {
+void g_objectRS(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan, float rot, float scale) {
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = rot;
+  g->render.vs_param.scale = scale;
 
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
@@ -153,6 +157,16 @@ void g_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, floa
   });
 
   sg_draw(6 * frame, 6, 1);
+}
+
+void g_objectR(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan, float rot) {
+  g_objectRS(g, buffer, tex, frame, pan, rot, 1.0f);
+}
+void g_objectS(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan, float scale) {
+  g_objectRS(g, buffer, tex, frame, pan, 0.0, scale);
+}
+void g_object(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan) {
+  g_objectRS(g, buffer, tex, frame, pan, 0.0f, 1.0f);
 }
 
 sg_image img_load(const char *path) {
@@ -335,6 +349,7 @@ static void Game_init(Game *g) {
       {2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale},
       {1.0f, 1.0f},
       0.0f,
+      1.0f,
   };
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0.0, 0};
 
@@ -365,6 +380,7 @@ static void Game_init(Game *g) {
                    "uniform vec2 to_screen_scale;\n"
                    "uniform vec2 pan;\n"
                    "uniform float rot;\n"
+                   "uniform float scale;\n"
                    "\n"
                    "layout(location=0) in vec4 position;\n"
                    "layout(location=1) in vec2 texcoord;\n"
@@ -381,7 +397,8 @@ static void Game_init(Game *g) {
                    "\n"
                    "void main() {\n"
                    //  "  gl_Position = mvp * position;\n"
-                   "  p = rotate(position.xy, rot) + pan;\n"
+                   "  p = scale * position.xy;\n"
+                   "  p = rotate(p, rot) + pan;\n"
                    "  gl_Position = vec4(p.x * to_screen_scale.x - 1, p.y * to_screen_scale.y - 1, 0, 1);\n"
                    "  uv = texcoord;\n"
                    "}\n";
@@ -419,6 +436,7 @@ static void Game_init(Game *g) {
                          {"to_screen_scale", SG_UNIFORMTYPE_FLOAT2, 1},
                          {"pan", SG_UNIFORMTYPE_FLOAT2, 1},
                          {"rot", SG_UNIFORMTYPE_FLOAT, 1},
+                         {"scale", SG_UNIFORMTYPE_FLOAT, 1},
                      },
              }}},
       .fs =

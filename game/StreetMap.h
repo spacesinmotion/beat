@@ -59,8 +59,7 @@ void StreetMap_draw(StreetMap *sm, Game *g) {
       else
         continue;
 
-      g_object(g, g_animation_buffer(g), sm->texture, v_mulf((Vec2){i * 16, j * 16}, 1.0f), 0.0f,
-               street_tex_for(sm, i, j));
+      g_object(g, g_animation_buffer(g), sm->texture, street_tex_for(sm, i, j), v_mulf((Vec2){i * 16, j * 16}, 1.0f));
     }
   }
 }

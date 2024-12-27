@@ -61,7 +61,7 @@ void GameScene_draw(GameScene *gs, Game *g) {
     g_color(g, red());
     for (int i = gs->r.x; i < gs->r.x + gs->r.w; ++i)
       for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
-        g_object(g, g_animation_buffer(g), gs->marker, Level_to_vec(i, j), 0.0f, g_frame(g) % 4);
+        g_object(g, g_animation_buffer(g), gs->marker, g_frame(g) % 4, Level_to_vec(i, j));
   }
 }
 
@@ -69,19 +69,19 @@ void GameScene_draw_overlay(GameScene *gs, Game *g) {
   g_noise(g, 0.0f);
   g_color(g, white());
   for (int i = 0; i < 10; ++i)
-    g_object(g, g_animation_buffer(g), gs->menubar_img, (Vec2){8 + 4 + i * 16, 8 + 4}, 0.0f, i % 16);
+    g_object(g, g_animation_buffer(g), gs->menubar_img, i % 16, (Vec2){8 + 4 + i * 16, 8 + 4});
   for (int i = 0; i < 10; ++i) {
     g_noise(g, i == gs->menu_under_mouse ? 0.3f : 0.0f);
     g_color(g, i == gs->menu_under_mouse ? red() : (gs->menu_selected == i ? green() : blue()));
-    g_object(g, g_animation_buffer(g), gs->marker, (Vec2){8 + 4 + i * 16, 8 + 4}, 0.0f,
-             i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4);
+    g_object(g, g_animation_buffer(g), gs->marker, i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4,
+             (Vec2){8 + 4 + i * 16, 8 + 4});
   }
 
   Point vp = g_viewport(g);
   Vec2 clock_pos = (Vec2){vp.x - 16.0f, vp.y - 16.0f};
   g_color(g, gs->daytime > 0.75 ? red() : white());
-  g_object(g, g_animation_buffer(g), gs->overlay_img, clock_pos, -gs->daytime * M_PI * 2.0f, 0);
-  g_object(g, g_animation_buffer(g), gs->overlay_img, clock_pos, 0.0f, 1);
+  g_objectRS(g, g_animation_buffer(g), gs->overlay_img, 0, clock_pos, -gs->daytime * M_PI * 2.0f, 2.0f);
+  g_objectS(g, g_animation_buffer(g), gs->overlay_img, 1, clock_pos, 2.0f);
 }
 
 void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {

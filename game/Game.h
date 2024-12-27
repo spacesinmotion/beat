@@ -46,7 +46,11 @@ void g_color(Game *game, Color c);
 void g_noise(Game *game, float n);
 
 void g_buffer(Game *g, const Buffer *buffer, const sg_image *img, Vec2 pan);
-void g_object(Game *g, const Buffer *buffer, const sg_image *tex, Vec2 pan, float rot, int frame);
+
+void g_objectRS(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan, float rot, float scale);
+void g_objectR(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan, float rot);
+void g_objectS(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan, float scale);
+void g_object(Game *g, const Buffer *buffer, const sg_image *tex, int frame, Vec2 pan);
 
 int map_key(int i, int j);
 void set_map_key(int i, int j, int k);
