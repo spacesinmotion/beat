@@ -26,7 +26,7 @@ void g_set_scene(Game *g, Scene scene);
 float g_time(Game *g);
 int g_frame(Game *g);
 
-Point g_viewport(Game *g);
+Size g_viewport(Game *g);
 
 G_Object g_tilerect_buffer(Game *g, int w, int h);
 G_Object g_animation_buffer(Game *g);

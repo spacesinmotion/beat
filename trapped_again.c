@@ -111,8 +111,8 @@ void g_set_scene(Game *g, Scene scene) { g->scene = scene; }
 float g_time(Game *g) { return g->time; }
 int g_frame(Game *g) { return (int)(g->time * 8.0f); }
 
-Point g_viewport(Game *g) {
-  return (Point){sapp_width() / g->render.overlay_scale, sapp_height() / g->render.overlay_scale};
+Size g_viewport(Game *g) {
+  return (Size){sapp_width() / g->render.overlay_scale, sapp_height() / g->render.overlay_scale};
 }
 
 void g_color(Game *game, Color c) {

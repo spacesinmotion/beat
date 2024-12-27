@@ -16,6 +16,10 @@ typedef struct Point {
   int x, y;
 } Point;
 
+typedef struct Size {
+  int w, h;
+} Size;
+
 typedef struct Recti {
   int x, y, w, h;
 } Recti;

@@ -73,8 +73,8 @@ void GameScene_draw_overlay(GameScene *gs, Game *g) {
              (Vec2){8 + 4 + i * 16, 8 + 4});
   }
 
-  Point vp = g_viewport(g);
-  Vec2 clock_pos = (Vec2){vp.x - 16.0f, vp.y - 16.0f};
+  Size vp = g_viewport(g);
+  Vec2 clock_pos = (Vec2){vp.w - 16.0f, vp.h - 16.0f};
   g_color(g, gs->daytime > 0.75 ? red() : white());
   g_objectRS(g, g_animation_buffer(g), Img_overlay_images, 0, clock_pos, -gs->daytime * M_PI * 2.0f, 2.0f);
   g_objectS(g, g_animation_buffer(g), Img_overlay_images, 1, clock_pos, 2.0f);
