@@ -54,30 +54,30 @@ void GameScene_draw(GameScene *gs, Game *g) {
   if (gs->menu_under_mouse < 0 && Level_validR(gs->level, gs->r)) {
     if (gs->r.h > 0 && gs->r.w > 0) {
       g_color(g, gs->preview);
-      g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), gs->house_map_img, Level_to_vec(gs->r.x, gs->r.y));
+      g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), Img_house_map, Level_to_vec(gs->r.x, gs->r.y));
     }
     g_color(g, red());
     for (int i = gs->r.x; i < gs->r.x + gs->r.w; ++i)
       for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
-        g_object(g, g_animation_buffer(g), gs->marker, g_frame(g) % 4, Level_to_vec(i, j));
+        g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, Level_to_vec(i, j));
   }
 }
 
 void GameScene_draw_overlay(GameScene *gs, Game *g) {
   g_color(g, white());
   for (int i = 0; i < 10; ++i)
-    g_object(g, g_animation_buffer(g), gs->menubar_img, i % 16, (Vec2){8 + 4 + i * 16, 8 + 4});
+    g_object(g, g_animation_buffer(g), Img_menubar, i % 16, (Vec2){8 + 4 + i * 16, 8 + 4});
   for (int i = 0; i < 10; ++i) {
     g_color(g, i == gs->menu_under_mouse ? red() : (gs->menu_selected == i ? green() : blue()));
-    g_object(g, g_animation_buffer(g), gs->marker, i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4,
+    g_object(g, g_animation_buffer(g), Img_marker, i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4,
              (Vec2){8 + 4 + i * 16, 8 + 4});
   }
 
   Point vp = g_viewport(g);
   Vec2 clock_pos = (Vec2){vp.x - 16.0f, vp.y - 16.0f};
   g_color(g, gs->daytime > 0.75 ? red() : white());
-  g_objectRS(g, g_animation_buffer(g), gs->overlay_img, 0, clock_pos, -gs->daytime * M_PI * 2.0f, 2.0f);
-  g_objectS(g, g_animation_buffer(g), gs->overlay_img, 1, clock_pos, 2.0f);
+  g_objectRS(g, g_animation_buffer(g), Img_overlay_images, 0, clock_pos, -gs->daytime * M_PI * 2.0f, 2.0f);
+  g_objectS(g, g_animation_buffer(g), Img_overlay_images, 1, clock_pos, 2.0f);
 }
 
 void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
@@ -164,10 +164,6 @@ void GameScene_add_object(GameScene *gs, SceneObject so) { SceneObjectVec_push(&
 void GameScene_init(Game *g) {
   GameScene *gs = g_malloc(g, sizeof(GameScene));
   *gs = (GameScene){.scene_objects = (SceneObjectVec){NULL, 0, 0},
-                    .house_map_img = g_image(g, Img_house_map),
-                    .menubar_img = g_image(g, Img_menubar),
-                    .marker = g_image(g, Img_marker),
-                    .overlay_img = g_image(g, Img_overlay_images),
                     .menu_under_mouse = -1,
                     .menu_selected = 0,
                     .level = g_malloc(g, sizeof(Level)),

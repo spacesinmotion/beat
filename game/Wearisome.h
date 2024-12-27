@@ -14,9 +14,6 @@ typedef struct PathPoint {
 } PathPoint;
 
 typedef struct Wearisome {
-  G_Image texture;
-  G_Image weapon;
-
   Vec2 position;
   Vec2 destination;
 
@@ -42,11 +39,11 @@ void Wearisome_update(Wearisome *w, Game *g, GameScene *gs, float dt) {
 
 void Wearisome_draw(Wearisome *w, Game *g) {
   g_color(g, white());
-  g_objectS(g, g_animation_buffer(g), w->weapon, 0, v_add(w->position, (Vec2){8, 4}), 2.0f);
+  g_objectS(g, g_animation_buffer(g), Img_weapons, 0, v_add(w->position, (Vec2){8, 4}), 2.0f);
 
   Vec2 p = v_add(w->position, (Vec2){0, 2});
   g_color(g, rgb(77, 213, 30));
-  g_object(g, g_animation_buffer(g), w->texture, g_frame(g) % 4, p);
+  g_object(g, g_animation_buffer(g), Img_wearisome, g_frame(g) % 4, p);
 }
 
 SceneObjectTable Wearisome_table = (SceneObjectTable){
@@ -58,8 +55,6 @@ SceneObjectTable Wearisome_table = (SceneObjectTable){
 Wearisome *Wearisome_init(Game *g, GameScene *gs, Vec2 pos) {
   Wearisome *w = g_malloc(g, sizeof(Wearisome));
   *w = (Wearisome){
-      .texture = g_image(g, Img_wearisome),
-      .weapon = g_image(g, Img_weapons),
       .position = pos,
       .destination = pos,
       .path = NULL,

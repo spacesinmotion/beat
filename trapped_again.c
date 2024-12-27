@@ -99,7 +99,7 @@ typedef struct Game {
   G_Object animation_buffer_4x4;
   sg_sampler pixel_sampler;
 
-  G_Image images[NB_Img];
+  sg_image images[NB_Img];
 
   Scene scene;
 
@@ -122,47 +122,6 @@ void g_color(Game *game, Color c) {
   game->render.fs_param.color[3] = c.a;
 }
 
-void g_buffer(Game *g, G_Object buffer, G_Image tex, Vec2 pan) {
-  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
-  g->render.vs_param.rot = 0.0f;
-  g->render.vs_param.scale = 1.0f;
-
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
-  sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {{tex.id}}, .samplers = {g->pixel_sampler}},
-      .vertex_buffers = {{buffer.vertices}},
-      .index_buffer = {buffer.indices},
-  });
-  sg_draw(0, buffer.num_elements, 1);
-}
-
-void g_objectRS(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan, float rot, float scale) {
-  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
-  g->render.vs_param.rot = rot;
-  g->render.vs_param.scale = scale;
-
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
-  sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {{tex.id}}, .samplers = {g->pixel_sampler}},
-      .vertex_buffers = {{buffer.vertices}},
-      .index_buffer = {buffer.indices},
-  });
-
-  sg_draw(6 * frame, 6, 1);
-}
-
-void g_objectR(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan, float rot) {
-  g_objectRS(g, buffer, tex, frame, pan, rot, 1.0f);
-}
-void g_objectS(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan, float scale) {
-  g_objectRS(g, buffer, tex, frame, pan, 0.0, scale);
-}
-void g_object(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan) {
-  g_objectRS(g, buffer, tex, frame, pan, 0.0f, 1.0f);
-}
-
 sg_image img_load(const char *path) {
   int ww = 0, hh = 0, channel = 0;
 
@@ -181,10 +140,51 @@ sg_image img_load(const char *path) {
   return (sg_image){};
 }
 
-G_Image g_image(Game *g, Image img) {
+sg_image g_image(Game *g, Image img) {
   if (g->images[img].id == 0)
     g->images[img].id = img_load(image_paths[img]).id;
   return g->images[img];
+}
+
+void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {
+  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
+  g->render.vs_param.rot = 0.0f;
+  g->render.vs_param.scale = 1.0f;
+
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
+  sg_apply_bindings(&(sg_bindings){
+      .fs = {.images = {g_image(g, tex)}, .samplers = {g->pixel_sampler}},
+      .vertex_buffers = {{buffer.vertices}},
+      .index_buffer = {buffer.indices},
+  });
+  sg_draw(0, buffer.num_elements, 1);
+}
+
+void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, float scale) {
+  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
+  g->render.vs_param.rot = rot;
+  g->render.vs_param.scale = scale;
+
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
+  sg_apply_bindings(&(sg_bindings){
+      .fs = {.images = {g_image(g, tex)}, .samplers = {g->pixel_sampler}},
+      .vertex_buffers = {{buffer.vertices}},
+      .index_buffer = {buffer.indices},
+  });
+
+  sg_draw(6 * frame, 6, 1);
+}
+
+void g_objectR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot) {
+  g_objectRS(g, buffer, tex, frame, pan, rot, 1.0f);
+}
+void g_objectS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float scale) {
+  g_objectRS(g, buffer, tex, frame, pan, 0.0, scale);
+}
+void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan) {
+  g_objectRS(g, buffer, tex, frame, pan, 0.0f, 1.0f);
 }
 
 void Game_update_state(Game *g, double dt) {

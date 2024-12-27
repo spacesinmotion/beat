@@ -10,9 +10,6 @@
 
 #include "Scene.h"
 
-typedef struct G_Image {
-  uint32_t id;
-} G_Image;
 typedef struct G_Object {
   uint32_t vertices, indices, num_elements;
 } G_Object;
@@ -34,16 +31,14 @@ Point g_viewport(Game *g);
 G_Object g_tilerect_buffer(Game *g, int w, int h);
 G_Object g_animation_buffer(Game *g);
 
-G_Image g_image(Game *g, Image i);
-
 void g_color(Game *game, Color c);
 
-void g_buffer(Game *g, G_Object buffer, G_Image tex, Vec2 pan);
+void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan);
 
-void g_objectRS(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan, float rot, float scale);
-void g_objectR(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan, float rot);
-void g_objectS(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan, float scale);
-void g_object(Game *g, G_Object buffer, G_Image tex, int frame, Vec2 pan);
+void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, float scale);
+void g_objectR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot);
+void g_objectS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float scale);
+void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan);
 
 void *g_malloc(Game *g, size_t size);
 void *g_realloc(Game *g, void *ptr, size_t size);

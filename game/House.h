@@ -4,9 +4,9 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/Wearisome.h"
+#include "game/assets.h"
 
 typedef struct House {
-  G_Image texture;
   G_Object buffer;
   Point location;
 
@@ -47,7 +47,7 @@ void House_update(House *h, Game *g, GameScene *gs, float dt) {
 
 void House_draw(House *h, Game *g) {
   g_color(g, House_color());
-  g_buffer(g, h->buffer, h->texture, Level_to_vecP(h->location));
+  g_buffer(g, h->buffer, Img_house_map, Level_to_vecP(h->location));
 }
 
 static SceneObjectTable House_table = (SceneObjectTable){
@@ -59,7 +59,6 @@ static SceneObjectTable House_table = (SceneObjectTable){
 House *House_init(Game *g, GameScene *gs, Point p) {
   House *w = g_malloc(g, sizeof(House));
   *w = (House){
-      .texture = g_image(g, Img_house_map),
       .buffer = g_tilerect_buffer(g, 2, 2),
       .location = p,
       .wearisome = NULL,

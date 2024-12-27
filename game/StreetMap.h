@@ -10,7 +10,6 @@
 #include <stdlib.h>
 
 typedef struct StreetMap {
-  G_Image texture;
   Level *level;
 
   G_Object street_tile_map;
@@ -44,7 +43,7 @@ int street_tex_for(StreetMap *sm, int i, int j) {
 
 void StreetMap_draw(StreetMap *sm, Game *g) {
   g_color(g, Street_color());
-  g_buffer(g, sm->street_tile_map, g_image(g, Img_tilemap), (Vec2){0, 0});
+  g_buffer(g, sm->street_tile_map, Img_tilemap, (Vec2){0, 0});
 
   for (int i = 0; i < LEVEL_WIDTH; ++i) {
     for (int j = 0; j < LEVEL_WIDTH; ++j) {
@@ -56,7 +55,7 @@ void StreetMap_draw(StreetMap *sm, Game *g) {
       else
         continue;
 
-      g_object(g, g_animation_buffer(g), sm->texture, street_tex_for(sm, i, j), v_mulf((Vec2){i * 16, j * 16}, 1.0f));
+      g_object(g, g_animation_buffer(g), Img_street, street_tex_for(sm, i, j), v_mulf((Vec2){i * 16, j * 16}, 1.0f));
     }
   }
 }
@@ -68,7 +67,6 @@ void StreetMap_draw(StreetMap *sm, Game *g) {
 StreetMap *StreetMap_init(Game *g, GameScene *gs) {
   StreetMap *sm = g_malloc(g, sizeof(StreetMap));
   *sm = (StreetMap){
-      .texture = g_image(g, Img_street),
       .level = gs->level,
       .street_tile_map = {0},
   };

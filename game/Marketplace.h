@@ -6,7 +6,6 @@
 #include "game/assets.h"
 
 typedef struct Marketplace {
-  G_Image texture;
   G_Object buffer;
   Point location;
 } Marketplace;
@@ -32,7 +31,7 @@ void Marketplace_update(Marketplace *mp, Game *g, GameScene *gs, float dt) {
 
 void Marketplace_draw(Marketplace *mp, Game *g) {
   g_color(g, Marketplace_color());
-  g_buffer(g, mp->buffer, mp->texture, Level_to_vecP(mp->location));
+  g_buffer(g, mp->buffer, Img_house_map, Level_to_vecP(mp->location));
 }
 
 static SceneObjectTable Marketplace_table = (SceneObjectTable){
@@ -44,7 +43,6 @@ static SceneObjectTable Marketplace_table = (SceneObjectTable){
 Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
   Marketplace *w = g_malloc(g, sizeof(Marketplace));
   *w = (Marketplace){
-      .texture = g_image(g, Img_house_map),
       .buffer = g_tilerect_buffer(g, 4, 3),
       .location = p,
   };
