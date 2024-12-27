@@ -24,7 +24,7 @@ typedef struct SceneObjectTable {
 
 typedef struct SceneObject {
   void *context;
-  SceneObjectTable *table;
+  const SceneObjectTable *table;
 } SceneObject;
 
 static inline bool SceneObject_eq(const SceneObject *so1, const SceneObject *so2) {

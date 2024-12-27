@@ -190,8 +190,8 @@ void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan) {
 void Game_update_state(Game *g, double dt) {
   g->time += dt;
 
-  if (g->scene.update)
-    g->scene.update(g->scene.context, g, dt);
+  if (g->scene.table->update)
+    g->scene.table->update(g->scene.context, g, dt);
 }
 
 static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) {
@@ -498,18 +498,18 @@ void Game_update_console(Game *g) {
 }
 
 void Game_draw_scene(Game *g) {
-  if (g->scene.draw) {
+  if (g->scene.table->draw) {
     g->render.vs_param.to_screen_scale =
         (Vec2){2.0f / sapp_widthf() * g->render.camera_scale, 2.0f / sapp_heightf() * g->render.camera_scale};
-    g->scene.draw(g->scene.context, g);
+    g->scene.table->draw(g->scene.context, g);
   }
 
-  if (g->scene.draw_overlay) {
+  if (g->scene.table->draw_overlay) {
     Vec2 pan = g->render.camera_pan;
     g->render.vs_param.to_screen_scale =
         (Vec2){2.0f / sapp_widthf() * g->render.overlay_scale, 2.0f / sapp_heightf() * g->render.overlay_scale};
     g->render.camera_pan = (Vec2){0.0f, 0.0};
-    g->scene.draw_overlay(g->scene.context, g);
+    g->scene.table->draw_overlay(g->scene.context, g);
     g->render.camera_pan = pan;
   }
 }
@@ -559,22 +559,22 @@ static void Game_handel_events(const sapp_event *e, Game *g) {
     if (e->mouse_button == 2)
       mid_down = true;
 
-    if (g->scene.mouse_down)
-      g->scene.mouse_down(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y),
-                          to_overlay(g, e->mouse_x, e->mouse_y), e->mouse_button);
+    if (g->scene.table->mouse_down)
+      g->scene.table->mouse_down(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y),
+                                 to_overlay(g, e->mouse_x, e->mouse_y), e->mouse_button);
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_UP) {
     if (e->mouse_button == 2)
       mid_down = false;
-    if (g->scene.mouse_up)
-      g->scene.mouse_up(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y), to_overlay(g, e->mouse_x, e->mouse_y),
-                        e->mouse_button);
+    if (g->scene.table->mouse_up)
+      g->scene.table->mouse_up(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y),
+                               to_overlay(g, e->mouse_x, e->mouse_y), e->mouse_button);
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
     if (mid_down)
       g->render.camera_pan =
           v_add(g->render.camera_pan, v_diff((Vec2){e->mouse_dx, -e->mouse_dy}, g->render.camera_scale));
-    if (g->scene.mouse_move)
-      g->scene.mouse_move(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y),
-                          to_overlay(g, e->mouse_x, e->mouse_y));
+    if (g->scene.table->mouse_move)
+      g->scene.table->mouse_move(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y),
+                                 to_overlay(g, e->mouse_x, e->mouse_y));
   } else if ((e->type == SAPP_EVENTTYPE_KEY_DOWN)) {
     switch (e->key_code) {
     case SAPP_KEYCODE_SPACE:

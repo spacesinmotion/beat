@@ -162,6 +162,13 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
 
 void GameScene_add_object(GameScene *gs, SceneObject so) { SceneObjectVec_push(&gs->scene_objects, so); }
 
+SceneTable GameScene_table = {
+    .update = (SceneUpdateCB)GameScene_update,
+    .draw = (SceneDrawCB)GameScene_draw,
+    .draw_overlay = (SceneDrawCB)GameScene_draw_overlay,
+    .mouse_move = (SceneMouseMoveCB)GameScene_mouse_move,
+    .mouse_down = (SceneMouseCB)GameScene_mouse_down,
+};
 void GameScene_init(Game *g) {
   GameScene *gs = g_malloc(g, sizeof(GameScene));
   *gs = (GameScene){.scene_objects = (SceneObjectVec){NULL, 0, 0},
@@ -175,12 +182,5 @@ void GameScene_init(Game *g) {
 
   gs->w = Wearisome_init(g, gs, (Vec2){0, 0});
 
-  g_set_scene(g, (Scene){
-                     .context = gs,
-                     .update = (SceneUpdateCB)GameScene_update,
-                     .draw = (SceneDrawCB)GameScene_draw,
-                     .draw_overlay = (SceneDrawCB)GameScene_draw_overlay,
-                     .mouse_move = (SceneMouseMoveCB)GameScene_mouse_move,
-                     .mouse_down = (SceneMouseCB)GameScene_mouse_down,
-                 });
+  g_set_scene(g, (Scene){gs, &GameScene_table});
 }
