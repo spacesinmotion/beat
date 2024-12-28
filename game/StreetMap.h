@@ -46,7 +46,7 @@ void StreetMap_draw(StreetMap *sm, Game *g) {
   g_buffer(g, sm->street_tile_map, Img_tilemap, (Vec2){0, 0});
 
   for (int i = 0; i < LEVEL_WIDTH; ++i) {
-    for (int j = 0; j < LEVEL_WIDTH; ++j) {
+    for (int j = 0; j < LEVEL_HEIGHT; ++j) {
       TileType tc = Level_tile(sm->level, i, j);
       if (tc == T_PathStartEnd)
         g_color(g, red());
@@ -72,9 +72,9 @@ StreetMap *StreetMap_init(Game *g, GameScene *gs) {
   };
 
   int last_x = 2, last_y = 2;
-  for (int n = 0; n < 5; ++n) {
-    int x = 2 + rand() % (LEVEL_WIDTH - 4);
-    int y = 2 + rand() % (LEVEL_HEIGHT - 4);
+  for (int n = 0; n < 15; ++n) {
+    int x = rand() % (LEVEL_WIDTH - 4);
+    int y = rand() % (LEVEL_HEIGHT - 4);
 
     int width = 3 + rand() % 6;
     int height = 3 + rand() % 6;

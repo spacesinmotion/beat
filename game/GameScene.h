@@ -28,8 +28,6 @@ typedef struct GameScene {
 
   Level *level;
   StreetMap *street_map;
-
-  Wearisome *w;
 } GameScene;
 
 typedef struct GameScene GameScene;

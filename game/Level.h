@@ -53,6 +53,22 @@ void Level_set_movable(Level *level, int x, int y, bool movable) {
   }
 }
 
+Point Level_movable_around(Level *l, Recti r) {
+  for (int i = r.x; i < r.x + r.w; ++i) {
+    if (Level_movable(l, i, r.y - 1))
+      return (Point){i, r.y - 1};
+    if (Level_movable(l, i, r.y + r.w))
+      return (Point){i, r.y + r.w};
+  }
+  for (int j = r.y; j < r.y + r.h; ++j) {
+    if (Level_movable(l, r.x - 1, j))
+      return (Point){r.x - 1, j};
+    if (Level_movable(l, r.x + r.h, j))
+      return (Point){r.x + r.h, j};
+  }
+  return (Point){-1, -1};
+}
+
 TileType Level_tile(Level *level, int x, int y) {
   return Level_valid(level, x, y) ? (TileType)(level->tiles[x][y] & ~T_Movable) : T_None;
 }
@@ -76,8 +92,11 @@ void Level_clear_paths(Level *level) {
   }
 }
 
-Vec2 Level_to_vec(int i, int j) { return (Vec2){i * 16.0f, j * 16.0f}; }
+static const float F = 16.0f;
+Vec2 Level_to_vec(int i, int j) { return (Vec2){i * F, j * F}; }
 Vec2 Level_to_vecP(Point p) { return Level_to_vec(p.x, p.y); }
+
+Point Level_to_point(Vec2 v) { return (Point){v.x / F, v.y / F}; }
 
 typedef struct {
   Point points[LEVEL_WIDTH * LEVEL_HEIGHT];

@@ -136,26 +136,26 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
     } else if (gs->menu_selected == 2) {
       Marketplace_init(g, gs, (Point){gs->r.x, gs->r.y});
     } else {
-      if (Level_movable(gs->level, gs->r.x, gs->r.y)) {
-        if (start.x < 0) {
-          Level_clear_paths(gs->level);
-          start = (Point){gs->r.x, gs->r.y};
-          gs->w->position = gs->w->destination = Level_to_vecP(start);
-        } else {
-          stop = (Point){gs->r.x, gs->r.y};
-          bfs(gs->level, start.x, start.y,
-              (SearchHandle){
-                  gs,
-                  (CanMoveCB)movable,
-                  (GoalReachedCB)reached_goal,
-                  (PathCB)mark_path,
-              });
-          start = (Point){-1, -1};
-          gs->w->path = path;
-          path = NULL;
-        }
-        Level_set_tile(gs->level, gs->r.x, gs->r.y, T_PathStartEnd);
-      }
+      // if (Level_movable(gs->level, gs->r.x, gs->r.y)) {
+      //   if (start.x < 0) {
+      //     Level_clear_paths(gs->level);
+      //     start = (Point){gs->r.x, gs->r.y};
+      //     gs->w->position = gs->w->destination = Level_to_vecP(start);
+      //   } else {
+      //     stop = (Point){gs->r.x, gs->r.y};
+      //     bfs(gs->level, start.x, start.y,
+      //         (SearchHandle){
+      //             gs,
+      //             (CanMoveCB)movable,
+      //             (GoalReachedCB)reached_goal,
+      //             (PathCB)mark_path,
+      //         });
+      //     start = (Point){-1, -1};
+      //     gs->w->path = path;
+      //     path = NULL;
+      //   }
+      //   Level_set_tile(gs->level, gs->r.x, gs->r.y, T_PathStartEnd);
+      // }
     }
   }
 }
@@ -179,8 +179,6 @@ void GameScene_init(Game *g) {
 
   Level_init(gs->level);
   gs->street_map = StreetMap_init(g, gs);
-
-  gs->w = Wearisome_init(g, gs, (Vec2){0, 0});
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }

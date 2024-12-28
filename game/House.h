@@ -5,13 +5,13 @@
 #include "game/Level.h"
 #include "game/Wearisome.h"
 #include "game/assets.h"
+#include "math/Rect.h"
 
 typedef struct House {
   G_Object buffer;
   Point location;
 
   Wearisome *wearisome;
-  bool wearisomeat_home;
 } House;
 
 Color House_color() { return rgb(87, 163, 106); }
@@ -26,19 +26,23 @@ Circle House_circle(House *h) {
   return (Circle){0};
 }
 
+Point House_current_entry(House *h, Level *l) {
+  int options[8][2] = {{-1, 0}, {-1, 1}, {2, 0}, {2, 1}, {0, -1}, {1, -1}, {0, 2}, {1, 2}};
+  for (int i = 0; i < 8; ++i) {
+    int ii = h->location.x + options[i][0];
+    int jj = h->location.y + options[i][1];
+    if (Level_movable(l, ii, jj))
+      return (Point){ii, jj};
+  }
+  return (Point){h->location.x, h->location.y};
+}
+
 void House_update(House *h, GameScene *gs, float dt) {
   (void)dt;
+  (void)gs;
 
-  if (h->wearisomeat_home) {
-    int options[8][2] = {{-1, 0}, {-1, 1}, {2, 0}, {2, 1}, {0, -1}, {1, -1}, {0, 2}, {1, 2}};
-    for (int i = 0; i < 8; ++i) {
-      int ii = h->location.x + options[i][0];
-      int jj = h->location.y + options[i][1];
-      if (Level_movable(gs->level, ii, jj)) {
-        h->wearisomeat_home = false;
-        h->wearisome->destination = Level_to_vecP((Point){ii, jj});
-      }
-    }
+  if (w_is_home(h->wearisome)) {
+  } else {
   }
 }
 
@@ -54,19 +58,19 @@ static SceneObjectTable House_table = (SceneObjectTable){
     .draw = (SceneObjectDrawCB)House_draw,
 };
 House *House_init(Game *g, GameScene *gs, Point p) {
-  House *w = g_malloc(g, sizeof(House));
-  *w = (House){
+  House *h = g_malloc(g, sizeof(House));
+  *h = (House){
       .buffer = g_tilerect_buffer(g, 2, 2),
       .location = p,
       .wearisome = NULL,
-      .wearisomeat_home = true,
   };
 
-  Level_set_tileR(gs->level, (Recti){p.x, p.y, 2, 2}, T_House);
-  GameScene_add_object(gs, (SceneObject){w, &House_table});
+  Recti r = (Recti){p.x, p.y, 2, 2};
+  Level_set_tileR(gs->level, r, T_House);
+  GameScene_add_object(gs, (SceneObject){h, &House_table});
 
-  w->wearisome = Wearisome_init(g, gs, Level_to_vecP(p));
+  h->wearisome = Wearisome_init(g, gs, r);
 
-  return w;
+  return h;
 }
 #endif // HOUSE_H
