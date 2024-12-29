@@ -40,10 +40,18 @@ typedef struct Needs {
   float food, water, sleep;
 } Needs;
 
+typedef void (*DeliverDoneCB)(void *);
 typedef struct DeliverJob {
-  bool done;
+  void *context;
+  DeliverDoneCB done;
   Recti from, to;
 } DeliverJob;
+
+DeliverJob *deliver_job(Recti from, Recti to, void *context, DeliverDoneCB cb) {
+  DeliverJob *job = gc_malloc(&gc, sizeof(DeliverJob));
+  *job = (DeliverJob){context, cb, from, to};
+  return job;
+}
 
 typedef struct Wearisome {
   Recti home;
@@ -117,6 +125,8 @@ void w_u_wandering(Wearisome *w, GameScene *gs, float dt) {
 }
 
 void w_u_deliver_collect(Wearisome *w, GameScene *gs, float dt) {
+  (void)gs;
+
   w->position = v_lerp_about(w->position, w->destination, dt * 48.0);
   if (v_eq(w->position, w->destination)) {
     if (w->path) {
@@ -148,7 +158,7 @@ void w_u_deliver(Wearisome *w, GameScene *gs, float dt) {
       w->destination = w->path->p;
       w->path = w->path->next;
     } else {
-      w->deliver_job->done = true;
+      w->deliver_job->done(w->deliver_job->context);
       w->deliver_job = NULL;
       w_wander_to_random_near_path(w, gs);
     }

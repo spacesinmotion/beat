@@ -22,8 +22,6 @@ typedef struct House {
   Resources resources_maximum;
 
   Wearisome *wearisome;
-
-  DeliverJob *get_water;
 } House;
 
 Color House_color() { return rgb(87, 163, 106); }
@@ -46,6 +44,15 @@ Point House_current_entry(House *h, Level *l) {
   return (Point){h->location.x, h->location.y};
 }
 
+void House_get_water_done(House *h) {
+  if (!House_dead(h))
+    h->resources.water += 1.0;
+}
+void House_get_food_done(House *h) {
+  if (!House_dead(h))
+    h->resources.food += 1.0;
+}
+
 void House_update(House *h, GameScene *gs, float dt) {
   (void)dt;
   (void)gs;
@@ -63,15 +70,15 @@ void House_update(House *h, GameScene *gs, float dt) {
     // printf("Wearisome: %f (w:%f f:%f s:%f)\n", w->health, w->needs.water, w->needs.food, w->needs.sleep);
   }
 
-  if (h->get_water && h->get_water->done) {
-    h->resources.water += 1.0;
-    h->get_water = NULL;
+  if (h->resources_maximum.water - h->resources.water >= 1.0f && w_is_free(h->wearisome)) {
+    w_deliver(h->wearisome, gs,
+              deliver_job((Recti){17, 10, 4, 3}, (Recti){h->location.x, h->location.y, 2, 2}, h,
+                          (DeliverDoneCB)House_get_water_done));
   }
-  if (h->resources_maximum.water - h->resources.water >= 1.0f && !h->get_water && w_is_free(h->wearisome)) {
-    h->get_water = gc_malloc(&gc, sizeof(DeliverJob));
-    *h->get_water = (DeliverJob){false, (Recti){17, 10, 4, 3}, (Recti){h->location.x, h->location.y, 2, 2}};
-    if (!w_deliver(h->wearisome, gs, h->get_water))
-      h->get_water = NULL;
+  if (h->resources_maximum.food - h->resources.food >= 1.0f && w_is_free(h->wearisome)) {
+    w_deliver(h->wearisome, gs,
+              deliver_job((Recti){17, 10, 4, 3}, (Recti){h->location.x, h->location.y, 2, 2}, h,
+                          (DeliverDoneCB)House_get_food_done));
   }
 }
 
@@ -111,7 +118,6 @@ House *House_init(Game *g, GameScene *gs, Point p) {
       .resources = {.food = 2.0f, .water = 2.0f},
       .resources_maximum = {.food = 2.0f, .water = 2.0f},
       .wearisome = NULL,
-      .get_water = NULL,
   };
 
   Recti r = (Recti){p.x, p.y, 2, 2};
