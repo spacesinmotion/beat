@@ -11,6 +11,10 @@ typedef struct House {
   G_Object buffer;
   Point location;
 
+  struct {
+    float food, water;
+  } resources;
+
   Wearisome *wearisome;
 } House;
 
@@ -46,6 +50,12 @@ void House_update(House *h, GameScene *gs, float dt) {
 
   if (h->wearisome && w_is_home(h->wearisome)) {
     w_sleep(h->wearisome, 4.0f * gs->daytime_step);
+
+    h->resources.water -= w_drink(h->wearisome, f_min(h->resources.water, 8.0 * gs->daytime_step));
+    h->resources.food -= w_eat(h->wearisome, f_min(h->resources.food, 8.0 * gs->daytime_step));
+    printf("House w:%f f:%f ", h->resources.water, h->resources.food);
+    Wearisome *w = h->wearisome;
+    printf("Wearisome: %f (w:%f f:%f s:%f)\n", w->health, w->needs.water, w->needs.food, w->needs.sleep);
   }
 }
 
@@ -65,6 +75,11 @@ House *House_init(Game *g, GameScene *gs, Point p) {
   *h = (House){
       .buffer = g_tilerect_buffer(g, 2, 2),
       .location = p,
+      .resources =
+          {
+              .food = 1.0f,
+              .water = 2.0f,
+          },
       .wearisome = NULL,
   };
 

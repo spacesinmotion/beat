@@ -203,7 +203,20 @@ void w_move_to(Wearisome *w, GameScene *gs, Point d, WearisomeState new_state) {
 }
 
 bool w_is_home(Wearisome *w) { return w->state == W_AtHome; }
+
 void w_sleep(Wearisome *w, float t) { w->needs.sleep = f_min(1.0f, w->needs.sleep + t); }
+float w_drink(Wearisome *w, float t) {
+  w->needs.water += t;
+  float r = f_max(0.0, w->needs.water - 1.0f);
+  w->needs.water -= r;
+  return t - r;
+}
+float w_eat(Wearisome *w, float t) {
+  w->needs.food += t;
+  float r = f_max(0.0, w->needs.food - 1.0f);
+  w->needs.food -= r;
+  return t - r;
+}
 
 SceneObjectTable w_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)w_dead,
