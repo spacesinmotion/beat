@@ -1,22 +1,29 @@
 #ifndef HOUSE_H
 #define HOUSE_H
 
+#include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/SceneObject.h"
 #include "game/Wearisome.h"
 #include "game/assets.h"
 #include "math/Rect.h"
+#include <time.h>
+
+typedef struct Resources {
+  float food, water;
+} Resources;
 
 typedef struct House {
   G_Object buffer;
   Point location;
 
-  struct {
-    float food, water;
-  } resources;
+  Resources resources;
+  Resources resources_maximum;
 
   Wearisome *wearisome;
+
+  DeliverJob *get_water;
 } House;
 
 Color House_color() { return rgb(87, 163, 106); }
@@ -51,15 +58,43 @@ void House_update(House *h, GameScene *gs, float dt) {
 
     h->resources.water -= w_drink(h->wearisome, f_min(h->resources.water, 12.0 * gs->daytime_step));
     h->resources.food -= w_eat(h->wearisome, f_min(h->resources.food, 12.0 * gs->daytime_step));
-    printf("House w:%f f:%f ", h->resources.water, h->resources.food);
-    Wearisome *w = h->wearisome;
-    printf("Wearisome: %f (w:%f f:%f s:%f)\n", w->health, w->needs.water, w->needs.food, w->needs.sleep);
+    // printf("House w:%f f:%f ", h->resources.water, h->resources.food);
+    // Wearisome *w = h->wearisome;
+    // printf("Wearisome: %f (w:%f f:%f s:%f)\n", w->health, w->needs.water, w->needs.food, w->needs.sleep);
+  }
+
+  if (h->get_water && h->get_water->done) {
+    h->resources.water += 1.0;
+    h->get_water = NULL;
+  }
+  if (h->resources_maximum.water - h->resources.water >= 1.0f && !h->get_water && w_is_free(h->wearisome)) {
+    h->get_water = gc_malloc(&gc, sizeof(DeliverJob));
+    *h->get_water = (DeliverJob){false, (Recti){17, 10, 4, 3}, (Recti){h->location.x, h->location.y, 2, 2}};
+    if (!w_deliver(h->wearisome, gs, h->get_water))
+      h->get_water = NULL;
   }
 }
 
 void House_draw(House *h, Game *g) {
+  Vec2 p = Level_to_vecP(h->location);
   g_color(g, h->wearisome ? House_color() : rgb(0, 0, 0));
-  g_buffer(g, h->buffer, Img_house_map, Level_to_vecP(h->location));
+  g_buffer(g, h->buffer, Img_house_map, p);
+
+  float x = h->resources.water / h->resources_maximum.water;
+  g_color(g, warn(x));
+  for (int i = 0; i < 6; ++i) {
+    if (i / 6.0f >= x)
+      break;
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){-2, -2 + 4 * i}), 0.25);
+  }
+
+  x = h->resources.food / h->resources_maximum.food;
+  g_color(g, warn(x));
+  for (int i = 0; i < 6; ++i) {
+    if (i / 6.0f >= x)
+      break;
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, -2 + 4 * i}), 0.25);
+  }
 }
 
 static SceneObjectTable House_table = (SceneObjectTable){
@@ -73,12 +108,10 @@ House *House_init(Game *g, GameScene *gs, Point p) {
   *h = (House){
       .buffer = g_tilerect_buffer(g, 2, 2),
       .location = p,
-      .resources =
-          {
-              .food = 1.0f,
-              .water = 2.0f,
-          },
+      .resources = {.food = 2.0f, .water = 2.0f},
+      .resources_maximum = {.food = 2.0f, .water = 2.0f},
       .wearisome = NULL,
+      .get_water = NULL,
   };
 
   Recti r = (Recti){p.x, p.y, 2, 2};

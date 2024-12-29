@@ -1,8 +1,6 @@
 #ifndef COLOR
 #define COLOR
 
-#include <math.h>
-
 typedef struct Color {
   float r, g, b, a;
 } Color;

@@ -11,6 +11,7 @@
 #include "math/Rect.h"
 #include "math/Vec2.h"
 #include "math/random.h"
+#include <time.h>
 
 typedef struct PathPoint {
   Vec2 p;
@@ -29,11 +30,20 @@ typedef enum WearisomeState {
   W_MovingHome,
   W_Waiting,
   W_Wandering,
+
+  W_DeliverCollect,
+  W_DeliverWait,
+  W_Deliver,
 } WearisomeState;
 
 typedef struct Needs {
   float food, water, sleep;
 } Needs;
+
+typedef struct DeliverJob {
+  bool done;
+  Recti from, to;
+} DeliverJob;
 
 typedef struct Wearisome {
   Recti home;
@@ -47,6 +57,8 @@ typedef struct Wearisome {
   float health;
 
   WearisomeState state;
+
+  DeliverJob *deliver_job;
 } Wearisome;
 
 bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
@@ -104,6 +116,45 @@ void w_u_wandering(Wearisome *w, GameScene *gs, float dt) {
   }
 }
 
+void w_u_deliver_collect(Wearisome *w, GameScene *gs, float dt) {
+  w->position = v_lerp_about(w->position, w->destination, dt * 48.0);
+  if (v_eq(w->position, w->destination)) {
+    if (w->path) {
+      w->destination = w->path->p;
+      w->path = w->path->next;
+    } else {
+      w->wait_time = 0.5f;
+      w->state = W_DeliverWait;
+    }
+  }
+}
+
+void w_u_deliver_wait(Wearisome *w, GameScene *gs, float dt) {
+  w->wait_time -= dt;
+  if (!w->deliver_job)
+    w->state = W_Waiting;
+  else if (w->wait_time < 0.0f) {
+    if (w_move_to_rect(w, gs, w->deliver_job->to))
+      w->state = W_Deliver;
+    else
+      w->state = W_Waiting;
+  }
+}
+
+void w_u_deliver(Wearisome *w, GameScene *gs, float dt) {
+  w->position = v_lerp_about(w->position, w->destination, dt * 48.0);
+  if (v_eq(w->position, w->destination)) {
+    if (w->path) {
+      w->destination = w->path->p;
+      w->path = w->path->next;
+    } else {
+      w->deliver_job->done = true;
+      w->deliver_job = NULL;
+      w_wander_to_random_near_path(w, gs);
+    }
+  }
+}
+
 void w_update(Wearisome *w, GameScene *gs, float dt) {
   if (w_dead(w))
     return;
@@ -143,6 +194,16 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
 
   case W_Wandering:
     w_u_wandering(w, gs, dt);
+    break;
+
+  case W_DeliverCollect:
+    w_u_deliver_collect(w, gs, dt);
+    break;
+  case W_DeliverWait:
+    w_u_deliver_wait(w, gs, dt);
+    break;
+  case W_Deliver:
+    w_u_deliver(w, gs, dt);
     break;
   }
 }
@@ -218,6 +279,16 @@ void w_sleep(Wearisome *w, float t) { w->needs.sleep = f_min(1.0f, w->needs.slee
 float w_drink(Wearisome *w, float t) { return apply_need(&w->needs.water, t); }
 float w_eat(Wearisome *w, float t) { return apply_need(&w->needs.food, t); }
 
+bool w_is_free(Wearisome *w) { return w->state == W_Wandering || w->state == W_Waiting; }
+bool w_deliver(Wearisome *w, GameScene *gs, DeliverJob *job) {
+  if (w_move_to_rect(w, gs, job->from)) {
+    w->deliver_job = job;
+    w->state = W_DeliverCollect;
+    return true;
+  }
+  return false;
+}
+
 SceneObjectTable w_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)w_dead,
     .render_order = (SceneObjectRenderOrderCB)w_render_order,
@@ -237,6 +308,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
                            .water = r_float_r(0.35f, 0.65f),
                            .sleep = r_float_r(0.35f, 0.65f)},
       .health = 1.0f,
+      .deliver_job = NULL,
       .state = W_AtHome,
   };
   GameScene_add_object(gs, (SceneObject){.context = w, &w_table});
