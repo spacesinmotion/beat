@@ -188,6 +188,27 @@ void GameScene_init(Game *g) {
                     .r = (Recti){-1, -1, 1, 1}};
 
   Level_init(gs->level);
+
+  Marketplace_init(g, gs, (Point){17, 10});
+  for (int i = 8; i < 30; ++i)
+    Level_set_movable(gs->level, i, 9, true);
+  for (int i = 13; i < 27; ++i)
+    Level_set_movable(gs->level, i, 20, true);
+  for (int i = 12; i < 31; ++i)
+    Level_set_movable(gs->level, i, 13, true);
+  for (int i = 2; i < 23; ++i)
+    Level_set_movable(gs->level, 16, i, true);
+  for (int i = 1; i < 26; ++i)
+    Level_set_movable(gs->level, 21, i, true);
+  for (int i = 0; i < 3; ++i) {
+    House_init(g, gs, (Point){17, 10 - 3 - 2 * i});
+    House_init(g, gs, (Point){19, 10 - 3 - 2 * i});
+    House_init(g, gs, (Point){17, 10 + 4 + 2 * i});
+    House_init(g, gs, (Point){19, 10 + 4 + 2 * i});
+    House_init(g, gs, (Point){14, 10 + 4 + 2 * i});
+    House_init(g, gs, (Point){22, 10 + 4 + 2 * i});
+  }
+
   gs->street_map = StreetMap_init(g, gs);
 
   g_set_scene(g, (Scene){gs, &GameScene_table});

@@ -71,32 +71,32 @@ StreetMap *StreetMap_init(Game *g, GameScene *gs) {
       .street_tile_map = {0},
   };
 
-  int last_x = 2, last_y = 2;
-  for (int n = 0; n < 15; ++n) {
-    int x = rand() % (LEVEL_WIDTH - 4);
-    int y = rand() % (LEVEL_HEIGHT - 4);
+  // int last_x = 2, last_y = 2;
+  // for (int n = 0; n < 15; ++n) {
+  //   int x = rand() % (LEVEL_WIDTH - 4);
+  //   int y = rand() % (LEVEL_HEIGHT - 4);
 
-    int width = 3 + rand() % 6;
-    int height = 3 + rand() % 6;
-    int next_x = x + width / 2;
-    int next_y = y + height / 2;
+  //   int width = 3 + rand() % 6;
+  //   int height = 3 + rand() % 6;
+  //   int next_x = x + width / 2;
+  //   int next_y = y + height / 2;
 
-    if (n > 0) {
-      if (rand() % 2 == 0) {
-        for (int i = i_min(last_y, next_y); i <= i_max(last_y, next_y); ++i)
-          Level_set_movable(sm->level, i_min(last_x, next_x), i, true);
-        for (int i = i_min(last_x, next_x); i <= i_max(last_x, next_x); ++i)
-          Level_set_movable(sm->level, i, last_x < next_x ? next_y : last_y, true);
-      } else {
-        for (int i = i_min(last_x, next_x); i <= i_max(last_x, next_x); ++i)
-          Level_set_movable(sm->level, i, i_min(last_y, next_y), true);
-        for (int i = i_min(last_y, next_y); i <= i_max(last_y, next_y); ++i)
-          Level_set_movable(sm->level, last_y < next_y ? next_x : last_x, i, true);
-      }
-    }
-    last_x = next_x;
-    last_y = next_y;
-  }
+  //   if (n > 0) {
+  //     if (rand() % 2 == 0) {
+  //       for (int i = i_min(last_y, next_y); i <= i_max(last_y, next_y); ++i)
+  //         Level_set_movable(sm->level, i_min(last_x, next_x), i, true);
+  //       for (int i = i_min(last_x, next_x); i <= i_max(last_x, next_x); ++i)
+  //         Level_set_movable(sm->level, i, last_x < next_x ? next_y : last_y, true);
+  //     } else {
+  //       for (int i = i_min(last_x, next_x); i <= i_max(last_x, next_x); ++i)
+  //         Level_set_movable(sm->level, i, i_min(last_y, next_y), true);
+  //       for (int i = i_min(last_y, next_y); i <= i_max(last_y, next_y); ++i)
+  //         Level_set_movable(sm->level, last_y < next_y ? next_x : last_x, i, true);
+  //     }
+  //   }
+  //   last_x = next_x;
+  //   last_y = next_y;
+  // }
 
   StreetMap_update(sm);
 

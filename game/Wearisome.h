@@ -121,7 +121,7 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
     break;
 
   case W_AtHome: {
-    const float ref = 1.0f - f_min(w->needs.sleep, w->health);
+    const float ref = 0.35f * (1.0f - f_min(w->needs.sleep, w->health));
     if (gs->daytime > ref && gs->daytime < 0.75f) {
       w->path = NULL;
       w_wander_to_random_near_path(w, gs);
