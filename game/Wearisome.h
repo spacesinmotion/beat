@@ -51,10 +51,8 @@ bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
 
 Circle w_circle(Wearisome *w) { return (Circle){w->position, 8.0f}; }
 
-void w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest, WearisomeState new_state);
-void w_move_to_rect(Wearisome *w, GameScene *gs, Recti r, WearisomeState new_state) {
-  w_move_to(w, gs, (Recti){0}, r, new_state);
-}
+bool w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest);
+bool w_move_to_rect(Wearisome *w, GameScene *gs, Recti r) { return w_move_to(w, gs, (Recti){0}, r); }
 
 void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
   Point l = Level_to_point(w->destination);
@@ -62,7 +60,8 @@ void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
     int i = l.x + (rand() % 10) - 5;
     int j = l.y + (rand() % 10) - 5;
     if (Level_movable(gs->level, i, j)) {
-      w_move_to(w, gs, w->state == W_AtHome ? w->home : (Recti){0}, (Recti){i, j, 1, 1}, W_Wandering);
+      if (w_move_to(w, gs, w->state == W_AtHome ? w->home : (Recti){0}, (Recti){i, j, 1, 1}))
+        w->state = W_Wandering;
       break;
     }
   }
@@ -70,8 +69,8 @@ void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
 
 void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
   w->wait_time -= dt;
-  if (gs->daytime > 0.75f) {
-    w_move_to_rect(w, gs, w->home, W_MovingHome);
+  if (gs->daytime > 0.75f && w_move_to_rect(w, gs, w->home)) {
+    w->state = W_MovingHome;
   } else if (w->wait_time < 0.0f) {
     w_wander_to_random_near_path(w, gs);
   }
@@ -91,8 +90,8 @@ void w_u_moving_home(Wearisome *w, float dt) {
 void w_u_wandering(Wearisome *w, GameScene *gs, float dt) {
   w->position = v_lerp_about(w->position, w->destination, dt * 48.0);
   if (v_eq(w->position, w->destination)) {
-    if (gs->daytime > 0.75f) {
-      w_move_to_rect(w, gs, w->home, W_MovingHome);
+    if (gs->daytime > 0.75f && w_move_to_rect(w, gs, w->home)) {
+      w->state = W_MovingHome;
     } else if (w->path) {
       w->destination = w->path->p;
       w->path = w->path->next;
@@ -126,6 +125,8 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
     if (gs->daytime > ref && gs->daytime < 0.75f) {
       w->path = NULL;
       w_wander_to_random_near_path(w, gs);
+      if (!w->path)
+        w->state = W_AtHome;
     }
     break;
   }
@@ -182,7 +183,7 @@ void WearisomePathSearch_build_path(WearisomePathSearchData *data, int i, int j)
   data->path = PathPoint_init(Level_to_vec(i, j), data->path);
 }
 
-void w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest, WearisomeState new_state) {
+bool w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest) {
   WearisomePathSearchData search_data = {w, gs, Level_to_point(w->destination), cur, dest, NULL};
   bfs(gs->level, search_data.start.x, search_data.start.y,
       (SearchHandle){
@@ -192,7 +193,7 @@ void w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest, WearisomeStat
           (PathCB)WearisomePathSearch_build_path,
       });
   w->path = search_data.path;
-  w->state = new_state;
+  return w->path != NULL;
 }
 
 bool w_is_home(Wearisome *w) { return w->state == W_AtHome; }
