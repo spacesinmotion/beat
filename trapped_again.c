@@ -671,7 +671,7 @@ int main(int argc, char *argv[]) {
       .user_data = &g,
       .width = 1024,
       .height = 690,
-      .window_title = "trapped again",
+      .window_title = "click economy",
       .icon.sokol_default = true,
       .logger.func = slog_func,
   });

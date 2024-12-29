@@ -122,6 +122,10 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
   (void)mp;
   (void)op;
 
+  if (button == 1) {
+    gs->menu_selected = -1;
+    gs->r.w = gs->r.h = 0;
+  }
   if (button == 0) {
     if (gs->menu_under_mouse >= 0) {
       gs->menu_selected = gs->menu_under_mouse;
@@ -183,7 +187,7 @@ void GameScene_init(Game *g) {
   GameScene *gs = g_malloc(g, sizeof(GameScene));
   *gs = (GameScene){.scene_objects = (SceneObjectVec){NULL, 0, 0},
                     .menu_under_mouse = -1,
-                    .menu_selected = 0,
+                    .menu_selected = -1,
                     .level = g_malloc(g, sizeof(Level)),
                     .r = (Recti){-1, -1, 1, 1}};
 
