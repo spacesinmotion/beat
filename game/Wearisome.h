@@ -146,19 +146,25 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
 }
 
 void w_draw(Wearisome *w, Game *g) {
-  g_color(g, white());
-  g_objectS(g, g_animation_buffer(g), Img_weapons, 0, v_add(w->position, (Vec2){8, 4}), 2.0f);
+  // g_color(g, white());
+  // g_objectS(g, g_animation_buffer(g), Img_weapons, 0, v_add(w->position, (Vec2){8, 4}), 2.0f);
 
   Vec2 p = v_add(w->position, (Vec2){0, 2});
   g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));
   g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : g_frame(g) % 4, p);
 
-  g_color(g, warn(w->needs.water));
-  g_objectS(g, g_animation_buffer(g), Img_maze_pointer, 4, v_add(w->position, (Vec2){-4, 12}), 0.25);
-  g_color(g, warn(w->needs.food));
-  g_objectS(g, g_animation_buffer(g), Img_maze_pointer, 4, v_add(w->position, (Vec2){0, 12}), 0.25);
-  g_color(g, warn(w->needs.sleep));
-  g_objectS(g, g_animation_buffer(g), Img_maze_pointer, 4, v_add(w->position, (Vec2){4, 12}), 0.25);
+  if (w->needs.water < 0.75) {
+    g_color(g, warn(w->needs.water));
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(w->position, (Vec2){-4, 12}), 0.25);
+  }
+  if (w->needs.food < 0.75) {
+    g_color(g, warn(w->needs.food));
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(w->position, (Vec2){0, 12}), 0.25);
+  }
+  if (w->needs.sleep < 0.75) {
+    g_color(g, warn(w->needs.sleep));
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(w->position, (Vec2){4, 12}), 0.25);
+  }
 }
 
 typedef struct WearisomePathSearchData {

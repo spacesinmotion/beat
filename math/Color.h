@@ -17,8 +17,11 @@ static inline Color green() { return rgb(0, 255, 0); }
 static inline Color blue() { return rgb(0, 0, 255); }
 
 static inline Color warn(float t) {
-  t = pow(t, 0.3);
-  return rgb(177 - 100 * t, 53 + 150 * t, 30);
+  if (t > 0.5)
+    return rgb(77, 213, 30);
+  if (t > 0.25)
+    return rgb(216, 170, 43);
+  return rgb(177, 53, 30);
 }
 // fn lighter(c Color, t f32) Color {
 //   return Color {
