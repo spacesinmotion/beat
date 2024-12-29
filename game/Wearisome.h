@@ -7,7 +7,6 @@
 #include "game/SceneObject.h"
 #include "game/assets.h"
 #include "gc/gc.h"
-#include "math/Circ.h"
 #include "math/Color.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
@@ -32,6 +31,10 @@ typedef enum WearisomeState {
   W_Wandering,
 } WearisomeState;
 
+typedef struct Needs {
+  float food, water, sleep;
+} Needs;
+
 typedef struct Wearisome {
   Recti home;
   Vec2 position, destination;
@@ -39,9 +42,8 @@ typedef struct Wearisome {
   PathPoint *path;
   float wait_time;
 
-  struct {
-    float food, water, sleep;
-  } needs;
+  Needs needs;
+  Needs need_consumption;
   float health;
 
   WearisomeState state;
@@ -106,9 +108,9 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
   if (w_dead(w))
     return;
 
-  w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step / 2.0f);
-  w->needs.food = f_max(0.0f, w->needs.food - gs->daytime_step / 4.0f);
-  w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step / 2.0f);
+  w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step * w->need_consumption.water);
+  w->needs.food = f_max(0.0f, w->needs.food - gs->daytime_step * w->need_consumption.food);
+  w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step * w->need_consumption.sleep);
   if (w->needs.water < 0.1f || w->needs.food < 0.1f || w->needs.sleep < 0.1f)
     w->health -= 2.0f * gs->daytime_step;
   else
@@ -121,7 +123,7 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
     break;
 
   case W_AtHome: {
-    const float ref = 0.35f * (1.0f - f_min(w->needs.sleep, w->health));
+    const float ref = 0.30f * (1.0f - f_min(w->needs.sleep, w->health));
     if (gs->daytime > ref && gs->daytime < 0.75f) {
       w->path = NULL;
       w_wander_to_random_near_path(w, gs);
@@ -151,7 +153,8 @@ void w_draw(Wearisome *w, Game *g) {
 
   Vec2 p = v_add(w->position, (Vec2){0, 2});
   g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));
-  g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : g_frame(g) % 4, p);
+  const int o = (size_t)w / 17;
+  g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : (o + g_frame(g)) % 4, p);
 
   if (w->needs.water < 0.75) {
     g_color(g, warn(w->needs.water));
@@ -230,6 +233,9 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
       .destination = pos,
       .path = NULL,
       .needs = {.food = 1.0f, .water = 1.0f, .sleep = 1.0f},
+      .need_consumption = {.food = r_float_r(0.2f, 0.3f),
+                           .water = r_float_r(0.35f, 0.65f),
+                           .sleep = r_float_r(0.35f, 0.65f)},
       .health = 1.0f,
       .state = W_AtHome,
   };
