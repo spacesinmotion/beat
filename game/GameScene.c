@@ -67,7 +67,7 @@ void GameScene_draw(GameScene *gs, Game *g) {
       g_color(g, gs->preview);
       g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), Img_house_map, Level_to_vec(gs->r.x, gs->r.y));
     }
-    g_color(g, red());
+    g_color(g, Level_freeR(gs->level, gs->r) ? green() : red());
     for (int i = gs->r.x; i < gs->r.x + gs->r.w; ++i)
       for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
         g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, Level_to_vec(i, j));
@@ -118,15 +118,14 @@ void mark_path(GameScene *gs, int i, int j) {
 }
 
 void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
-  (void)g;
   (void)mp;
   (void)op;
 
   if (button == 1) {
     gs->menu_selected = -1;
     gs->r.w = gs->r.h = 0;
-  }
-  if (button == 0) {
+
+  } else if (button == 0) {
     if (gs->menu_under_mouse >= 0) {
       gs->menu_selected = gs->menu_under_mouse;
       if (gs->menu_selected == 0) {
@@ -146,30 +145,11 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
       Level_set_movable(gs->level, gs->r.x, gs->r.y, true);
       StreetMap_update(gs->street_map);
     } else if (gs->menu_selected == 1) {
-      House_init(g, gs, (Point){gs->r.x, gs->r.y});
+      if (Level_freeR(gs->level, gs->r))
+        House_init(g, gs, (Point){gs->r.x, gs->r.y});
     } else if (gs->menu_selected == 2) {
-      Marketplace_init(g, gs, (Point){gs->r.x, gs->r.y});
-    } else {
-      // if (Level_movable(gs->level, gs->r.x, gs->r.y)) {
-      //   if (start.x < 0) {
-      //     Level_clear_paths(gs->level);
-      //     start = (Point){gs->r.x, gs->r.y};
-      //     gs->w->position = gs->w->destination = Level_to_vecP(start);
-      //   } else {
-      //     stop = (Point){gs->r.x, gs->r.y};
-      //     bfs(gs->level, start.x, start.y,
-      //         (SearchHandle){
-      //             gs,
-      //             (CanMoveCB)movable,
-      //             (GoalReachedCB)reached_goal,
-      //             (PathCB)mark_path,
-      //         });
-      //     start = (Point){-1, -1};
-      //     gs->w->path = path;
-      //     path = NULL;
-      //   }
-      //   Level_set_tile(gs->level, gs->r.x, gs->r.y, T_PathStartEnd);
-      // }
+      if (Level_freeR(gs->level, gs->r))
+        Marketplace_init(g, gs, (Point){gs->r.x, gs->r.y});
     }
   }
 }
@@ -189,7 +169,7 @@ void GameScene_init(Game *g) {
                     .menu_under_mouse = -1,
                     .menu_selected = -1,
                     .level = g_malloc(g, sizeof(Level)),
-                    .r = (Recti){-1, -1, 1, 1}};
+                    .r = (Recti){-1, -1, 0, 0}};
 
   Level_init(gs->level);
 

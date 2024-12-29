@@ -31,12 +31,21 @@ bool Level_valid(Level *level, int x, int y) {
   (void)level;
   return x >= 0 && x < LEVEL_WIDTH && y >= 0 && y < LEVEL_HEIGHT;
 }
-
 bool Level_validP(Level *level, Point p) { return Level_valid(level, p.x, p.y); }
 bool Level_validR(Level *level, Recti r) {
   for (int i = r.x; i < r.x + r.w; ++i)
     for (int j = r.y; j < r.y + r.h; ++j)
       if (!Level_valid(level, i, j))
+        return false;
+  return true;
+}
+
+bool Level_free(Level *level, int x, int y) { return Level_valid(level, x, y) && level->tiles[x][y] == T_None; }
+bool Level_freeP(Level *level, Point p) { return Level_free(level, p.x, p.y); }
+bool Level_freeR(Level *level, Recti r) {
+  for (int i = r.x; i < r.x + r.w; ++i)
+    for (int j = r.y; j < r.y + r.h; ++j)
+      if (!Level_free(level, i, j))
         return false;
   return true;
 }
