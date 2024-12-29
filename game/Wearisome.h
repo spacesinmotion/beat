@@ -24,17 +24,6 @@ PathPoint *PathPoint_init(Vec2 p, PathPoint *next) {
   return pp;
 }
 
-PathPoint *PathPoint_append(PathPoint *pp, Vec2 dest) {
-  if (!pp)
-    return PathPoint_init(dest, NULL);
-
-  PathPoint *p = pp;
-  while (p->next)
-    p = p->next;
-  p->next = PathPoint_init(dest, NULL);
-  return pp;
-}
-
 typedef enum WearisomeState {
   W_None = 0,
   W_AtHome,
@@ -62,11 +51,8 @@ bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
 
 Circle w_circle(Wearisome *w) { return (Circle){w->position, 8.0f}; }
 
-void w_move_to(Wearisome *w, GameScene *gs, Point d, WearisomeState new_state);
-void w_move_to_rect(Wearisome *w, GameScene *gs, Recti r, WearisomeState new_state) {
-  w_move_to(w, gs, Level_movable_around(gs->level, r), new_state);
-  w->path = PathPoint_append(w->path, Level_to_vec(r.x, r.y));
-}
+void w_move_to(Wearisome *w, GameScene *gs, Recti r, WearisomeState new_state);
+void w_move_to_rect(Wearisome *w, GameScene *gs, Recti r, WearisomeState new_state) { w_move_to(w, gs, r, new_state); }
 
 void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
   w->wait_time -= dt;
@@ -78,7 +64,7 @@ void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
       int i = l.x + (rand() % 10) - 5;
       int j = l.y + (rand() % 10) - 5;
       if (Level_movable(gs->level, i, j)) {
-        w_move_to(w, gs, (Point){i, j}, W_Wandering);
+        w_move_to(w, gs, (Recti){i, j, 1, 1}, W_Wandering);
         break;
       }
     }
@@ -169,23 +155,23 @@ typedef struct WearisomePathSearchData {
   Wearisome *w;
   GameScene *gs;
   Point start;
-  Point stop;
+  Recti destination;
   PathPoint *path;
 } WearisomePathSearchData;
 
 bool WearisomePathSearch_moveable(WearisomePathSearchData *data, int x, int y) {
-  return Level_movable(data->gs->level, x, y);
+  return Level_movable(data->gs->level, x, y) || ri_contains(data->destination, x, y);
 }
 bool WearisomePathSearch_reached_goal(WearisomePathSearchData *data, int x, int y) {
-  return x == data->stop.x && y == data->stop.y;
+  return ri_contains(data->destination, x, y);
 }
 
 void WearisomePathSearch_build_path(WearisomePathSearchData *data, int i, int j) {
   data->path = PathPoint_init(Level_to_vec(i, j), data->path);
 }
 
-void w_move_to(Wearisome *w, GameScene *gs, Point d, WearisomeState new_state) {
-  WearisomePathSearchData search_data = {w, gs, Level_to_point(w->destination), d, NULL};
+void w_move_to(Wearisome *w, GameScene *gs, Recti r, WearisomeState new_state) {
+  WearisomePathSearchData search_data = {w, gs, Level_to_point(w->destination), r, NULL};
   bfs(gs->level, search_data.start.x, search_data.start.y,
       (SearchHandle){
           &search_data,
