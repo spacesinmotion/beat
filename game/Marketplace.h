@@ -3,6 +3,7 @@
 
 #include "game/GameScene.h"
 #include "game/Level.h"
+#include "game/SceneObject.h"
 #include "game/assets.h"
 
 typedef struct Marketplace {
@@ -17,10 +18,7 @@ bool Marketplace_dead(Marketplace *mp) {
   return false;
 }
 
-Circle Marketplace_circle(Marketplace *mp) {
-  (void)mp;
-  return (Circle){0};
-}
+float Marketplace_render_order(Marketplace *mp) { return Level_to_vecP(mp->location).y; }
 
 void Marketplace_update(Marketplace *mp, GameScene *gs, float dt) {
   (void)mp;
@@ -35,7 +33,7 @@ void Marketplace_draw(Marketplace *mp, Game *g) {
 
 static SceneObjectTable Marketplace_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)Marketplace_dead,
-    .circle = (SceneObjectCircle)Marketplace_circle,
+    .render_order = (SceneObjectRenderOrderCB)Marketplace_render_order,
     .update = (SceneObjectUpdateCB)Marketplace_update,
     .draw = (SceneObjectDrawCB)Marketplace_draw,
 };

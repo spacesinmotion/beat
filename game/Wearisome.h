@@ -49,7 +49,7 @@ typedef struct Wearisome {
 
 bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
 
-Circle w_circle(Wearisome *w) { return (Circle){w->position, 8.0f}; }
+float w_render_order(Wearisome *w) { return 10000.0f + w->position.y; }
 
 bool w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest);
 bool w_move_to_rect(Wearisome *w, GameScene *gs, Recti r) { return w_move_to(w, gs, (Recti){0}, r); }
@@ -211,7 +211,7 @@ float w_eat(Wearisome *w, float t) { return apply_need(&w->needs.food, t); }
 
 SceneObjectTable w_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)w_dead,
-    .circle = (SceneObjectCircle)w_circle,
+    .render_order = (SceneObjectRenderOrderCB)w_render_order,
     .update = (SceneObjectUpdateCB)w_update,
     .draw = (SceneObjectDrawCB)w_draw,
 };

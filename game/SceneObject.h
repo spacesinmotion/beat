@@ -2,22 +2,20 @@
 #define SCENEOBJECT
 
 #include "Game.h"
-#include "math/Circ.h"
-
-#include <assert.h>
+#include <float.h>
 #include <stdbool.h>
 
 typedef struct SceneObject SceneObject;
 typedef struct GameScene GameScene;
 
 typedef bool (*SceneObjectDeadCB)(const SceneObject *);
-typedef Circle (*SceneObjectCircle)(const SceneObject *);
+typedef float (*SceneObjectRenderOrderCB)(const SceneObject *);
 typedef void (*SceneObjectUpdateCB)(SceneObject *, GameScene *, float);
 typedef void (*SceneObjectDrawCB)(SceneObject *, Game *);
 
 typedef struct SceneObjectTable {
   SceneObjectDeadCB dead;
-  SceneObjectCircle circle;
+  SceneObjectRenderOrderCB render_order;
   SceneObjectUpdateCB update;
   SceneObjectDrawCB draw;
 } SceneObjectTable;
@@ -35,9 +33,8 @@ static inline bool SceneObject_dead(const SceneObject *so) {
   return !so->context || (so->table->dead && so->table->dead(so->context));
 }
 
-static inline Circle SceneObject_circle(const SceneObject *so) {
-  assert(so->context && so->table->circle);
-  return so->table->circle(so->context);
+static inline float SceneObject_render_order(const SceneObject *so) {
+  return so->table->render_order ? so->table->render_order(so->context) : FLT_MAX;
 }
 
 static inline void SceneObject_update(SceneObject *so, GameScene *gs, float dt) {

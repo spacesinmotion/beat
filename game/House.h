@@ -3,6 +3,7 @@
 
 #include "game/GameScene.h"
 #include "game/Level.h"
+#include "game/SceneObject.h"
 #include "game/Wearisome.h"
 #include "game/assets.h"
 #include "math/Rect.h"
@@ -25,10 +26,7 @@ bool House_dead(House *h) {
   return false;
 }
 
-Circle House_circle(House *h) {
-  (void)h;
-  return (Circle){0};
-}
+float House_render_order(House *h) { return Level_to_vecP(h->location).y; }
 
 Point House_current_entry(House *h, Level *l) {
   int options[8][2] = {{-1, 0}, {-1, 1}, {2, 0}, {2, 1}, {0, -1}, {1, -1}, {0, 2}, {1, 2}};
@@ -66,7 +64,7 @@ void House_draw(House *h, Game *g) {
 
 static SceneObjectTable House_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)House_dead,
-    .circle = (SceneObjectCircle)House_circle,
+    .render_order = (SceneObjectRenderOrderCB)House_render_order,
     .update = (SceneObjectUpdateCB)House_update,
     .draw = (SceneObjectDrawCB)House_draw,
 };

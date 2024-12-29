@@ -11,6 +11,7 @@
 #include "math.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
+#include <stdlib.h>
 
 void SceneObjectVec_push(SceneObjectVec *vec, SceneObject so) {
   if (vec->len + 1 > vec->cap) {
@@ -31,6 +32,12 @@ void SceneObjectVec_filter_dead(SceneObjectVec *vec) {
   }
 }
 
+int render_order_compare(const void *va, const void *vb) {
+  const float a = SceneObject_render_order((SceneObject *)va);
+  const float b = SceneObject_render_order((SceneObject *)vb);
+  return a < b ? -1 : (a > b ? 1 : 0);
+}
+
 void GameScene_update(GameScene *gs, Game *g, float dt) {
   (void)g;
   gs->daytime_step = dt / 60.0f;
@@ -44,6 +51,8 @@ void GameScene_update(GameScene *gs, Game *g, float dt) {
     SceneObject_update(&gs->scene_objects.data[i], gs, dt);
 
   SceneObjectVec_filter_dead(&gs->scene_objects);
+
+  qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), render_order_compare);
 }
 
 void GameScene_draw(GameScene *gs, Game *g) {
