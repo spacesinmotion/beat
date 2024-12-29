@@ -49,7 +49,7 @@ void House_update(House *h, GameScene *gs, float dt) {
     h->wearisome = NULL;
 
   if (h->wearisome && w_is_home(h->wearisome)) {
-    w_sleep(h->wearisome, 4.0f * gs->daytime_step);
+    w_sleep(h->wearisome, 6.0f * gs->daytime_step);
 
     h->resources.water -= w_drink(h->wearisome, f_min(h->resources.water, 8.0 * gs->daytime_step));
     h->resources.food -= w_eat(h->wearisome, f_min(h->resources.food, 8.0 * gs->daytime_step));

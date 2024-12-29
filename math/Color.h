@@ -1,6 +1,8 @@
 #ifndef COLOR
 #define COLOR
 
+#include <math.h>
+
 typedef struct Color {
   float r, g, b, a;
 } Color;
@@ -14,6 +16,10 @@ static inline Color red() { return rgb(255, 0, 0); }
 static inline Color green() { return rgb(0, 255, 0); }
 static inline Color blue() { return rgb(0, 0, 255); }
 
+static inline Color warn(float t) {
+  t = pow(t, 0.3);
+  return rgb(177 - 100 * t, 53 + 150 * t, 30);
+}
 // fn lighter(c Color, t f32) Color {
 //   return Color {
 //     (c.r as f32 * (1.0f - t) + 255.0f * t) as i32, (c.g as f32 * (1.0f - t) + 255.0f * t) as i32,
