@@ -41,13 +41,15 @@ void House_update(House *h, GameScene *gs, float dt) {
   (void)dt;
   (void)gs;
 
-  if (w_is_home(h->wearisome)) {
-  } else {
+  if (h->wearisome && w_dead(h->wearisome))
+    h->wearisome = NULL;
+
+  if (h->wearisome && w_is_home(h->wearisome)) {
   }
 }
 
 void House_draw(House *h, Game *g) {
-  g_color(g, House_color());
+  g_color(g, h->wearisome ? House_color() : rgb(0, 0, 0));
   g_buffer(g, h->buffer, Img_house_map, Level_to_vecP(h->location));
 }
 

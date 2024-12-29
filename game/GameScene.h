@@ -17,7 +17,7 @@ typedef struct SceneObjectVec {
 typedef struct GameScene {
   SceneObjectVec scene_objects;
 
-  float daytime;
+  float daytime_step, daytime;
   int day;
 
   Color preview;

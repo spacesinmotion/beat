@@ -8,11 +8,10 @@
 #include "game/assets.h"
 #include "gc/gc.h"
 #include "math/Circ.h"
+#include "math/Color.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
 #include "math/random.h"
-#include <stdlib.h>
-#include <time.h>
 
 typedef struct PathPoint {
   Vec2 p;
@@ -51,13 +50,15 @@ typedef struct Wearisome {
   PathPoint *path;
   float wait_time;
 
+  struct {
+    float food, water, sleep;
+  } needs;
+  float health;
+
   WearisomeState state;
 } Wearisome;
 
-bool w_dead(Wearisome *w) {
-  (void)w;
-  return false;
-}
+bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
 
 Circle w_circle(Wearisome *w) { return (Circle){w->position, 8.0f}; }
 
@@ -111,6 +112,15 @@ void w_u_wandering(Wearisome *w, GameScene *gs, float dt) {
 }
 
 void w_update(Wearisome *w, GameScene *gs, float dt) {
+  if (w_dead(w))
+    return;
+
+  w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step / 2.0f);
+  w->needs.food = f_max(0.0f, w->needs.food - gs->daytime_step / 4.0f);
+  w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step / 3.0f);
+  if (w->needs.water < 0.1f || w->needs.food < 0.1f || w->needs.sleep < 0.1f)
+    w->health -= 2.0f * gs->daytime_step;
+
   switch (w->state) {
   case W_None:
     break;
@@ -137,13 +147,25 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
   }
 }
 
+Color warn(float t) {
+  t = pow(t, 0.3);
+  return rgb(177 - 100 * t, 53 + 150 * t, 30);
+}
+
 void w_draw(Wearisome *w, Game *g) {
   g_color(g, white());
   g_objectS(g, g_animation_buffer(g), Img_weapons, 0, v_add(w->position, (Vec2){8, 4}), 2.0f);
 
   Vec2 p = v_add(w->position, (Vec2){0, 2});
-  g_color(g, rgb(77, 213, 30));
-  g_object(g, g_animation_buffer(g), Img_wearisome, g_frame(g) % 4, p);
+  g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));
+  g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : g_frame(g) % 4, p);
+
+  g_color(g, warn(w->needs.water));
+  g_objectS(g, g_animation_buffer(g), Img_maze_pointer, 4, v_add(w->position, (Vec2){-4, 12}), 0.25);
+  g_color(g, warn(w->needs.food));
+  g_objectS(g, g_animation_buffer(g), Img_maze_pointer, 4, v_add(w->position, (Vec2){0, 12}), 0.25);
+  g_color(g, warn(w->needs.sleep));
+  g_objectS(g, g_animation_buffer(g), Img_maze_pointer, 4, v_add(w->position, (Vec2){4, 12}), 0.25);
 }
 
 typedef struct WearisomePathSearchData {
@@ -194,6 +216,8 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
       .position = pos,
       .destination = pos,
       .path = NULL,
+      .needs = {.food = 1.0f, .water = 1.0f, .sleep = 1.0f},
+      .health = 1.0f,
       .state = W_AtHome,
   };
   GameScene_add_object(gs, (SceneObject){.context = w, &w_table});
