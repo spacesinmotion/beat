@@ -89,7 +89,7 @@ void w_u_moving_home(Wearisome *w, float dt) {
 }
 
 void w_u_wandering(Wearisome *w, GameScene *gs, float dt) {
-  w->position = v_lerp_about(w->position, w->destination, dt * 32.0);
+  w->position = v_lerp_about(w->position, w->destination, dt * 48.0);
   if (v_eq(w->position, w->destination)) {
     if (gs->daytime > 0.75f) {
       w_move_to_rect(w, gs, w->home, W_MovingHome);
@@ -112,6 +112,8 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
   w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step / 2.0f);
   if (w->needs.water < 0.1f || w->needs.food < 0.1f || w->needs.sleep < 0.1f)
     w->health -= 2.0f * gs->daytime_step;
+  else
+    w->health = f_min(1.0f, w->health + gs->daytime_step / 8.0f);
 
   // printf("Wearisome: %f (w:%f f:%f s:%f)\n", w->health, w->needs.water, w->needs.food, w->needs.sleep);
 
@@ -119,12 +121,14 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
   case W_None:
     break;
 
-  case W_AtHome:
-    if (gs->daytime < 0.75f) {
+  case W_AtHome: {
+    const float ref = 1.0f - f_min(w->needs.sleep, w->health);
+    if (gs->daytime > ref && gs->daytime < 0.75f) {
       w->path = NULL;
       w_wander_to_random_near_path(w, gs);
     }
     break;
+  }
 
   case W_MovingHome:
     w_u_moving_home(w, dt);
