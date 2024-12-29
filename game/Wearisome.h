@@ -117,9 +117,11 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
 
   w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step / 2.0f);
   w->needs.food = f_max(0.0f, w->needs.food - gs->daytime_step / 4.0f);
-  w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step / 3.0f);
+  w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step / 2.0f);
   if (w->needs.water < 0.1f || w->needs.food < 0.1f || w->needs.sleep < 0.1f)
     w->health -= 2.0f * gs->daytime_step;
+
+  // printf("Wearisome: %f (w:%f f:%f s:%f)\n", w->health, w->needs.water, w->needs.food, w->needs.sleep);
 
   switch (w->state) {
   case W_None:
@@ -201,6 +203,7 @@ void w_move_to(Wearisome *w, GameScene *gs, Point d, WearisomeState new_state) {
 }
 
 bool w_is_home(Wearisome *w) { return w->state == W_AtHome; }
+void w_sleep(Wearisome *w, float t) { w->needs.sleep = f_min(1.0f, w->needs.sleep + t); }
 
 SceneObjectTable w_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)w_dead,

@@ -45,6 +45,7 @@ void House_update(House *h, GameScene *gs, float dt) {
     h->wearisome = NULL;
 
   if (h->wearisome && w_is_home(h->wearisome)) {
+    w_sleep(h->wearisome, 4.0f * gs->daytime_step);
   }
 }
 
