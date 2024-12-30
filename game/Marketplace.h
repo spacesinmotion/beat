@@ -29,12 +29,9 @@ void mp_update(Marketplace *mp, GameScene *gs, float dt) {
 
 void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {
   if (ri_contains(mp->location, gs->r.x, gs->r.y)) {
-    c_printf(g, "##################\n");
+    c_printf(g, "#####################\n");
     c_printf(g, "# Marketplace (%d,%d,%d,%d)\n", mp->location.x, mp->location.y, 4, 3);
-    c_printf(g, "##################\n");
-    // c_printf(g, "# water: %f\n", mp->resources.water);
-    // c_printf(g, "#  food: %f\n", mp->resources.food);
-    c_printf(g, "##################\n");
+    c_printf(g, "#####################\n");
   }
 
   g_color(g, mp_color());

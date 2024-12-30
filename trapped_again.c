@@ -504,10 +504,13 @@ void g_update_console(Game *g) {
   sdtx_canvas(sapp_width(), sapp_height());
 
   sdtx_home();
-  sdtx_origin(1, 1);
+  sdtx_origin((int)(sapp_width() / 8) - 10, (int)(sapp_height() / 8) - 3);
   sdtx_color3b(0x42, 0x53, 0x47);
   sdtx_printf("%f\n", g_time(g));
   sdtx_printf("%f\n\n", sapp_frame_duration());
+
+  sdtx_home();
+  sdtx_origin(1, 1);
 }
 
 void g_draw_scene(Game *g) {

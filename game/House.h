@@ -65,9 +65,6 @@ void h_update(House *h, GameScene *gs, float dt) {
 
     h->resources.water -= w_drink(h->wearisome, f_min(h->resources.water, 12.0 * gs->daytime_step));
     h->resources.food -= w_eat(h->wearisome, f_min(h->resources.food, 12.0 * gs->daytime_step));
-    // printf("House w:%f f:%f ", h->resources.water, h->resources.food);
-    // Wearisome *w = h->wearisome;
-    // printf("Wearisome: %f (w:%f f:%f s:%f)\n", w->health, w->needs.water, w->needs.food, w->needs.sleep);
   }
 
   if (h->resources_maximum.water - h->resources.water >= 1.0f && w_is_free(h->wearisome)) {
@@ -80,12 +77,12 @@ void h_update(House *h, GameScene *gs, float dt) {
 
 void h_draw(House *h, GameScene *gs, Game *g) {
   if (ri_contains(h->location, gs->r.x, gs->r.y)) {
-    c_printf(g, "##################\n");
+    c_printf(g, "#####################\n");
     c_printf(g, "# HOUSE (%d,%d,%d,%d)\n", h->location.x, h->location.y, 2, 2);
-    c_printf(g, "##################\n");
-    c_printf(g, "# water: %f\n", h->resources.water);
-    c_printf(g, "#  food: %f\n", h->resources.food);
-    c_printf(g, "##################\n");
+    c_printf(g, "#####################\n");
+    c_printf(g, "#%10s: %f\n", "water", h->resources.water);
+    c_printf(g, "#%10s: %f\n", "food", h->resources.food);
+    c_printf(g, "#####################\n\n");
   }
 
   Vec2 p = l_to_vecP(ri_bottom_right(h->location));

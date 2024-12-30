@@ -20,6 +20,8 @@ typedef struct GameScene {
   float daytime_step, daytime;
   int day;
 
+  int clicks;
+
   Color preview;
   Recti r;
 

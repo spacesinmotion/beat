@@ -57,6 +57,12 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 
 void gs_draw(GameScene *gs, Game *g) {
 
+  c_printf(g, "#####################\n");
+  c_printf(g, "#%10s: %d\n", "day", gs->day);
+  c_printf(g, "#%10s: %f\n", "daytime", gs->daytime);
+  c_printf(g, "#%10s: %d\n", "clicks", gs->clicks);
+  c_printf(g, "#####################\n\n");
+
   StreetMap_draw(gs->street_map, g);
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
@@ -150,11 +156,16 @@ SceneTable GameScene_table = {
 };
 void GameScene_init(Game *g) {
   GameScene *gs = g_malloc(g, sizeof(GameScene));
-  *gs = (GameScene){.scene_objects = (SceneObjectVec){NULL, 0, 0},
-                    .menu_under_mouse = -1,
-                    .menu_selected = -1,
-                    .level = g_malloc(g, sizeof(Level)),
-                    .r = (Recti){-1, -1, 0, 0}};
+  *gs = (GameScene){
+      .scene_objects = (SceneObjectVec){NULL, 0, 0},
+      .menu_under_mouse = -1,
+      .menu_selected = -1,
+      .day = 1,
+      .daytime = 0.0f,
+      .clicks = 0,
+      .level = g_malloc(g, sizeof(Level)),
+      .r = (Recti){-1, -1, 0, 0},
+  };
 
   l_init(gs->level);
 
