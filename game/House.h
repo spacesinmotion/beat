@@ -44,14 +44,17 @@ Point h_current_entry(House *h, Level *l) {
   return (Point){h->location.x, h->location.y};
 }
 
-void h_get_water_done(House *h) {
-  if (!h_dead(h))
-    h->resources.water += 1.0;
+void h_pay_stuff(House *h, GameScene *gs) {
+  (void)h;
+  gs->clicks++;
 }
-
-void h_get_food_done(House *h) {
-  if (!h_dead(h))
-    h->resources.food += 1.0;
+void h_get_water_done(House *h, GameScene *gs) {
+  (void)gs;
+  h->resources.water += 1.0;
+}
+void h_get_food_done(House *h, GameScene *gs) {
+  (void)gs;
+  h->resources.food += 1.0;
 }
 
 void h_update(House *h, GameScene *gs, float dt) {
@@ -68,10 +71,14 @@ void h_update(House *h, GameScene *gs, float dt) {
   }
 
   if (h->resources_maximum.water - h->resources.water >= 1.0f && w_is_free(h->wearisome)) {
-    w_deliver(h->wearisome, gs, deliver_job((Recti){17, 10, 4, 3}, h->location, h, (DeliverDoneCB)h_get_water_done));
+    w_deliver(h->wearisome, gs,
+              deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_stuff,
+                          (DeliverDoneCB)h_get_water_done));
   }
   if (h->resources_maximum.food - h->resources.food >= 1.0f && w_is_free(h->wearisome)) {
-    w_deliver(h->wearisome, gs, deliver_job((Recti){17, 10, 4, 3}, h->location, h, (DeliverDoneCB)h_get_food_done));
+    w_deliver(
+        h->wearisome, gs,
+        deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_stuff, (DeliverDoneCB)h_get_food_done));
   }
 }
 

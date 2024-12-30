@@ -40,17 +40,25 @@ typedef struct Needs {
   float food, water, sleep;
 } Needs;
 
-typedef void (*DeliverDoneCB)(void *);
+typedef bool (*CollectDoneCB)(void *, GameScene *);
+typedef void (*DeliverDoneCB)(void *, GameScene *);
 typedef struct DeliverJob {
   void *context;
-  DeliverDoneCB done;
+  CollectDoneCB collect_done;
+  DeliverDoneCB deliver_done;
   Recti from, to;
 } DeliverJob;
 
-DeliverJob *deliver_job(Recti from, Recti to, void *context, DeliverDoneCB cb) {
+DeliverJob *deliver_job(Recti from, Recti to, void *context, CollectDoneCB on_collect, DeliverDoneCB on_delivered) {
   DeliverJob *job = gc_malloc(&gc, sizeof(DeliverJob));
-  *job = (DeliverJob){context, cb, from, to};
+  *job = (DeliverJob){context, on_collect, on_delivered, from, to};
   return job;
+}
+
+bool dj_on_collect(DeliverJob *dj, GameScene *gs) { return !dj->collect_done || dj->collect_done(dj->context, gs); }
+void dj_on_delivered(DeliverJob *dj, GameScene *gs) {
+  if (dj->deliver_done)
+    dj->deliver_done(dj->context, gs);
 }
 
 typedef struct Wearisome {
@@ -144,10 +152,12 @@ void w_u_deliver_wait(Wearisome *w, GameScene *gs, float dt) {
   if (!w->deliver_job)
     w->state = W_Waiting;
   else if (w->wait_time < 0.0f) {
-    if (w_move_to_rect(w, gs, w->deliver_job->to))
+    if (dj_on_collect(w->deliver_job, gs) && w_move_to_rect(w, gs, w->deliver_job->to)) {
       w->state = W_Deliver;
-    else
+    } else {
       w->state = W_Waiting;
+      w->deliver_job = NULL;
+    }
   }
 }
 
@@ -158,7 +168,7 @@ void w_u_deliver(Wearisome *w, GameScene *gs, float dt) {
       w->destination = w->path->p;
       w->path = w->path->next;
     } else {
-      w->deliver_job->done(w->deliver_job->context);
+      dj_on_delivered(w->deliver_job, gs);
       w->deliver_job = NULL;
       w_wander_to_random_near_path(w, gs);
     }
