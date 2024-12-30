@@ -23,6 +23,7 @@ typedef struct Size {
 typedef struct Recti {
   int x, y, w, h;
 } Recti;
+static inline Point ri_bottom_right(Recti r) { return (Point){r.x, r.y}; }
 
 static inline bool ri_contains(Recti r, int x, int y) { return r.x <= x && r.y <= y && r.x + r.w > x && r.y + r.h > y; }
 

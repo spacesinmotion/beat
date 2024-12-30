@@ -102,8 +102,11 @@ void Level_clear_paths(Level *level) {
 }
 
 static const float F = 16.0f;
+float Level_to_x(int i) { return i * F; }
+float Level_to_y(int j) { return j * F; }
 Vec2 Level_to_vec(int i, int j) { return (Vec2){i * F, j * F}; }
 Vec2 Level_to_vecP(Point p) { return Level_to_vec(p.x, p.y); }
+Rect Level_to_vecR(Recti r) { return (Rect){Level_to_vec(r.x, r.y), Level_to_vec(r.w, r.h)}; }
 
 Point Level_to_point(Vec2 v) { return (Point){v.x / F, v.y / F}; }
 

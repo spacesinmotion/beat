@@ -5,10 +5,11 @@
 #include "game/Level.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
+#include "math/Rect.h"
 
 typedef struct Marketplace {
   G_Object buffer;
-  Point location;
+  Recti location;
 } Marketplace;
 
 Color Marketplace_color() { return rgb(196, 113, 65); }
@@ -18,7 +19,7 @@ bool Marketplace_dead(Marketplace *mp) {
   return false;
 }
 
-float Marketplace_render_order(Marketplace *mp) { return Level_to_vecP(mp->location).y; }
+float Marketplace_render_order(Marketplace *mp) { return Level_to_y(mp->location.y); }
 
 void Marketplace_update(Marketplace *mp, GameScene *gs, float dt) {
   (void)mp;
@@ -37,7 +38,7 @@ void Marketplace_draw(Marketplace *mp, GameScene *gs, Game *g) {
   }
 
   g_color(g, Marketplace_color());
-  g_buffer(g, mp->buffer, Img_house_map, Level_to_vecP(mp->location));
+  g_buffer(g, mp->buffer, Img_house_map, Level_to_vecP(ri_bottom_right(mp->location)));
 }
 
 static SceneObjectTable Marketplace_table = (SceneObjectTable){
@@ -47,14 +48,14 @@ static SceneObjectTable Marketplace_table = (SceneObjectTable){
     .draw = (SceneObjectDrawCB)Marketplace_draw,
 };
 Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
-  Marketplace *w = g_malloc(g, sizeof(Marketplace));
-  *w = (Marketplace){
+  Marketplace *mp = g_malloc(g, sizeof(Marketplace));
+  *mp = (Marketplace){
       .buffer = g_tilerect_buffer(g, 4, 3),
-      .location = p,
+      .location = (Recti){p.x, p.y, 4, 3},
   };
 
-  Level_set_tileR(gs->level, (Recti){p.x, p.y, 4, 3}, T_Marketplace);
-  GameScene_add_object(gs, (SceneObject){.context = w, &Marketplace_table});
-  return w;
+  Level_set_tileR(gs->level, mp->location, T_Marketplace);
+  GameScene_add_object(gs, (SceneObject){.context = mp, &Marketplace_table});
+  return mp;
 }
 #endif // MARKETPLACE_H

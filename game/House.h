@@ -16,7 +16,7 @@ typedef struct Resources {
 
 typedef struct House {
   G_Object buffer;
-  Point location;
+  Recti location;
 
   Resources resources;
   Resources resources_maximum;
@@ -31,7 +31,7 @@ bool House_dead(House *h) {
   return false;
 }
 
-float House_render_order(House *h) { return Level_to_vecP(h->location).y; }
+float House_render_order(House *h) { return Level_to_y(h->location.y); }
 
 Point House_current_entry(House *h, Level *l) {
   int options[8][2] = {{-1, 0}, {-1, 1}, {2, 0}, {2, 1}, {0, -1}, {1, -1}, {0, 2}, {1, 2}};
@@ -92,7 +92,7 @@ void House_draw(House *h, GameScene *gs, Game *g) {
     c_printf(g, "##################\n");
   }
 
-  Vec2 p = Level_to_vecP(h->location);
+  Vec2 p = Level_to_vecP(ri_bottom_right(h->location));
   g_color(g, h->wearisome ? House_color() : rgb(0, 0, 0));
   g_buffer(g, h->buffer, Img_house_map, p);
 
@@ -123,17 +123,16 @@ House *House_init(Game *g, GameScene *gs, Point p) {
   House *h = g_malloc(g, sizeof(House));
   *h = (House){
       .buffer = g_tilerect_buffer(g, 2, 2),
-      .location = p,
+      .location = {p.x, p.y, 2, 2},
       .resources = {.food = 2.0f, .water = 2.0f},
       .resources_maximum = {.food = 2.0f, .water = 2.0f},
       .wearisome = NULL,
   };
 
-  Recti r = (Recti){p.x, p.y, 2, 2};
-  Level_set_tileR(gs->level, r, T_House);
+  Level_set_tileR(gs->level, h->location, T_House);
   GameScene_add_object(gs, (SceneObject){h, &House_table});
 
-  h->wearisome = Wearisome_init(g, gs, r);
+  h->wearisome = Wearisome_init(g, gs, h->location);
 
   return h;
 }
