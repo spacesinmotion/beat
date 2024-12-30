@@ -54,6 +54,13 @@ void fa_done_work(Farm *fa) {
   fa->clicks_claimed--;
   fa->clicks--;
 }
+void fa_click(Farm *fa, GameScene *gs) {
+  (void)gs;
+  if (fa->clicks < 4 && gs->clicks > 0) {
+    fa->clicks++;
+    gs->clicks--;
+  }
+}
 
 static SceneObjectTable Farm_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)fa_dead,
@@ -73,7 +80,12 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
 
   TileContent *tile_content = gc_malloc(&gc, sizeof(TileContent));
   *tile_content = (TileContent){
-      fa, (HasWorkCB)fa_has_work, (ClaimWorkCB)fa_claim_work, (StartWorkCB)fa_start_work, (DoneWorkCB)fa_done_work,
+      fa,
+      (HasWorkCB)fa_has_work,
+      (ClaimWorkCB)fa_claim_work,
+      (StartWorkCB)fa_start_work,
+      (DoneWorkCB)fa_done_work,
+      (ClickCB)fa_click,
   };
   l_set_tile_contentR(gs->level, fa->location, tile_content);
 

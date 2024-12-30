@@ -149,6 +149,10 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
     } else if (gs->menu_selected == 3) {
       if (l_freeR(gs->level, gs->r))
         Farm_init(g, gs, (Point){gs->r.x, gs->r.y});
+    } else {
+      TileContent *c = l_content(gs->level, gs->r.x, gs->r.y);
+      if (c && c->click)
+        c->click(c->context, gs);
     }
   }
 }

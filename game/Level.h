@@ -19,16 +19,20 @@ typedef enum TileType {
   T_Movable = 1 << 7,
 } TileType;
 
+typedef struct TileContent TileContent;
+typedef struct GameScene GameScene;
 typedef bool (*HasWorkCB)(void *);
 typedef void (*ClaimWorkCB)(void *);
 typedef float (*StartWorkCB)(void *);
 typedef void (*DoneWorkCB)(void *);
+typedef void (*ClickCB)(const TileContent *, GameScene *gs);
 typedef struct TileContent {
   void *context;
   HasWorkCB has_work;
   ClaimWorkCB claim_work;
   StartWorkCB start_work;
   DoneWorkCB done_work;
+  ClickCB click;
 } TileContent;
 
 typedef struct Tile {
