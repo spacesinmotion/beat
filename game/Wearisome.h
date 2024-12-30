@@ -77,11 +77,11 @@ bool w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest);
 bool w_move_to_rect(Wearisome *w, GameScene *gs, Recti r) { return w_move_to(w, gs, (Recti){0}, r); }
 
 void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
-  Point l = Level_to_point(w->destination);
+  Point l = l_to_point(w->destination);
   for (int i = 0; i < 1000; i++) {
     int i = l.x + (rand() % 10) - 5;
     int j = l.y + (rand() % 10) - 5;
-    if (Level_movable(gs->level, i, j)) {
+    if (l_movable(gs->level, i, j)) {
       if (w_move_to(w, gs, w->state == W_AtHome ? w->home : (Recti){0}, (Recti){i, j, 1, 1}))
         w->state = W_Wandering;
       break;
@@ -252,7 +252,7 @@ typedef struct WearisomePathSearchData {
 } WearisomePathSearchData;
 
 bool WearisomePathSearch_moveable(WearisomePathSearchData *data, int x, int y) {
-  return Level_movable(data->gs->level, x, y) || ri_contains(data->destination, x, y) ||
+  return l_movable(data->gs->level, x, y) || ri_contains(data->destination, x, y) ||
          ri_contains(data->start_rect, x, y);
 }
 
@@ -261,18 +261,18 @@ bool WearisomePathSearch_reached_goal(WearisomePathSearchData *data, int x, int 
 }
 
 void WearisomePathSearch_build_path(WearisomePathSearchData *data, int i, int j) {
-  data->path = PathPoint_init(Level_to_vec(i, j), data->path);
+  data->path = PathPoint_init(l_to_vec(i, j), data->path);
 }
 
 bool w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest) {
-  WearisomePathSearchData search_data = {w, gs, Level_to_point(w->destination), cur, dest, NULL};
-  bfs(gs->level, search_data.start.x, search_data.start.y,
-      (SearchHandle){
-          &search_data,
-          (CanMoveCB)WearisomePathSearch_moveable,
-          (GoalReachedCB)WearisomePathSearch_reached_goal,
-          (PathCB)WearisomePathSearch_build_path,
-      });
+  WearisomePathSearchData search_data = {w, gs, l_to_point(w->destination), cur, dest, NULL};
+  l_bright_first(gs->level, search_data.start.x, search_data.start.y,
+                 (SearchHandle){
+                     &search_data,
+                     (CanMoveCB)WearisomePathSearch_moveable,
+                     (GoalReachedCB)WearisomePathSearch_reached_goal,
+                     (PathCB)WearisomePathSearch_build_path,
+                 });
   w->path = search_data.path;
   return w->path != NULL;
 }
@@ -307,7 +307,7 @@ SceneObjectTable w_table = (SceneObjectTable){
     .draw = (SceneObjectDrawCB)w_draw,
 };
 Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
-  Vec2 pos = Level_to_vec(home.x, home.y);
+  Vec2 pos = l_to_vec(home.x, home.y);
   Wearisome *w = g_malloc(g, sizeof(Wearisome));
   *w = (Wearisome){
       .home = home,

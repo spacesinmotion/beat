@@ -31,14 +31,14 @@ bool House_dead(House *h) {
   return false;
 }
 
-float House_render_order(House *h) { return Level_to_y(h->location.y); }
+float House_render_order(House *h) { return l_to_y(h->location.y); }
 
 Point House_current_entry(House *h, Level *l) {
   int options[8][2] = {{-1, 0}, {-1, 1}, {2, 0}, {2, 1}, {0, -1}, {1, -1}, {0, 2}, {1, 2}};
   for (int i = 0; i < 8; ++i) {
     int ii = h->location.x + options[i][0];
     int jj = h->location.y + options[i][1];
-    if (Level_movable(l, ii, jj))
+    if (l_movable(l, ii, jj))
       return (Point){ii, jj};
   }
   return (Point){h->location.x, h->location.y};
@@ -92,7 +92,7 @@ void House_draw(House *h, GameScene *gs, Game *g) {
     c_printf(g, "##################\n");
   }
 
-  Vec2 p = Level_to_vecP(ri_bottom_right(h->location));
+  Vec2 p = l_to_vecP(ri_bottom_right(h->location));
   g_color(g, h->wearisome ? House_color() : rgb(0, 0, 0));
   g_buffer(g, h->buffer, Img_house_map, p);
 

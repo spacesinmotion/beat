@@ -62,15 +62,15 @@ void GameScene_draw(GameScene *gs, Game *g) {
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_draw(&gs->scene_objects.data[i], gs, g);
 
-  if (gs->menu_under_mouse < 0 && Level_validR(gs->level, gs->r)) {
+  if (gs->menu_under_mouse < 0 && l_validR(gs->level, gs->r)) {
     if (gs->r.h > 0 && gs->r.w > 0) {
       g_color(g, gs->preview);
-      g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), Img_house_map, Level_to_vec(gs->r.x, gs->r.y));
+      g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), Img_house_map, l_to_vec(gs->r.x, gs->r.y));
     }
-    g_color(g, Level_freeR(gs->level, gs->r) ? green() : red());
+    g_color(g, l_freeR(gs->level, gs->r) ? green() : red());
     for (int i = gs->r.x; i < gs->r.x + gs->r.w; ++i)
       for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
-        g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, Level_to_vec(i, j));
+        g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, l_to_vec(i, j));
   }
 }
 
@@ -102,21 +102,6 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
       gs->menu_under_mouse = i;
 }
 
-PathPoint *path = NULL;
-Point start = (Point){-1, -1};
-Point stop = (Point){-1, -1};
-bool reached_goal(GameScene *gs, int i, int j) {
-  (void)gs;
-  return i == stop.x && j == stop.y;
-}
-bool movable(GameScene *gs, int i, int j) { return Level_movable(gs->level, i, j); }
-void mark_path(GameScene *gs, int i, int j) {
-  PathPoint *pp = gc_malloc(&gc, sizeof(PathPoint));
-  *pp = (PathPoint){Level_to_vec(i, j), path};
-  path = pp;
-  Level_set_tile(gs->level, i, j, T_Path);
-}
-
 void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   (void)mp;
   (void)op;
@@ -142,13 +127,13 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
         gs->r.w = gs->r.h = 0;
       }
     } else if (gs->menu_selected == 0) {
-      Level_set_movable(gs->level, gs->r.x, gs->r.y, true);
+      l_set_movable(gs->level, gs->r.x, gs->r.y, true);
       StreetMap_update(gs->street_map);
     } else if (gs->menu_selected == 1) {
-      if (Level_freeR(gs->level, gs->r))
+      if (l_freeR(gs->level, gs->r))
         House_init(g, gs, (Point){gs->r.x, gs->r.y});
     } else if (gs->menu_selected == 2) {
-      if (Level_freeR(gs->level, gs->r))
+      if (l_freeR(gs->level, gs->r))
         Marketplace_init(g, gs, (Point){gs->r.x, gs->r.y});
     }
   }
@@ -171,19 +156,19 @@ void GameScene_init(Game *g) {
                     .level = g_malloc(g, sizeof(Level)),
                     .r = (Recti){-1, -1, 0, 0}};
 
-  Level_init(gs->level);
+  l_init(gs->level);
 
   Marketplace_init(g, gs, (Point){17, 10});
   for (int i = 8; i < 30; ++i)
-    Level_set_movable(gs->level, i, 9, true);
+    l_set_movable(gs->level, i, 9, true);
   for (int i = 13; i < 27; ++i)
-    Level_set_movable(gs->level, i, 20, true);
+    l_set_movable(gs->level, i, 20, true);
   for (int i = 12; i < 31; ++i)
-    Level_set_movable(gs->level, i, 13, true);
+    l_set_movable(gs->level, i, 13, true);
   for (int i = 2; i < 23; ++i)
-    Level_set_movable(gs->level, 16, i, true);
+    l_set_movable(gs->level, 16, i, true);
   for (int i = 1; i < 26; ++i)
-    Level_set_movable(gs->level, 21, i, true);
+    l_set_movable(gs->level, 21, i, true);
   for (int i = 0; i < 3; ++i) {
     House_init(g, gs, (Point){17, 10 - 3 - 2 * i});
     House_init(g, gs, (Point){19, 10 - 3 - 2 * i});

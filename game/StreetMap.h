@@ -25,18 +25,18 @@ bool StreetMap_dead(StreetMap *sm) {
 void StreetMap_update(StreetMap *sm) {
   if (G_Object_valid(&sm->street_tile_map))
     G_Object_free(&sm->street_tile_map);
-  sm->street_tile_map = create_tile_rect_buffer(LEVEL_WIDTH, LEVEL_HEIGHT, (IsSetCB)Level_movable, sm->level);
+  sm->street_tile_map = create_tile_rect_buffer(LEVEL_WIDTH, LEVEL_HEIGHT, (IsSetCB)l_movable, sm->level);
 }
 
 int street_tex_for(StreetMap *sm, int i, int j) {
   int k = 0;
-  if (Level_movable(sm->level, i + 1, j))
+  if (l_movable(sm->level, i + 1, j))
     k += 1;
-  if (Level_movable(sm->level, i, j + 1))
+  if (l_movable(sm->level, i, j + 1))
     k += 2;
-  if (Level_movable(sm->level, i - 1, j))
+  if (l_movable(sm->level, i - 1, j))
     k += 4;
-  if (Level_movable(sm->level, i, j - 1))
+  if (l_movable(sm->level, i, j - 1))
     k += 8;
   return k;
 }
@@ -45,19 +45,19 @@ void StreetMap_draw(StreetMap *sm, Game *g) {
   g_color(g, Street_color());
   g_buffer(g, sm->street_tile_map, Img_tilemap, (Vec2){0, 0});
 
-  for (int i = 0; i < LEVEL_WIDTH; ++i) {
-    for (int j = 0; j < LEVEL_HEIGHT; ++j) {
-      TileType tc = Level_tile(sm->level, i, j);
-      if (tc == T_PathStartEnd)
-        g_color(g, red());
-      else if (tc == T_Path)
-        g_color(g, rgb(194, 130, 130));
-      else
-        continue;
+  // for (int i = 0; i < LEVEL_WIDTH; ++i) {
+  //   for (int j = 0; j < LEVEL_HEIGHT; ++j) {
+  //     TileType tc = l_tile(sm->level, i, j);
+  //     if (tc == T_PathStartEnd)
+  //       g_color(g, red());
+  //     else if (tc == T_Path)
+  //       g_color(g, rgb(194, 130, 130));
+  //     else
+  //       continue;
 
-      g_object(g, g_animation_buffer(g), Img_street, street_tex_for(sm, i, j), v_mulf((Vec2){i * 16, j * 16}, 1.0f));
-    }
-  }
+  //     g_object(g, g_animation_buffer(g), Img_street, street_tex_for(sm, i, j), v_mulf((Vec2){i * 16, j * 16}, 1.0f));
+  //   }
+  // }
 }
 
 // SceneObjectTable StreetMap_table = (SceneObjectTable){

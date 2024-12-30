@@ -15,9 +15,6 @@ typedef enum TileType {
   T_Marketplace,
   T_House,
 
-  T_Path,
-  T_PathStartEnd,
-
   T_Movable = 1 << 7,
 } TileType;
 
@@ -25,36 +22,36 @@ typedef struct Level {
   uint8_t tiles[LEVEL_WIDTH][LEVEL_HEIGHT];
 } Level;
 
-void Level_init(Level *level) { memset(level->tiles, 0, sizeof(level->tiles)); }
+void l_init(Level *level) { memset(level->tiles, 0, sizeof(level->tiles)); }
 
-bool Level_valid(Level *level, int x, int y) {
+bool l_valid(Level *level, int x, int y) {
   (void)level;
   return x >= 0 && x < LEVEL_WIDTH && y >= 0 && y < LEVEL_HEIGHT;
 }
-bool Level_validP(Level *level, Point p) { return Level_valid(level, p.x, p.y); }
-bool Level_validR(Level *level, Recti r) {
+bool l_validP(Level *level, Point p) { return l_valid(level, p.x, p.y); }
+bool l_validR(Level *level, Recti r) {
   for (int i = r.x; i < r.x + r.w; ++i)
     for (int j = r.y; j < r.y + r.h; ++j)
-      if (!Level_valid(level, i, j))
+      if (!l_valid(level, i, j))
         return false;
   return true;
 }
 
-bool Level_free(Level *level, int x, int y) { return Level_valid(level, x, y) && level->tiles[x][y] == T_None; }
-bool Level_freeP(Level *level, Point p) { return Level_free(level, p.x, p.y); }
-bool Level_freeR(Level *level, Recti r) {
+bool l_free(Level *level, int x, int y) { return l_valid(level, x, y) && level->tiles[x][y] == T_None; }
+bool l_freeP(Level *level, Point p) { return l_free(level, p.x, p.y); }
+bool l_freeR(Level *level, Recti r) {
   for (int i = r.x; i < r.x + r.w; ++i)
     for (int j = r.y; j < r.y + r.h; ++j)
-      if (!Level_free(level, i, j))
+      if (!l_free(level, i, j))
         return false;
   return true;
 }
 
-bool Level_movable(Level *level, int x, int y) {
-  return Level_valid(level, x, y) && ((level->tiles[x][y] & T_Movable) == T_Movable);
+bool l_movable(Level *level, int x, int y) {
+  return l_valid(level, x, y) && ((level->tiles[x][y] & T_Movable) == T_Movable);
 }
-void Level_set_movable(Level *level, int x, int y, bool movable) {
-  if (Level_valid(level, x, y)) {
+void l_set_movable(Level *level, int x, int y, bool movable) {
+  if (l_valid(level, x, y)) {
     if (movable)
       level->tiles[x][y] |= T_Movable;
     else
@@ -62,66 +59,37 @@ void Level_set_movable(Level *level, int x, int y, bool movable) {
   }
 }
 
-Point Level_movable_around(Level *l, Recti r) {
-  for (int i = r.x; i < r.x + r.w; ++i) {
-    if (Level_movable(l, i, r.y - 1))
-      return (Point){i, r.y - 1};
-    if (Level_movable(l, i, r.y + r.w))
-      return (Point){i, r.y + r.w};
-  }
-  for (int j = r.y; j < r.y + r.h; ++j) {
-    if (Level_movable(l, r.x - 1, j))
-      return (Point){r.x - 1, j};
-    if (Level_movable(l, r.x + r.h, j))
-      return (Point){r.x + r.h, j};
-  }
-  return (Point){-1, -1};
+TileType l_tile(Level *level, int x, int y) {
+  return l_valid(level, x, y) ? (TileType)(level->tiles[x][y] & ~T_Movable) : T_None;
 }
-
-TileType Level_tile(Level *level, int x, int y) {
-  return Level_valid(level, x, y) ? (TileType)(level->tiles[x][y] & ~T_Movable) : T_None;
-}
-void Level_set_tile(Level *level, int x, int y, TileType tile) {
-  if (Level_valid(level, x, y))
-    level->tiles[x][y] = Level_movable(level, x, y) ? tile | T_Movable : tile;
+void l_set_tile(Level *level, int x, int y, TileType tile) {
+  if (l_valid(level, x, y))
+    level->tiles[x][y] = l_movable(level, x, y) ? tile | T_Movable : tile;
 }
 void Level_set_tileR(Level *level, Recti r, TileType tile) {
   for (int i = r.x; i < r.x + r.w; ++i)
     for (int j = r.y; j < r.y + r.h; ++j)
-      Level_set_tile(level, i, j, tile);
-}
-
-void Level_clear_paths(Level *level) {
-  for (int i = 0; i < LEVEL_WIDTH; ++i) {
-    for (int j = 0; j < LEVEL_HEIGHT; ++j) {
-      TileType t = Level_tile(level, i, j);
-      if (t == T_Path || t == T_PathStartEnd)
-        Level_set_tile(level, i, j, T_None);
-    }
-  }
+      l_set_tile(level, i, j, tile);
 }
 
 static const float F = 16.0f;
-float Level_to_x(int i) { return i * F; }
-float Level_to_y(int j) { return j * F; }
-Vec2 Level_to_vec(int i, int j) { return (Vec2){i * F, j * F}; }
-Vec2 Level_to_vecP(Point p) { return Level_to_vec(p.x, p.y); }
-Rect Level_to_vecR(Recti r) { return (Rect){Level_to_vec(r.x, r.y), Level_to_vec(r.w, r.h)}; }
+float l_to_x(int i) { return i * F; }
+float l_to_y(int j) { return j * F; }
+Vec2 l_to_vec(int i, int j) { return (Vec2){i * F, j * F}; }
+Vec2 l_to_vecP(Point p) { return l_to_vec(p.x, p.y); }
+Rect l_to_vecR(Recti r) { return (Rect){l_to_vec(r.x, r.y), l_to_vec(r.w, r.h)}; }
 
-Point Level_to_point(Vec2 v) { return (Point){v.x / F, v.y / F}; }
+Point l_to_point(Vec2 v) { return (Point){v.x / F, v.y / F}; }
 
-typedef struct {
+typedef struct Queue {
   Point points[LEVEL_WIDTH * LEVEL_HEIGHT];
   int front, rear;
 } Queue;
 
-void init_queue(Queue *q) { q->front = q->rear = 0; }
-
-bool is_queue_empty(Queue *q) { return q->front == q->rear; }
-
-void enqueue(Queue *q, Point p) { q->points[q->rear++] = p; }
-
-Point dequeue(Queue *q) { return q->points[q->front++]; }
+void q_init_queue(Queue *q) { q->front = q->rear = 0; }
+bool q_is_queue_empty(Queue *q) { return q->front == q->rear; }
+void q_enqueue(Queue *q, Point p) { q->points[q->rear++] = p; }
+Point q_dequeue(Queue *q) { return q->points[q->front++]; }
 
 typedef struct SearchHandle SearchHandle;
 typedef bool (*CanMoveCB)(SearchHandle *, int x, int y);
@@ -134,21 +102,21 @@ typedef struct SearchHandle {
   PathCB path_callback;
 } SearchHandle;
 
-bool bfs(Level *level, int start_x, int start_y, SearchHandle handle) {
+bool l_bright_first(Level *level, int start_x, int start_y, SearchHandle handle) {
   (void)level;
 
   Point predecessor[LEVEL_WIDTH][LEVEL_HEIGHT];
   memset(predecessor, -1, sizeof(predecessor));
 
   Queue q;
-  init_queue(&q);
-  enqueue(&q, (Point){start_x, start_y});
+  q_init_queue(&q);
+  q_enqueue(&q, (Point){start_x, start_y});
   predecessor[start_x][start_y] = (Point){start_x, start_y}; // self
 
   int directions[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
-  while (!is_queue_empty(&q)) {
-    Point p = dequeue(&q);
+  while (!q_is_queue_empty(&q)) {
+    Point p = q_dequeue(&q);
 
     if (handle.goal_reached(handle.context, p.x, p.y)) {
       Point c = p;
@@ -168,7 +136,7 @@ bool bfs(Level *level, int start_x, int start_y, SearchHandle handle) {
 
       if (predecessor[nx][ny].x < 0 && handle.can_move(handle.context, nx, ny)) {
         predecessor[nx][ny] = (Point){p.x, p.y};
-        enqueue(&q, (Point){nx, ny});
+        q_enqueue(&q, (Point){nx, ny});
       }
     }
   }

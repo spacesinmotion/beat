@@ -19,7 +19,7 @@ bool Marketplace_dead(Marketplace *mp) {
   return false;
 }
 
-float Marketplace_render_order(Marketplace *mp) { return Level_to_y(mp->location.y); }
+float Marketplace_render_order(Marketplace *mp) { return l_to_y(mp->location.y); }
 
 void Marketplace_update(Marketplace *mp, GameScene *gs, float dt) {
   (void)mp;
@@ -38,7 +38,7 @@ void Marketplace_draw(Marketplace *mp, GameScene *gs, Game *g) {
   }
 
   g_color(g, Marketplace_color());
-  g_buffer(g, mp->buffer, Img_house_map, Level_to_vecP(ri_bottom_right(mp->location)));
+  g_buffer(g, mp->buffer, Img_house_map, l_to_vecP(ri_bottom_right(mp->location)));
 }
 
 static SceneObjectTable Marketplace_table = (SceneObjectTable){
