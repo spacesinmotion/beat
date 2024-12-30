@@ -131,7 +131,6 @@ void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
 
 typedef struct WearisomeJobSearchData {
   GameScene *gs;
-  Point start;
   Recti start_rect;
   PathPoint *path;
 } WearisomeJobSearchData;
@@ -155,8 +154,9 @@ void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
     w->state = W_MovingHome;
   } else if (w->wait_time < 0.0f) {
     if (gs->daytime < 0.65 && w->needs.sleep > 0.4) {
-      WearisomeJobSearchData search_data = {gs, l_to_point(w->destination), w->current_rect, NULL};
-      l_bright_first(gs->level, search_data.start.x, search_data.start.y,
+      WearisomeJobSearchData search_data = {gs, w->current_rect, NULL};
+      Point start = l_to_point(w->destination);
+      l_bright_first(gs->level, start.x, start.y,
                      (SearchHandle){
                          &search_data,
                          (CanMoveCB)WearisomeJobSearch_moveable,
@@ -364,9 +364,7 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
 }
 
 typedef struct WearisomePathSearchData {
-  Wearisome *w;
   GameScene *gs;
-  Point start;
   Recti start_rect;
   Recti destination;
   PathPoint *path;
@@ -386,8 +384,9 @@ void WearisomePathSearch_build_path(WearisomePathSearchData *data, int i, int j)
 }
 
 bool w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest) {
-  WearisomePathSearchData search_data = {w, gs, l_to_point(w->destination), cur, dest, NULL};
-  l_bright_first(gs->level, search_data.start.x, search_data.start.y,
+  WearisomePathSearchData search_data = {gs, cur, dest, NULL};
+  Point start = l_to_point(w->destination);
+  l_bright_first(gs->level, start.x, start.y,
                  (SearchHandle){
                      &search_data,
                      (CanMoveCB)WearisomePathSearch_moveable,
