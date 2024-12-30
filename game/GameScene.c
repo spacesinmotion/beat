@@ -57,11 +57,11 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 
 void gs_draw(GameScene *gs, Game *g) {
 
-  c_printf(g, "#####################\n");
-  c_printf(g, "#%10s: %d\n", "day", gs->day);
-  c_printf(g, "#%10s: %f\n", "daytime", gs->daytime);
-  c_printf(g, "#%10s: %d\n", "clicks", gs->clicks);
-  c_printf(g, "#####################\n\n");
+  c_printf(g, "----------------------\n");
+  c_printf(g, " %10s: %d\n", "day", gs->day);
+  c_printf(g, " %10s: %f\n", "daytime", gs->daytime);
+  c_printf(g, " %10s: %d\n", "clicks", gs->clicks);
+  c_printf(g, "----------------------\n\n");
 
   StreetMap_draw(gs->street_map, g);
 

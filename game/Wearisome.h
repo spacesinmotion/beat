@@ -36,6 +36,28 @@ typedef enum WearisomeState {
   W_Deliver,
 } WearisomeState;
 
+const char *WearisomeState_name(WearisomeState s) {
+  switch (s) {
+  case W_None:
+    return "none";
+  case W_AtHome:
+    return "at home";
+  case W_MovingHome:
+    return "moving home";
+  case W_Waiting:
+    return "waiting";
+  case W_Wandering:
+    return "wandering";
+  case W_DeliverCollect:
+    return "collect something";
+  case W_DeliverWait:
+    return "wait for deliver";
+  case W_Deliver:
+    return "deliver something";
+  }
+  return "<error>";
+}
+
 typedef struct Needs {
   float food, water, sleep;
 } Needs;
@@ -62,7 +84,7 @@ void dj_on_delivered(DeliverJob *dj, GameScene *gs) {
 }
 
 typedef struct Wearisome {
-  Recti home;
+  Recti home, current_rect;
   Vec2 position, destination;
 
   PathPoint *path;
@@ -75,6 +97,8 @@ typedef struct Wearisome {
   WearisomeState state;
 
   DeliverJob *deliver_job;
+
+  bool house_highlight;
 } Wearisome;
 
 bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
@@ -82,7 +106,7 @@ bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
 float w_render_order(Wearisome *w) { return 10000.0f + w->position.y; }
 
 bool w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest);
-bool w_move_to_rect(Wearisome *w, GameScene *gs, Recti r) { return w_move_to(w, gs, (Recti){0}, r); }
+bool w_move_to_rect(Wearisome *w, GameScene *gs, Recti r) { return w_move_to(w, gs, w->current_rect, r); }
 
 void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
   Point l = l_to_point(w->destination);
@@ -90,7 +114,7 @@ void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
     int i = l.x + (rand() % 10) - 5;
     int j = l.y + (rand() % 10) - 5;
     if (l_movable(gs->level, i, j)) {
-      if (w_move_to(w, gs, w->state == W_AtHome ? w->home : (Recti){0}, (Recti){i, j, 1, 1}))
+      if (w_move_to(w, gs, w->current_rect, (Recti){i, j, 1, 1}))
         w->state = W_Wandering;
       break;
     }
@@ -112,8 +136,10 @@ void w_u_moving_home(Wearisome *w, float dt) {
     if (w->path) {
       w->destination = w->path->p;
       w->path = w->path->next;
-    } else
+    } else {
       w->state = W_AtHome;
+      w->current_rect = w->home;
+    }
   }
 }
 
@@ -143,6 +169,7 @@ void w_u_deliver_collect(Wearisome *w, GameScene *gs, float dt) {
     } else {
       w->wait_time = 0.5f;
       w->state = W_DeliverWait;
+      w->current_rect = w->deliver_job->from;
     }
   }
 }
@@ -168,6 +195,7 @@ void w_u_deliver(Wearisome *w, GameScene *gs, float dt) {
       w->destination = w->path->p;
       w->path = w->path->next;
     } else {
+      w->current_rect = w->deliver_job->to;
       dj_on_delivered(w->deliver_job, gs);
       w->deliver_job = NULL;
       w_wander_to_random_near_path(w, gs);
@@ -187,7 +215,9 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
   else
     w->health = f_min(1.0f, w->health + gs->daytime_step / 8.0f);
 
-  // printf("Wearisome: %f (w:%f f:%f s:%f)\n", w->health, w->needs.water, w->needs.food, w->needs.sleep);
+  Point p = l_to_point(w->destination);
+  if (!ri_contains(w->current_rect, p.x, p.y))
+    w->current_rect = (Recti){0};
 
   switch (w->state) {
   case W_None:
@@ -198,8 +228,10 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
     if (gs->daytime > ref && gs->daytime < 0.75f) {
       w->path = NULL;
       w_wander_to_random_near_path(w, gs);
-      if (!w->path)
+      if (!w->path) {
         w->state = W_AtHome;
+        w->current_rect = w->home;
+      }
     }
     break;
   }
@@ -230,8 +262,10 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
 
 void w_draw(Wearisome *w, GameScene *gs, Game *g) {
   (void)gs;
-  // g_color(g, white());
-  // g_objectS(g, g_animation_buffer(g), Img_weapons, 0, v_add(w->position, (Vec2){8, 4}), 2.0f);
+  if (w->house_highlight) {
+    g_color(g, rgb(200, 62, 235));
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(w->position, (Vec2){0, 8}), 0.75f);
+  }
 
   Vec2 p = v_add(w->position, (Vec2){0, 2});
   g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));
@@ -321,6 +355,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
   Wearisome *w = g_malloc(g, sizeof(Wearisome));
   *w = (Wearisome){
       .home = home,
+      .current_rect = home,
       .position = pos,
       .destination = pos,
       .path = NULL,
@@ -331,6 +366,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
       .health = 1.0f,
       .deliver_job = NULL,
       .state = W_AtHome,
+      .house_highlight = false,
   };
   gs_add_object(gs, (SceneObject){.context = w, &w_table});
   return w;

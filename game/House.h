@@ -12,6 +12,7 @@
 
 typedef struct Resources {
   float food, water;
+  int clicks;
 } Resources;
 
 typedef struct House {
@@ -47,6 +48,7 @@ Point h_current_entry(House *h, Level *l) {
 void h_pay_stuff(House *h, GameScene *gs) {
   (void)h;
   gs->clicks++;
+  h->resources.clicks--;
 }
 void h_get_water_done(House *h, GameScene *gs) {
   (void)gs;
@@ -70,27 +72,41 @@ void h_update(House *h, GameScene *gs, float dt) {
     h->resources.food -= w_eat(h->wearisome, f_min(h->resources.food, 12.0 * gs->daytime_step));
   }
 
-  if (h->resources_maximum.water - h->resources.water >= 1.0f && w_is_free(h->wearisome)) {
-    w_deliver(h->wearisome, gs,
-              deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_stuff,
-                          (DeliverDoneCB)h_get_water_done));
+  if (h->resources_maximum.clicks > 0 && h->resources_maximum.water - h->resources.water >= 1.0f &&
+      w_is_free(h->wearisome) &&
+      w_deliver(h->wearisome, gs,
+                deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_stuff,
+                            (DeliverDoneCB)h_get_water_done))) {
+    h->resources_maximum.clicks--;
   }
-  if (h->resources_maximum.food - h->resources.food >= 1.0f && w_is_free(h->wearisome)) {
-    w_deliver(
-        h->wearisome, gs,
-        deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_stuff, (DeliverDoneCB)h_get_food_done));
+  if (h->resources_maximum.clicks > 0 && h->resources_maximum.food - h->resources.food >= 1.0f &&
+      w_is_free(h->wearisome) &&
+      w_deliver(h->wearisome, gs,
+                deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_stuff,
+                            (DeliverDoneCB)h_get_food_done))) {
+    h->resources_maximum.clicks--;
   }
 }
 
 void h_draw(House *h, GameScene *gs, Game *g) {
   if (ri_contains(h->location, gs->r.x, gs->r.y)) {
-    c_printf(g, "#####################\n");
-    c_printf(g, "# HOUSE (%d,%d,%d,%d)\n", h->location.x, h->location.y, 2, 2);
-    c_printf(g, "#####################\n");
-    c_printf(g, "#%10s: %f\n", "water", h->resources.water);
-    c_printf(g, "#%10s: %f\n", "food", h->resources.food);
-    c_printf(g, "#####################\n\n");
-  }
+    h->wearisome->house_highlight = true;
+    c_printf(g, "----------------------\n");
+    c_printf(g, "  HOUSE (%d,%d,%d,%d)\n", h->location.x, h->location.y, 2, 2);
+    c_printf(g, "----------------------\n");
+    c_printf(g, " %10s: %d\n", "clicks", h->resources.clicks);
+    c_printf(g, " %10s: %d\n", "clicks", h->resources.clicks);
+    c_printf(g, " %10s: %f\n", "water", h->resources.water);
+    c_printf(g, " %10s: %f\n", "food", h->resources.food);
+    c_printf(g, "----------------------\n");
+    c_printf(g, " %10s: %s\n", "state", WearisomeState_name(h->wearisome->state));
+    c_printf(g, " %10s: %f\n", "health", h->wearisome->health);
+    c_printf(g, " %10s: %f\n", "sleep", h->wearisome->needs.sleep);
+    c_printf(g, " %10s: %f\n", "water", h->wearisome->needs.water);
+    c_printf(g, " %10s: %f\n", "food", h->wearisome->needs.food);
+    c_printf(g, "----------------------\n\n");
+  } else
+    h->wearisome->house_highlight = false;
 
   Vec2 p = l_to_vecP(ri_bottom_right(h->location));
   g_color(g, h->wearisome ? h_color() : rgb(0, 0, 0));
@@ -111,6 +127,11 @@ void h_draw(House *h, GameScene *gs, Game *g) {
       break;
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, -2 + 4 * i}), 0.25);
   }
+
+  g_color(g, rgb(255, 215, 0));
+  for (int i = 0; i < h->resources.clicks; ++i) {
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){20, -2 + 4 * i}), 0.25);
+  }
 }
 
 static SceneObjectTable House_table = (SceneObjectTable){
@@ -124,8 +145,8 @@ House *House_init(Game *g, GameScene *gs, Point p) {
   *h = (House){
       .buffer = g_tilerect_buffer(g, 2, 2),
       .location = {p.x, p.y, 2, 2},
-      .resources = {.food = 2.0f, .water = 2.0f},
-      .resources_maximum = {.food = 2.0f, .water = 2.0f},
+      .resources = {.food = 1.0f, .water = 1.0f, .clicks = 2},
+      .resources_maximum = {.food = 2.0f, .water = 2.0f, .clicks = 2},
       .wearisome = NULL,
   };
 
