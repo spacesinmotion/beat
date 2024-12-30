@@ -89,8 +89,8 @@ void h_update(House *h, GameScene *gs, float dt) {
 }
 
 void h_draw(House *h, GameScene *gs, Game *g) {
-  if (ri_contains(h->location, gs->r.x, gs->r.y)) {
-    h->wearisome->house_highlight = true;
+  const bool hovered = ri_contains(h->location, gs->r.x, gs->r.y);
+  if (hovered) {
     c_printf(g, "----------------------\n");
     c_printf(g, "  HOUSE (%d,%d,%d,%d)\n", h->location.x, h->location.y, 2, 2);
     c_printf(g, "----------------------\n");
@@ -98,15 +98,18 @@ void h_draw(House *h, GameScene *gs, Game *g) {
     c_printf(g, " %10s: %d\n", "clicks", h->resources.clicks);
     c_printf(g, " %10s: %f\n", "water", h->resources.water);
     c_printf(g, " %10s: %f\n", "food", h->resources.food);
-    c_printf(g, "----------------------\n");
-    c_printf(g, " %10s: %s\n", "state", WearisomeState_name(h->wearisome->state));
-    c_printf(g, " %10s: %f\n", "health", h->wearisome->health);
-    c_printf(g, " %10s: %f\n", "sleep", h->wearisome->needs.sleep);
-    c_printf(g, " %10s: %f\n", "water", h->wearisome->needs.water);
-    c_printf(g, " %10s: %f\n", "food", h->wearisome->needs.food);
+    if (h->wearisome) {
+      c_printf(g, "----------------------\n");
+      c_printf(g, " %10s: %s\n", "state", WearisomeState_name(h->wearisome->state));
+      c_printf(g, " %10s: %f\n", "health", h->wearisome->health);
+      c_printf(g, " %10s: %f\n", "sleep", h->wearisome->needs.sleep);
+      c_printf(g, " %10s: %f\n", "water", h->wearisome->needs.water);
+      c_printf(g, " %10s: %f\n", "food", h->wearisome->needs.food);
+    }
     c_printf(g, "----------------------\n\n");
-  } else
-    h->wearisome->house_highlight = false;
+  }
+  if (h->wearisome)
+    h->wearisome->house_highlight = hovered;
 
   Vec2 p = l_to_vecP(ri_bottom_right(h->location));
   g_color(g, h->wearisome ? h_color() : rgb(0, 0, 0));
@@ -142,11 +145,12 @@ static SceneObjectTable House_table = (SceneObjectTable){
 };
 House *House_init(Game *g, GameScene *gs, Point p) {
   House *h = g_malloc(g, sizeof(House));
+  int c = rand() % 2;
   *h = (House){
       .buffer = g_tilerect_buffer(g, 2, 2),
       .location = {p.x, p.y, 2, 2},
-      .resources = {.food = 1.0f, .water = 1.0f, .clicks = 2},
-      .resources_maximum = {.food = 2.0f, .water = 2.0f, .clicks = 2},
+      .resources = {.food = 1.0f, .water = 1.0f, .clicks = c},
+      .resources_maximum = {.food = 2.0f, .water = 2.0f, .clicks = c},
       .wearisome = NULL,
   };
 
