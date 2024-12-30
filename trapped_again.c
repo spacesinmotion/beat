@@ -187,7 +187,7 @@ void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan) {
   g_objectRS(g, buffer, tex, frame, pan, 0.0f, 1.0f);
 }
 
-void Game_update_state(Game *g, double dt) {
+void g_update_state(Game *g, double dt) {
   g->time += dt;
 
   if (g->scene.table->update)
@@ -339,7 +339,7 @@ G_Object g_tilerect_buffer(Game *g, int w, int h) {
 
 G_Object g_animation_buffer(Game *g) { return g->animation_buffer_4x4; }
 
-static void Game_init(Game *g) {
+static void g_init(Game *g) {
   g->render.camera_pan = (Vec2){32.0f, 32.0f};
   g->render.camera_scale = 2.0f;
   g->render.overlay_scale = 2.0f;
@@ -500,17 +500,17 @@ void c_printf(Game *g, const char *fmt, ...) {
   va_end(args);
 }
 
-void Game_update_console(Game *g) {
+void g_update_console(Game *g) {
   sdtx_canvas(sapp_width(), sapp_height());
 
   sdtx_home();
-  sdtx_origin(0, 0);
+  sdtx_origin(1, 1);
   sdtx_color3b(0x42, 0x53, 0x47);
   sdtx_printf("%f\n", g_time(g));
   sdtx_printf("%f\n\n", sapp_frame_duration());
 }
 
-void Game_draw_scene(Game *g) {
+void g_draw_scene(Game *g) {
   if (g->scene.table->draw) {
     g->render.vs_param.to_screen_scale =
         (Vec2){2.0f / sapp_widthf() * g->render.camera_scale, 2.0f / sapp_heightf() * g->render.camera_scale};
@@ -527,10 +527,10 @@ void Game_draw_scene(Game *g) {
   }
 }
 
-static void Game_draw(Game *g) {
-  Game_update_state(g, sapp_frame_duration());
+static void g_draw(Game *g) {
+  g_update_state(g, sapp_frame_duration());
 
-  Game_update_console(g);
+  g_update_console(g);
 
   sg_begin_pass(&(sg_pass){
       .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {1.0f, 1.0f, 1.0f, 1.0f}}},
@@ -538,14 +538,14 @@ static void Game_draw(Game *g) {
   });
 
   sg_apply_pipeline(g->pipeline);
-  Game_draw_scene(g);
+  g_draw_scene(g);
   sdtx_draw();
 
   sg_end_pass();
   sg_commit();
 }
 
-static void Game_cleanup(Game *g) {
+static void g_cleanup(Game *g) {
   (void)g;
 
   sdtx_shutdown();
@@ -561,7 +561,7 @@ static Vec2 to_overlay(Game *g, float x, float y) {
 }
 
 bool mid_down = false;
-static void Game_handel_events(const sapp_event *e, Game *g) {
+static void g_handel_events(const sapp_event *e, Game *g) {
   if (e->type == SAPP_EVENTTYPE_MOUSE_SCROLL) {
     Vec2 mp_b = to_scene(g, e->mouse_x, e->mouse_y);
     g->render.camera_scale += e->scroll_y * 0.1f;
@@ -677,10 +677,10 @@ int main(int argc, char *argv[]) {
 
   Game g = (Game){0};
   sapp_run(&(sapp_desc){
-      .init_userdata_cb = (void (*)(void *))Game_init,
-      .frame_userdata_cb = (void (*)(void *))Game_draw,
-      .cleanup_userdata_cb = (void (*)(void *))Game_cleanup,
-      .event_userdata_cb = (void (*)(const sapp_event *, void *))Game_handel_events,
+      .init_userdata_cb = (void (*)(void *))g_init,
+      .frame_userdata_cb = (void (*)(void *))g_draw,
+      .cleanup_userdata_cb = (void (*)(void *))g_cleanup,
+      .event_userdata_cb = (void (*)(const sapp_event *, void *))g_handel_events,
       .user_data = &g,
       .width = 1024,
       .height = 690,
