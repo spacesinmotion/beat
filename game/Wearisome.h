@@ -34,6 +34,9 @@ typedef enum WearisomeState {
   W_DeliverCollect,
   W_DeliverWait,
   W_Deliver,
+
+  W_MoveToWork,
+  W_Working,
 } WearisomeState;
 
 const char *WearisomeState_name(WearisomeState s) {
@@ -54,6 +57,10 @@ const char *WearisomeState_name(WearisomeState s) {
     return "wait for deliver";
   case W_Deliver:
     return "deliver something";
+  case W_MoveToWork:
+    return "move to work";
+  case W_Working:
+    return "working";
   }
   return "<error>";
 }
@@ -99,6 +106,7 @@ typedef struct Wearisome {
   DeliverJob *deliver_job;
 
   bool house_highlight;
+  int clicks_worked;
 } Wearisome;
 
 bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
@@ -121,12 +129,47 @@ void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
   }
 }
 
+typedef struct WearisomeJobSearchData {
+  GameScene *gs;
+  Point start;
+  Recti start_rect;
+  PathPoint *path;
+} WearisomeJobSearchData;
+
+bool WearisomeJobSearch_moveable(WearisomeJobSearchData *data, int x, int y) {
+  return l_movable(data->gs->level, x, y) || ri_contains(data->start_rect, x, y) ||
+         l_tile(data->gs->level, x, y) == T_Farm;
+}
+
+bool WearisomeJobSearch_reached_goal(WearisomeJobSearchData *data, int x, int y) {
+  return l_tile(data->gs->level, x, y) == T_Farm;
+}
+
+void WearisomeJobSearch_build_path(WearisomeJobSearchData *data, int i, int j) {
+  data->path = PathPoint_init(l_to_vec(i, j), data->path);
+}
+
 void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
   w->wait_time -= dt;
   if (gs->daytime > 0.75f && w_move_to_rect(w, gs, w->home)) {
     w->state = W_MovingHome;
   } else if (w->wait_time < 0.0f) {
-    w_wander_to_random_near_path(w, gs);
+    if (gs->daytime < 0.65 && w->needs.sleep > 0.4) {
+      WearisomeJobSearchData search_data = {gs, l_to_point(w->destination), w->current_rect, NULL};
+      l_bright_first(gs->level, search_data.start.x, search_data.start.y,
+                     (SearchHandle){
+                         &search_data,
+                         (CanMoveCB)WearisomeJobSearch_moveable,
+                         (GoalReachedCB)WearisomeJobSearch_reached_goal,
+                         (PathCB)WearisomeJobSearch_build_path,
+                     });
+      if (search_data.path) {
+        w->path = search_data.path;
+        w->state = W_MoveToWork;
+      }
+    }
+    if (!w->path)
+      w_wander_to_random_near_path(w, gs);
   }
 }
 
@@ -203,13 +246,40 @@ void w_u_deliver(Wearisome *w, GameScene *gs, float dt) {
   }
 }
 
+void w_u_move_to_work(Wearisome *w, GameScene *gs, float dt) {
+  (void)gs;
+
+  w->position = v_lerp_about(w->position, w->destination, dt * 48.0);
+  if (v_eq(w->position, w->destination)) {
+    if (w->path) {
+      w->destination = w->path->p;
+      w->path = w->path->next;
+    } else {
+      w->wait_time = 11.0f;
+      w->state = W_Working;
+      // w->current_rect = w->deliver_job->from;
+    }
+  }
+}
+
+void w_u_working(Wearisome *w, GameScene *gs, float dt) {
+  (void)gs;
+
+  w->wait_time -= dt;
+  if (w->wait_time < 0.0f) {
+    w->clicks_worked++;
+    w_wander_to_random_near_path(w, gs);
+  }
+}
+
 void w_update(Wearisome *w, GameScene *gs, float dt) {
   if (w_dead(w))
     return;
 
-  w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step * w->need_consumption.water);
-  w->needs.food = f_max(0.0f, w->needs.food - gs->daytime_step * w->need_consumption.food);
-  w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step * w->need_consumption.sleep);
+  const float working_factor = w->state == W_Working ? 1.5 : 1.0;
+  w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step * w->need_consumption.water * working_factor);
+  w->needs.food = f_max(0.0f, w->needs.food - gs->daytime_step * w->need_consumption.food * working_factor);
+  w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step * w->need_consumption.sleep * working_factor);
   if (w->needs.water < 0.1f || w->needs.food < 0.1f || w->needs.sleep < 0.1f)
     w->health -= 2.0f * gs->daytime_step;
   else
@@ -256,6 +326,13 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
     break;
   case W_Deliver:
     w_u_deliver(w, gs, dt);
+    break;
+
+  case W_MoveToWork:
+    w_u_move_to_work(w, gs, dt);
+    break;
+  case W_Working:
+    w_u_working(w, gs, dt);
     break;
   }
 }
@@ -367,6 +444,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
       .deliver_job = NULL,
       .state = W_AtHome,
       .house_highlight = false,
+      .clicks_worked = 0,
   };
   gs_add_object(gs, (SceneObject){.context = w, &w_table});
   return w;

@@ -86,6 +86,12 @@ void h_update(House *h, GameScene *gs, float dt) {
                             (DeliverDoneCB)h_get_food_done))) {
     h->resources_maximum.clicks--;
   }
+
+  if (h->wearisome) {
+    h->resources.clicks += h->wearisome->clicks_worked;
+    h->resources_maximum.clicks += h->wearisome->clicks_worked;
+    h->wearisome->clicks_worked = 0;
+  }
 }
 
 void h_draw(House *h, GameScene *gs, Game *g) {
@@ -95,7 +101,7 @@ void h_draw(House *h, GameScene *gs, Game *g) {
     c_printf(g, "  HOUSE (%d,%d,%d,%d)\n", h->location.x, h->location.y, 2, 2);
     c_printf(g, "----------------------\n");
     c_printf(g, " %10s: %d\n", "clicks", h->resources.clicks);
-    c_printf(g, " %10s: %d\n", "clicks", h->resources.clicks);
+    c_printf(g, " %10s: %d\n", "clicks", h->resources_maximum.clicks);
     c_printf(g, " %10s: %f\n", "water", h->resources.water);
     c_printf(g, " %10s: %f\n", "food", h->resources.food);
     if (h->wearisome) {
@@ -105,6 +111,7 @@ void h_draw(House *h, GameScene *gs, Game *g) {
       c_printf(g, " %10s: %f\n", "sleep", h->wearisome->needs.sleep);
       c_printf(g, " %10s: %f\n", "water", h->wearisome->needs.water);
       c_printf(g, " %10s: %f\n", "food", h->wearisome->needs.food);
+      c_printf(g, " %10s: %d\n", "worked", h->wearisome->clicks_worked);
     }
     c_printf(g, "----------------------\n\n");
   }
