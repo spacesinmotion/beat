@@ -117,7 +117,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->preview = Street_color();
         gs->r.w = gs->r.h = 1;
       } else if (gs->menu_selected == 1) {
-        gs->preview = House_color();
+        gs->preview = h_color();
         gs->r.w = gs->r.h = 2;
       } else if (gs->menu_selected == 2) {
         gs->preview = Marketplace_color();

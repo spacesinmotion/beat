@@ -24,16 +24,16 @@ typedef struct House {
   Wearisome *wearisome;
 } House;
 
-Color House_color() { return rgb(87, 163, 106); }
+Color h_color() { return rgb(87, 163, 106); }
 
-bool House_dead(House *h) {
+bool h_dead(House *h) {
   (void)h;
   return false;
 }
 
-float House_render_order(House *h) { return l_to_y(h->location.y); }
+float h_render_order(House *h) { return l_to_y(h->location.y); }
 
-Point House_current_entry(House *h, Level *l) {
+Point h_current_entry(House *h, Level *l) {
   int options[8][2] = {{-1, 0}, {-1, 1}, {2, 0}, {2, 1}, {0, -1}, {1, -1}, {0, 2}, {1, 2}};
   for (int i = 0; i < 8; ++i) {
     int ii = h->location.x + options[i][0];
@@ -44,18 +44,18 @@ Point House_current_entry(House *h, Level *l) {
   return (Point){h->location.x, h->location.y};
 }
 
-void House_get_water_done(House *h) {
-  if (!House_dead(h))
+void h_get_water_done(House *h) {
+  if (!h_dead(h))
     h->resources.water += 1.0;
 }
-void House_get_food_done(House *h) {
-  if (!House_dead(h))
+
+void h_get_food_done(House *h) {
+  if (!h_dead(h))
     h->resources.food += 1.0;
 }
 
-void House_update(House *h, GameScene *gs, float dt) {
+void h_update(House *h, GameScene *gs, float dt) {
   (void)dt;
-  (void)gs;
 
   if (h->wearisome && w_dead(h->wearisome))
     h->wearisome = NULL;
@@ -73,16 +73,16 @@ void House_update(House *h, GameScene *gs, float dt) {
   if (h->resources_maximum.water - h->resources.water >= 1.0f && w_is_free(h->wearisome)) {
     w_deliver(h->wearisome, gs,
               deliver_job((Recti){17, 10, 4, 3}, (Recti){h->location.x, h->location.y, 2, 2}, h,
-                          (DeliverDoneCB)House_get_water_done));
+                          (DeliverDoneCB)h_get_water_done));
   }
   if (h->resources_maximum.food - h->resources.food >= 1.0f && w_is_free(h->wearisome)) {
     w_deliver(h->wearisome, gs,
               deliver_job((Recti){17, 10, 4, 3}, (Recti){h->location.x, h->location.y, 2, 2}, h,
-                          (DeliverDoneCB)House_get_food_done));
+                          (DeliverDoneCB)h_get_food_done));
   }
 }
 
-void House_draw(House *h, GameScene *gs, Game *g) {
+void h_draw(House *h, GameScene *gs, Game *g) {
   if (ri_contains((Recti){h->location.x, h->location.y, 2, 2}, gs->r.x, gs->r.y)) {
     c_printf(g, "##################\n");
     c_printf(g, "# HOUSE (%d,%d,%d,%d)\n", h->location.x, h->location.y, 2, 2);
@@ -93,7 +93,7 @@ void House_draw(House *h, GameScene *gs, Game *g) {
   }
 
   Vec2 p = l_to_vecP(ri_bottom_right(h->location));
-  g_color(g, h->wearisome ? House_color() : rgb(0, 0, 0));
+  g_color(g, h->wearisome ? h_color() : rgb(0, 0, 0));
   g_buffer(g, h->buffer, Img_house_map, p);
 
   float x = h->resources.water / h->resources_maximum.water;
@@ -114,10 +114,10 @@ void House_draw(House *h, GameScene *gs, Game *g) {
 }
 
 static SceneObjectTable House_table = (SceneObjectTable){
-    .dead = (SceneObjectDeadCB)House_dead,
-    .render_order = (SceneObjectRenderOrderCB)House_render_order,
-    .update = (SceneObjectUpdateCB)House_update,
-    .draw = (SceneObjectDrawCB)House_draw,
+    .dead = (SceneObjectDeadCB)h_dead,
+    .render_order = (SceneObjectRenderOrderCB)h_render_order,
+    .update = (SceneObjectUpdateCB)h_update,
+    .draw = (SceneObjectDrawCB)h_draw,
 };
 House *House_init(Game *g, GameScene *gs, Point p) {
   House *h = g_malloc(g, sizeof(House));
