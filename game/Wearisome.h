@@ -5,6 +5,7 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/SceneObject.h"
+#include "game/TileContent.h"
 #include "game/assets.h"
 #include "gc/gc.h"
 #include "math/Color.h"
@@ -141,12 +142,10 @@ bool WearisomeJobSearch_moveable(WearisomeJobSearchData *data, int x, int y) {
 
 bool WearisomeJobSearch_reached_goal(WearisomeJobSearchData *data, int x, int y) {
   TileContent *c = l_content(data->gs->level, x, y);
-  if (c && c->has_work && c->has_work(c->context)) {
-    if (c->claim_work)
-      c->claim_work(c->context);
-    return true;
-  }
-  return false;
+  if (!tc_has_work(c))
+    return false;
+  tc_claim_work(c);
+  return true;
 }
 
 void WearisomeJobSearch_build_path(WearisomeJobSearchData *data, int i, int j) {
@@ -260,12 +259,7 @@ void w_u_move_to_work(Wearisome *w, GameScene *gs, float dt) {
       w->destination = w->path->p;
       w->path = w->path->next;
     } else {
-      Point p = l_to_point(w->destination);
-      TileContent *c = l_content(gs->level, p.x, p.y);
-      if (c && c->start_work)
-        w->wait_time = c->start_work(c->context);
-      else
-        w->wait_time = 1.0f;
+      w->wait_time = tc_start_work(l_contentP(gs->level, l_to_point(w->destination)));
       w->state = W_Working;
 
       // w->current_rect = w->deliver_job->from;
@@ -278,10 +272,7 @@ void w_u_working(Wearisome *w, GameScene *gs, float dt) {
 
   w->wait_time -= dt;
   if (w->wait_time < 0.0f) {
-    Point p = l_to_point(w->destination);
-    TileContent *c = l_content(gs->level, p.x, p.y);
-    if (c && c->done_work)
-      c->done_work(c->context);
+    tc_done_work(l_contentP(gs->level, l_to_point(w->destination)));
     w->clicks_worked++;
     w_wander_to_random_near_path(w, gs);
   }

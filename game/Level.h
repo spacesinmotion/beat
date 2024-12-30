@@ -1,6 +1,7 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
+#include "game/TileContent.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
 #include <stdbool.h>
@@ -20,21 +21,6 @@ typedef enum TileType {
 } TileType;
 
 typedef struct TileContent TileContent;
-typedef struct GameScene GameScene;
-typedef bool (*HasWorkCB)(void *);
-typedef void (*ClaimWorkCB)(void *);
-typedef float (*StartWorkCB)(void *);
-typedef void (*DoneWorkCB)(void *);
-typedef void (*ClickCB)(const TileContent *, GameScene *gs);
-typedef struct TileContent {
-  void *context;
-  HasWorkCB has_work;
-  ClaimWorkCB claim_work;
-  StartWorkCB start_work;
-  DoneWorkCB done_work;
-  ClickCB click;
-} TileContent;
-
 typedef struct Tile {
   uint8_t val;
   TileContent *content;
@@ -43,14 +29,14 @@ typedef struct Level {
   Tile tiles[LEVEL_WIDTH][LEVEL_HEIGHT];
 } Level;
 
-void l_init(Level *level) { memset(level->tiles, 0, sizeof(level->tiles)); }
+static inline void l_init(Level *level) { memset(level->tiles, 0, sizeof(level->tiles)); }
 
-bool l_valid(const Level *level, int x, int y) {
+static inline bool l_valid(const Level *level, int x, int y) {
   (void)level;
   return x >= 0 && x < LEVEL_WIDTH && y >= 0 && y < LEVEL_HEIGHT;
 }
-bool l_validP(Level *level, Point p) { return l_valid(level, p.x, p.y); }
-bool l_validR(Level *level, Recti r) {
+static inline bool l_validP(Level *level, Point p) { return l_valid(level, p.x, p.y); }
+static inline bool l_validR(Level *level, Recti r) {
   for (int i = r.x; i < r.x + r.w; ++i)
     for (int j = r.y; j < r.y + r.h; ++j)
       if (!l_valid(level, i, j))
@@ -68,10 +54,10 @@ bool l_freeR(Level *level, Recti r) {
   return true;
 }
 
-bool l_movable(Level *level, int x, int y) {
+static inline bool l_movable(Level *level, int x, int y) {
   return l_valid(level, x, y) && ((level->tiles[x][y].val & T_Movable) == T_Movable);
 }
-void l_set_movable(Level *level, int x, int y, bool movable) {
+static inline void l_set_movable(Level *level, int x, int y, bool movable) {
   if (l_valid(level, x, y)) {
     if (movable)
       level->tiles[x][y].val |= T_Movable;
@@ -80,54 +66,56 @@ void l_set_movable(Level *level, int x, int y, bool movable) {
   }
 }
 
-TileType l_tile(Level *level, int x, int y) {
+static inline TileType l_tile(Level *level, int x, int y) {
   return l_valid(level, x, y) ? (TileType)(level->tiles[x][y].val & ~T_Movable) : T_None;
 }
-void l_set_tile(Level *level, int x, int y, TileType tile) {
+static inline void l_set_tile(Level *level, int x, int y, TileType tile) {
   if (l_valid(level, x, y))
     level->tiles[x][y].val = l_movable(level, x, y) ? tile | T_Movable : tile;
 }
-void l_set_tileR(Level *level, Recti r, TileType tile) {
+static inline void l_set_tileR(Level *level, Recti r, TileType tile) {
   for (int i = r.x; i < r.x + r.w; ++i)
     for (int j = r.y; j < r.y + r.h; ++j)
       l_set_tile(level, i, j, tile);
 }
 
-void l_set_tile_content(Level *level, int x, int y, TileContent *c) {
+static inline void l_set_tile_content(Level *level, int x, int y, TileContent *c) {
   if (l_valid(level, x, y))
     level->tiles[x][y].content = c;
 }
-void l_set_tile_contentR(Level *level, Recti r, TileContent *c) {
+static inline void l_set_tile_contentR(Level *level, Recti r, TileContent *c) {
   for (int i = r.x; i < r.x + r.w; ++i)
     for (int j = r.y; j < r.y + r.h; ++j)
       l_set_tile_content(level, i, j, c);
 }
 
-bool l_has_work(Level *l, int x, int y) {
-  return l_valid(l, x, y) && l->tiles[x][y].content && l->tiles[x][y].content->has_work &&
-         l->tiles[x][y].content->has_work(l->tiles[x][y].content->context);
+static inline bool l_has_work(Level *l, int x, int y) {
+  return l_valid(l, x, y) && l->tiles[x][y].content && tc_has_work(l->tiles[x][y].content);
 }
 
-TileContent *l_content(const Level *l, int x, int y) { return l_valid(l, x, y) ? l->tiles[x][y].content : NULL; }
+static inline TileContent *l_content(const Level *l, int x, int y) {
+  return l_valid(l, x, y) ? l->tiles[x][y].content : NULL;
+}
+static inline TileContent *l_contentP(const Level *l, Point p) { return l_content(l, p.x, p.y); }
 
 static const float F = 16.0f;
-float l_to_x(int i) { return i * F; }
-float l_to_y(int j) { return j * F; }
-Vec2 l_to_vec(int i, int j) { return (Vec2){i * F, j * F}; }
-Vec2 l_to_vecP(Point p) { return l_to_vec(p.x, p.y); }
-Rect l_to_vecR(Recti r) { return (Rect){l_to_vec(r.x, r.y), l_to_vec(r.w, r.h)}; }
+static inline float l_to_x(int i) { return i * F; }
+static inline float l_to_y(int j) { return j * F; }
+static inline Vec2 l_to_vec(int i, int j) { return (Vec2){i * F, j * F}; }
+static inline Vec2 l_to_vecP(Point p) { return l_to_vec(p.x, p.y); }
+static inline Rect l_to_vecR(Recti r) { return (Rect){l_to_vec(r.x, r.y), l_to_vec(r.w, r.h)}; }
 
-Point l_to_point(Vec2 v) { return (Point){v.x / F, v.y / F}; }
+static inline Point l_to_point(Vec2 v) { return (Point){v.x / F, v.y / F}; }
 
 typedef struct Queue {
   Point points[LEVEL_WIDTH * LEVEL_HEIGHT];
   int front, rear;
 } Queue;
 
-void q_init_queue(Queue *q) { q->front = q->rear = 0; }
-bool q_is_queue_empty(Queue *q) { return q->front == q->rear; }
-void q_enqueue(Queue *q, Point p) { q->points[q->rear++] = p; }
-Point q_dequeue(Queue *q) { return q->points[q->front++]; }
+static inline void q_init_queue(Queue *q) { q->front = q->rear = 0; }
+static inline bool q_is_queue_empty(Queue *q) { return q->front == q->rear; }
+static inline void q_enqueue(Queue *q, Point p) { q->points[q->rear++] = p; }
+static inline Point q_dequeue(Queue *q) { return q->points[q->front++]; }
 
 typedef struct SearchHandle SearchHandle;
 typedef bool (*CanMoveCB)(SearchHandle *, int x, int y);

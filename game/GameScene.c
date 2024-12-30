@@ -7,6 +7,7 @@
 #include "game/Marketplace.h"
 #include "game/SceneObject.h"
 #include "game/StreetMap.h"
+#include "game/TileContent.h"
 #include "game/assets.h"
 #include "gc/gc.h"
 #include "math.h"
@@ -150,9 +151,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
       if (l_freeR(gs->level, gs->r))
         Farm_init(g, gs, (Point){gs->r.x, gs->r.y});
     } else {
-      TileContent *c = l_content(gs->level, gs->r.x, gs->r.y);
-      if (c && c->click)
-        c->click(c->context, gs);
+      tc_click(l_content(gs->level, gs->r.x, gs->r.y), gs);
     }
   }
 }

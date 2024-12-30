@@ -3,7 +3,7 @@
 
 #include "game/GameScene.h"
 #include "game/Level.h"
-#include "gc/gc.h"
+#include "game/TileContent.h"
 
 typedef struct Farm {
   G_Object buffer;
@@ -62,11 +62,18 @@ void fa_click(Farm *fa, GameScene *gs) {
   }
 }
 
-static SceneObjectTable Farm_table = (SceneObjectTable){
+static SceneObjectTable Farm_table = {
     .dead = (SceneObjectDeadCB)fa_dead,
     .render_order = (SceneObjectRenderOrderCB)fa_render_order,
     .update = (SceneObjectUpdateCB)fa_update,
     .draw = (SceneObjectDrawCB)fa_draw,
+};
+static TileContentTable Farm_TileContent_Table = {
+    .has_work = (HasWorkCB)fa_has_work,
+    .claim_work = (ClaimWorkCB)fa_claim_work,
+    .start_work = (StartWorkCB)fa_start_work,
+    .done_work = (DoneWorkCB)fa_done_work,
+    .click = (ClickCB)fa_click,
 };
 Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   Farm *fa = g_malloc(g, sizeof(Farm));
@@ -77,17 +84,7 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   };
 
   l_set_tileR(gs->level, fa->location, T_Farm);
-
-  TileContent *tile_content = gc_malloc(&gc, sizeof(TileContent));
-  *tile_content = (TileContent){
-      fa,
-      (HasWorkCB)fa_has_work,
-      (ClaimWorkCB)fa_claim_work,
-      (StartWorkCB)fa_start_work,
-      (DoneWorkCB)fa_done_work,
-      (ClickCB)fa_click,
-  };
-  l_set_tile_contentR(gs->level, fa->location, tile_content);
+  l_set_tile_contentR(gs->level, fa->location, to_TileContent(fa, &Farm_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = fa, &Farm_table});
   return fa;
