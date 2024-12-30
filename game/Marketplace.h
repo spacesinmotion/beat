@@ -12,22 +12,22 @@ typedef struct Marketplace {
   Recti location;
 } Marketplace;
 
-Color Marketplace_color() { return rgb(196, 113, 65); }
+Color mp_color() { return rgb(196, 113, 65); }
 
-bool Marketplace_dead(Marketplace *mp) {
+bool mp_dead(Marketplace *mp) {
   (void)mp;
   return false;
 }
 
-float Marketplace_render_order(Marketplace *mp) { return l_to_y(mp->location.y); }
+float mp_render_order(Marketplace *mp) { return l_to_y(mp->location.y); }
 
-void Marketplace_update(Marketplace *mp, GameScene *gs, float dt) {
+void mp_update(Marketplace *mp, GameScene *gs, float dt) {
   (void)mp;
   (void)gs;
   (void)dt;
 }
 
-void Marketplace_draw(Marketplace *mp, GameScene *gs, Game *g) {
+void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {
   if (ri_contains((Recti){mp->location.x, mp->location.y, 2, 2}, gs->r.x, gs->r.y)) {
     c_printf(g, "##################\n");
     c_printf(g, "# Marketplace (%d,%d,%d,%d)\n", mp->location.x, mp->location.y, 4, 3);
@@ -37,15 +37,15 @@ void Marketplace_draw(Marketplace *mp, GameScene *gs, Game *g) {
     c_printf(g, "##################\n");
   }
 
-  g_color(g, Marketplace_color());
+  g_color(g, mp_color());
   g_buffer(g, mp->buffer, Img_house_map, l_to_vecP(ri_bottom_right(mp->location)));
 }
 
 static SceneObjectTable Marketplace_table = (SceneObjectTable){
-    .dead = (SceneObjectDeadCB)Marketplace_dead,
-    .render_order = (SceneObjectRenderOrderCB)Marketplace_render_order,
-    .update = (SceneObjectUpdateCB)Marketplace_update,
-    .draw = (SceneObjectDrawCB)Marketplace_draw,
+    .dead = (SceneObjectDeadCB)mp_dead,
+    .render_order = (SceneObjectRenderOrderCB)mp_render_order,
+    .update = (SceneObjectUpdateCB)mp_update,
+    .draw = (SceneObjectDrawCB)mp_draw,
 };
 Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
   Marketplace *mp = g_malloc(g, sizeof(Marketplace));

@@ -98,7 +98,7 @@ void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
 
   gs->menu_under_mouse = -1;
   for (int i = 0; i < 10; ++i)
-    if (Rect_contains((Rect){(Vec2){4 + i * 16, 4}, (Vec2){16, 16}}, op))
+    if (r_contains((Rect){(Vec2){4 + i * 16, 4}, (Vec2){16, 16}}, op))
       gs->menu_under_mouse = i;
 }
 
@@ -120,7 +120,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->preview = h_color();
         gs->r.w = gs->r.h = 2;
       } else if (gs->menu_selected == 2) {
-        gs->preview = Marketplace_color();
+        gs->preview = mp_color();
         gs->r.w = 4;
         gs->r.h = 3;
       } else {
