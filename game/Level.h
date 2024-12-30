@@ -19,13 +19,29 @@ typedef enum TileType {
   T_Movable = 1 << 7,
 } TileType;
 
+typedef bool (*HasWorkCB)(void *);
+typedef void (*ClaimWorkCB)(void *);
+typedef float (*StartWorkCB)(void *);
+typedef void (*DoneWorkCB)(void *);
+typedef struct TileContent {
+  void *context;
+  HasWorkCB has_work;
+  ClaimWorkCB claim_work;
+  StartWorkCB start_work;
+  DoneWorkCB done_work;
+} TileContent;
+
+typedef struct Tile {
+  uint8_t val;
+  TileContent *content;
+} Tile;
 typedef struct Level {
-  uint8_t tiles[LEVEL_WIDTH][LEVEL_HEIGHT];
+  Tile tiles[LEVEL_WIDTH][LEVEL_HEIGHT];
 } Level;
 
 void l_init(Level *level) { memset(level->tiles, 0, sizeof(level->tiles)); }
 
-bool l_valid(Level *level, int x, int y) {
+bool l_valid(const Level *level, int x, int y) {
   (void)level;
   return x >= 0 && x < LEVEL_WIDTH && y >= 0 && y < LEVEL_HEIGHT;
 }
@@ -38,7 +54,7 @@ bool l_validR(Level *level, Recti r) {
   return true;
 }
 
-bool l_free(Level *level, int x, int y) { return l_valid(level, x, y) && level->tiles[x][y] == T_None; }
+bool l_free(Level *level, int x, int y) { return l_valid(level, x, y) && level->tiles[x][y].val == T_None; }
 bool l_freeP(Level *level, Point p) { return l_free(level, p.x, p.y); }
 bool l_freeR(Level *level, Recti r) {
   for (int i = r.x; i < r.x + r.w; ++i)
@@ -49,29 +65,46 @@ bool l_freeR(Level *level, Recti r) {
 }
 
 bool l_movable(Level *level, int x, int y) {
-  return l_valid(level, x, y) && ((level->tiles[x][y] & T_Movable) == T_Movable);
+  return l_valid(level, x, y) && ((level->tiles[x][y].val & T_Movable) == T_Movable);
 }
 void l_set_movable(Level *level, int x, int y, bool movable) {
   if (l_valid(level, x, y)) {
     if (movable)
-      level->tiles[x][y] |= T_Movable;
+      level->tiles[x][y].val |= T_Movable;
     else
-      level->tiles[x][y] &= ~T_Movable;
+      level->tiles[x][y].val &= ~T_Movable;
   }
 }
 
 TileType l_tile(Level *level, int x, int y) {
-  return l_valid(level, x, y) ? (TileType)(level->tiles[x][y] & ~T_Movable) : T_None;
+  return l_valid(level, x, y) ? (TileType)(level->tiles[x][y].val & ~T_Movable) : T_None;
 }
 void l_set_tile(Level *level, int x, int y, TileType tile) {
   if (l_valid(level, x, y))
-    level->tiles[x][y] = l_movable(level, x, y) ? tile | T_Movable : tile;
+    level->tiles[x][y].val = l_movable(level, x, y) ? tile | T_Movable : tile;
 }
-void Level_set_tileR(Level *level, Recti r, TileType tile) {
+void l_set_tileR(Level *level, Recti r, TileType tile) {
   for (int i = r.x; i < r.x + r.w; ++i)
     for (int j = r.y; j < r.y + r.h; ++j)
       l_set_tile(level, i, j, tile);
 }
+
+void l_set_tile_content(Level *level, int x, int y, TileContent *c) {
+  if (l_valid(level, x, y))
+    level->tiles[x][y].content = c;
+}
+void l_set_tile_contentR(Level *level, Recti r, TileContent *c) {
+  for (int i = r.x; i < r.x + r.w; ++i)
+    for (int j = r.y; j < r.y + r.h; ++j)
+      l_set_tile_content(level, i, j, c);
+}
+
+bool l_has_work(Level *l, int x, int y) {
+  return l_valid(l, x, y) && l->tiles[x][y].content && l->tiles[x][y].content->has_work &&
+         l->tiles[x][y].content->has_work(l->tiles[x][y].content->context);
+}
+
+TileContent *l_content(const Level *l, int x, int y) { return l_valid(l, x, y) ? l->tiles[x][y].content : NULL; }
 
 static const float F = 16.0f;
 float l_to_x(int i) { return i * F; }

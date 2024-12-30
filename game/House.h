@@ -161,7 +161,7 @@ House *House_init(Game *g, GameScene *gs, Point p) {
       .wearisome = NULL,
   };
 
-  Level_set_tileR(gs->level, h->location, T_House);
+  l_set_tileR(gs->level, h->location, T_House);
   gs_add_object(gs, (SceneObject){h, &House_table});
 
   h->wearisome = Wearisome_init(g, gs, h->location);
