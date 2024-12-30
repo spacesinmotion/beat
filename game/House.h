@@ -71,14 +71,10 @@ void h_update(House *h, GameScene *gs, float dt) {
   }
 
   if (h->resources_maximum.water - h->resources.water >= 1.0f && w_is_free(h->wearisome)) {
-    w_deliver(h->wearisome, gs,
-              deliver_job((Recti){17, 10, 4, 3}, (Recti){h->location.x, h->location.y, 2, 2}, h,
-                          (DeliverDoneCB)h_get_water_done));
+    w_deliver(h->wearisome, gs, deliver_job((Recti){17, 10, 4, 3}, h->location, h, (DeliverDoneCB)h_get_water_done));
   }
   if (h->resources_maximum.food - h->resources.food >= 1.0f && w_is_free(h->wearisome)) {
-    w_deliver(h->wearisome, gs,
-              deliver_job((Recti){17, 10, 4, 3}, (Recti){h->location.x, h->location.y, 2, 2}, h,
-                          (DeliverDoneCB)h_get_food_done));
+    w_deliver(h->wearisome, gs, deliver_job((Recti){17, 10, 4, 3}, h->location, h, (DeliverDoneCB)h_get_food_done));
   }
 }
 
