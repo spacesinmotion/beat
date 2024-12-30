@@ -101,6 +101,7 @@ typedef struct Wearisome {
   Needs needs;
   Needs need_consumption;
   float health;
+  bool needs_click;
 
   WearisomeState state;
 
@@ -152,12 +153,27 @@ void WearisomeJobSearch_build_path(WearisomeJobSearchData *data, int i, int j) {
   data->path = PathPoint_init(l_to_vec(i, j), data->path);
 }
 
+bool w_want_to_work(Wearisome *w, GameScene *gs) {
+  int key = w->needs_click ? 2 : 0;
+  if (w->needs_click && w->needs.water < 0.4)
+    key++;
+  if (w->needs_click && w->needs.food < 0.4)
+    key++;
+  if (!w->needs_click && w->needs.sleep < 0.5)
+    key--;
+  if (gs->daytime > 0.55)
+    key--;
+  if (gs->daytime > 0.65)
+    key--;
+  return rand() % 5 < key;
+}
+
 void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
   w->wait_time -= dt;
-  if (gs->daytime > 0.75f && w_move_to_rect(w, gs, w->home)) {
+  if ((gs->daytime > 0.75f || w->needs.sleep < 0.2) && w_move_to_rect(w, gs, w->home)) {
     w->state = W_MovingHome;
   } else if (w->wait_time < 0.0f) {
-    if (gs->daytime < 0.65 && w->needs.sleep > 0.4) {
+    if (w_want_to_work(w, gs)) {
       WearisomeJobSearchData search_data = {gs, w->current_rect, NULL};
       Point start = l_to_point(w->destination);
       l_bright_first(gs->level, start.x, start.y,
@@ -282,7 +298,7 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
   if (w_dead(w))
     return;
 
-  const float working_factor = w->state == W_Working ? 1.5 : 1.0;
+  const float working_factor = w->state == W_Working ? 1.25 : 1.0;
   w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step * w->need_consumption.water * working_factor);
   w->needs.food = f_max(0.0f, w->needs.food - gs->daytime_step * w->need_consumption.food * working_factor);
   w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step * w->need_consumption.sleep * working_factor);
@@ -450,6 +466,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
       .state = W_AtHome,
       .house_highlight = false,
       .clicks_worked = 0,
+      .needs_click = false,
   };
   gs_add_object(gs, (SceneObject){.context = w, &w_table});
   return w;
