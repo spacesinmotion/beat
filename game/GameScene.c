@@ -33,8 +33,8 @@ void so_vec_filter_dead(SceneObjectVec *vec) {
 }
 
 int so_render_order_compare(const void *va, const void *vb) {
-  const float a = SceneObject_render_order((SceneObject *)va);
-  const float b = SceneObject_render_order((SceneObject *)vb);
+  const float a = so_render_order((SceneObject *)va);
+  const float b = so_render_order((SceneObject *)vb);
   return a < b ? -1 : (a > b ? 1 : 0);
 }
 
@@ -48,7 +48,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   }
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
-    SceneObject_update(&gs->scene_objects.data[i], gs, dt);
+    so_update(&gs->scene_objects.data[i], gs, dt);
 
   so_vec_filter_dead(&gs->scene_objects);
 
@@ -60,7 +60,7 @@ void gs_draw(GameScene *gs, Game *g) {
   StreetMap_draw(gs->street_map, g);
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
-    SceneObject_draw(&gs->scene_objects.data[i], gs, g);
+    so_draw(&gs->scene_objects.data[i], gs, g);
 
   if (gs->menu_under_mouse < 0 && l_validR(gs->level, gs->r)) {
     if (gs->r.h > 0 && gs->r.w > 0) {
