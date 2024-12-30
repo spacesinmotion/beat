@@ -83,7 +83,7 @@ void h_update(House *h, GameScene *gs, float dt) {
 }
 
 void h_draw(House *h, GameScene *gs, Game *g) {
-  if (ri_contains((Recti){h->location.x, h->location.y, 2, 2}, gs->r.x, gs->r.y)) {
+  if (ri_contains(h->location, gs->r.x, gs->r.y)) {
     c_printf(g, "##################\n");
     c_printf(g, "# HOUSE (%d,%d,%d,%d)\n", h->location.x, h->location.y, 2, 2);
     c_printf(g, "##################\n");
