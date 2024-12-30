@@ -43,4 +43,7 @@ void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan);
 void *g_malloc(Game *g, size_t size);
 void *g_realloc(Game *g, void *ptr, size_t size);
 
+void c_color(Game *g, Color c);
+void c_printf(Game *g, const char *fmt, ...);
+
 #endif

@@ -82,7 +82,16 @@ void House_update(House *h, GameScene *gs, float dt) {
   }
 }
 
-void House_draw(House *h, Game *g) {
+void House_draw(House *h, GameScene *gs, Game *g) {
+  if (ri_contains((Recti){h->location.x, h->location.y, 2, 2}, gs->r.x, gs->r.y)) {
+    c_printf(g, "##################\n");
+    c_printf(g, "# HOUSE (%d,%d,%d,%d)\n", h->location.x, h->location.y, 2, 2);
+    c_printf(g, "##################\n");
+    c_printf(g, "# water: %f\n", h->resources.water);
+    c_printf(g, "#  food: %f\n", h->resources.food);
+    c_printf(g, "##################\n");
+  }
+
   Vec2 p = Level_to_vecP(h->location);
   g_color(g, h->wearisome ? House_color() : rgb(0, 0, 0));
   g_buffer(g, h->buffer, Img_house_map, p);

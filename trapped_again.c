@@ -487,6 +487,19 @@ static void Game_init(Game *g) {
   GameScene_init(g);
 }
 
+void c_color(Game *g, Color c) {
+  (void)g;
+  sdtx_color3f(c.r, c.g, c.g);
+}
+void c_printf(Game *g, const char *fmt, ...) {
+  (void)g;
+
+  va_list args;
+  va_start(args, fmt);
+  sdtx_vprintf(fmt, args);
+  va_end(args);
+}
+
 void Game_update_console(Game *g) {
   sdtx_canvas(sapp_width(), sapp_height());
 
@@ -494,7 +507,7 @@ void Game_update_console(Game *g) {
   sdtx_origin(0, 0);
   sdtx_color3b(0x42, 0x53, 0x47);
   sdtx_printf("%f\n", g_time(g));
-  sdtx_printf("%f\n", sapp_frame_duration());
+  sdtx_printf("%f\n\n", sapp_frame_duration());
 }
 
 void Game_draw_scene(Game *g) {

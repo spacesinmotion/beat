@@ -60,7 +60,7 @@ void GameScene_draw(GameScene *gs, Game *g) {
   StreetMap_draw(gs->street_map, g);
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
-    SceneObject_draw(&gs->scene_objects.data[i], g);
+    SceneObject_draw(&gs->scene_objects.data[i], gs, g);
 
   if (gs->menu_under_mouse < 0 && Level_validR(gs->level, gs->r)) {
     if (gs->r.h > 0 && gs->r.w > 0) {

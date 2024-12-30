@@ -218,7 +218,8 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
   }
 }
 
-void w_draw(Wearisome *w, Game *g) {
+void w_draw(Wearisome *w, GameScene *gs, Game *g) {
+  (void)gs;
   // g_color(g, white());
   // g_objectS(g, g_animation_buffer(g), Img_weapons, 0, v_add(w->position, (Vec2){8, 4}), 2.0f);
 
