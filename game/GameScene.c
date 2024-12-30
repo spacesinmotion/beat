@@ -13,7 +13,7 @@
 #include "math/Vec2.h"
 #include <stdlib.h>
 
-void SceneObjectVec_push(SceneObjectVec *vec, SceneObject so) {
+void so_vec_push(SceneObjectVec *vec, SceneObject so) {
   if (vec->len + 1 > vec->cap) {
     vec->cap += 16;
     vec->data = (SceneObject *)gc_realloc(&gc, vec->data, vec->cap * sizeof(SceneObject));
@@ -22,7 +22,7 @@ void SceneObjectVec_push(SceneObjectVec *vec, SceneObject so) {
   vec->len++;
 }
 
-void SceneObjectVec_filter_dead(SceneObjectVec *vec) {
+void so_vec_filter_dead(SceneObjectVec *vec) {
   for (int i = vec->len - 1; i >= 0; --i) {
     if (!vec->data[i].table->dead(vec->data[i].context))
       continue;
@@ -32,13 +32,13 @@ void SceneObjectVec_filter_dead(SceneObjectVec *vec) {
   }
 }
 
-int render_order_compare(const void *va, const void *vb) {
+int so_render_order_compare(const void *va, const void *vb) {
   const float a = SceneObject_render_order((SceneObject *)va);
   const float b = SceneObject_render_order((SceneObject *)vb);
   return a < b ? -1 : (a > b ? 1 : 0);
 }
 
-void GameScene_update(GameScene *gs, Game *g, float dt) {
+void gs_update(GameScene *gs, Game *g, float dt) {
   (void)g;
   gs->daytime_step = dt / 60.0f;
   gs->daytime += gs->daytime_step;
@@ -50,12 +50,12 @@ void GameScene_update(GameScene *gs, Game *g, float dt) {
   for (int i = 0; i < gs->scene_objects.len; ++i)
     SceneObject_update(&gs->scene_objects.data[i], gs, dt);
 
-  SceneObjectVec_filter_dead(&gs->scene_objects);
+  so_vec_filter_dead(&gs->scene_objects);
 
-  qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), render_order_compare);
+  qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
 }
 
-void GameScene_draw(GameScene *gs, Game *g) {
+void gs_draw(GameScene *gs, Game *g) {
 
   StreetMap_draw(gs->street_map, g);
 
@@ -74,7 +74,7 @@ void GameScene_draw(GameScene *gs, Game *g) {
   }
 }
 
-void GameScene_draw_overlay(GameScene *gs, Game *g) {
+void gs_draw_overlay(GameScene *gs, Game *g) {
   g_color(g, white());
   for (int i = 0; i < 10; ++i)
     g_object(g, g_animation_buffer(g), Img_menubar, i % 16, (Vec2){8 + 4 + i * 16, 8 + 4});
@@ -91,7 +91,7 @@ void GameScene_draw_overlay(GameScene *gs, Game *g) {
   g_objectS(g, g_animation_buffer(g), Img_overlay_images, 1, clock_pos, 2.0f);
 }
 
-void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
+void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   (void)g;
   gs->r.x = (int)((mp.x + 8) / 16.0f);
   gs->r.y = (int)((mp.y + 8) / 16.0f);
@@ -102,7 +102,7 @@ void GameScene_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
       gs->menu_under_mouse = i;
 }
 
-void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
+void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   (void)mp;
   (void)op;
 
@@ -139,14 +139,14 @@ void GameScene_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) 
   }
 }
 
-void GameScene_add_object(GameScene *gs, SceneObject so) { SceneObjectVec_push(&gs->scene_objects, so); }
+void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
 
 SceneTable GameScene_table = {
-    .update = (SceneUpdateCB)GameScene_update,
-    .draw = (SceneDrawCB)GameScene_draw,
-    .draw_overlay = (SceneDrawCB)GameScene_draw_overlay,
-    .mouse_move = (SceneMouseMoveCB)GameScene_mouse_move,
-    .mouse_down = (SceneMouseCB)GameScene_mouse_down,
+    .update = (SceneUpdateCB)gs_update,
+    .draw = (SceneDrawCB)gs_draw,
+    .draw_overlay = (SceneDrawCB)gs_draw_overlay,
+    .mouse_move = (SceneMouseMoveCB)gs_mouse_move,
+    .mouse_down = (SceneMouseCB)gs_mouse_down,
 };
 void GameScene_init(Game *g) {
   GameScene *gs = g_malloc(g, sizeof(GameScene));

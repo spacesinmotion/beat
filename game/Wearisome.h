@@ -322,7 +322,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
       .deliver_job = NULL,
       .state = W_AtHome,
   };
-  GameScene_add_object(gs, (SceneObject){.context = w, &w_table});
+  gs_add_object(gs, (SceneObject){.context = w, &w_table});
   return w;
 }
 

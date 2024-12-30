@@ -55,7 +55,7 @@ Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
   };
 
   Level_set_tileR(gs->level, mp->location, T_Marketplace);
-  GameScene_add_object(gs, (SceneObject){.context = mp, &Marketplace_table});
+  gs_add_object(gs, (SceneObject){.context = mp, &Marketplace_table});
   return mp;
 }
 #endif // MARKETPLACE_H

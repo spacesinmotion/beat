@@ -33,6 +33,6 @@ typedef struct GameScene {
 typedef struct GameScene GameScene;
 void GameScene_init(Game *g);
 
-void GameScene_add_object(GameScene *gs, SceneObject so);
+void gs_add_object(GameScene *gs, SceneObject so);
 
 #endif
