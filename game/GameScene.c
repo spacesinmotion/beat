@@ -63,7 +63,10 @@ void gs_draw(GameScene *gs, Game *g) {
   c_printf(g, "----------------------\n");
   c_printf(g, " %10s: %d\n", "day", gs->day);
   c_printf(g, " %10s: %f\n", "daytime", gs->daytime);
+  c_printf(g, "----------------------\n\n");
   c_printf(g, " %10s: %d\n", "clicks", gs->clicks);
+  c_printf(g, " %10s: %d\n", "water", gs->resources.water);
+  c_printf(g, " %10s: %d\n", "food", gs->resources.food);
   c_printf(g, "----------------------\n\n");
 
   StreetMap_draw(gs->street_map, g);
@@ -182,6 +185,8 @@ void GameScene_init(Game *g) {
       .day = 1,
       .daytime = 0.0f,
       .clicks = 0,
+      .resources = {.water = 10, .food = 10},
+      .resources_claimed = {.water = 0, .food = 0},
       .level = g_malloc(g, sizeof(Level)),
       .r = (Recti){-1, -1, 0, 0},
   };

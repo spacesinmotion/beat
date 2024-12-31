@@ -45,8 +45,17 @@ Point h_current_entry(House *h, Level *l) {
   return (Point){h->location.x, h->location.y};
 }
 
-void h_pay_stuff(House *h, GameScene *gs) {
+void h_pay_water(House *h, GameScene *gs) {
   (void)h;
+  gs->resources.water--;
+  gs->resources_claimed.water--;
+  gs->clicks++;
+  h->resources.clicks--;
+}
+void h_pay_food(House *h, GameScene *gs) {
+  (void)h;
+  gs->resources.food--;
+  gs->resources_claimed.food--;
   gs->clicks++;
   h->resources.clicks--;
 }
@@ -87,16 +96,18 @@ void h_update(House *h, GameScene *gs, float dt) {
     h->resources.food -= w_eat(h->wearisome, f_min(h->resources.food, 12.0 * gs->daytime_step));
   }
 
-  if (need_water && w_is_free(h->wearisome) &&
+  if (need_water && (gs->resources.water - gs->resources_claimed.water > 0) && w_is_free(h->wearisome) &&
       w_deliver(h->wearisome, gs,
-                deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_stuff,
+                deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_water,
                             (DeliverDoneCB)h_get_water_done))) {
+    gs->resources_claimed.water++;
     h->resources_maximum.clicks--;
   }
-  if (need_food && w_is_free(h->wearisome) &&
+  if (need_food && (gs->resources.food - gs->resources_claimed.food > 0) && w_is_free(h->wearisome) &&
       w_deliver(h->wearisome, gs,
-                deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_stuff,
+                deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_food,
                             (DeliverDoneCB)h_get_food_done))) {
+    gs->resources_claimed.food++;
     h->resources_maximum.clicks--;
   }
 }

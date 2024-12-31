@@ -14,6 +14,10 @@ typedef struct SceneObjectVec {
   int len, cap;
 } SceneObjectVec;
 
+typedef struct Stuff {
+  int water, food;
+} Stuff;
+
 typedef struct GameScene {
   SceneObjectVec scene_objects;
 
@@ -21,6 +25,8 @@ typedef struct GameScene {
   int day;
 
   int clicks;
+  Stuff resources;
+  Stuff resources_claimed;
 
   Color preview;
   Recti r;

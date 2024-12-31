@@ -71,6 +71,7 @@ void fa_done_work(Farm *fa, GameScene *gs) {
   fa->clicks_done++;
   if (fa->clicks_done == 9) {
     fa->clicks = fa->clicks_claimed = fa->clicks_work = fa->clicks_done = 0;
+    gs->resources.food += 10;
   }
 }
 void fa_click(Farm *fa, GameScene *gs) {
