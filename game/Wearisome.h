@@ -102,6 +102,8 @@ typedef struct Wearisome {
   float health;
   bool needs_click;
 
+  float speed;
+
   WearisomeState state;
 
   DeliverJob *deliver_job;
@@ -120,8 +122,8 @@ bool w_move_to_rect(Wearisome *w, GameScene *gs, Recti r) { return w_move_to(w, 
 void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
   Point l = l_to_point(w->destination);
   for (int i = 0; i < 1000; i++) {
-    int i = l.x + (rand() % 10) - 5;
-    int j = l.y + (rand() % 10) - 5;
+    int i = l.x + (rand() % 8) - 4;
+    int j = l.y + (rand() % 8) - 4;
     if (l_movable(gs->level, i, j)) {
       if (w_move_to(w, gs, w->current_rect, (Recti){i, j, 1, 1}))
         w->state = W_Wandering;
@@ -155,7 +157,7 @@ void WearisomeJobSearch_build_path(WearisomeJobSearchData *data, int i, int j) {
 bool w_has_emergency(Wearisome *w, float k) { return w->needs.sleep < k || w->needs.water < k || w->needs.food < k; }
 
 bool w_want_to_work(Wearisome *w, GameScene *gs) {
-  int key = w->needs_click ? 2 : 0;
+  int key = w->needs_click ? 4 : 0;
   if (w->needs_click && w->needs.water < 0.4)
     key++;
   if (w->needs_click && w->needs.food < 0.4)
@@ -166,7 +168,7 @@ bool w_want_to_work(Wearisome *w, GameScene *gs) {
     key--;
   if (gs->daytime > 0.65)
     key--;
-  return rand() % 5 < key;
+  return rand() % 7 < key;
 }
 
 void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
@@ -209,7 +211,7 @@ void w_u_at_home(Wearisome *w, GameScene *gs, float dt) {
 }
 
 void w_u_moving_home(Wearisome *w, float dt) {
-  w->position = v_lerp_about(w->position, w->destination, dt * 32.0);
+  w->position = v_lerp_about(w->position, w->destination, dt * w->speed);
   if (v_eq(w->position, w->destination)) {
     if (w->path) {
       w->destination = w->path->p;
@@ -222,8 +224,7 @@ void w_u_moving_home(Wearisome *w, float dt) {
 }
 
 void w_u_wandering(Wearisome *w, GameScene *gs, float dt) {
-
-  w->position = v_lerp_about(w->position, w->destination, dt * 48.0);
+  w->position = v_lerp_about(w->position, w->destination, dt * 0.334 * w->speed);
   if (v_eq(w->position, w->destination)) {
     if ((gs->daytime > 0.75f || w_has_emergency(w, 0.25f)) && w_move_to_rect(w, gs, w->home)) {
       w->state = W_MovingHome;
@@ -240,7 +241,7 @@ void w_u_wandering(Wearisome *w, GameScene *gs, float dt) {
 void w_u_deliver_collect(Wearisome *w, GameScene *gs, float dt) {
   (void)gs;
 
-  w->position = v_lerp_about(w->position, w->destination, dt * 48.0);
+  w->position = v_lerp_about(w->position, w->destination, dt * w->speed);
   if (v_eq(w->position, w->destination)) {
     if (w->path) {
       w->destination = w->path->p;
@@ -268,7 +269,7 @@ void w_u_deliver_wait(Wearisome *w, GameScene *gs, float dt) {
 }
 
 void w_u_deliver(Wearisome *w, GameScene *gs, float dt) {
-  w->position = v_lerp_about(w->position, w->destination, dt * 48.0);
+  w->position = v_lerp_about(w->position, w->destination, dt * w->speed);
   if (v_eq(w->position, w->destination)) {
     if (w->path) {
       w->destination = w->path->p;
@@ -285,7 +286,7 @@ void w_u_deliver(Wearisome *w, GameScene *gs, float dt) {
 void w_u_move_to_work(Wearisome *w, GameScene *gs, float dt) {
   (void)gs;
 
-  w->position = v_lerp_about(w->position, w->destination, dt * 48.0);
+  w->position = v_lerp_about(w->position, w->destination, dt * w->speed);
   if (v_eq(w->position, w->destination)) {
     if (w->path) {
       w->destination = w->path->p;
@@ -475,6 +476,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
       .house_highlight = false,
       .clicks_worked = 0,
       .needs_click = false,
+      .speed = r_float_r(60.0f, 70.0f),
   };
   gs_add_object(gs, (SceneObject){.context = w, &w_table});
   return w;

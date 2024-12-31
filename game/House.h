@@ -70,7 +70,15 @@ void h_update(House *h, GameScene *gs, float dt) {
   h->resources.clicks += h->wearisome->clicks_worked;
   h->resources_maximum.clicks += h->wearisome->clicks_worked;
   h->wearisome->clicks_worked = 0;
-  h->wearisome->needs_click = h->resources.clicks < 2;
+  
+  int needed_resource = h->resources.clicks - 3;
+  const bool need_water = h->resources_maximum.clicks > 0 && h->resources_maximum.water - h->resources.water >= 1.0f;
+  if (need_water)
+    needed_resource--;
+  const bool need_food = h->resources_maximum.clicks > 0 && h->resources_maximum.food - h->resources.food >= 1.0f;
+  if (need_food)
+    needed_resource--;
+  h->wearisome->needs_click = needed_resource < 0;
 
   if (w_is_home(h->wearisome)) {
     w_sleep(h->wearisome, 8.0f * gs->daytime_step);
@@ -79,14 +87,12 @@ void h_update(House *h, GameScene *gs, float dt) {
     h->resources.food -= w_eat(h->wearisome, f_min(h->resources.food, 12.0 * gs->daytime_step));
   }
 
-  const bool need_water = h->resources_maximum.clicks > 0 && h->resources_maximum.water - h->resources.water >= 1.0f;
   if (need_water && w_is_free(h->wearisome) &&
       w_deliver(h->wearisome, gs,
                 deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_stuff,
                             (DeliverDoneCB)h_get_water_done))) {
     h->resources_maximum.clicks--;
   }
-  const bool need_food = h->resources_maximum.clicks > 0 && h->resources_maximum.food - h->resources.food >= 1.0f;
   if (need_food && w_is_free(h->wearisome) &&
       w_deliver(h->wearisome, gs,
                 deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_stuff,
@@ -153,7 +159,7 @@ static SceneObjectTable House_table = (SceneObjectTable){
 };
 House *House_init(Game *g, GameScene *gs, Point p) {
   House *h = g_malloc(g, sizeof(House));
-  int c = rand() % 2;
+  int c = rand() % 2 + 1;
   *h = (House){
       .buffer = g_tilerect_buffer(g, 2, 2),
       .location = {p.x, p.y, 2, 2},
