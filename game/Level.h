@@ -15,6 +15,7 @@ typedef enum TileType {
   T_None = 0,
   T_Marketplace,
   T_House,
+  T_Well,
   T_Farm,
   T_ClickFactory,
 

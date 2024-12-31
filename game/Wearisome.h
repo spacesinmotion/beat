@@ -161,15 +161,17 @@ bool w_has_emergency(Wearisome *w, float k) { return w->needs.sleep < k || w->ne
 bool w_want_to_work(Wearisome *w, GameScene *gs) {
   int key = w->needs_click ? 4 : 0;
   if (w->needs_click && w->needs.water < 0.4)
-    key--;
+    key++;
   if (w->needs_click && w->needs.food < 0.4)
-    key--;
+    key++;
   if (w->needs.sleep < 0.3)
-    key++;
+    key--;
   if (w->needs.sleep < 0.5 && gs->daytime > 0.55)
-    key++;
-  if (w->needs.sleep < 0.5 && gs->daytime > 0.65)
-    key++;
+    key--;
+  if (w->needs.sleep < 0.6 && gs->daytime > 0.65)
+    key--;
+  if (w->needs.sleep < 0.7 && gs->daytime > 0.7)
+    key--;
   return rand() % 7 < key;
 }
 
@@ -377,7 +379,7 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(w->position, (Vec2){0, 8}), 0.75f);
   }
 
-  if (w->state == W_Working)
+  if (w->state == W_Working || w->state == W_AtHome)
     return;
   Vec2 p = v_add(w->position, (Vec2){0, 2});
   g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));

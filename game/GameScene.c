@@ -9,6 +9,7 @@
 #include "game/SceneObject.h"
 #include "game/StreetMap.h"
 #include "game/TileContent.h"
+#include "game/Well.h"
 #include "game/assets.h"
 #include "gc/gc.h"
 #include "math.h"
@@ -143,6 +144,10 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->preview = cf_color();
         gs->r.w = 3;
         gs->r.h = 3;
+      } else if (gs->menu_selected == 5) {
+        gs->preview = wl_color();
+        gs->r.w = 2;
+        gs->r.h = 3;
       } else {
         gs->r.w = gs->r.h = 0;
       }
@@ -161,6 +166,9 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
     } else if (gs->menu_selected == 4) {
       if (l_freeR(gs->level, gs->r))
         ClickFactory_init(g, gs, (Point){gs->r.x, gs->r.y});
+    } else if (gs->menu_selected == 5) {
+      if (l_freeR(gs->level, gs->r))
+        Well_init(g, gs, (Point){gs->r.x, gs->r.y});
     } else {
       tc_click(l_content(gs->level, gs->r.x, gs->r.y), gs);
     }
