@@ -16,6 +16,7 @@ typedef enum TileType {
   T_Marketplace,
   T_House,
   T_Farm,
+  T_ClickFactory,
 
   T_Movable = 1 << 7,
 } TileType;
@@ -87,10 +88,6 @@ static inline void l_set_tile_contentR(Level *level, Recti r, TileContent *c) {
   for (int i = r.x; i < r.x + r.w; ++i)
     for (int j = r.y; j < r.y + r.h; ++j)
       l_set_tile_content(level, i, j, c);
-}
-
-static inline bool l_has_work(Level *l, int x, int y) {
-  return l_valid(l, x, y) && l->tiles[x][y].content && tc_has_work(l->tiles[x][y].content);
 }
 
 static inline TileContent *l_content(const Level *l, int x, int y) {

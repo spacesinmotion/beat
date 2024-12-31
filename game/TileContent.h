@@ -8,10 +8,10 @@
 typedef struct TileContent TileContent;
 typedef struct GameScene GameScene;
 
-typedef bool (*HasWorkCB)(void *);
-typedef void (*ClaimWorkCB)(void *);
-typedef float (*StartWorkCB)(void *);
-typedef void (*DoneWorkCB)(void *);
+typedef bool (*HasWorkCB)(void *, GameScene *gs);
+typedef void (*ClaimWorkCB)(void *, GameScene *gs);
+typedef float (*StartWorkCB)(void *, GameScene *gs);
+typedef void (*DoneWorkCB)(void *, GameScene *gs);
 typedef void (*ClickCB)(const TileContent *, GameScene *gs);
 
 typedef struct TileContentTable {
@@ -26,19 +26,21 @@ typedef struct TileContent {
   const TileContentTable *table;
 } TileContent;
 
-bool tc_has_work(const TileContent *tc) { return tc && tc->table->has_work && tc->table->has_work(tc->context); }
-void tc_claim_work(const TileContent *tc) {
-  if (tc && tc->table->claim_work)
-    tc->table->claim_work(tc->context);
+bool tc_has_work(const TileContent *tc, GameScene *gs) {
+  return tc && tc->table->has_work && tc->table->has_work(tc->context, gs);
 }
-float tc_start_work(const TileContent *tc) {
+void tc_claim_work(const TileContent *tc, GameScene *gs) {
+  if (tc && tc->table->claim_work)
+    tc->table->claim_work(tc->context, gs);
+}
+float tc_start_work(const TileContent *tc, GameScene *gs) {
   if (tc && tc->table->start_work)
-    return tc->table->start_work(tc->context);
+    return tc->table->start_work(tc->context, gs);
   return 1.0;
 }
-void tc_done_work(const TileContent *tc) {
+void tc_done_work(const TileContent *tc, GameScene *gs) {
   if (tc && tc->table->done_work)
-    tc->table->done_work(tc->context);
+    tc->table->done_work(tc->context, gs);
 }
 void tc_click(const TileContent *tc, GameScene *gs) {
   if (tc && tc->table->click)

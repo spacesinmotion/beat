@@ -139,14 +139,16 @@ typedef struct WearisomeJobSearchData {
 } WearisomeJobSearchData;
 
 bool WearisomeJobSearch_moveable(WearisomeJobSearchData *data, int x, int y) {
-  return l_movable(data->gs->level, x, y) || ri_contains(data->start_rect, x, y) || l_has_work(data->gs->level, x, y);
+  if (l_movable(data->gs->level, x, y) || ri_contains(data->start_rect, x, y))
+    return true;
+  return tc_has_work(l_content(data->gs->level, x, y), data->gs);
 }
 
 bool WearisomeJobSearch_reached_goal(WearisomeJobSearchData *data, int x, int y) {
   TileContent *c = l_content(data->gs->level, x, y);
-  if (!tc_has_work(c))
+  if (!tc_has_work(c, data->gs))
     return false;
-  tc_claim_work(c);
+  tc_claim_work(c, data->gs);
   return true;
 }
 
@@ -292,7 +294,7 @@ void w_u_move_to_work(Wearisome *w, GameScene *gs, float dt) {
       w->destination = w->path->p;
       w->path = w->path->next;
     } else {
-      w->wait_time = tc_start_work(l_contentP(gs->level, l_to_point(w->destination)));
+      w->wait_time = tc_start_work(l_contentP(gs->level, l_to_point(w->destination)), gs);
       w->state = W_Working;
 
       // w->current_rect = w->deliver_job->from;
@@ -305,7 +307,7 @@ void w_u_working(Wearisome *w, GameScene *gs, float dt) {
 
   w->wait_time -= dt;
   if (w->wait_time < 0.0f) {
-    tc_done_work(l_contentP(gs->level, l_to_point(w->destination)));
+    tc_done_work(l_contentP(gs->level, l_to_point(w->destination)), gs);
     w->clicks_worked++;
     w_wander_to_random_near_path(w, gs);
   }
@@ -375,6 +377,8 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(w->position, (Vec2){0, 8}), 0.75f);
   }
 
+  if (w->state == W_Working)
+    return;
   Vec2 p = v_add(w->position, (Vec2){0, 2});
   g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));
   const int o = (size_t)w / 17;

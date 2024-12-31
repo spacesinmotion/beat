@@ -70,7 +70,7 @@ void h_update(House *h, GameScene *gs, float dt) {
   h->resources.clicks += h->wearisome->clicks_worked;
   h->resources_maximum.clicks += h->wearisome->clicks_worked;
   h->wearisome->clicks_worked = 0;
-  
+
   int needed_resource = h->resources.clicks - 3;
   const bool need_water = h->resources_maximum.clicks > 0 && h->resources_maximum.water - h->resources.water >= 1.0f;
   if (need_water)

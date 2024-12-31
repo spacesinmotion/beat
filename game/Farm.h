@@ -12,7 +12,7 @@ typedef struct Farm {
   int clicks_claimed;
 } Farm;
 
-Color fa_color() { return rgb(245, 222, 179); }
+Color fa_color() { return rgb(11, 133, 0); }
 
 bool fa_dead(Farm *fa) {
   (void)fa;
@@ -44,13 +44,13 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
   }
 }
 
-bool fa_has_work(Farm *fa) { return fa->clicks - fa->clicks_claimed > 0; }
-void fa_claim_work(Farm *fa) { fa->clicks_claimed++; }
-float fa_start_work(Farm *fa) {
+bool fa_has_work(Farm *fa, GameScene *gs) { return fa->clicks - fa->clicks_claimed > 0; }
+void fa_claim_work(Farm *fa, GameScene *gs) { fa->clicks_claimed++; }
+float fa_start_work(Farm *fa, GameScene *gs) {
   (void)fa;
   return 11.0;
 }
-void fa_done_work(Farm *fa) {
+void fa_done_work(Farm *fa, GameScene *gs) {
   fa->clicks_claimed--;
   fa->clicks--;
 }
