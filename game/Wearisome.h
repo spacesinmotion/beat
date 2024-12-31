@@ -169,9 +169,9 @@ bool w_want_to_work(Wearisome *w, GameScene *gs) {
   if (w->needs.sleep < 0.5 && gs->daytime > 0.55)
     key--;
   if (w->needs.sleep < 0.6 && gs->daytime > 0.65)
-    key--;
-  if (w->needs.sleep < 0.7 && gs->daytime > 0.7)
-    key--;
+    key -= 2;
+  if (w->needs.sleep < 0.8 && gs->daytime > 0.7)
+    key -= 2;
   return rand() % 6 <= key;
 }
 
