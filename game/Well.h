@@ -36,6 +36,8 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
   Vec2 p = l_to_vecP(ri_bottom_right(wl->location));
   g_color(g, wl_color());
   g_buffer(g, wl->buffer, Img_house_map, p);
+  g_color(g, white());
+  g_object(g, g_animation_buffer(g), Img_menubar, 3, p);
 
   Point o[] = {{1, 2}, {1, 1}};
   for (int i = 0; i < 2; ++i) {

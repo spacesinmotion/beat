@@ -36,6 +36,8 @@ void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
   Vec2 p = l_to_vecP(ri_bottom_right(cf->location));
   g_color(g, cf_color());
   g_buffer(g, cf->buffer, Img_house_map, p);
+  g_color(g, white());
+  g_object(g, g_animation_buffer(g), Img_menubar, 5, p);
 
   Point o[] = {{1, 2}, {2, 2}, {1, 1}, {2, 1}};
   for (int i = 0; i < 4; ++i) {

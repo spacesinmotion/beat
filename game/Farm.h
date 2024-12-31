@@ -36,6 +36,8 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
   Vec2 p = l_to_vecP(ri_bottom_right(fa->location));
   g_color(g, fa_color());
   g_buffer(g, fa->buffer, Img_house_map, p);
+  g_color(g, white());
+  g_object(g, g_animation_buffer(g), Img_menubar, 4, p);
 
   Point o[] = {
       {1, 3}, {2, 3}, {3, 3}, //

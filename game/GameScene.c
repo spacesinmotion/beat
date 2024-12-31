@@ -88,9 +88,10 @@ void gs_draw(GameScene *gs, Game *g) {
 }
 
 void gs_draw_overlay(GameScene *gs, Game *g) {
-  g_color(g, white());
-  for (int i = 0; i < 10; ++i)
+  for (int i = 0; i < 10; ++i) {
+    g_color(g, i == gs->menu_under_mouse ? gray(100) : (gs->menu_selected == i ? gray(25) : gray(75)));
     g_object(g, g_animation_buffer(g), Img_menubar, i % 16, (Vec2){8 + 4 + i * 16, 8 + 4});
+  }
   for (int i = 0; i < 10; ++i) {
     g_color(g, i == gs->menu_under_mouse ? red() : (gs->menu_selected == i ? green() : blue()));
     g_object(g, g_animation_buffer(g), Img_marker, i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4,
@@ -130,23 +131,23 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->preview = Street_color();
         gs->r.w = gs->r.h = 1;
       } else if (gs->menu_selected == 1) {
-        gs->preview = h_color();
-        gs->r.w = gs->r.h = 2;
-      } else if (gs->menu_selected == 2) {
         gs->preview = mp_color();
         gs->r.w = 4;
         gs->r.h = 3;
+      } else if (gs->menu_selected == 2) {
+        gs->preview = h_color();
+        gs->r.w = gs->r.h = 2;
       } else if (gs->menu_selected == 3) {
+        gs->preview = wl_color();
+        gs->r.w = 2;
+        gs->r.h = 3;
+      } else if (gs->menu_selected == 4) {
         gs->preview = fa_color();
         gs->r.w = 4;
         gs->r.h = 4;
-      } else if (gs->menu_selected == 4) {
+      } else if (gs->menu_selected == 5) {
         gs->preview = cf_color();
         gs->r.w = 3;
-        gs->r.h = 3;
-      } else if (gs->menu_selected == 5) {
-        gs->preview = wl_color();
-        gs->r.w = 2;
         gs->r.h = 3;
       } else {
         gs->r.w = gs->r.h = 0;
@@ -156,19 +157,19 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
       StreetMap_update(gs->street_map);
     } else if (gs->menu_selected == 1) {
       if (l_freeR(gs->level, gs->r))
-        House_init(g, gs, (Point){gs->r.x, gs->r.y});
+        Marketplace_init(g, gs, (Point){gs->r.x, gs->r.y});
     } else if (gs->menu_selected == 2) {
       if (l_freeR(gs->level, gs->r))
-        Marketplace_init(g, gs, (Point){gs->r.x, gs->r.y});
+        House_init(g, gs, (Point){gs->r.x, gs->r.y});
     } else if (gs->menu_selected == 3) {
       if (l_freeR(gs->level, gs->r))
-        Farm_init(g, gs, (Point){gs->r.x, gs->r.y});
+        Well_init(g, gs, (Point){gs->r.x, gs->r.y});
     } else if (gs->menu_selected == 4) {
       if (l_freeR(gs->level, gs->r))
-        ClickFactory_init(g, gs, (Point){gs->r.x, gs->r.y});
+        Farm_init(g, gs, (Point){gs->r.x, gs->r.y});
     } else if (gs->menu_selected == 5) {
       if (l_freeR(gs->level, gs->r))
-        Well_init(g, gs, (Point){gs->r.x, gs->r.y});
+        ClickFactory_init(g, gs, (Point){gs->r.x, gs->r.y});
     } else {
       tc_click(l_content(gs->level, gs->r.x, gs->r.y), gs);
     }
