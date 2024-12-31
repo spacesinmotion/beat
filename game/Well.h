@@ -98,7 +98,6 @@ Well *Well_init(Game *g, GameScene *gs, Point p) {
   *wl = (Well){
       .buffer = g_tilerect_buffer(g, 2, 3),
       .location = (Recti){p.x, p.y, 2, 3},
-      .clicks = 2,
   };
 
   l_set_tileR(gs->level, wl->location, T_Well);

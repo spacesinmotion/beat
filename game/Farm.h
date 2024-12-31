@@ -102,7 +102,6 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   *fa = (Farm){
       .buffer = g_tilerect_buffer(g, 4, 4),
       .location = (Recti){p.x, p.y, 4, 4},
-      .clicks = 9,
   };
 
   l_set_tileR(gs->level, fa->location, T_Farm);

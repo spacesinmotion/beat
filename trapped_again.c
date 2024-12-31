@@ -535,8 +535,9 @@ static void g_draw(Game *g) {
 
   g_update_console(g);
 
+  Color b = rgb(226, 219, 197);
   sg_begin_pass(&(sg_pass){
-      .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {1.0f, 1.0f, 1.0f, 1.0f}}},
+      .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {b.r, b.g, b.b, b.a}}},
       .swapchain = sglue_swapchain(),
   });
 

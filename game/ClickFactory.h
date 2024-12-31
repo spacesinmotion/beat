@@ -98,7 +98,6 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   *cf = (ClickFactory){
       .buffer = g_tilerect_buffer(g, 3, 3),
       .location = (Recti){p.x, p.y, 3, 3},
-      .clicks = 4,
   };
 
   l_set_tileR(gs->level, cf->location, T_ClickFactory);

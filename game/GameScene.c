@@ -1,6 +1,7 @@
 
 #include "game/GameScene.h"
 #include "game/ClickFactory.h"
+#include "game/ConstructionSite.h"
 #include "game/Farm.h"
 #include "game/Game.h"
 #include "game/House.h"
@@ -152,24 +153,8 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
       } else {
         gs->r.w = gs->r.h = 0;
       }
-    } else if (gs->menu_selected == 0) {
-      l_set_movable(gs->level, gs->r.x, gs->r.y, true);
-      StreetMap_update(gs->street_map);
-    } else if (gs->menu_selected == 1) {
-      if (l_freeR(gs->level, gs->r))
-        Marketplace_init(g, gs, (Point){gs->r.x, gs->r.y});
-    } else if (gs->menu_selected == 2) {
-      if (l_freeR(gs->level, gs->r))
-        House_init(g, gs, (Point){gs->r.x, gs->r.y});
-    } else if (gs->menu_selected == 3) {
-      if (l_freeR(gs->level, gs->r))
-        Well_init(g, gs, (Point){gs->r.x, gs->r.y});
-    } else if (gs->menu_selected == 4) {
-      if (l_freeR(gs->level, gs->r))
-        Farm_init(g, gs, (Point){gs->r.x, gs->r.y});
-    } else if (gs->menu_selected == 5) {
-      if (l_freeR(gs->level, gs->r))
-        ClickFactory_init(g, gs, (Point){gs->r.x, gs->r.y});
+    } else if (gs->menu_selected >= 0) {
+      ConstructionSite_init(g, gs, gs->r, gs->menu_selected);
     } else {
       tc_click(l_content(gs->level, gs->r.x, gs->r.y), gs);
     }
@@ -178,6 +163,27 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
 
 void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
 
+void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
+  if (key == 0) {
+    l_set_movable(gs->level, r.x, r.y, true);
+    StreetMap_update(gs->street_map);
+  } else if (key == 1) {
+    if (l_freeR(gs->level, r))
+      Marketplace_init(g, gs, (Point){r.x, r.y});
+  } else if (key == 2) {
+    if (l_freeR(gs->level, r))
+      House_init(g, gs, (Point){r.x, r.y});
+  } else if (key == 3) {
+    if (l_freeR(gs->level, r))
+      Well_init(g, gs, (Point){r.x, r.y});
+  } else if (key == 4) {
+    if (l_freeR(gs->level, r))
+      Farm_init(g, gs, (Point){r.x, r.y});
+  } else if (key == 5) {
+    if (l_freeR(gs->level, r))
+      ClickFactory_init(g, gs, (Point){r.x, r.y});
+  }
+}
 SceneTable GameScene_table = {
     .update = (SceneUpdateCB)gs_update,
     .draw = (SceneDrawCB)gs_draw,
@@ -194,7 +200,7 @@ void GameScene_init(Game *g) {
       .day = 1,
       .daytime = 0.0f,
       .clicks = 0,
-      .resources = {.water = 10, .food = 10},
+      .resources = {.water = 60, .food = 50},
       .resources_claimed = {.water = 0, .food = 0},
       .level = g_malloc(g, sizeof(Level)),
       .r = (Recti){-1, -1, 0, 0},
@@ -214,12 +220,12 @@ void GameScene_init(Game *g) {
   for (int i = 1; i < 26; ++i)
     l_set_movable(gs->level, 21, i, true);
   for (int i = 0; i < 3; ++i) {
-    House_init(g, gs, (Point){17, 10 - 3 - 2 * i});
-    House_init(g, gs, (Point){19, 10 - 3 - 2 * i});
-    House_init(g, gs, (Point){17, 10 + 4 + 2 * i});
-    House_init(g, gs, (Point){19, 10 + 4 + 2 * i});
-    House_init(g, gs, (Point){14, 10 + 4 + 2 * i});
-    House_init(g, gs, (Point){22, 10 + 4 + 2 * i});
+    h_earn_click(House_init(g, gs, (Point){17, 10 - 3 - 2 * i}), rand() % 3 + 1);
+    h_earn_click(House_init(g, gs, (Point){19, 10 - 3 - 2 * i}), rand() % 3 + 1);
+    h_earn_click(House_init(g, gs, (Point){17, 10 + 4 + 2 * i}), rand() % 3 + 1);
+    h_earn_click(House_init(g, gs, (Point){19, 10 + 4 + 2 * i}), rand() % 3 + 1);
+    h_earn_click(House_init(g, gs, (Point){14, 10 + 4 + 2 * i}), rand() % 3 + 1);
+    h_earn_click(House_init(g, gs, (Point){22, 10 + 4 + 2 * i}), rand() % 3 + 1);
   }
 
   gs->street_map = StreetMap_init(g, gs);

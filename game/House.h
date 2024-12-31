@@ -45,6 +45,11 @@ Point h_current_entry(House *h, Level *l) {
   return (Point){h->location.x, h->location.y};
 }
 
+void h_earn_click(House *h, int c) {
+  h->resources.clicks += c;
+  h->resources_maximum.clicks += c;
+}
+
 void h_pay_water(House *h, GameScene *gs) {
   (void)h;
   gs->resources.water--;
@@ -76,8 +81,7 @@ void h_update(House *h, GameScene *gs, float dt) {
   if (!h->wearisome)
     return;
 
-  h->resources.clicks += h->wearisome->clicks_worked;
-  h->resources_maximum.clicks += h->wearisome->clicks_worked;
+  h_earn_click(h, h->wearisome->clicks_worked);
   h->wearisome->clicks_worked = 0;
 
   int needed_resource = h->resources.clicks - 3;
@@ -170,12 +174,11 @@ static SceneObjectTable House_table = (SceneObjectTable){
 };
 House *House_init(Game *g, GameScene *gs, Point p) {
   House *h = g_malloc(g, sizeof(House));
-  int c = rand() % 2 + 1;
   *h = (House){
       .buffer = g_tilerect_buffer(g, 2, 2),
       .location = {p.x, p.y, 2, 2},
-      .resources = {.food = 1.0f, .water = 1.0f, .clicks = c},
-      .resources_maximum = {.food = 2.0f, .water = 2.0f, .clicks = c},
+      .resources = {.food = 0.0f, .water = 0.0f, .clicks = 0},
+      .resources_maximum = {.food = 2.0f, .water = 2.0f, .clicks = 0},
       .wearisome = NULL,
   };
 

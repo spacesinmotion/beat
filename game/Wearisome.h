@@ -172,7 +172,7 @@ bool w_want_to_work(Wearisome *w, GameScene *gs) {
     key--;
   if (w->needs.sleep < 0.7 && gs->daytime > 0.7)
     key--;
-  return rand() % 7 < key;
+  return rand() % 6 <= key;
 }
 
 void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
