@@ -12,7 +12,6 @@
 #include "math/Rect.h"
 #include "math/Vec2.h"
 #include "math/random.h"
-#include <time.h>
 
 typedef struct PathPoint {
   Vec2 p;
@@ -153,6 +152,8 @@ void WearisomeJobSearch_build_path(WearisomeJobSearchData *data, int i, int j) {
   data->path = PathPoint_init(l_to_vec(i, j), data->path);
 }
 
+bool w_has_emergency(Wearisome *w, float k) { return w->needs.sleep < k || w->needs.water < k || w->needs.food < k; }
+
 bool w_want_to_work(Wearisome *w, GameScene *gs) {
   int key = w->needs_click ? 2 : 0;
   if (w->needs_click && w->needs.water < 0.4)
@@ -170,7 +171,7 @@ bool w_want_to_work(Wearisome *w, GameScene *gs) {
 
 void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
   w->wait_time -= dt;
-  if ((gs->daytime > 0.75f || w->needs.sleep < 0.2) && w_move_to_rect(w, gs, w->home)) {
+  if ((gs->daytime > 0.75f || w_has_emergency(w, 0.25f)) && w_move_to_rect(w, gs, w->home)) {
     w->state = W_MovingHome;
   } else if (w->wait_time < 0.0f) {
     if (w_want_to_work(w, gs)) {
@@ -193,6 +194,20 @@ void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
   }
 }
 
+void w_u_at_home(Wearisome *w, GameScene *gs, float dt) {
+  if (w_has_emergency(w, 0.5f))
+    return;
+  const float ref = 0.25f * (1.0f - f_min(w->needs.sleep, w->health));
+  if (gs->daytime > ref && gs->daytime < 0.75f) {
+    w->path = NULL;
+    w_wander_to_random_near_path(w, gs);
+    if (!w->path) {
+      w->state = W_AtHome;
+      w->current_rect = w->home;
+    }
+  }
+}
+
 void w_u_moving_home(Wearisome *w, float dt) {
   w->position = v_lerp_about(w->position, w->destination, dt * 32.0);
   if (v_eq(w->position, w->destination)) {
@@ -207,9 +222,10 @@ void w_u_moving_home(Wearisome *w, float dt) {
 }
 
 void w_u_wandering(Wearisome *w, GameScene *gs, float dt) {
+
   w->position = v_lerp_about(w->position, w->destination, dt * 48.0);
   if (v_eq(w->position, w->destination)) {
-    if (gs->daytime > 0.75f && w_move_to_rect(w, gs, w->home)) {
+    if ((gs->daytime > 0.75f || w_has_emergency(w, 0.25f)) && w_move_to_rect(w, gs, w->home)) {
       w->state = W_MovingHome;
     } else if (w->path) {
       w->destination = w->path->p;
@@ -316,15 +332,7 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
     break;
 
   case W_AtHome: {
-    const float ref = 0.25f * (1.0f - f_min(w->needs.sleep, w->health));
-    if (gs->daytime > ref && gs->daytime < 0.75f) {
-      w->path = NULL;
-      w_wander_to_random_near_path(w, gs);
-      if (!w->path) {
-        w->state = W_AtHome;
-        w->current_rect = w->home;
-      }
-    }
+    w_u_at_home(w, gs, dt);
     break;
   }
 
