@@ -52,6 +52,9 @@ void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
     // g_color(g, rgb(255, 255, 255));
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vecP(o[i])), 0.75f);
   }
+  g_color(g, rgb(255, 255, 255));
+  for (int i = cf->clicks; i < 4; ++i)
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
 }
 
 bool cf_has_work(ClickFactory *cf, GameScene *gs) { return cf->clicks - cf->clicks_claimed > 0; }

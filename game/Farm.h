@@ -56,6 +56,9 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
     // g_color(g, rgb(255, 255, 255));
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vecP(o[i])), 0.75f);
   }
+  g_color(g, rgb(255, 255, 255));
+  for (int i = fa->clicks; i < 9; ++i)
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
 }
 
 bool fa_has_work(Farm *fa, GameScene *gs) { return fa->clicks - fa->clicks_claimed > 0; }
