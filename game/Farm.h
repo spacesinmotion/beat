@@ -8,8 +8,7 @@
 typedef struct Farm {
   G_Object buffer;
   Recti location;
-  int clicks;
-  int clicks_claimed;
+  int clicks, clicks_claimed, clicks_work, clicks_done;
 } Farm;
 
 Color fa_color() { return rgb(11, 133, 0); }
@@ -38,25 +37,42 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
   g_color(g, fa_color());
   g_buffer(g, fa->buffer, Img_house_map, p);
 
-  g_color(g, rgb(255, 255, 255));
-  for (int i = 0; i < fa->clicks; ++i) {
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){20, -2 + 4 * i}), 0.25);
+  Point o[] = {
+      {1, 3}, {2, 3}, {3, 3}, //
+      {1, 2}, {2, 2}, {3, 2}, //
+      {1, 1}, {2, 1}, {3, 1}, //
+  };
+  for (int i = 0; i < 9; ++i) {
+    if (i < fa->clicks_done)
+      g_color(g, rgb(107, 107, 107));
+    else if (i < fa->clicks_work)
+      g_color(g, rgb(101, 168, 110));
+    else if (i < fa->clicks_claimed)
+      g_color(g, rgb(89, 135, 146));
+    else if (i < fa->clicks)
+      g_color(g, rgb(255, 255, 255));
+    else
+      break;
+    // g_color(g, rgb(255, 255, 255));
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vecP(o[i])), 0.75f);
   }
 }
 
 bool fa_has_work(Farm *fa, GameScene *gs) { return fa->clicks - fa->clicks_claimed > 0; }
 void fa_claim_work(Farm *fa, GameScene *gs) { fa->clicks_claimed++; }
 float fa_start_work(Farm *fa, GameScene *gs) {
-  (void)fa;
+  fa->clicks_work++;
   return 11.0;
 }
 void fa_done_work(Farm *fa, GameScene *gs) {
-  fa->clicks_claimed--;
-  fa->clicks--;
+  fa->clicks_done++;
+  if (fa->clicks_done == 9) {
+    fa->clicks = fa->clicks_claimed = fa->clicks_work = fa->clicks_done = 0;
+  }
 }
 void fa_click(Farm *fa, GameScene *gs) {
   (void)gs;
-  if (fa->clicks < 4 && gs->clicks > 0) {
+  if (fa->clicks < 9 && gs->clicks > 0) {
     fa->clicks++;
     gs->clicks--;
   }
@@ -80,7 +96,7 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   *fa = (Farm){
       .buffer = g_tilerect_buffer(g, 4, 4),
       .location = (Recti){p.x, p.y, 4, 4},
-      .clicks = 4,
+      .clicks = 9,
   };
 
   l_set_tileR(gs->level, fa->location, T_Farm);
