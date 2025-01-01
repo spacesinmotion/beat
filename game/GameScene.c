@@ -10,6 +10,7 @@
 #include "game/SceneObject.h"
 #include "game/StreetMap.h"
 #include "game/TileContent.h"
+#include "game/Wearisome.h"
 #include "game/Well.h"
 #include "game/assets.h"
 #include "gc/gc.h"
@@ -220,12 +221,12 @@ void GameScene_init(Game *g) {
   for (int i = 1; i < 26; ++i)
     l_set_movable(gs->level, 21, i, true);
   for (int i = 0; i < 3; ++i) {
-    h_earn_click(House_init(g, gs, (Point){17, 10 - 3 - 2 * i}), rand() % 3 + 1);
-    h_earn_click(House_init(g, gs, (Point){19, 10 - 3 - 2 * i}), rand() % 3 + 1);
-    h_earn_click(House_init(g, gs, (Point){17, 10 + 4 + 2 * i}), rand() % 3 + 1);
-    h_earn_click(House_init(g, gs, (Point){19, 10 + 4 + 2 * i}), rand() % 3 + 1);
-    h_earn_click(House_init(g, gs, (Point){14, 10 + 4 + 2 * i}), rand() % 3 + 1);
-    h_earn_click(House_init(g, gs, (Point){22, 10 + 4 + 2 * i}), rand() % 3 + 1);
+    h_earn_click(Wearisome_House_init(g, gs, (Point){17, 10 - 3 - 2 * i}), rand() % 3 + 1);
+    h_earn_click(Wearisome_House_init(g, gs, (Point){19, 10 - 3 - 2 * i}), rand() % 3 + 1);
+    h_earn_click(Wearisome_House_init(g, gs, (Point){17, 10 + 4 + 2 * i}), rand() % 3 + 1);
+    h_earn_click(Wearisome_House_init(g, gs, (Point){19, 10 + 4 + 2 * i}), rand() % 3 + 1);
+    h_earn_click(Wearisome_House_init(g, gs, (Point){14, 10 + 4 + 2 * i}), rand() % 3 + 1);
+    h_earn_click(Wearisome_House_init(g, gs, (Point){22, 10 + 4 + 2 * i}), rand() % 3 + 1);
   }
 
   gs->street_map = StreetMap_init(g, gs);

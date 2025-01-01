@@ -3,6 +3,7 @@
 
 #include "game/Game.h"
 #include "game/GameScene.h"
+#include "game/House.h"
 #include "game/Level.h"
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
@@ -91,7 +92,8 @@ void dj_on_delivered(DeliverJob *dj, GameScene *gs) {
 }
 
 typedef struct Wearisome {
-  Recti home, current_rect;
+  House *home;
+  Recti current_rect;
   Vec2 position, destination;
 
   PathPoint *path;
@@ -107,10 +109,18 @@ typedef struct Wearisome {
   WearisomeState state;
 
   DeliverJob *deliver_job;
-
-  bool house_highlight;
-  int clicks_worked;
 } Wearisome;
+
+float apply_need(float *n, float t) {
+  *n += t;
+  float r = f_max(0.0, *n - 1.0f);
+  *n -= r;
+  return t - r;
+}
+
+void w_sleep(Wearisome *w, float t) { w->needs.sleep = f_min(1.0f, w->needs.sleep + t); }
+float w_drink(Wearisome *w, float t) { return apply_need(&w->needs.water, t); }
+float w_eat(Wearisome *w, float t) { return apply_need(&w->needs.food, t); }
 
 bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
 
@@ -127,9 +137,11 @@ void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
     if (l_movable(gs->level, i, j)) {
       if (w_move_to(w, gs, w->current_rect, (Recti){i, j, 1, 1}))
         w->state = W_Wandering;
-      break;
+      return;
     }
   }
+
+  printf("FAILED TO WANDER!!!\n");
 }
 
 typedef struct WearisomeJobSearchData {
@@ -159,17 +171,19 @@ void WearisomeJobSearch_build_path(WearisomeJobSearchData *data, int i, int j) {
 bool w_has_emergency(Wearisome *w, float k) { return w->needs.sleep < k || w->needs.water < k || w->needs.food < k; }
 
 void w_u_at_home(Wearisome *w, GameScene *gs, float dt) {
-  (void)dt;
-  if (w_has_emergency(w, 0.5f))
+  w_sleep(w, 8.0f * gs->daytime_step);
+  w->home->resources.water -= w_drink(w, f_min(w->home->resources.water, 12.0 * gs->daytime_step));
+  w->home->resources.food -= w_eat(w, f_min(w->home->resources.food, 12.0 * gs->daytime_step));
+
+  if (gs->daytime > 0.75 || w->needs.sleep < 0.7f || (w->needs.water < 0.7f && w->home->resources.water > 0.0f) ||
+      (w->needs.food < 0.7f && w->home->resources.food > 0.0f))
     return;
-  const float ref = 0.25f * (1.0f - f_min(w->needs.sleep, w->health));
-  if (gs->daytime > ref && gs->daytime < 0.75f) {
-    w->path = NULL;
-    w_wander_to_random_near_path(w, gs);
-    if (!w->path) {
-      w->state = W_AtHome;
-      w->current_rect = w->home;
-    }
+
+  w->path = NULL;
+  w_wander_to_random_near_path(w, gs);
+  if (!w->path) {
+    w->state = W_AtHome;
+    w->current_rect = w->home->location;
   }
 }
 
@@ -181,7 +195,7 @@ void w_u_moving_home(Wearisome *w, float dt) {
       w->path = w->path->next;
     } else {
       w->state = W_AtHome;
-      w->current_rect = w->home;
+      w->current_rect = w->home->location;
     }
   }
 }
@@ -203,42 +217,83 @@ bool w_want_to_work(Wearisome *w, GameScene *gs) {
   return rand() % 6 <= key;
 }
 
+DeliverJob *h_deliver_job(House *h, GameScene *gs) {
+  if (h->resources_maximum.clicks <= 0)
+    return NULL;
+
+  bool need_water = h->resources_maximum.water - h->resources.water >= 1.0f;
+  bool need_food = h->resources_maximum.food - h->resources.food >= 1.0f;
+  bool food_is_more_urgent = need_water && need_food && h->resources.water > h->resources.food;
+  if (!food_is_more_urgent && need_water && (gs->resource_pool.water - gs->resource_pool_claimed.water > 0)) {
+    gs->resource_pool_claimed.water++;
+    h->resources_maximum.clicks--;
+    return deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_water,
+                       (DeliverDoneCB)h_get_water_done);
+  } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0)) {
+    gs->resource_pool_claimed.food++;
+    h->resources_maximum.clicks--;
+    return deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_food,
+                       (DeliverDoneCB)h_get_food_done);
+  }
+  return NULL;
+}
+
+bool w_deliver(Wearisome *w, GameScene *gs, DeliverJob *job);
+
+bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
+  WearisomeState old_state = w->state;
+  DeliverJob *job = NULL;
+
+  if (gs->daytime > 0.75f && w_move_to_rect(w, gs, w->home->location))
+    w->state = W_MovingHome;
+
+  else if (w->needs.sleep < 0.25f && w_move_to_rect(w, gs, w->home->location))
+    w->state = W_MovingHome;
+
+  else if (((w->needs.water < 0.25f && w->home->resources.water > 0.0f) ||
+            (w->needs.food < 0.25f && w->home->resources.food > 0.0f)) &&
+           w_move_to_rect(w, gs, w->home->location))
+    w->state = W_MovingHome;
+
+  else if ((job = h_deliver_job(w->home, gs)))
+    w_deliver(w, gs, job);
+
+  else if (w->home->resources_maximum.clicks < 2 || rand() % 10 < 3) {
+    WearisomeJobSearchData search_data = {gs, w->current_rect, NULL};
+    Point start = l_to_point(w->destination);
+    l_bright_first(gs->level, start.x, start.y,
+                   (SearchHandle){
+                       &search_data,
+                       (CanMoveCB)WearisomeJobSearch_moveable,
+                       (GoalReachedCB)WearisomeJobSearch_reached_goal,
+                       (PathCB)WearisomeJobSearch_build_path,
+                   });
+    if (search_data.path) {
+      w->path = search_data.path;
+      w->state = W_MoveToWork;
+    }
+  }
+
+  return w->state != old_state;
+}
+
 void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
   w->wait_time -= dt;
-  if ((gs->daytime > 0.75f || w_has_emergency(w, 0.25f)) && w_move_to_rect(w, gs, w->home)) {
-    w->state = W_MovingHome;
-  } else if (w->wait_time < 0.0f) {
-    if (w_want_to_work(w, gs)) {
-      WearisomeJobSearchData search_data = {gs, w->current_rect, NULL};
-      Point start = l_to_point(w->destination);
-      l_bright_first(gs->level, start.x, start.y,
-                     (SearchHandle){
-                         &search_data,
-                         (CanMoveCB)WearisomeJobSearch_moveable,
-                         (GoalReachedCB)WearisomeJobSearch_reached_goal,
-                         (PathCB)WearisomeJobSearch_build_path,
-                     });
-      if (search_data.path) {
-        w->path = search_data.path;
-        w->state = W_MoveToWork;
-      }
-    }
-    if (!w->path)
-      w_wander_to_random_near_path(w, gs);
-  }
+  if (w->wait_time < 0.0f && !w_check_what_to_do_next(w, gs))
+    w_wander_to_random_near_path(w, gs);
 }
 
 void w_u_wandering(Wearisome *w, GameScene *gs, float dt) {
   w->position = v_lerp_about(w->position, w->destination, dt * 0.334 * w->speed);
   if (v_eq(w->position, w->destination)) {
-    if ((gs->daytime > 0.75f || w_has_emergency(w, 0.25f)) && w_move_to_rect(w, gs, w->home)) {
-      w->state = W_MovingHome;
-    } else if (w->path) {
-      w->destination = w->path->p;
-      w->path = w->path->next;
-    } else {
-      w->wait_time = r_float_r(1.25f, 3.4f);
-      w->state = W_Waiting;
+    if (!w_check_what_to_do_next(w, gs)) {
+      if (w->path) {
+        w->destination = w->path->p;
+        w->path = w->path->next;
+      } else {
+        w->wait_time = r_float_r(1.25f, 3.4f);
+        w->state = W_Waiting;
+      }
     }
   }
 }
@@ -311,7 +366,7 @@ void w_u_working(Wearisome *w, GameScene *gs, float dt) {
   w->wait_time -= dt;
   if (w->wait_time < 0.0f) {
     tc_done_work(l_contentP(gs->level, l_to_point(w->destination)), gs);
-    w->clicks_worked++;
+    h_earn_click(w->home, 1);
     w_wander_to_random_near_path(w, gs);
   }
 }
@@ -328,6 +383,8 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
     w->health -= 2.0f * gs->daytime_step;
   else
     w->health = f_min(1.0f, w->health + gs->daytime_step / 8.0f);
+
+  w->home->wearisome_dead = w->health <= 0.0;
 
   Point p = l_to_point(w->destination);
   if (!ri_contains(w->current_rect, p.x, p.y))
@@ -375,9 +432,16 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
 
 void w_draw(Wearisome *w, GameScene *gs, Game *g) {
   (void)gs;
-  if (w->house_highlight) {
+  if (w->home->highlight) {
     g_color(g, rgb(200, 62, 235));
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(w->position, (Vec2){0, 8}), 0.75f);
+
+    c_printf(g, "----------------------\n");
+    c_printf(g, " %10s: %s\n", "state", WearisomeState_name(w->state));
+    c_printf(g, " %10s: %f\n", "health", w->health);
+    c_printf(g, " %10s: %f\n", "sleep", w->needs.sleep);
+    c_printf(g, " %10s: %f\n", "water", w->needs.water);
+    c_printf(g, " %10s: %f\n", "food", w->needs.food);
   }
 
   if (w->state == W_Working || w->state == W_AtHome)
@@ -437,17 +501,6 @@ bool w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest) {
 
 bool w_is_home(Wearisome *w) { return w->state == W_AtHome; }
 
-float apply_need(float *n, float t) {
-  *n += t;
-  float r = f_max(0.0, *n - 1.0f);
-  *n -= r;
-  return t - r;
-}
-
-void w_sleep(Wearisome *w, float t) { w->needs.sleep = f_min(1.0f, w->needs.sleep + t); }
-float w_drink(Wearisome *w, float t) { return apply_need(&w->needs.water, t); }
-float w_eat(Wearisome *w, float t) { return apply_need(&w->needs.food, t); }
-
 bool w_is_free(Wearisome *w) { return w->state == W_Wandering || w->state == W_Waiting; }
 bool w_deliver(Wearisome *w, GameScene *gs, DeliverJob *job) {
   if (w_move_to_rect(w, gs, job->from)) {
@@ -464,12 +517,12 @@ SceneObjectTable w_table = (SceneObjectTable){
     .update = (SceneObjectUpdateCB)w_update,
     .draw = (SceneObjectDrawCB)w_draw,
 };
-Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
-  Vec2 pos = l_to_vec(home.x, home.y);
+Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
+  Vec2 pos = l_to_vec(home->location.x, home->location.y);
   Wearisome *w = g_malloc(g, sizeof(Wearisome));
   *w = (Wearisome){
       .home = home,
-      .current_rect = home,
+      .current_rect = home->location,
       .position = pos,
       .destination = pos,
       .path = NULL,
@@ -480,13 +533,17 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, Recti home) {
       .health = 1.0f,
       .deliver_job = NULL,
       .state = W_AtHome,
-      .house_highlight = false,
-      .clicks_worked = 0,
       .needs_click = false,
       .speed = r_float_r(60.0f, 70.0f),
   };
   gs_add_object(gs, (SceneObject){.context = w, &w_table});
   return w;
+}
+
+House *Wearisome_House_init(Game *g, GameScene *gs, Point p) {
+  House *h = House_init(g, gs, p);
+  Wearisome_init(g, gs, h);
+  return h;
 }
 
 #endif
