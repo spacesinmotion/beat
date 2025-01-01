@@ -340,6 +340,7 @@ G_Object g_tilerect_buffer(Game *g, int w, int h) {
 G_Object g_animation_buffer(Game *g) { return g->animation_buffer_4x4; }
 
 static void g_init(Game *g) {
+  srand(1);
   g->render.camera_pan = (Vec2){32.0f, 32.0f};
   g->render.camera_scale = 2.0f;
   g->render.overlay_scale = 2.0f;

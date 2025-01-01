@@ -160,18 +160,18 @@ bool w_has_emergency(Wearisome *w, float k) { return w->needs.sleep < k || w->ne
 
 bool w_want_to_work(Wearisome *w, GameScene *gs) {
   int key = w->needs_click ? 4 : 0;
-  if (w->needs_click && w->needs.water < 0.4)
-    key++;
-  if (w->needs_click && w->needs.food < 0.4)
-    key++;
-  if (w->needs.sleep < 0.3)
+  if (w->needs.water < 0.4)
+    key--;
+  if (w->needs.food < 0.4)
+    key--;
+  if (w->needs.sleep < 0.4)
     key--;
   if (w->needs.sleep < 0.5 && gs->daytime > 0.55)
     key--;
   if (w->needs.sleep < 0.6 && gs->daytime > 0.65)
-    key -= 2;
+    key--;
   if (w->needs.sleep < 0.8 && gs->daytime > 0.7)
-    key -= 2;
+    key--;
   return rand() % 6 <= key;
 }
 
