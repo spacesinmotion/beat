@@ -18,6 +18,7 @@ typedef enum TileType {
   T_Well,
   T_Farm,
   T_ClickFactory,
+  T_Entertainment,
 
   T_Movable = 1 << 7,
 } TileType;
@@ -59,6 +60,7 @@ bool l_freeR(Level *level, Recti r) {
 static inline bool l_movable(Level *level, int x, int y) {
   return l_valid(level, x, y) && ((level->tiles[x][y].val & T_Movable) == T_Movable);
 }
+static inline bool l_movableP(Level *level, Point p) { return l_movable(level, p.x, p.y); }
 static inline void l_set_movable(Level *level, int x, int y, bool movable) {
   if (l_valid(level, x, y)) {
     if (movable)

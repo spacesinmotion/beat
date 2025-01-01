@@ -16,6 +16,7 @@ typedef void (*ClickCB)(const TileContent *, GameScene *gs);
 
 typedef struct TileContentTable {
   HasWorkCB has_work;
+  HasWorkCB has_entertainment;
   ClaimWorkCB claim_work;
   StartWorkCB start_work;
   DoneWorkCB done_work;
@@ -28,6 +29,9 @@ typedef struct TileContent {
 
 bool tc_has_work(const TileContent *tc, GameScene *gs) {
   return tc && tc->table->has_work && tc->table->has_work(tc->context, gs);
+}
+bool tc_has_has_entertainment(const TileContent *tc, GameScene *gs) {
+  return tc && tc->table->has_entertainment && tc->table->has_entertainment(tc->context, gs);
 }
 void tc_claim_work(const TileContent *tc, GameScene *gs) {
   if (tc && tc->table->claim_work)

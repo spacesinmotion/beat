@@ -38,6 +38,9 @@ typedef enum WearisomeState {
 
   W_MoveToWork,
   W_Working,
+
+  W_MoveToEntertainment,
+  W_GetEntertained,
 } WearisomeState;
 
 const char *WearisomeState_name(WearisomeState s) {
@@ -62,6 +65,10 @@ const char *WearisomeState_name(WearisomeState s) {
     return "move to work";
   case W_Working:
     return "working";
+  case W_MoveToEntertainment:
+    return "move to entertainment";
+  case W_GetEntertained:
+    return "get entertained";
   }
   return "<error>";
 }
@@ -163,6 +170,19 @@ bool WearisomeJobSearch_reached_goal(WearisomeJobSearchData *data, int x, int y)
   tc_claim_work(c, data->gs);
   return true;
 }
+bool WearisomeEntertainmentSearch_moveable(WearisomeJobSearchData *data, int x, int y) {
+  if (l_movable(data->gs->level, x, y) || ri_contains(data->start_rect, x, y))
+    return true;
+  return tc_has_has_entertainment(l_content(data->gs->level, x, y), data->gs);
+}
+
+bool WearisomeEntertainmentSearch_reached_goal(WearisomeJobSearchData *data, int x, int y) {
+  TileContent *c = l_content(data->gs->level, x, y);
+  if (!tc_has_has_entertainment(c, data->gs))
+    return false;
+  tc_claim_work(c, data->gs);
+  return true;
+}
 
 void WearisomeJobSearch_build_path(WearisomeJobSearchData *data, int i, int j) {
   data->path = PathPoint_init(l_to_vec(i, j), data->path);
@@ -244,6 +264,9 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
   WearisomeState old_state = w->state;
   DeliverJob *job = NULL;
 
+  if (!l_movableP(gs->level, l_to_point(w->destination)))
+    return NULL;
+
   if (gs->daytime > 0.75f && w_move_to_rect(w, gs, w->home->location))
     w->state = W_MovingHome;
 
@@ -255,10 +278,26 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
            w_move_to_rect(w, gs, w->home->location))
     w->state = W_MovingHome;
 
-  else if ((job = h_deliver_job(w->home, gs)))
+  else if ((job = h_deliver_job(w->home, gs))) {
     w_deliver(w, gs, job);
 
-  else if (w->home->resources_maximum.clicks < rand() % 10) {
+  } else if (w->home->resources_maximum.clicks > (rand() % 8) + 2 && w->needs.sleep > 0.6 && w->needs.water > 0.6 &&
+             w->needs.food > 0.6) {
+    WearisomeJobSearchData search_data = {gs, w->current_rect, NULL};
+    Point start = l_to_point(w->destination);
+    l_bright_first(gs->level, start.x, start.y,
+                   (SearchHandle){
+                       &search_data,
+                       (CanMoveCB)WearisomeEntertainmentSearch_moveable,
+                       (GoalReachedCB)WearisomeEntertainmentSearch_reached_goal,
+                       (PathCB)WearisomeJobSearch_build_path,
+                   });
+    if (search_data.path) {
+      w->path = search_data.path;
+      w->state = W_MoveToEntertainment;
+    }
+
+  } else if (w->home->resources_maximum.clicks < rand() % 10) {
     WearisomeJobSearchData search_data = {gs, w->current_rect, NULL};
     Point start = l_to_point(w->destination);
     l_bright_first(gs->level, start.x, start.y,
@@ -353,7 +392,11 @@ void w_u_move_to_work(Wearisome *w, GameScene *gs, float dt) {
       w->path = w->path->next;
     } else {
       w->wait_time = tc_start_work(l_contentP(gs->level, l_to_point(w->destination)), gs);
-      w->state = W_Working;
+      if (w->state == W_MoveToEntertainment) {
+        h_earn_click(w->home, -1);
+        gs->clicks++;
+      }
+      w->state = w->state == W_MoveToWork ? W_Working : W_GetEntertained;
 
       // w->current_rect = w->deliver_job->from;
     }
@@ -366,7 +409,8 @@ void w_u_working(Wearisome *w, GameScene *gs, float dt) {
   w->wait_time -= dt;
   if (w->wait_time < 0.0f) {
     tc_done_work(l_contentP(gs->level, l_to_point(w->destination)), gs);
-    h_earn_click(w->home, 1);
+    if (w->state == W_Working)
+      h_earn_click(w->home, 1);
     w_wander_to_random_near_path(w, gs);
   }
 }
@@ -375,7 +419,7 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
   if (w_dead(w))
     return;
 
-  const float working_factor = w->state == W_Working ? 1.25 : 1.0;
+  const float working_factor = w->state == W_Working ? 1.25f : (W_GetEntertained ? 0.8f : 1.0f);
   w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step * w->need_consumption.water * working_factor);
   w->needs.food = f_max(0.0f, w->needs.food - gs->daytime_step * w->need_consumption.food * working_factor);
   w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step * w->need_consumption.sleep * working_factor);
@@ -423,9 +467,11 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
     break;
 
   case W_MoveToWork:
+  case W_MoveToEntertainment:
     w_u_move_to_work(w, gs, dt);
     break;
   case W_Working:
+  case W_GetEntertained:
     w_u_working(w, gs, dt);
     break;
   }
@@ -445,7 +491,7 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
     c_printf(g, " %10s: %f\n", "food", w->needs.food);
   }
 
-  if (w->state == W_Working || w->state == W_AtHome)
+  if (w->state == W_Working || w->state == W_GetEntertained || w->state == W_AtHome)
     return;
   Vec2 p = v_add(w->position, (Vec2){0, 2});
   g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));

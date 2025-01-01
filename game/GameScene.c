@@ -2,6 +2,7 @@
 #include "game/GameScene.h"
 #include "game/ClickFactory.h"
 #include "game/ConstructionSite.h"
+#include "game/Entertainment.h"
 #include "game/Farm.h"
 #include "game/Game.h"
 #include "game/House.h"
@@ -151,11 +152,16 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->preview = cf_color();
         gs->r.w = 3;
         gs->r.h = 3;
+      } else if (gs->menu_selected == 6) {
+        gs->preview = em_color();
+        gs->r.w = 3;
+        gs->r.h = 2;
       } else {
         gs->r.w = gs->r.h = 0;
       }
     } else if (gs->menu_selected >= 0) {
-      ConstructionSite_init(g, gs, gs->r, gs->menu_selected);
+      if (l_freeR(gs->level, gs->r))
+        ConstructionSite_init(g, gs, gs->r, gs->menu_selected);
     } else {
       tc_click(l_content(gs->level, gs->r.x, gs->r.y), gs);
     }
@@ -165,24 +171,24 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
 void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
 
 void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
+  if (!l_freeR(gs->level, r))
+    return;
+
   if (key == 0) {
     l_set_movable(gs->level, r.x, r.y, true);
     StreetMap_update(gs->street_map);
   } else if (key == 1) {
-    if (l_freeR(gs->level, r))
-      Marketplace_init(g, gs, (Point){r.x, r.y});
+    Marketplace_init(g, gs, (Point){r.x, r.y});
   } else if (key == 2) {
-    if (l_freeR(gs->level, r))
-      House_init(g, gs, (Point){r.x, r.y});
+    Wearisome_House_init(g, gs, (Point){r.x, r.y});
   } else if (key == 3) {
-    if (l_freeR(gs->level, r))
-      Well_init(g, gs, (Point){r.x, r.y});
+    Well_init(g, gs, (Point){r.x, r.y});
   } else if (key == 4) {
-    if (l_freeR(gs->level, r))
-      Farm_init(g, gs, (Point){r.x, r.y});
+    Farm_init(g, gs, (Point){r.x, r.y});
   } else if (key == 5) {
-    if (l_freeR(gs->level, r))
-      ClickFactory_init(g, gs, (Point){r.x, r.y});
+    ClickFactory_init(g, gs, (Point){r.x, r.y});
+  } else if (key == 6) {
+    Entertainment_init(g, gs, (Point){r.x, r.y});
   }
 }
 SceneTable GameScene_table = {

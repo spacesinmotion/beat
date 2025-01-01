@@ -1,0 +1,104 @@
+#ifndef ENTERTAINMENT_H
+#define ENTERTAINMENT_H
+
+#include "game/GameScene.h"
+#include "game/Level.h"
+#include "game/TileContent.h"
+
+typedef struct Entertainment {
+  G_Object buffer;
+  Recti location;
+  int claimed, started;
+} Entertainment;
+
+Color em_color() { return rgb(245, 99, 72); }
+
+bool em_dead(Entertainment *em) {
+  (void)em;
+  return false;
+}
+
+float em_render_order(Entertainment *em) { return l_to_y(em->location.y); }
+
+void em_update(Entertainment *em, GameScene *gs, float dt) {
+  (void)em;
+  (void)gs;
+  (void)dt;
+}
+
+void em_draw(Entertainment *em, GameScene *gs, Game *g) {
+  if (ri_contains(em->location, gs->r.x, gs->r.y)) {
+    c_printf(g, "----------------------\n");
+    c_printf(g, "  Entertainment (%d,%d,%d,%d)\n", em->location.x, em->location.y, 4, 3);
+    c_printf(g, "----------------------\n");
+  }
+
+  Vec2 p = l_to_vecP(ri_bottom_right(em->location));
+  g_color(g, em_color());
+  g_buffer(g, em->buffer, Img_house_map, p);
+  g_color(g, white());
+  g_object(g, g_animation_buffer(g), Img_menubar, 6, p);
+
+  Point o[] = {{1, 1}, {2, 1}};
+  for (int i = 0; i < 2; ++i) {
+    if (i < em->started)
+      g_color(g, rgb(101, 168, 110));
+    else if (i < em->claimed)
+      g_color(g, rgb(89, 135, 146));
+    else
+      break;
+    // g_color(g, rgb(255, 255, 255));
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vecP(o[i])), 0.75f);
+  }
+  g_color(g, rgb(255, 255, 255));
+  for (int i = em->claimed; i < 2; ++i)
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
+}
+
+bool em_has_entertainment(Entertainment *em, GameScene *gs) { return em->claimed < 2; }
+void em_claim_work(Entertainment *em, GameScene *gs) { em->claimed++; }
+float em_start_work(Entertainment *em, GameScene *gs) {
+  em->started++;
+  return 2.0;
+}
+void em_done_work(Entertainment *em, GameScene *gs) {
+  em->started--;
+  em->claimed--;
+}
+void em_click(Entertainment *em, GameScene *gs) {
+  (void)em;
+  (void)gs;
+  // if (em->clicks < 2 && gs->clicks > 0) {
+  //   em->clicks++;
+  //   gs->clicks--;
+  // }
+}
+
+static SceneObjectTable Entertainment_table = {
+    .dead = (SceneObjectDeadCB)em_dead,
+    .render_order = (SceneObjectRenderOrderCB)em_render_order,
+    .update = (SceneObjectUpdateCB)em_update,
+    .draw = (SceneObjectDrawCB)em_draw,
+};
+static TileContentTable Entertainment_TileContent_Table = {
+    .has_entertainment = (HasWorkCB)em_has_entertainment,
+    .claim_work = (ClaimWorkCB)em_claim_work,
+    .start_work = (StartWorkCB)em_start_work,
+    .done_work = (DoneWorkCB)em_done_work,
+    .click = (ClickCB)em_click,
+};
+Entertainment *Entertainment_init(Game *g, GameScene *gs, Point p) {
+  Entertainment *em = g_malloc(g, sizeof(Entertainment));
+  *em = (Entertainment){
+      .buffer = g_tilerect_buffer(g, 3, 2),
+      .location = (Recti){p.x, p.y, 3, 2},
+  };
+
+  l_set_tileR(gs->level, em->location, T_Entertainment);
+  l_set_tile_contentR(gs->level, em->location, to_TileContent(em, &Entertainment_TileContent_Table));
+
+  gs_add_object(gs, (SceneObject){.context = em, &Entertainment_table});
+  return em;
+}
+
+#endif
