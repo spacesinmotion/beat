@@ -158,6 +158,33 @@ void WearisomeJobSearch_build_path(WearisomeJobSearchData *data, int i, int j) {
 
 bool w_has_emergency(Wearisome *w, float k) { return w->needs.sleep < k || w->needs.water < k || w->needs.food < k; }
 
+void w_u_at_home(Wearisome *w, GameScene *gs, float dt) {
+  if (w_has_emergency(w, 0.5f))
+    return;
+  const float ref = 0.25f * (1.0f - f_min(w->needs.sleep, w->health));
+  if (gs->daytime > ref && gs->daytime < 0.75f) {
+    w->path = NULL;
+    w_wander_to_random_near_path(w, gs);
+    if (!w->path) {
+      w->state = W_AtHome;
+      w->current_rect = w->home;
+    }
+  }
+}
+
+void w_u_moving_home(Wearisome *w, float dt) {
+  w->position = v_lerp_about(w->position, w->destination, dt * w->speed);
+  if (v_eq(w->position, w->destination)) {
+    if (w->path) {
+      w->destination = w->path->p;
+      w->path = w->path->next;
+    } else {
+      w->state = W_AtHome;
+      w->current_rect = w->home;
+    }
+  }
+}
+
 bool w_want_to_work(Wearisome *w, GameScene *gs) {
   int key = w->needs_click ? 4 : 0;
   if (w->needs.water < 0.4)
@@ -197,33 +224,6 @@ void w_u_waiting(Wearisome *w, GameScene *gs, float dt) {
     }
     if (!w->path)
       w_wander_to_random_near_path(w, gs);
-  }
-}
-
-void w_u_at_home(Wearisome *w, GameScene *gs, float dt) {
-  if (w_has_emergency(w, 0.5f))
-    return;
-  const float ref = 0.25f * (1.0f - f_min(w->needs.sleep, w->health));
-  if (gs->daytime > ref && gs->daytime < 0.75f) {
-    w->path = NULL;
-    w_wander_to_random_near_path(w, gs);
-    if (!w->path) {
-      w->state = W_AtHome;
-      w->current_rect = w->home;
-    }
-  }
-}
-
-void w_u_moving_home(Wearisome *w, float dt) {
-  w->position = v_lerp_about(w->position, w->destination, dt * w->speed);
-  if (v_eq(w->position, w->destination)) {
-    if (w->path) {
-      w->destination = w->path->p;
-      w->path = w->path->next;
-    } else {
-      w->state = W_AtHome;
-      w->current_rect = w->home;
-    }
   }
 }
 
