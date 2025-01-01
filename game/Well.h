@@ -69,7 +69,7 @@ void wl_done_work(Well *wl, GameScene *gs) {
   wl->clicks_done++;
   if (wl->clicks_done == 2) {
     wl->clicks = wl->clicks_claimed = wl->clicks_work = wl->clicks_done = 0;
-    gs->resources.water += 4;
+    gs->resource_pool.water += 4;
   }
 }
 void wl_click(Well *wl, GameScene *gs) {

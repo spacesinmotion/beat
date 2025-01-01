@@ -159,6 +159,7 @@ void WearisomeJobSearch_build_path(WearisomeJobSearchData *data, int i, int j) {
 bool w_has_emergency(Wearisome *w, float k) { return w->needs.sleep < k || w->needs.water < k || w->needs.food < k; }
 
 void w_u_at_home(Wearisome *w, GameScene *gs, float dt) {
+  (void)dt;
   if (w_has_emergency(w, 0.5f))
     return;
   const float ref = 0.25f * (1.0f - f_min(w->needs.sleep, w->health));

@@ -63,9 +63,16 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
 }
 
-bool fa_has_work(Farm *fa, GameScene *gs) { return fa->clicks - fa->clicks_claimed > 0; }
-void fa_claim_work(Farm *fa, GameScene *gs) { fa->clicks_claimed++; }
+bool fa_has_work(Farm *fa, GameScene *gs) {
+  (void)gs;
+  return fa->clicks - fa->clicks_claimed > 0;
+}
+void fa_claim_work(Farm *fa, GameScene *gs) {
+  (void)gs;
+  fa->clicks_claimed++;
+}
 float fa_start_work(Farm *fa, GameScene *gs) {
+  (void)gs;
   fa->clicks_work++;
   return 11.0;
 }
@@ -73,7 +80,7 @@ void fa_done_work(Farm *fa, GameScene *gs) {
   fa->clicks_done++;
   if (fa->clicks_done == 9) {
     fa->clicks = fa->clicks_claimed = fa->clicks_work = fa->clicks_done = 0;
-    gs->resources.food += 10;
+    gs->resource_pool.food += 10;
   }
 }
 void fa_click(Farm *fa, GameScene *gs) {

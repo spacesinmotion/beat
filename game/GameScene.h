@@ -25,8 +25,8 @@ typedef struct GameScene {
   int day;
 
   int clicks;
-  Stuff resources;
-  Stuff resources_claimed;
+  Stuff resource_pool;
+  Stuff resource_pool_claimed;
 
   Color preview;
   Recti r;

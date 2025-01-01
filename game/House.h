@@ -52,15 +52,15 @@ void h_earn_click(House *h, int c) {
 
 void h_pay_water(House *h, GameScene *gs) {
   (void)h;
-  gs->resources.water--;
-  gs->resources_claimed.water--;
+  gs->resource_pool.water--;
+  gs->resource_pool_claimed.water--;
   gs->clicks++;
   h->resources.clicks--;
 }
 void h_pay_food(House *h, GameScene *gs) {
   (void)h;
-  gs->resources.food--;
-  gs->resources_claimed.food--;
+  gs->resource_pool.food--;
+  gs->resource_pool_claimed.food--;
   gs->clicks++;
   h->resources.clicks--;
 }
@@ -101,18 +101,18 @@ void h_update(House *h, GameScene *gs, float dt) {
   }
 
   bool food_is_more_urgent = need_water && need_food && h->resources.water > h->resources.food;
-  if (!food_is_more_urgent && need_water && (gs->resources.water - gs->resources_claimed.water > 0) &&
+  if (!food_is_more_urgent && need_water && (gs->resource_pool.water - gs->resource_pool_claimed.water > 0) &&
       w_is_free(h->wearisome) &&
       w_deliver(h->wearisome, gs,
                 deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_water,
                             (DeliverDoneCB)h_get_water_done))) {
-    gs->resources_claimed.water++;
+    gs->resource_pool_claimed.water++;
     h->resources_maximum.clicks--;
-  } else if (need_food && (gs->resources.food - gs->resources_claimed.food > 0) && w_is_free(h->wearisome) &&
+  } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0) && w_is_free(h->wearisome) &&
              w_deliver(h->wearisome, gs,
                        deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_food,
                                    (DeliverDoneCB)h_get_food_done))) {
-    gs->resources_claimed.food++;
+    gs->resource_pool_claimed.food++;
     h->resources_maximum.clicks--;
   }
 }
