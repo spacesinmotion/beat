@@ -76,13 +76,23 @@ void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
   g_object(g, g_animation_buffer(g), Img_menubar, cs->key, p);
 }
 
-bool cs_has_work(ConstructionSite *cs, GameScene *gs) { return cs->clicks - cs->clicks_claimed > 0; }
-void cs_claim_work(ConstructionSite *cs, GameScene *gs) { cs->clicks_claimed++; }
+bool cs_has_work(ConstructionSite *cs, GameScene *gs) {
+  (void)gs;
+  return cs->clicks - cs->clicks_claimed > 0;
+}
+void cs_claim_work(ConstructionSite *cs, GameScene *gs) {
+  (void)gs;
+  cs->clicks_claimed++;
+}
 float cs_start_work(ConstructionSite *cs, GameScene *gs) {
+  (void)gs;
   cs->clicks_work++;
   return 11.0;
 }
-void cs_done_work(ConstructionSite *cs, GameScene *gs) { cs->clicks_done++; }
+void cs_done_work(ConstructionSite *cs, GameScene *gs) {
+  (void)gs;
+  cs->clicks_done++;
+}
 void cs_click(ConstructionSite *cs, GameScene *gs) {
   (void)gs;
   if (cs->clicks < cs->location.w * cs->location.h && gs->clicks > 0) {

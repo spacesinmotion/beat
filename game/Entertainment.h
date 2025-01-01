@@ -55,13 +55,21 @@ void em_draw(Entertainment *em, GameScene *gs, Game *g) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
 }
 
-bool em_has_entertainment(Entertainment *em, GameScene *gs) { return em->claimed < 2; }
-void em_claim_work(Entertainment *em, GameScene *gs) { em->claimed++; }
+bool em_has_entertainment(Entertainment *em, GameScene *gs) {
+  (void)gs;
+  return em->claimed < 2;
+}
+void em_claim_work(Entertainment *em, GameScene *gs) {
+  (void)gs;
+  em->claimed++;
+}
 float em_start_work(Entertainment *em, GameScene *gs) {
+  (void)gs;
   em->started++;
   return 2.0;
 }
 void em_done_work(Entertainment *em, GameScene *gs) {
+  (void)gs;
   em->started--;
   em->claimed--;
 }

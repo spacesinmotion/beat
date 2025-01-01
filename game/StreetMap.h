@@ -7,8 +7,6 @@
 #include "game/assets.h"
 #include "math/Vec2.h"
 
-#include <stdlib.h>
-
 typedef struct StreetMap {
   Level *level;
 

@@ -59,9 +59,16 @@ void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
 }
 
-bool cf_has_work(ClickFactory *cf, GameScene *gs) { return cf->clicks - cf->clicks_claimed > 0; }
-void cf_claim_work(ClickFactory *cf, GameScene *gs) { cf->clicks_claimed++; }
+bool cf_has_work(ClickFactory *cf, GameScene *gs) {
+  (void)gs;
+  return cf->clicks - cf->clicks_claimed > 0;
+}
+void cf_claim_work(ClickFactory *cf, GameScene *gs) {
+  (void)gs;
+  cf->clicks_claimed++;
+}
 float cf_start_work(ClickFactory *cf, GameScene *gs) {
+  (void)gs;
   cf->clicks_work++;
   return 10.0;
 }

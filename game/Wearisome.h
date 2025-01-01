@@ -147,8 +147,6 @@ void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
       return;
     }
   }
-
-  printf("FAILED TO WANDER!!!\n");
 }
 
 typedef struct WearisomeJobSearchData {
@@ -191,6 +189,8 @@ void WearisomeJobSearch_build_path(WearisomeJobSearchData *data, int i, int j) {
 bool w_has_emergency(Wearisome *w, float k) { return w->needs.sleep < k || w->needs.water < k || w->needs.food < k; }
 
 void w_u_at_home(Wearisome *w, GameScene *gs, float dt) {
+  (void)dt;
+
   w_sleep(w, 8.0f * gs->daytime_step);
   w->home->resources.water -= w_drink(w, f_min(w->home->resources.water, 12.0 * gs->daytime_step));
   w->home->resources.food -= w_eat(w, f_min(w->home->resources.food, 12.0 * gs->daytime_step));

@@ -59,9 +59,16 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
 }
 
-bool wl_has_work(Well *wl, GameScene *gs) { return wl->clicks - wl->clicks_claimed > 0; }
-void wl_claim_work(Well *wl, GameScene *gs) { wl->clicks_claimed++; }
+bool wl_has_work(Well *wl, GameScene *gs) {
+  (void)gs;
+  return wl->clicks - wl->clicks_claimed > 0;
+}
+void wl_claim_work(Well *wl, GameScene *gs) {
+  (void)gs;
+  wl->clicks_claimed++;
+}
 float wl_start_work(Well *wl, GameScene *gs) {
+  (void)gs;
   wl->clicks_work++;
   return 11.0;
 }
