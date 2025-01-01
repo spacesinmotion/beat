@@ -258,7 +258,7 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
   else if ((job = h_deliver_job(w->home, gs)))
     w_deliver(w, gs, job);
 
-  else if (w->home->resources_maximum.clicks < 2 || rand() % 10 < 3) {
+  else if (w->home->resources_maximum.clicks < rand() % 10) {
     WearisomeJobSearchData search_data = {gs, w->current_rect, NULL};
     Point start = l_to_point(w->destination);
     l_bright_first(gs->level, start.x, start.y,
@@ -384,7 +384,8 @@ void w_update(Wearisome *w, GameScene *gs, float dt) {
   else
     w->health = f_min(1.0f, w->health + gs->daytime_step / 8.0f);
 
-  w->home->wearisome_dead = w->health <= 0.0;
+  if ((w->home->wearisome_dead = w->health <= 0.0f))
+    return;
 
   Point p = l_to_point(w->destination);
   if (!ri_contains(w->current_rect, p.x, p.y))
