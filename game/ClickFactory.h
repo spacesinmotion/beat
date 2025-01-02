@@ -76,7 +76,7 @@ void cf_done_work(ClickFactory *cf, GameScene *gs) {
   cf->clicks_done++;
   if (cf->clicks_done == 4) {
     cf->clicks = cf->clicks_claimed = cf->clicks_work = cf->clicks_done = 0;
-    gs->clicks++;
+    gs_produce_click(gs);
   }
 }
 void cf_click(ClickFactory *cf, GameScene *gs) {

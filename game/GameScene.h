@@ -24,7 +24,7 @@ typedef struct GameScene {
   float daytime_step, daytime;
   int day;
 
-  int clicks;
+  int clicks, clicks_produced, clicks_in_houses;
   Stuff resource_pool;
   Stuff resource_pool_claimed;
 
@@ -42,5 +42,10 @@ typedef struct GameScene GameScene;
 void GameScene_init(Game *g);
 
 void gs_add_object(GameScene *gs, SceneObject so);
+
+static inline void gs_produce_click(GameScene *gs) {
+  gs->clicks++;
+  gs->clicks_produced++;
+}
 
 #endif

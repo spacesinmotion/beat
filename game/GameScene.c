@@ -54,6 +54,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     gs->day++;
   }
 
+  gs->clicks_in_houses = 0;
   for (int i = 0; i < gs->scene_objects.len; ++i)
     so_update(&gs->scene_objects.data[i], gs, dt);
 
@@ -68,9 +69,13 @@ void gs_draw(GameScene *gs, Game *g) {
   c_printf(g, " %10s: %d\n", "day", gs->day);
   c_printf(g, " %10s: %f\n", "daytime", gs->daytime);
   c_printf(g, "----------------------\n\n");
-  c_printf(g, " %10s: %d\n", "clicks", gs->clicks);
+  c_printf(g, " %10s: %d\n", "clicks$", gs->clicks);
   c_printf(g, " %10s: %d\n", "water", gs->resource_pool.water);
   c_printf(g, " %10s: %d\n", "food", gs->resource_pool.food);
+  c_printf(g, "----------------------\n\n");
+  c_printf(g, " %10s: %d\n", "all$", gs->clicks_in_houses + gs->clicks);
+  c_printf(g, " %10s: %d\n", "spread$", gs->clicks_in_houses);
+  c_printf(g, " %10s: %d\n", "produced$", gs->clicks_produced);
   c_printf(g, "----------------------\n\n");
 
   StreetMap_draw(gs->street_map, g);

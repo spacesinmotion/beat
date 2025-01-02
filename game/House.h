@@ -79,6 +79,7 @@ void h_update(House *h, GameScene *gs, float dt) {
   (void)h;
   (void)gs;
   (void)dt;
+  gs->clicks_in_houses += h->resources.clicks;
 }
 
 void h_draw(House *h, GameScene *gs, Game *g) {
