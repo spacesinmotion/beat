@@ -395,14 +395,18 @@ void w_u_working(Wearisome *w, GameScene *gs, float dt) {
   }
 }
 
+static Needs one_factor = {.food = 1.0f, .water = 1.0f, .sleep = 1.0f};
+static Needs working_factor = {.food = 1.3f, .water = 1.15f, .sleep = 1.4f};
+static Needs entertainment_factor = {.food = 0.2f, .water = 0.2f, .sleep = 1.0f};
 void w_update(Wearisome *w, GameScene *gs, float dt) {
   if (w_dead(w))
     return;
 
-  const float working_factor = w->state == W_Working ? 1.25f : (W_GetEntertained ? 0.8f : 1.0f);
-  w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step * w->need_consumption.water * working_factor);
-  w->needs.food = f_max(0.0f, w->needs.food - gs->daytime_step * w->need_consumption.food * working_factor);
-  w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step * w->need_consumption.sleep * working_factor);
+  const Needs *factor =
+      w->state == W_Working ? &working_factor : (w->state == W_GetEntertained ? &entertainment_factor : &one_factor);
+  w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step * w->need_consumption.water * factor->water);
+  w->needs.food = f_max(0.0f, w->needs.food - gs->daytime_step * w->need_consumption.food * factor->food);
+  w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step * w->need_consumption.sleep * factor->sleep);
   if (w->needs.water < 0.1f || w->needs.food < 0.1f || w->needs.sleep < 0.1f)
     w->health -= 2.0f * gs->daytime_step;
   else

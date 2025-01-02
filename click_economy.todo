@@ -10,7 +10,7 @@ Gameplay:
   ☐ if wearisome gets dead, the house should become a constructionside again
   ☐ different jobs should take different time @high 
   ☐ _maybe_ leaving buildings faster and more direct
-  ☐ _Entertainment_ should stop needing food and water 
+  ✔ _Entertainment_ should stop needing food and water @done(25-01-02 10:00)
   ☐ need bigger construction objects -> should bind a lot of people
   Resources:
     ☐ wood, stone, bricks, ?? -> building stuff
