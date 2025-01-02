@@ -1,4 +1,34 @@
+Bugs:
+  ✔ construction side could be placed on construction side @critical @started(25-01-02 09:12) @done(25-01-02 09:20) @lasted(8m37s)
+  ☐ sometimes path construction side is not removed -> thay instantly start next work I think
 
+Gameplay:
+  ☐ people should not start to work if it is getting late
+  ☐ path build dirctly applys a click to build it @high 
+  ☐ different jobs should take different time @high -> path builds faster please
+  ☐ _maybe_ leaving buildings faster and more direct
+  ☐ _Entertainment_ should stop needing food and water 
+  ☐ need bigger construction objects -> should bind a lot of people
+  Resources:
+    ☐ wood, stone, bricks, ?? -> building stuff
+    ☐ construction should take resources
+  Structures:
+    ☐ search for structures that provide resources -> hard coded marketplace @high 
+    ☐ improve house display
+    ☐ clicks should be more expensive -> bigger buildings
+    ☐ reduce amount of food produced -> use size of market place
+    ☐ a _Logistics_ building -> new job moving stuff from producer to warehouse
+    warning signs:
+      ☐ has resources 
+      ☐ wearisome at home
+      ☐ building not reachable
+      ☐ can't reach warehouse
+    ☐ a _warehouse_ -> limit global pool and increase by this buildings
+    ☐ a _Park_ it earns no clicks, but reduces need consumption 
+  ☐ Buildings that allow more spread more clicks per click?
+
+Refactoring:
+  ✔ move _DeliverJob_ into separate file @started(25-01-02 08:17) @done(25-01-02 08:25) @lasted(8m36s)
 
 General File Structure:
   ✔ Rename main c file @started(25-01-02 08:03) @done(25-01-02 08:14) @lasted(11m56s)
@@ -8,13 +38,3 @@ General File Structure:
 Assets:
   ☐ store only the SVG files PNG could be created automatically
 
-Refactoring:
-  ✔ move _DeliverJob_ into separate file @started(25-01-02 08:17) @done(25-01-02 08:25) @lasted(8m36s)
-
-Gameplay:
-  ☐ people should not start to work if it is getting late
-  ☐ different jobs should take different time
-  ☐ _maybe_ leaving buildings faster and more direct
-  Resources:
-    ☐ wood, stone, bricks, ?? -> building stuff
-    ☐ construction should take redsources

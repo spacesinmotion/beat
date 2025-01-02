@@ -33,6 +33,7 @@ void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
 
   if (cs->clicks_done == cs->location.w * cs->location.h) {
     cs->clicks_done++;
+    l_clear_tileR(gs->level, cs->location);
     gs_construction_done(gs, g, cs->location, cs->key);
     return;
   }
@@ -40,17 +41,10 @@ void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
   Vec2 p = l_to_vecP(ri_bottom_right(cs->location));
 
   g_color(g, cs_color());
-  // g_buffer(g, cs->buffer, Img_house_map, p);
-  // g_color(g, white());
   for (int i = 0; i < cs->location.w; ++i)
     for (int j = 0; j < cs->location.h; ++j)
       g_object(g, g_animation_buffer(g), Img_marker, 0, v_add(p, l_to_vec(i, j)));
 
-  // Point o[] = {
-  //     {1, 3}, {2, 3}, {3, 3}, //
-  //     {1, 2}, {2, 2}, {3, 2}, //
-  //     {1, 1}, {2, 1}, {3, 1}, //
-  // };
   int c = 0;
   for (int j = cs->location.h - 1; j >= 0; --j) {
     for (int i = 0; i < cs->location.w; ++i) {
@@ -122,6 +116,7 @@ ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key
   };
 
   l_set_tile_contentR(gs->level, cs->location, to_TileContent(cs, &ConstructionSite_TileContent_Table));
+  l_set_tileR(gs->level, r, T_ConstructionSite);
 
   gs_add_object(gs, (SceneObject){.context = cs, &ConstructionSite_table});
   return cs;

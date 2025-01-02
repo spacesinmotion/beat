@@ -13,6 +13,7 @@
 
 typedef enum TileType {
   T_None = 0,
+  T_ConstructionSite,
   T_Marketplace,
   T_House,
   T_Well,
@@ -81,6 +82,15 @@ static inline void l_set_tileR(Level *level, Recti r, TileType tile) {
   for (int i = r.x; i < r.x + r.w; ++i)
     for (int j = r.y; j < r.y + r.h; ++j)
       l_set_tile(level, i, j, tile);
+}
+static inline void l_clear_tile(Level *level, int x, int y) {
+  if (l_valid(level, x, y))
+    level->tiles[x][y].val = l_movable(level, x, y) ? T_Movable : T_None;
+}
+static inline void l_clear_tileR(Level *level, Recti r) {
+  for (int i = r.x; i < r.x + r.w; ++i)
+    for (int j = r.y; j < r.y + r.h; ++j)
+      l_clear_tile(level, i, j);
 }
 
 static inline void l_set_tile_content(Level *level, int x, int y, TileContent *c) {
