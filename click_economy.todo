@@ -1,0 +1,12 @@
+
+
+General File Structure:
+  ✔ Rename main c file @started(25-01-02 08:03) @done(25-01-02 08:14) @lasted(11m56s)
+  ☐ move external stuff to a "extern" sub directory
+  ☐ move engine related code to an "engine" directory
+
+Assets:
+  ☐ store only the SVG files PNG could be created automatically
+
+Refactoring:
+  ☐ move _DeliverJob_ into separate file
