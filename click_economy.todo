@@ -3,7 +3,7 @@ Bugs:
   ☐ sometimes path construction side is not removed -> thay instantly start next work I think
 
 Gameplay:
-  ☐ people should not start to work if it is getting late
+  ✔ people should not start to work if it is getting late @done(25-01-02 12:11)
   ✔ path build directly applys a click to build it @high @done(25-01-02 09:26)
   ✔ path construction should be faster then other constructions @done(25-01-02 09:31)
   ☐ path should not be buildable without clicks available

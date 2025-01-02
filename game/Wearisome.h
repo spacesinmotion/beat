@@ -201,20 +201,24 @@ void w_u_moving_home(Wearisome *w, float dt) {
 }
 
 bool w_want_to_work(Wearisome *w, GameScene *gs) {
-  int key = w->needs_click ? 4 : 0;
-  if (w->needs.water < 0.4)
-    key--;
-  if (w->needs.food < 0.4)
-    key--;
-  if (w->needs.sleep < 0.4)
-    key--;
-  if (w->needs.sleep < 0.5 && gs->daytime > 0.55)
-    key--;
-  if (w->needs.sleep < 0.6 && gs->daytime > 0.65)
-    key--;
-  if (w->needs.sleep < 0.8 && gs->daytime > 0.7)
-    key--;
-  return rand() % 6 <= key;
+  int reduce_urgent = 4;
+  if (gs->daytime > 0.5)
+    reduce_urgent++;
+  if (gs->daytime > 0.6)
+    reduce_urgent++;
+  if (gs->daytime > 0.7)
+    reduce_urgent++;
+  if (w->needs.sleep < 0.25f)
+    reduce_urgent += 10;
+  if (w->needs.water < 0.25f)
+    reduce_urgent += 10;
+  if (w->needs.food < 0.25f)
+    reduce_urgent += 10;
+
+  float r = r_float();
+  float ref = reduce_urgent * w->home->resources_maximum.clicks;
+  ref = 1 / (ref + 1);
+  return r < ref;
 }
 
 DeliverJob *h_deliver_job(House *h, GameScene *gs) {
@@ -277,7 +281,7 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
       w->state = W_MoveToEntertainment;
     }
 
-  } else if (w->home->resources_maximum.clicks < rand() % 10) {
+  } else if (w_want_to_work(w, gs)) {
     WearisomeJobSearchData search_data = {gs, w->current_rect, NULL};
     Point start = l_to_point(w->destination);
     l_bright_first(gs->level, start.x, start.y,
