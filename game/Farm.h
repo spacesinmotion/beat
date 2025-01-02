@@ -1,6 +1,7 @@
 #ifndef FARM_H
 #define FARM_H
 
+#include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
@@ -44,19 +45,18 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
       {1, 2}, {2, 2}, {3, 2}, //
       {1, 1}, {2, 1}, {3, 1}, //
   };
-  for (int i = 0; i < 9; ++i) {
-    if (i < fa->clicks_done)
-      g_color(g, rgb(107, 107, 107));
-    else if (i < fa->clicks_work)
-      g_color(g, rgb(101, 168, 110));
-    else if (i < fa->clicks_claimed)
-      g_color(g, rgb(89, 135, 146));
-    else if (i < fa->clicks)
-      g_color(g, rgb(255, 255, 255));
+  for (int c = 0; c < 9; ++c) {
+    if (c < fa->clicks_done)
+      done_color(g);
+    else if (c < fa->clicks_work)
+      working_color(g);
+    else if (c < fa->clicks_claimed)
+      work_claimed_color(g);
+    else if (c < fa->clicks)
+      clicked_color(g);
     else
       break;
-    // g_color(g, rgb(255, 255, 255));
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vecP(o[i])), 0.75f);
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vecP(o[c])), 0.75f);
   }
   g_color(g, rgb(255, 255, 255));
   for (int i = fa->clicks; i < 9; ++i)

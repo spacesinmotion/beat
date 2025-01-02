@@ -1,6 +1,7 @@
 #ifndef CONSTRUCTIONSITE_H
 #define CONSTRUCTIONSITE_H
 
+#include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
@@ -49,13 +50,13 @@ void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
   for (int j = cs->location.h - 1; j >= 0; --j) {
     for (int i = 0; i < cs->location.w; ++i) {
       if (c < cs->clicks_done)
-        g_color(g, rgb(101, 168, 110));
+        done_color(g);
       else if (c < cs->clicks_work)
-        g_color(g, rgb(89, 135, 146));
+        working_color(g);
       else if (c < cs->clicks_claimed)
-        g_color(g, rgb(56, 85, 92));
+        work_claimed_color(g);
       else if (c < cs->clicks)
-        g_color(g, rgb(143, 143, 143));
+        clicked_color(g);
       else
         break;
       g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vec(i, j)), 0.75f);

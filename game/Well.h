@@ -1,6 +1,7 @@
 #ifndef WELL_H
 #define WELL_H
 
+#include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
@@ -40,19 +41,18 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
   g_object(g, g_animation_buffer(g), Img_menubar, 3, p);
 
   Point o[] = {{1, 2}, {1, 1}};
-  for (int i = 0; i < 2; ++i) {
-    if (i < wl->clicks_done)
-      g_color(g, rgb(107, 107, 107));
-    else if (i < wl->clicks_work)
-      g_color(g, rgb(101, 168, 110));
-    else if (i < wl->clicks_claimed)
-      g_color(g, rgb(89, 135, 146));
-    else if (i < wl->clicks)
-      g_color(g, rgb(255, 255, 255));
+  for (int c = 0; c < 2; ++c) {
+    if (c < wl->clicks_done)
+      done_color(g);
+    else if (c < wl->clicks_work)
+      working_color(g);
+    else if (c < wl->clicks_claimed)
+      work_claimed_color(g);
+    else if (c < wl->clicks)
+      clicked_color(g);
     else
       break;
-    // g_color(g, rgb(255, 255, 255));
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vecP(o[i])), 0.75f);
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vecP(o[c])), 0.75f);
   }
   g_color(g, rgb(255, 255, 255));
   for (int i = wl->clicks; i < 2; ++i)
