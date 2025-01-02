@@ -97,7 +97,6 @@ void h_draw(House *h, GameScene *gs, Game *g) {
 
   Vec2 p = l_to_vecP(ri_bottom_right(h->location));
   g_color(g, h->wearisome_dead ? rgb(0, 0, 0) : h_color());
-  g_color(g, h_color());
   g_buffer(g, h->buffer, Img_house_map, p);
 
   float x = h->resources.water / h->resources_maximum.water;
