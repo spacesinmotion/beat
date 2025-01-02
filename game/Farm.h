@@ -5,6 +5,7 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
+#include <assert.h>
 
 typedef struct Farm {
   G_Object buffer;
@@ -63,20 +64,26 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
 }
 
-bool fa_has_work(Farm *fa, GameScene *gs) {
+bool fa_provides(Farm *fa, GameScene *gs, Resource r) {
   (void)gs;
-  return fa->clicks - fa->clicks_claimed > 0;
+  return r == R_Work && fa->clicks - fa->clicks_claimed > 0;
 }
-void fa_claim_work(Farm *fa, GameScene *gs) {
+void fa_claim(Farm *fa, GameScene *gs, Resource r) {
   (void)gs;
+  assert(r == R_Work);
+
   fa->clicks_claimed++;
 }
-float fa_start_work(Farm *fa, GameScene *gs) {
+float fa_start(Farm *fa, GameScene *gs, Resource r) {
   (void)gs;
+  assert(r == R_Work);
+
   fa->clicks_work++;
   return 11.0;
 }
-void fa_done_work(Farm *fa, GameScene *gs) {
+void fa_done(Farm *fa, GameScene *gs, Resource r) {
+  assert(r == R_Work);
+
   fa->clicks_done++;
   if (fa->clicks_done == 9) {
     fa->clicks = fa->clicks_claimed = fa->clicks_work = fa->clicks_done = 0;
@@ -98,10 +105,10 @@ static SceneObjectTable Farm_table = {
     .draw = (SceneObjectDrawCB)fa_draw,
 };
 static TileContentTable Farm_TileContent_Table = {
-    .has_work = (HasWorkCB)fa_has_work,
-    .claim_work = (ClaimWorkCB)fa_claim_work,
-    .start_work = (StartWorkCB)fa_start_work,
-    .done_work = (DoneWorkCB)fa_done_work,
+    .provides = (ProvidesCB)fa_provides,
+    .claim = (ClaimCB)fa_claim,
+    .start = (StartCB)fa_start,
+    .done = (DoneCB)fa_done,
     .click = (ClickCB)fa_click,
 };
 Farm *Farm_init(Game *g, GameScene *gs, Point p) {

@@ -5,6 +5,7 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
+#include <assert.h>
 
 typedef struct Entertainment {
   G_Object buffer;
@@ -56,31 +57,29 @@ void em_draw(Entertainment *em, GameScene *gs, Game *g) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
 }
 
-bool em_has_entertainment(Entertainment *em, GameScene *gs) {
+bool em_provides(Entertainment *em, GameScene *gs, Resource r) {
   (void)gs;
-  return em->claimed < 2;
+  return r == R_Entertainment && em->claimed < 2;
 }
-void em_claim_work(Entertainment *em, GameScene *gs) {
+void em_claim(Entertainment *em, GameScene *gs, Resource r) {
   (void)gs;
+  assert(r == R_Entertainment);
+
   em->claimed++;
 }
-float em_start_work(Entertainment *em, GameScene *gs) {
+float em_start(Entertainment *em, GameScene *gs, Resource r) {
   (void)gs;
+  assert(r == R_Entertainment);
+
   em->started++;
   return 2.0;
 }
-void em_done_work(Entertainment *em, GameScene *gs) {
+void em_done(Entertainment *em, GameScene *gs, Resource r) {
   (void)gs;
+  assert(r == R_Entertainment);
+
   em->started--;
   em->claimed--;
-}
-void em_click(Entertainment *em, GameScene *gs) {
-  (void)em;
-  (void)gs;
-  // if (em->clicks < 2 && gs->clicks > 0) {
-  //   em->clicks++;
-  //   gs->clicks--;
-  // }
 }
 
 static SceneObjectTable Entertainment_table = {
@@ -90,11 +89,10 @@ static SceneObjectTable Entertainment_table = {
     .draw = (SceneObjectDrawCB)em_draw,
 };
 static TileContentTable Entertainment_TileContent_Table = {
-    .has_entertainment = (HasWorkCB)em_has_entertainment,
-    .claim_work = (ClaimWorkCB)em_claim_work,
-    .start_work = (StartWorkCB)em_start_work,
-    .done_work = (DoneWorkCB)em_done_work,
-    .click = (ClickCB)em_click,
+    .provides = (ProvidesCB)em_provides,
+    .claim = (ClaimCB)em_claim,
+    .start = (StartCB)em_start,
+    .done = (DoneCB)em_done,
 };
 Entertainment *Entertainment_init(Game *g, GameScene *gs, Point p) {
   Entertainment *em = g_malloc(g, sizeof(Entertainment));

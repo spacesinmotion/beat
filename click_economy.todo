@@ -7,11 +7,12 @@ Gameplay:
   ☐ if wearisome gets dead, the house should become a constructionside again
   ☐ _maybe_ leaving buildings faster and more direct
   ☐ need bigger construction objects -> should bind a lot of people
+  ☐ controll game speed pause, normal, fast, faster
   Resources:
     ☐ wood, stone, bricks, ?? -> building stuff
     ☐ construction should take resources
   Structures:
-    ☐ search for structures that provide resources -> hard coded marketplace @critical @today
+    ☐ search for structures that provide resources -> hard coded marketplace @critical @today @started(25-01-02 13:00)
     ☐ improve house display
     ☐ clicks should be more expensive -> bigger buildings
     ☐ reduce amount of food produced -> use size of market place
@@ -25,12 +26,13 @@ Gameplay:
     ☐ a _Park_ it earns no clicks, but reduces need consumption 
   ☐ Buildings that allow more spread more clicks per click?
 
-General File Structure:
-  ☐ move external stuff to a "extern" sub directory
-  ☐ move engine related code to an "engine" directory
-
-Assets:
-  ☐ store only the SVG files PNG could be created automatically
+Refactoring:
+  ☐ refactor workprovider implentation in one class (everyone who provides R_Work)
+  General File Structure:
+    ☐ move external stuff to a "extern" sub directory
+    ☐ move engine related code to an "engine" directory
+  Assets:
+    ☐ store only the SVG files PNG could be created automatically
 
 Archive:
   ✔ construction side could be placed on construction side @critical @started(25-01-02 09:12) @done(25-01-02 09:20) @lasted(8m37s) @project(Bugs)

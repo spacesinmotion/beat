@@ -5,6 +5,7 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
+#include <assert.h>
 
 typedef struct Well {
   G_Object buffer;
@@ -59,20 +60,26 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
 }
 
-bool wl_has_work(Well *wl, GameScene *gs) {
+bool wl_provides(Well *wl, GameScene *gs, Resource r) {
   (void)gs;
-  return wl->clicks - wl->clicks_claimed > 0;
+  return r == R_Work && wl->clicks - wl->clicks_claimed > 0;
 }
-void wl_claim_work(Well *wl, GameScene *gs) {
+void wl_claim(Well *wl, GameScene *gs, Resource r) {
   (void)gs;
+  assert(r == R_Work);
+
   wl->clicks_claimed++;
 }
-float wl_start_work(Well *wl, GameScene *gs) {
+float wl_start(Well *wl, GameScene *gs, Resource r) {
   (void)gs;
+  assert(r == R_Work);
+
   wl->clicks_work++;
   return 11.0;
 }
-void wl_done_work(Well *wl, GameScene *gs) {
+void wl_done(Well *wl, GameScene *gs, Resource r) {
+  assert(r == R_Work);
+
   wl->clicks_done++;
   if (wl->clicks_done == 2) {
     wl->clicks = wl->clicks_claimed = wl->clicks_work = wl->clicks_done = 0;
@@ -94,10 +101,10 @@ static SceneObjectTable Well_table = {
     .draw = (SceneObjectDrawCB)wl_draw,
 };
 static TileContentTable Well_TileContent_Table = {
-    .has_work = (HasWorkCB)wl_has_work,
-    .claim_work = (ClaimWorkCB)wl_claim_work,
-    .start_work = (StartWorkCB)wl_start_work,
-    .done_work = (DoneWorkCB)wl_done_work,
+    .provides = (ProvidesCB)wl_provides,
+    .claim = (ClaimCB)wl_claim,
+    .start = (StartCB)wl_start,
+    .done = (DoneCB)wl_done,
     .click = (ClickCB)wl_click,
 };
 Well *Well_init(Game *g, GameScene *gs, Point p) {

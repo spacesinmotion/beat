@@ -138,27 +138,27 @@ typedef struct WearisomeJobSearchData {
 bool WearisomeJobSearch_moveable(WearisomeJobSearchData *data, int x, int y) {
   if (l_movable(data->gs->level, x, y) || ri_contains(data->start_rect, x, y))
     return true;
-  return tc_has_work(l_content(data->gs->level, x, y), data->gs);
+  return tc_provides(l_content(data->gs->level, x, y), data->gs, R_Work);
 }
 
 bool WearisomeJobSearch_reached_goal(WearisomeJobSearchData *data, int x, int y) {
   TileContent *c = l_content(data->gs->level, x, y);
-  if (!tc_has_work(c, data->gs))
+  if (!tc_provides(c, data->gs, R_Work))
     return false;
-  tc_claim_work(c, data->gs);
+  tc_claim(c, data->gs, R_Work);
   return true;
 }
 bool WearisomeEntertainmentSearch_moveable(WearisomeJobSearchData *data, int x, int y) {
   if (l_movable(data->gs->level, x, y) || ri_contains(data->start_rect, x, y))
     return true;
-  return tc_has_has_entertainment(l_content(data->gs->level, x, y), data->gs);
+  return tc_provides(l_content(data->gs->level, x, y), data->gs, R_Entertainment);
 }
 
 bool WearisomeEntertainmentSearch_reached_goal(WearisomeJobSearchData *data, int x, int y) {
   TileContent *c = l_content(data->gs->level, x, y);
-  if (!tc_has_has_entertainment(c, data->gs))
+  if (!tc_provides(c, data->gs, R_Entertainment))
     return false;
-  tc_claim_work(c, data->gs);
+  tc_claim(c, data->gs, R_Entertainment);
   return true;
 }
 
@@ -375,7 +375,8 @@ void w_u_move_to_work(Wearisome *w, GameScene *gs, float dt) {
       w->destination = w->path->p;
       w->path = w->path->next;
     } else {
-      w->wait_time = tc_start_work(l_contentP(gs->level, l_to_point(w->destination)), gs);
+      w->wait_time = tc_start(l_contentP(gs->level, l_to_point(w->destination)), gs,
+                              w->state == W_MoveToEntertainment ? R_Entertainment : R_Work);
       if (w->state == W_MoveToEntertainment) {
         h_earn_click(w->home, -1);
         gs->clicks++;
@@ -392,7 +393,7 @@ void w_u_working(Wearisome *w, GameScene *gs, float dt) {
 
   w->wait_time -= dt;
   if (w->wait_time < 0.0f) {
-    tc_done_work(l_contentP(gs->level, l_to_point(w->destination)), gs);
+    tc_done(l_contentP(gs->level, l_to_point(w->destination)), gs, w->state == W_Working ? R_Work : R_Entertainment);
     if (w->state == W_Working)
       h_earn_click(w->home, 1);
     w_wander_to_random_near_path(w, gs);

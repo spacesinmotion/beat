@@ -5,6 +5,7 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
+#include <assert.h>
 
 typedef struct ClickFactory {
   G_Object buffer;
@@ -59,20 +60,26 @@ void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
 }
 
-bool cf_has_work(ClickFactory *cf, GameScene *gs) {
+bool cf_provides(ClickFactory *cf, GameScene *gs, Resource r) {
   (void)gs;
-  return cf->clicks - cf->clicks_claimed > 0;
+  return r == R_Work && cf->clicks - cf->clicks_claimed > 0;
 }
-void cf_claim_work(ClickFactory *cf, GameScene *gs) {
+void cf_claim(ClickFactory *cf, GameScene *gs, Resource r) {
   (void)gs;
+
+  assert(r == R_Work);
   cf->clicks_claimed++;
 }
-float cf_start_work(ClickFactory *cf, GameScene *gs) {
+float cf_start(ClickFactory *cf, GameScene *gs, Resource r) {
   (void)gs;
+
+  assert(r == R_Work);
   cf->clicks_work++;
   return 10.0;
 }
-void cf_done_work(ClickFactory *cf, GameScene *gs) {
+void cf_done(ClickFactory *cf, GameScene *gs, Resource r) {
+
+  assert(r == R_Work);
   cf->clicks_done++;
   if (cf->clicks_done == 4) {
     cf->clicks = cf->clicks_claimed = cf->clicks_work = cf->clicks_done = 0;
@@ -94,10 +101,10 @@ static SceneObjectTable ClickFactory_table = {
     .draw = (SceneObjectDrawCB)cf_draw,
 };
 static TileContentTable ClickFactory_TileContent_Table = {
-    .has_work = (HasWorkCB)cf_has_work,
-    .claim_work = (ClaimWorkCB)cf_claim_work,
-    .start_work = (StartWorkCB)cf_start_work,
-    .done_work = (DoneWorkCB)cf_done_work,
+    .provides = (ProvidesCB)cf_provides,
+    .claim = (ClaimCB)cf_claim,
+    .start = (StartCB)cf_start,
+    .done = (DoneCB)cf_done,
     .click = (ClickCB)cf_click,
 };
 ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {

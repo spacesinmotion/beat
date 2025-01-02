@@ -5,6 +5,7 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
+#include <assert.h>
 
 void gs_construction_done(GameScene *gs, Game *g, Recti r, int key);
 
@@ -67,23 +68,26 @@ void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
   g_object(g, g_animation_buffer(g), Img_menubar, cs->key, p);
 }
 
-bool cs_has_work(ConstructionSite *cs, GameScene *gs) {
+bool cs_provides(ConstructionSite *cs, GameScene *gs, Resource r) {
   (void)gs;
-  return cs->clicks - cs->clicks_claimed > 0;
+  return r == R_Work && cs->clicks - cs->clicks_claimed > 0;
 }
-void cs_claim_work(ConstructionSite *cs, GameScene *gs) {
+void cs_claim(ConstructionSite *cs, GameScene *gs, Resource r) {
   (void)gs;
+  assert(r == R_Work);
   cs->clicks_claimed++;
 }
-float cs_start_work(ConstructionSite *cs, GameScene *gs) {
+float cs_start(ConstructionSite *cs, GameScene *gs, Resource r) {
   (void)gs;
+  assert(r == R_Work);
   cs->clicks_work++;
   if (cs->key == 0)
     return 2.0;
   return 11.0;
 }
-void cs_done_work(ConstructionSite *cs, GameScene *gs) {
+void cs_done(ConstructionSite *cs, GameScene *gs, Resource r) {
   (void)gs;
+  assert(r == R_Work);
   cs->clicks_done++;
 }
 void cs_click(ConstructionSite *cs, GameScene *gs) {
@@ -101,10 +105,10 @@ static SceneObjectTable ConstructionSite_table = {
     .draw = (SceneObjectDrawCB)cs_draw,
 };
 static TileContentTable ConstructionSite_TileContent_Table = {
-    .has_work = (HasWorkCB)cs_has_work,
-    .claim_work = (ClaimWorkCB)cs_claim_work,
-    .start_work = (StartWorkCB)cs_start_work,
-    .done_work = (DoneWorkCB)cs_done_work,
+    .provides = (ProvidesCB)cs_provides,
+    .claim = (ClaimCB)cs_claim,
+    .start = (StartCB)cs_start,
+    .done = (DoneCB)cs_done,
     .click = (ClickCB)cs_click,
 };
 ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key) {
