@@ -1,6 +1,7 @@
 #ifndef ENTERTAINMENT_H
 #define ENTERTAINMENT_H
 
+#include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
@@ -42,9 +43,9 @@ void em_draw(Entertainment *em, GameScene *gs, Game *g) {
   Point o[] = {{1, 1}, {2, 1}};
   for (int i = 0; i < 2; ++i) {
     if (i < em->started)
-      g_color(g, rgb(101, 168, 110));
+      working_color(g);
     else if (i < em->claimed)
-      g_color(g, rgb(89, 135, 146));
+      work_claimed_color(g);
     else
       break;
     // g_color(g, rgb(255, 255, 255));
