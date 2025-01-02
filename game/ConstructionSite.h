@@ -49,23 +49,19 @@ void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
   for (int j = cs->location.h - 1; j >= 0; --j) {
     for (int i = 0; i < cs->location.w; ++i) {
       if (c < cs->clicks_done)
-        g_color(g, rgb(107, 107, 107));
-      else if (c < cs->clicks_work)
         g_color(g, rgb(101, 168, 110));
-      else if (c < cs->clicks_claimed)
+      else if (c < cs->clicks_work)
         g_color(g, rgb(89, 135, 146));
+      else if (c < cs->clicks_claimed)
+        g_color(g, rgb(56, 85, 92));
       else if (c < cs->clicks)
-        g_color(g, rgb(255, 255, 255));
+        g_color(g, rgb(143, 143, 143));
       else
         break;
-      // g_color(g, rgb(255, 255, 255));
       g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vec(i, j)), 0.75f);
       ++c;
     }
   }
-  // g_color(g, rgb(255, 255, 255));
-  // for (int i = cs->clicks; i < 1; ++i)
-  //   g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
   g_color(g, white());
   g_object(g, g_animation_buffer(g), Img_menubar, cs->key, p);
 }
@@ -81,6 +77,8 @@ void cs_claim_work(ConstructionSite *cs, GameScene *gs) {
 float cs_start_work(ConstructionSite *cs, GameScene *gs) {
   (void)gs;
   cs->clicks_work++;
+  if (cs->key == 0)
+    return 2.0;
   return 11.0;
 }
 void cs_done_work(ConstructionSite *cs, GameScene *gs) {
@@ -117,6 +115,9 @@ ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key
 
   l_set_tile_contentR(gs->level, cs->location, to_TileContent(cs, &ConstructionSite_TileContent_Table));
   l_set_tileR(gs->level, r, T_ConstructionSite);
+
+  if (key == 0)
+    cs_click(cs, gs);
 
   gs_add_object(gs, (SceneObject){.context = cs, &ConstructionSite_table});
   return cs;

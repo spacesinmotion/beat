@@ -4,8 +4,9 @@ Bugs:
 
 Gameplay:
   ☐ people should not start to work if it is getting late
-  ☐ path build dirctly applys a click to build it @high 
-  ☐ different jobs should take different time @high -> path builds faster please
+  ✔ path build directly applys a click to build it @high @done(25-01-02 09:26)
+  ✔ path construction should be faster then other constructions @done(25-01-02 09:31)
+  ☐ different jobs should take different time @high 
   ☐ _maybe_ leaving buildings faster and more direct
   ☐ _Entertainment_ should stop needing food and water 
   ☐ need bigger construction objects -> should bind a lot of people
