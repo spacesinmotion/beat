@@ -9,4 +9,12 @@ Assets:
   ☐ store only the SVG files PNG could be created automatically
 
 Refactoring:
-  ☐ move _DeliverJob_ into separate file
+  ✔ move _DeliverJob_ into separate file @started(25-01-02 08:17) @done(25-01-02 08:25) @lasted(8m36s)
+
+Gameplay:
+  ☐ people should not start to work if it is getting late
+  ☐ different jobs should take different time
+  ☐ _maybe_ leaving buildings faster and more direct
+  Resources:
+    ☐ wood, stone, bricks, ?? -> building stuff
+    ☐ construction should take redsources
