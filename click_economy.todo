@@ -1,22 +1,17 @@
 Bugs:
-  ✔ construction side could be placed on construction side @critical @started(25-01-02 09:12) @done(25-01-02 09:20) @lasted(8m37s)
   ☐ sometimes path construction side is not removed -> thay instantly start next work I think
-
+  
 Gameplay:
-  ✔ people should not start to work if it is getting late @done(25-01-02 12:11)
-  ✔ path build directly applys a click to build it @high @done(25-01-02 09:26)
-  ✔ path construction should be faster then other constructions @done(25-01-02 09:31)
-  ☐ path should not be buildable without clicks available
-  ☐ if wearisome gets dead, the house should become a constructionside again
+  ✔ path should not be buildable without clicks available @done(25-01-02 12:33) @project(Gameplay)
   ☐ different jobs should take different time @high 
+  ☐ if wearisome gets dead, the house should become a constructionside again
   ☐ _maybe_ leaving buildings faster and more direct
-  ✔ _Entertainment_ should stop needing food and water @done(25-01-02 10:00)
   ☐ need bigger construction objects -> should bind a lot of people
   Resources:
     ☐ wood, stone, bricks, ?? -> building stuff
     ☐ construction should take resources
   Structures:
-    ☐ search for structures that provide resources -> hard coded marketplace @high 
+    ☐ search for structures that provide resources -> hard coded marketplace @critical @today
     ☐ improve house display
     ☐ clicks should be more expensive -> bigger buildings
     ☐ reduce amount of food produced -> use size of market place
@@ -30,14 +25,18 @@ Gameplay:
     ☐ a _Park_ it earns no clicks, but reduces need consumption 
   ☐ Buildings that allow more spread more clicks per click?
 
-Refactoring:
-  ✔ move _DeliverJob_ into separate file @started(25-01-02 08:17) @done(25-01-02 08:25) @lasted(8m36s)
-
 General File Structure:
-  ✔ Rename main c file @started(25-01-02 08:03) @done(25-01-02 08:14) @lasted(11m56s)
   ☐ move external stuff to a "extern" sub directory
   ☐ move engine related code to an "engine" directory
 
 Assets:
   ☐ store only the SVG files PNG could be created automatically
 
+Archive:
+  ✔ construction side could be placed on construction side @critical @started(25-01-02 09:12) @done(25-01-02 09:20) @lasted(8m37s) @project(Bugs)
+  ✔ people should not start to work if it is getting late @done(25-01-02 12:11) @project(Gameplay)
+  ✔ path build directly applys a click to build it @high @done(25-01-02 09:26) @project(Gameplay)
+  ✔ path construction should be faster then other constructions @done(25-01-02 09:31) @project(Gameplay)
+  ✔ _Entertainment_ should stop needing food and water @done(25-01-02 10:00) @project(Gameplay)
+  ✔ move _DeliverJob_ into separate file @started(25-01-02 08:17) @done(25-01-02 08:25) @lasted(8m36s) @project(Refactoring)
+  ✔ Rename main c file @started(25-01-02 08:03) @done(25-01-02 08:14) @lasted(11m56s) @project(General File Structure)

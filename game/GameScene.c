@@ -63,13 +63,21 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
 }
 
+bool gs_construction_available(GameScene *gs) {
+  if (!l_freeR(gs->level, gs->r))
+    return false;
+  if (gs->menu_selected == 0)
+    return gs->clicks > 0;
+  return true;
+}
+
 void gs_draw(GameScene *gs, Game *g) {
 
   c_printf(g, "----------------------\n");
   c_printf(g, " %10s: %d\n", "day", gs->day);
   c_printf(g, " %10s: %f\n", "daytime", gs->daytime);
   c_printf(g, "----------------------\n\n");
-  c_printf(g, " %10s: %d\n", "clicks$", gs->clicks);
+  c_printf(g, " %10s: %d\n", "clicks", gs->clicks);
   c_printf(g, " %10s: %d\n", "water", gs->resource_pool.water);
   c_printf(g, " %10s: %d\n", "food", gs->resource_pool.food);
   c_printf(g, "----------------------\n\n");
@@ -88,7 +96,7 @@ void gs_draw(GameScene *gs, Game *g) {
       g_color(g, gs->preview);
       g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), Img_house_map, l_to_vec(gs->r.x, gs->r.y));
     }
-    g_color(g, l_freeR(gs->level, gs->r) ? green() : red());
+    g_color(g, gs_construction_available(gs) ? green() : red());
     for (int i = gs->r.x; i < gs->r.x + gs->r.w; ++i)
       for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
         g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, l_to_vec(i, j));
@@ -165,7 +173,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->r.w = gs->r.h = 0;
       }
     } else if (gs->menu_selected >= 0) {
-      if (l_freeR(gs->level, gs->r))
+      if (gs_construction_available(gs))
         ConstructionSite_init(g, gs, gs->r, gs->menu_selected);
     } else {
       tc_click(l_content(gs->level, gs->r.x, gs->r.y), gs);
@@ -176,9 +184,6 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
 void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
 
 void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
-  if (!l_freeR(gs->level, r))
-    return;
-
   if (key == 0) {
     l_set_movable(gs->level, r.x, r.y, true);
     StreetMap_update(gs->street_map);
