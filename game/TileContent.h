@@ -10,6 +10,9 @@ typedef enum Resource {
 
   R_Work,
   R_Entertainment,
+
+  R_Water,
+  R_Food,
 } Resource;
 
 typedef struct TileContent TileContent;

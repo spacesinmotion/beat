@@ -9,22 +9,11 @@
 #include "game/TileContent.h"
 #include "game/assets.h"
 #include "game/jobs/DeliverJob.h"
-#include "gc/gc.h"
+#include "game/search/ResourceProviderSearch.h"
 #include "math/Color.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
 #include "math/random.h"
-
-typedef struct PathPoint {
-  Vec2 p;
-  struct PathPoint *next;
-} PathPoint;
-
-PathPoint *PathPoint_init(Vec2 p, PathPoint *next) {
-  PathPoint *pp = gc_malloc(&gc, sizeof(PathPoint));
-  *pp = (PathPoint){p, next};
-  return pp;
-}
 
 typedef enum WearisomeState {
   W_None = 0,
@@ -229,15 +218,19 @@ DeliverJob *h_deliver_job(House *h, GameScene *gs) {
   bool need_food = h->resources_maximum.food - h->resources.food >= 1.0f;
   bool food_is_more_urgent = need_water && need_food && h->resources.water > h->resources.food;
   if (!food_is_more_urgent && need_water && (gs->resource_pool.water - gs->resource_pool_claimed.water > 0)) {
-    gs->resource_pool_claimed.water++;
-    h->resources_maximum.clicks--;
-    return deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_water,
-                       (DeliverDoneCB)h_get_water_done);
+    Recti marketplace = find_resource_building(gs, h->location, R_Water);
+    if (marketplace.w > 0) {
+      gs->resource_pool_claimed.water++;
+      h->resources_maximum.clicks--;
+      return deliver_job(marketplace, h->location, h, (CollectDoneCB)h_pay_water, (DeliverDoneCB)h_get_water_done);
+    }
   } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0)) {
-    gs->resource_pool_claimed.food++;
-    h->resources_maximum.clicks--;
-    return deliver_job((Recti){17, 10, 4, 3}, h->location, h, (CollectDoneCB)h_pay_food,
-                       (DeliverDoneCB)h_get_food_done);
+    Recti marketplace = find_resource_building(gs, h->location, R_Food);
+    if (marketplace.w > 0) {
+      gs->resource_pool_claimed.food++;
+      h->resources_maximum.clicks--;
+      return deliver_job(marketplace, h->location, h, (CollectDoneCB)h_pay_food, (DeliverDoneCB)h_get_food_done);
+    }
   }
   return NULL;
 }
