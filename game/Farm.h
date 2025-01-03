@@ -58,7 +58,7 @@ void fa_done(WorkProvider *wp, GameScene *gs, Resource r) {
   wp->clicks_done++;
   if (wp->clicks_done == 9) {
     wp->clicks = wp->clicks_claimed = wp->clicks_work = wp->clicks_done = 0;
-    gs->resource_pool.food += 10;
+    gs->resource_pool.food += 9;
   }
 }
 

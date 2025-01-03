@@ -4,6 +4,7 @@ Bugs:
 Gameplay:
   ✔ path should not be buildable without clicks available @done(25-01-02 12:33) @project(Gameplay)
   ✔ different jobs should take different time @high @done(25-01-03 10:03)
+  ☐ Wearisome should check entertainment somehow like they check for work
   ☐ if wearisome gets dead, the house should become a constructionside again
   ☐ _maybe_ leaving buildings faster and more direct
   ☐ need bigger construction objects -> should bind a lot of people

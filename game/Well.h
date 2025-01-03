@@ -57,7 +57,7 @@ void wl_done(WorkProvider *wp, GameScene *gs, Resource r) {
   wp->clicks_done++;
   if (wp->clicks_done == 2) {
     wp->clicks = wp->clicks_claimed = wp->clicks_work = wp->clicks_done = 0;
-    gs->resource_pool.water += 4;
+    gs->resource_pool.water += 2;
   }
 }
 
