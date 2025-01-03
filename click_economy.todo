@@ -14,7 +14,7 @@ Gameplay:
   Structures:
     ✔ search for structures that provide resources -> hard coded marketplace @critical @today @started(25-01-02 13:00) @done(25-01-02 14:12) @lasted(1h12m23s)
     ☐ improve house display
-    ☐ clicks should be more expensive -> bigger buildings
+    ☐ clicks should be more expensive -> bigger click factory, a church/bank
     ☐ reduce amount of food produced -> use size of market place
     ☐ a _Logistics_ building -> new job moving stuff from producer to warehouse
     warning signs:
@@ -24,10 +24,10 @@ Gameplay:
       ☐ can't reach warehouse
     ☐ a _warehouse_ -> limit global pool and increase by this buildings
     ☐ a _Park_ it earns no clicks, but reduces need consumption 
-  ☐ Buildings that allow more spread more clicks per click?
+  ☐ Buildings that allow more spent more clicks per click?
 
 Refactoring:
-  ☐ refactor workprovider implentation in one class (everyone who provides R_Work)
+  ✔ refactor workprovider implentation in one class (everyone who provides R_Work) @done(25-01-03 09:28)
   General File Structure:
     ☐ move external stuff to a "extern" sub directory
     ☐ move engine related code to an "engine" directory

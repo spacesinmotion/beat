@@ -1,16 +1,17 @@
 #ifndef FARM_H
 #define FARM_H
 
-#include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
+#include "game/WorkProvider.h"
 #include <assert.h>
 
 typedef struct Farm {
+  WorkProvider work_provider;
+
   G_Object buffer;
   Recti location;
-  int clicks, clicks_claimed, clicks_work, clicks_done;
 } Farm;
 
 Color fa_color() { return rgb(11, 133, 0); }
@@ -41,61 +42,7 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
   g_color(g, white());
   g_object(g, g_animation_buffer(g), Img_menubar, 4, p);
 
-  Point o[] = {
-      {1, 3}, {2, 3}, {3, 3}, //
-      {1, 2}, {2, 2}, {3, 2}, //
-      {1, 1}, {2, 1}, {3, 1}, //
-  };
-  for (int c = 0; c < 9; ++c) {
-    if (c < fa->clicks_done)
-      done_color(g);
-    else if (c < fa->clicks_work)
-      working_color(g);
-    else if (c < fa->clicks_claimed)
-      work_claimed_color(g);
-    else if (c < fa->clicks)
-      clicked_color(g);
-    else
-      break;
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vecP(o[c])), 0.75f);
-  }
-  g_color(g, rgb(255, 255, 255));
-  for (int i = fa->clicks; i < 9; ++i)
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
-}
-
-bool fa_provides(Farm *fa, GameScene *gs, Resource r) {
-  (void)gs;
-  return r == R_Work && fa->clicks - fa->clicks_claimed > 0;
-}
-void fa_claim(Farm *fa, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Work);
-
-  fa->clicks_claimed++;
-}
-float fa_start(Farm *fa, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Work);
-
-  fa->clicks_work++;
-  return 11.0;
-}
-void fa_done(Farm *fa, GameScene *gs, Resource r) {
-  assert(r == R_Work);
-
-  fa->clicks_done++;
-  if (fa->clicks_done == 9) {
-    fa->clicks = fa->clicks_claimed = fa->clicks_work = fa->clicks_done = 0;
-    gs->resource_pool.food += 10;
-  }
-}
-void fa_click(Farm *fa, GameScene *gs) {
-  (void)gs;
-  if (fa->clicks < 9 && gs->clicks > 0) {
-    fa->clicks++;
-    gs->clicks--;
-  }
+  wp_draw_click_fields(&fa->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
 static SceneObjectTable Farm_table = {
@@ -104,12 +51,23 @@ static SceneObjectTable Farm_table = {
     .update = (SceneObjectUpdateCB)fa_update,
     .draw = (SceneObjectDrawCB)fa_draw,
 };
+
+void fa_done(WorkProvider *wp, GameScene *gs, Resource r) {
+  assert(r == R_Work);
+
+  wp->clicks_done++;
+  if (wp->clicks_done == 9) {
+    wp->clicks = wp->clicks_claimed = wp->clicks_work = wp->clicks_done = 0;
+    gs->resource_pool.food += 10;
+  }
+}
+
 static TileContentTable Farm_TileContent_Table = {
-    .provides = (ProvidesCB)fa_provides,
-    .claim = (ClaimCB)fa_claim,
-    .start = (StartCB)fa_start,
+    .provides = (ProvidesCB)wp_provides,
+    .claim = (ClaimCB)wp_claim,
+    .start = (StartCB)wp_start,
     .done = (DoneCB)fa_done,
-    .click = (ClickCB)fa_click,
+    .click = (ClickCB)wp_click,
 };
 Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   Farm *fa = g_malloc(g, sizeof(Farm));
@@ -117,6 +75,8 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
       .buffer = g_tilerect_buffer(g, 4, 4),
       .location = (Recti){p.x, p.y, 4, 4},
   };
+  assert((void *)fa == (void *)&fa->work_provider);
+  wp_init(&fa->work_provider, 3, 3);
 
   l_set_tileR(gs->level, fa->location, T_Farm);
   l_set_tile_contentR(gs->level, fa->location, to_TileContent(fa, &Farm_TileContent_Table));

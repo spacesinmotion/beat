@@ -1,22 +1,24 @@
 #ifndef CONSTRUCTIONSITE_H
 #define CONSTRUCTIONSITE_H
 
-#include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
+#include "game/WorkProvider.h"
 #include <assert.h>
 
 void gs_construction_done(GameScene *gs, Game *g, Recti r, int key);
 
 typedef struct ConstructionSite {
+  WorkProvider work_provider;
+
   Recti location;
-  int clicks, clicks_claimed, clicks_work, clicks_done, key;
+  int key;
 } ConstructionSite;
 
 Color cs_color() { return rgb(43, 187, 223); }
 
-bool cs_dead(ConstructionSite *cs) { return cs->clicks_done > cs->location.w * cs->location.h; }
+bool cs_dead(ConstructionSite *cs) { return cs->work_provider.clicks_done > wp_fields(&cs->work_provider); }
 
 float cs_render_order(ConstructionSite *cs) { return l_to_y(cs->location.y); }
 
@@ -33,8 +35,8 @@ void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
     c_printf(g, "----------------------\n");
   }
 
-  if (cs->clicks_done == cs->location.w * cs->location.h) {
-    cs->clicks_done++;
+  if (cs->work_provider.clicks_done == wp_fields(&cs->work_provider)) {
+    cs->work_provider.clicks_done++;
     l_clear_tileR(gs->level, cs->location);
     gs_construction_done(gs, g, cs->location, cs->key);
     return;
@@ -47,55 +49,9 @@ void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
     for (int j = 0; j < cs->location.h; ++j)
       g_object(g, g_animation_buffer(g), Img_marker, 0, v_add(p, l_to_vec(i, j)));
 
-  int c = 0;
-  for (int j = cs->location.h - 1; j >= 0; --j) {
-    for (int i = 0; i < cs->location.w; ++i) {
-      if (c < cs->clicks_done)
-        done_color(g);
-      else if (c < cs->clicks_work)
-        working_color(g);
-      else if (c < cs->clicks_claimed)
-        work_claimed_color(g);
-      else if (c < cs->clicks)
-        clicked_color(g);
-      else
-        break;
-      g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vec(i, j)), 0.75f);
-      ++c;
-    }
-  }
+  wp_draw_click_fields(&cs->work_provider, g, p, true);
   g_color(g, white());
   g_object(g, g_animation_buffer(g), Img_menubar, cs->key, p);
-}
-
-bool cs_provides(ConstructionSite *cs, GameScene *gs, Resource r) {
-  (void)gs;
-  return r == R_Work && cs->clicks - cs->clicks_claimed > 0;
-}
-void cs_claim(ConstructionSite *cs, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Work);
-  cs->clicks_claimed++;
-}
-float cs_start(ConstructionSite *cs, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Work);
-  cs->clicks_work++;
-  if (cs->key == 0)
-    return 2.0;
-  return 11.0;
-}
-void cs_done(ConstructionSite *cs, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Work);
-  cs->clicks_done++;
-}
-void cs_click(ConstructionSite *cs, GameScene *gs) {
-  (void)gs;
-  if (cs->clicks < cs->location.w * cs->location.h && gs->clicks > 0) {
-    cs->clicks++;
-    gs->clicks--;
-  }
 }
 
 static SceneObjectTable ConstructionSite_table = {
@@ -104,25 +60,35 @@ static SceneObjectTable ConstructionSite_table = {
     .update = (SceneObjectUpdateCB)cs_update,
     .draw = (SceneObjectDrawCB)cs_draw,
 };
+
+void cs_done(WorkProvider *wp, GameScene *gs, Resource r) {
+  (void)gs;
+  assert(r == R_Work);
+  wp->clicks_done++;
+}
+
 static TileContentTable ConstructionSite_TileContent_Table = {
-    .provides = (ProvidesCB)cs_provides,
-    .claim = (ClaimCB)cs_claim,
-    .start = (StartCB)cs_start,
+    .provides = (ProvidesCB)wp_provides,
+    .claim = (ClaimCB)wp_claim,
+    .start = (StartCB)wp_start,
     .done = (DoneCB)cs_done,
-    .click = (ClickCB)cs_click,
+    .click = (ClickCB)wp_click,
 };
+
 ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key) {
   ConstructionSite *cs = g_malloc(g, sizeof(ConstructionSite));
   *cs = (ConstructionSite){
       .location = r,
       .key = key,
   };
+  assert((void *)cs == (void *)&cs->work_provider);
+  wp_init(&cs->work_provider, r.w, r.h);
 
   l_set_tile_contentR(gs->level, cs->location, to_TileContent(cs, &ConstructionSite_TileContent_Table));
   l_set_tileR(gs->level, r, T_ConstructionSite);
 
   if (key == 0)
-    cs_click(cs, gs);
+    wp_click(&cs->work_provider, gs);
 
   gs_add_object(gs, (SceneObject){.context = cs, &ConstructionSite_table});
   return cs;

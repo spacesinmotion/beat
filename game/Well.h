@@ -1,16 +1,16 @@
 #ifndef WELL_H
 #define WELL_H
 
-#include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
-#include <assert.h>
+#include "game/WorkProvider.h"
 
 typedef struct Well {
+  WorkProvider work_provider;
+
   G_Object buffer;
   Recti location;
-  int clicks, clicks_claimed, clicks_work, clicks_done;
 } Well;
 
 Color wl_color() { return rgb(0, 80, 133); }
@@ -41,57 +41,7 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
   g_color(g, white());
   g_object(g, g_animation_buffer(g), Img_menubar, 3, p);
 
-  Point o[] = {{1, 2}, {1, 1}};
-  for (int c = 0; c < 2; ++c) {
-    if (c < wl->clicks_done)
-      done_color(g);
-    else if (c < wl->clicks_work)
-      working_color(g);
-    else if (c < wl->clicks_claimed)
-      work_claimed_color(g);
-    else if (c < wl->clicks)
-      clicked_color(g);
-    else
-      break;
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vecP(o[c])), 0.75f);
-  }
-  g_color(g, rgb(255, 255, 255));
-  for (int i = wl->clicks; i < 2; ++i)
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
-}
-
-bool wl_provides(Well *wl, GameScene *gs, Resource r) {
-  (void)gs;
-  return r == R_Work && wl->clicks - wl->clicks_claimed > 0;
-}
-void wl_claim(Well *wl, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Work);
-
-  wl->clicks_claimed++;
-}
-float wl_start(Well *wl, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Work);
-
-  wl->clicks_work++;
-  return 11.0;
-}
-void wl_done(Well *wl, GameScene *gs, Resource r) {
-  assert(r == R_Work);
-
-  wl->clicks_done++;
-  if (wl->clicks_done == 2) {
-    wl->clicks = wl->clicks_claimed = wl->clicks_work = wl->clicks_done = 0;
-    gs->resource_pool.water += 4;
-  }
-}
-void wl_click(Well *wl, GameScene *gs) {
-  (void)gs;
-  if (wl->clicks < 2 && gs->clicks > 0) {
-    wl->clicks++;
-    gs->clicks--;
-  }
+  wp_draw_click_fields(&wl->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
 static SceneObjectTable Well_table = {
@@ -100,19 +50,33 @@ static SceneObjectTable Well_table = {
     .update = (SceneObjectUpdateCB)wl_update,
     .draw = (SceneObjectDrawCB)wl_draw,
 };
+
+void wl_done(WorkProvider *wp, GameScene *gs, Resource r) {
+  assert(r == R_Work);
+
+  wp->clicks_done++;
+  if (wp->clicks_done == 2) {
+    wp->clicks = wp->clicks_claimed = wp->clicks_work = wp->clicks_done = 0;
+    gs->resource_pool.water += 4;
+  }
+}
+
 static TileContentTable Well_TileContent_Table = {
-    .provides = (ProvidesCB)wl_provides,
-    .claim = (ClaimCB)wl_claim,
-    .start = (StartCB)wl_start,
+    .provides = (ProvidesCB)wp_provides,
+    .claim = (ClaimCB)wp_claim,
+    .start = (StartCB)wp_start,
     .done = (DoneCB)wl_done,
-    .click = (ClickCB)wl_click,
+    .click = (ClickCB)wp_click,
 };
+
 Well *Well_init(Game *g, GameScene *gs, Point p) {
   Well *wl = g_malloc(g, sizeof(Well));
   *wl = (Well){
       .buffer = g_tilerect_buffer(g, 2, 3),
       .location = (Recti){p.x, p.y, 2, 3},
   };
+  assert((void *)wl == (void *)&wl->work_provider);
+  wp_init(&wl->work_provider, 1, 2);
 
   l_set_tileR(gs->level, wl->location, T_Well);
   l_set_tile_contentR(gs->level, wl->location, to_TileContent(wl, &Well_TileContent_Table));
