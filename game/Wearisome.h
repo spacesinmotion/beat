@@ -204,10 +204,17 @@ bool w_want_to_work(Wearisome *w, GameScene *gs) {
   if (w->needs.food < 0.25f)
     reduce_urgent += 10;
 
-  float r = r_float();
   float ref = reduce_urgent * w->home->resources_maximum.clicks;
   ref = 1 / (ref + 1);
-  return r < ref;
+  return r_float() < ref;
+}
+
+bool w_want_entertainment(Wearisome *w) {
+  if (w->needs.sleep < 0.25f || w->needs.water < 0.25f || w->needs.food < 0.25f)
+    return false;
+  float ref = w->home->resources_maximum.clicks;
+  ref = ref * ref / 74.0f;
+  return r_float() < ref;
 }
 
 DeliverJob *h_deliver_job(House *h, GameScene *gs) {
@@ -258,8 +265,7 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
   else if ((job = h_deliver_job(w->home, gs))) {
     w_deliver(w, gs, job);
 
-  } else if (w->home->resources_maximum.clicks > (rand() % 8) + 2 && w->needs.sleep > 0.6 && w->needs.water > 0.6 &&
-             w->needs.food > 0.6) {
+  } else if (w_want_entertainment(w)) {
     WearisomeJobSearchData search_data = {gs, w->current_rect, NULL};
     Point start = l_to_point(w->destination);
     l_bright_first(gs->level, start.x, start.y,
