@@ -12,6 +12,7 @@
 typedef struct WorkProvider {
   int colums, rows;
   int clicks, clicks_claimed, clicks_work, clicks_done;
+  float work_duration;
 } WorkProvider;
 
 static inline int wp_fields(const WorkProvider *wp) { return wp->colums * wp->rows; }
@@ -31,7 +32,7 @@ float wp_start(WorkProvider *wp, GameScene *gs, Resource r) {
 
   assert(r == R_Work);
   wp->clicks_work++;
-  return 10.0;
+  return wp->work_duration;
 }
 void wp_click(WorkProvider *wp, GameScene *gs) {
   (void)gs;
@@ -73,6 +74,8 @@ void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p, bool ignore_e
 //     // .done = (DoneCB)wp_done,
 //     .click = (ClickCB)wp_click,
 // };
-void wp_init(WorkProvider *wp, int c, int r) { *wp = (WorkProvider){c, r, 0, 0, 0, 0}; }
+void wp_init(WorkProvider *wp, int c, int r, float work_duration) {
+  *wp = (WorkProvider){c, r, 0, 0, 0, 0, work_duration};
+}
 
 #endif

@@ -76,7 +76,7 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
       .location = (Recti){p.x, p.y, 4, 4},
   };
   assert((void *)fa == (void *)&fa->work_provider);
-  wp_init(&fa->work_provider, 3, 3);
+  wp_init(&fa->work_provider, 3, 3, 8.0f);
 
   l_set_tileR(gs->level, fa->location, T_Farm);
   l_set_tile_contentR(gs->level, fa->location, to_TileContent(fa, &Farm_TileContent_Table));

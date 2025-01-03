@@ -76,7 +76,7 @@ Well *Well_init(Game *g, GameScene *gs, Point p) {
       .location = (Recti){p.x, p.y, 2, 3},
   };
   assert((void *)wl == (void *)&wl->work_provider);
-  wp_init(&wl->work_provider, 1, 2);
+  wp_init(&wl->work_provider, 1, 2, 9.0f);
 
   l_set_tileR(gs->level, wl->location, T_Well);
   l_set_tile_contentR(gs->level, wl->location, to_TileContent(wl, &Well_TileContent_Table));

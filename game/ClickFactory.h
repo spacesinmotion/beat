@@ -77,7 +77,7 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
       .location = (Recti){p.x, p.y, 3, 3},
   };
   assert((void *)cf == (void *)&cf->work_provider);
-  wp_init(&cf->work_provider, 2, 2);
+  wp_init(&cf->work_provider, 2, 2, 12.0f);
 
   l_set_tileR(gs->level, cf->location, T_ClickFactory);
   l_set_tile_contentR(gs->level, cf->location, to_TileContent(cf, &ClickFactory_TileContent_Table));

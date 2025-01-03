@@ -72,7 +72,7 @@ float em_start(Entertainment *em, GameScene *gs, Resource r) {
   assert(r == R_Entertainment);
 
   em->started++;
-  return 2.0;
+  return 15.0;
 }
 void em_done(Entertainment *em, GameScene *gs, Resource r) {
   (void)gs;
