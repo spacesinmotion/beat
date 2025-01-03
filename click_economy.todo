@@ -2,9 +2,6 @@ Bugs:
   ☐ sometimes path construction side is not removed -> thay instantly start next work I think
   
 Gameplay:
-  ✔ path should not be buildable without clicks available @done(25-01-02 12:33) @project(Gameplay)
-  ✔ different jobs should take different time @high @done(25-01-03 10:03)
-  ✔ Wearisome should check entertainment somehow like they check for work @done(25-01-03 15:19)
   ☐ if wearisome gets dead, the house should become a constructionside again
   ☐ _maybe_ leaving buildings faster and more direct
   ☐ need bigger construction objects -> should bind a lot of people
@@ -15,6 +12,7 @@ Gameplay:
   Structures:
     ✔ search for structures that provide resources -> hard coded marketplace @critical @done(25-01-02 14:12)
     ☐ improve house display
+    ☐ wearisome at home marker for house @high 
     ☐ clicks should be more expensive -> bigger click factory, a church/bank
     ☐ reduce amount of food produced -> use size of market place
     warning signs:
@@ -26,6 +24,9 @@ Gameplay:
     ☐ a _warehouse_ -> limit global pool and increase by this buildings
     ☐ a _Park_ it earns no clicks, but reduces need consumption 
   ☐ Buildings that allow more spent more clicks per click?
+  ✔ path should not be buildable without clicks available @done(25-01-02 12:33) @project(Gameplay)
+  ✔ different jobs should take different time @high @done(25-01-03 10:03)
+  ✔ Wearisome should check entertainment somehow like they check for work @done(25-01-03 15:19)
 
 Refactoring:
   ✔ refactor workprovider implentation in one class (everyone who provides R_Work) @done(25-01-03 09:28)

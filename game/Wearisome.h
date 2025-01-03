@@ -118,43 +118,6 @@ void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
   }
 }
 
-typedef struct WearisomeJobSearchData {
-  GameScene *gs;
-  Recti start_rect;
-  PathPoint *path;
-} WearisomeJobSearchData;
-
-bool WearisomeJobSearch_moveable(WearisomeJobSearchData *data, int x, int y) {
-  if (l_movable(data->gs->level, x, y) || ri_contains(data->start_rect, x, y))
-    return true;
-  return tc_provides(l_content(data->gs->level, x, y), data->gs, R_Work);
-}
-
-bool WearisomeJobSearch_reached_goal(WearisomeJobSearchData *data, int x, int y) {
-  TileContent *c = l_content(data->gs->level, x, y);
-  if (!tc_provides(c, data->gs, R_Work))
-    return false;
-  tc_claim(c, data->gs, R_Work);
-  return true;
-}
-bool WearisomeEntertainmentSearch_moveable(WearisomeJobSearchData *data, int x, int y) {
-  if (l_movable(data->gs->level, x, y) || ri_contains(data->start_rect, x, y))
-    return true;
-  return tc_provides(l_content(data->gs->level, x, y), data->gs, R_Entertainment);
-}
-
-bool WearisomeEntertainmentSearch_reached_goal(WearisomeJobSearchData *data, int x, int y) {
-  TileContent *c = l_content(data->gs->level, x, y);
-  if (!tc_provides(c, data->gs, R_Entertainment))
-    return false;
-  tc_claim(c, data->gs, R_Entertainment);
-  return true;
-}
-
-void WearisomeJobSearch_build_path(WearisomeJobSearchData *data, int i, int j) {
-  data->path = PathPoint_init(l_to_vec(i, j), data->path);
-}
-
 bool w_has_emergency(Wearisome *w, float k) { return w->needs.sleep < k || w->needs.water < k || w->needs.food < k; }
 
 void w_u_at_home(Wearisome *w, GameScene *gs, float dt) {
@@ -266,32 +229,20 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
     w_deliver(w, gs, job);
 
   } else if (w_want_entertainment(w)) {
-    WearisomeJobSearchData search_data = {gs, w->current_rect, NULL};
-    Point start = l_to_point(w->destination);
-    l_bright_first(gs->level, start.x, start.y,
-                   (SearchHandle){
-                       &search_data,
-                       (CanMoveCB)WearisomeEntertainmentSearch_moveable,
-                       (GoalReachedCB)WearisomeEntertainmentSearch_reached_goal,
-                       (PathCB)WearisomeJobSearch_build_path,
-                   });
-    if (search_data.path) {
-      w->path = search_data.path;
+    Point p = l_to_point(w->destination);
+    PathResult path_result = find_path_to_resource(gs, (Recti){p.x, p.y, 1, 1}, R_Entertainment);
+    if (path_result.path && path_result.building) {
+      tc_claim(path_result.building, gs, R_Entertainment);
+      w->path = path_result.path;
       w->state = W_MoveToEntertainment;
     }
 
   } else if (w_want_to_work(w, gs)) {
-    WearisomeJobSearchData search_data = {gs, w->current_rect, NULL};
-    Point start = l_to_point(w->destination);
-    l_bright_first(gs->level, start.x, start.y,
-                   (SearchHandle){
-                       &search_data,
-                       (CanMoveCB)WearisomeJobSearch_moveable,
-                       (GoalReachedCB)WearisomeJobSearch_reached_goal,
-                       (PathCB)WearisomeJobSearch_build_path,
-                   });
-    if (search_data.path) {
-      w->path = search_data.path;
+    Point p = l_to_point(w->destination);
+    PathResult path_result = find_path_to_resource(gs, (Recti){p.x, p.y, 1, 1}, R_Work);
+    if (path_result.path && path_result.building) {
+      tc_claim(path_result.building, gs, R_Work);
+      w->path = path_result.path;
       w->state = W_MoveToWork;
     }
   }

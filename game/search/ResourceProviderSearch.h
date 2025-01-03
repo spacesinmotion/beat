@@ -45,7 +45,11 @@ void rps_build_path(ResourceProviderSearch *data, int i, int j) {
   data->path = PathPoint_init(l_to_vec(i, j), data->path);
 }
 
-PathPoint *find_path_to_resource(GameScene *gs, Recti start, Resource r) {
+typedef struct PathResult {
+  PathPoint *path;
+  TileContent *building;
+} PathResult;
+PathResult find_path_to_resource(GameScene *gs, Recti start, Resource r) {
   ResourceProviderSearch search_data = {gs, start, r, {-1, -1}, NULL};
   l_bright_first(gs->level, start.x, start.y,
                  (SearchHandle){
@@ -54,7 +58,7 @@ PathPoint *find_path_to_resource(GameScene *gs, Recti start, Resource r) {
                      (GoalReachedCB)rps_reached_goal,
                      (PathCB)rps_build_path,
                  });
-  return search_data.path;
+  return (PathResult){search_data.path, l_contentP(gs->level, search_data.found)};
 }
 
 Recti find_resource_building(GameScene *gs, Recti start, Resource r) {
