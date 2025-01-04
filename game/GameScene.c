@@ -191,7 +191,6 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
 
 typedef enum GameKeys {
   PAUSE_KEY = 32,
-  SPEED_KEY = 258,
   SPEED_1_KEY = 49,
   SPEED_2_KEY = 50,
   SPEED_4_KEY = 51,
@@ -199,16 +198,8 @@ typedef enum GameKeys {
 } GameKeys;
 
 void gs_key_up(GameScene *gs, Game *g, int key) {
-  if (key == PAUSE_KEY)
+  if (key == PAUSE_KEY) {
     gs->game_paused = !gs->game_paused;
-  else if (key == SPEED_KEY) {
-    if (gs->game_paused) {
-      gs->game_paused = false;
-    } else {
-      gs->game_speed = gs->game_speed * 2.0;
-      if (gs->game_speed == 16.0f)
-        gs->game_speed = 1.0f;
-    }
   } else if (key == SPEED_1_KEY) {
     gs->game_paused = false;
     gs->game_speed = 1.0f;
