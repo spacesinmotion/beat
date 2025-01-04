@@ -594,12 +594,11 @@ static void g_handel_events(const sapp_event *e, Game *g) {
       g->scene.table->mouse_move(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y),
                                  to_overlay(g, e->mouse_x, e->mouse_y));
   } else if ((e->type == SAPP_EVENTTYPE_KEY_DOWN)) {
-    switch (e->key_code) {
-    case SAPP_KEYCODE_SPACE:
-      break;
-    default:
-      break;
-    }
+    if (g->scene.table->key_down)
+      g->scene.table->key_down(g->scene.context, g, e->key_code);
+  } else if ((e->type == SAPP_EVENTTYPE_KEY_UP)) {
+    if (g->scene.table->key_up)
+      g->scene.table->key_up(g->scene.context, g, e->key_code);
   }
 }
 

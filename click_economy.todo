@@ -7,7 +7,7 @@ Gameplay:
   ☐ if wearisome gets dead, the house should become a constructionside again
   ☐ _maybe_ leaving buildings faster and more direct
   ☐ need bigger construction objects -> should bind a lot of people
-  ☐ controll game speed pause, normal, fast, faster
+  ✔ control game speed pause, normal, fast, faster @done(25-01-04 10:56)
   ☐ start a any construction costs one click!!?!!
   Resources:
     ☐ wood, stone, bricks, ?? -> building stuff
@@ -34,6 +34,8 @@ Gameplay:
   ✔ Wearisome should check entertainment somehow like they check for work @done(25-01-03 15:19)
   Overlay:
     ☐ make an overview for resources
+    ☐ control game speed
+    ☐ a game menu quit/new/...
 
 Refactoring:
   ✔ refactor workprovider implentation in one class (everyone who provides R_Work) @done(25-01-03 09:28)

@@ -47,6 +47,9 @@ int so_render_order_compare(const void *va, const void *vb) {
 
 void gs_update(GameScene *gs, Game *g, float dt) {
   (void)g;
+
+  dt = gs->game_paused ? 0.0f : dt * gs->game_speed;
+
   gs->daytime_step = dt / 60.0f;
   gs->daytime += gs->daytime_step;
   if (gs->daytime > 1.0f) {
@@ -73,6 +76,8 @@ bool gs_construction_available(GameScene *gs) {
 
 void gs_draw(GameScene *gs, Game *g) {
 
+  c_printf(g, "----------------------\n");
+  c_printf(g, " %10s: %g\n", "game speed", gs->game_paused ? 0.0f : gs->game_speed);
   c_printf(g, "----------------------\n");
   c_printf(g, " %10s: %d\n", "day", gs->day);
   c_printf(g, " %10s: %f\n", "daytime", gs->daytime);
@@ -181,6 +186,41 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   }
 }
 
+typedef enum GameKeys {
+  PAUSE_KEY = 32,
+  SPEED_KEY = 258,
+  SPEED_1_KEY = 49,
+  SPEED_2_KEY = 50,
+  SPEED_4_KEY = 51,
+  SPEED_8_KEY = 52,
+} GameKeys;
+
+void gs_key_up(GameScene *gs, Game *g, int key) {
+  if (key == PAUSE_KEY)
+    gs->game_paused = !gs->game_paused;
+  else if (key == SPEED_KEY) {
+    if (gs->game_paused) {
+      gs->game_paused = false;
+    } else {
+      gs->game_speed = gs->game_speed * 2.0;
+      if (gs->game_speed == 16.0f)
+        gs->game_speed = 1.0f;
+    }
+  } else if (key == SPEED_1_KEY) {
+    gs->game_paused = false;
+    gs->game_speed = 1.0f;
+  } else if (key == SPEED_2_KEY) {
+    gs->game_speed = 2.0f;
+    gs->game_paused = false;
+  } else if (key == SPEED_4_KEY) {
+    gs->game_speed = 4.0f;
+    gs->game_paused = false;
+  } else if (key == SPEED_8_KEY) {
+    gs->game_speed = 8.0f;
+    gs->game_paused = false;
+  }
+}
+
 void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
 
 void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
@@ -207,11 +247,14 @@ SceneTable GameScene_table = {
     .draw_overlay = (SceneDrawCB)gs_draw_overlay,
     .mouse_move = (SceneMouseMoveCB)gs_mouse_move,
     .mouse_down = (SceneMouseCB)gs_mouse_down,
+    .key_up = (SceneKeyCB)gs_key_up,
 };
 void GameScene_init(Game *g) {
   GameScene *gs = g_malloc(g, sizeof(GameScene));
   *gs = (GameScene){
       .scene_objects = (SceneObjectVec){NULL, 0, 0},
+      .game_speed = 1.0f,
+      .game_paused = false,
       .menu_under_mouse = -1,
       .menu_selected = -1,
       .day = 1,

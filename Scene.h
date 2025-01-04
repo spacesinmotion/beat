@@ -9,6 +9,7 @@ typedef void (*SceneUpdateCB)(void *, Game *, float);
 typedef void (*SceneDrawCB)(void *, Game *);
 typedef void (*SceneMouseMoveCB)(void *, Game *, Vec2, Vec2);
 typedef void (*SceneMouseCB)(void *, Game *, Vec2, Vec2, int);
+typedef void (*SceneKeyCB)(void *, Game *, int);
 typedef struct SceneTable {
   SceneUpdateCB update;
   SceneDrawCB draw;
@@ -16,6 +17,8 @@ typedef struct SceneTable {
   SceneMouseMoveCB mouse_move;
   SceneMouseCB mouse_down;
   SceneMouseCB mouse_up;
+  SceneKeyCB key_down;
+  SceneKeyCB key_up;
 } SceneTable;
 typedef struct Scene {
   void *context;

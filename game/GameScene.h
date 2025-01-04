@@ -21,6 +21,9 @@ typedef struct Stuff {
 typedef struct GameScene {
   SceneObjectVec scene_objects;
 
+  float game_speed;
+  bool game_paused;
+
   float daytime_step, daytime;
   int day;
 
