@@ -50,11 +50,11 @@ void em_draw(Entertainment *em, GameScene *gs, Game *g) {
     else
       break;
     // g_color(g, rgb(255, 255, 255));
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, l_to_vecP(o[i])), 0.75f);
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 14, v_add(p, l_to_vecP(o[i])), 0.75f);
   }
   g_color(g, rgb(255, 255, 255));
   for (int i = em->claimed; i < 2; ++i)
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 13, v_add(p, l_to_vecP(o[i])), 0.75f);
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 15, v_add(p, l_to_vecP(o[i])), 0.75f);
 }
 
 bool em_provides(Entertainment *em, GameScene *gs, Resource r) {

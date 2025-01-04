@@ -3,6 +3,7 @@ Bugs:
   
 Gameplay:
   ☐ SceneObjects need Game pointer in update function
+  ☐ right click should stop a construction -> unspent clicks are returned -> remove construction tile claim
   ☐ if wearisome gets dead, the house should become a constructionside again
   ☐ _maybe_ leaving buildings faster and more direct
   ☐ need bigger construction objects -> should bind a lot of people
@@ -13,9 +14,10 @@ Gameplay:
     ☐ construction should take resources
   Structures:
     ✔ search for structures that provide resources -> hard coded marketplace @critical @done(25-01-02 14:12)
-    ☐ different icons for entertainment/buildings filled by wearisome on their own
-    ☐ improve house display
+    ✔ different icons for entertainment/buildings filled by wearisome on their own @done(25-01-04 10:12)
     ☐ wearisome at home marker for house @high 
+    ☐ improve house display
+    ☐ some animation for earning clicks 
     ☐ clicks should be more expensive -> bigger click factory, a church/bank
     ☐ reduce amount of food produced -> use size of market place
     warning signs:
@@ -30,6 +32,8 @@ Gameplay:
   ✔ path should not be buildable without clicks available @done(25-01-02 12:33) @project(Gameplay)
   ✔ different jobs should take different time @high @done(25-01-03 10:03)
   ✔ Wearisome should check entertainment somehow like they check for work @done(25-01-03 15:19)
+  Overlay:
+    ☐ make an overview for resources
 
 Refactoring:
   ✔ refactor workprovider implentation in one class (everyone who provides R_Work) @done(25-01-03 09:28)
