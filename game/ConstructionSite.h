@@ -29,17 +29,20 @@ void cs_update(ConstructionSite *cs, GameScene *gs, float dt) {
 }
 
 void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
-  if (ri_contains(cs->location, gs->r.x, gs->r.y)) {
-    c_printf(g, "----------------------\n");
-    c_printf(g, "  ConstructionSite (%d,%d,%d,%d)\n", cs->location.x, cs->location.y, 4, 3);
-    c_printf(g, "----------------------\n");
-  }
+  if (cs_dead(cs))
+    return;
 
-  if (cs->work_provider.clicks_done == wp_fields(&cs->work_provider)) {
+  if (wp_is_done(&cs->work_provider)) {
     cs->work_provider.clicks_done++;
     l_clear_tileR(gs->level, cs->location);
     gs_construction_done(gs, g, cs->location, cs->key);
     return;
+  }
+
+  if (ri_contains(cs->location, gs->r.x, gs->r.y)) {
+    c_printf(g, "----------------------\n");
+    c_printf(g, "  ConstructionSite (%d,%d,%d,%d)\n", cs->location.x, cs->location.y, 4, 3);
+    c_printf(g, "----------------------\n");
   }
 
   Vec2 p = l_to_vecP(ri_bottom_right(cs->location));
@@ -61,20 +64,6 @@ static SceneObjectTable ConstructionSite_table = {
     .draw = (SceneObjectDrawCB)cs_draw,
 };
 
-void cs_done(WorkProvider *wp, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Work);
-  wp->clicks_done++;
-}
-
-static TileContentTable ConstructionSite_TileContent_Table = {
-    .provides = (ProvidesCB)wp_provides,
-    .claim = (ClaimCB)wp_claim,
-    .start = (StartCB)wp_start,
-    .done = (DoneCB)cs_done,
-    .click = (ClickCB)wp_click,
-};
-
 ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key) {
   ConstructionSite *cs = g_malloc(g, sizeof(ConstructionSite));
   *cs = (ConstructionSite){
@@ -84,7 +73,7 @@ ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key
   assert((void *)cs == (void *)&cs->work_provider);
   wp_init(&cs->work_provider, r.w, r.h, key == 0 ? 2.0f : 11.0f);
 
-  l_set_tile_contentR(gs->level, cs->location, to_TileContent(cs, &ConstructionSite_TileContent_Table));
+  l_set_tile_contentR(gs->level, cs->location, to_TileContent(cs, &WorkProvider_TileContent_Default_Table));
   l_set_tileR(gs->level, r, T_ConstructionSite);
 
   if (key == 0)

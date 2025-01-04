@@ -10,6 +10,8 @@
 typedef struct Farm {
   WorkProvider work_provider;
 
+  float temporary_deliver_timer;
+
   G_Object buffer;
   Recti location;
 } Farm;
@@ -24,9 +26,14 @@ bool fa_dead(Farm *fa) {
 float fa_render_order(Farm *fa) { return l_to_y(fa->location.y); }
 
 void fa_update(Farm *fa, GameScene *gs, float dt) {
-  (void)fa;
-  (void)gs;
-  (void)dt;
+  if (fa->temporary_deliver_timer > 0.0f) {
+    if ((fa->temporary_deliver_timer -= dt) <= 0.0f) {
+      gs->resource_pool.food += 9;
+      wp_reset(&fa->work_provider);
+    }
+  } else if (wp_is_done(&fa->work_provider)) {
+    fa->temporary_deliver_timer = 5.0;
+  }
 }
 
 void fa_draw(Farm *fa, GameScene *gs, Game *g) {
@@ -41,6 +48,8 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
   g_buffer(g, fa->buffer, Img_house_map, p);
   g_color(g, white());
   g_object(g, g_animation_buffer(g), Img_menubar, 4, p);
+  if (fa->temporary_deliver_timer > 0.0f)
+    g_object(g, g_animation_buffer(g), Img_menubar, 7, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&fa->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
@@ -52,26 +61,10 @@ static SceneObjectTable Farm_table = {
     .draw = (SceneObjectDrawCB)fa_draw,
 };
 
-void fa_done(WorkProvider *wp, GameScene *gs, Resource r) {
-  assert(r == R_Work);
-
-  wp->clicks_done++;
-  if (wp->clicks_done == 9) {
-    wp->clicks = wp->clicks_claimed = wp->clicks_work = wp->clicks_done = 0;
-    gs->resource_pool.food += 9;
-  }
-}
-
-static TileContentTable Farm_TileContent_Table = {
-    .provides = (ProvidesCB)wp_provides,
-    .claim = (ClaimCB)wp_claim,
-    .start = (StartCB)wp_start,
-    .done = (DoneCB)fa_done,
-    .click = (ClickCB)wp_click,
-};
 Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   Farm *fa = g_malloc(g, sizeof(Farm));
   *fa = (Farm){
+      .temporary_deliver_timer = 0.0f,
       .buffer = g_tilerect_buffer(g, 4, 4),
       .location = (Recti){p.x, p.y, 4, 4},
   };
@@ -79,7 +72,7 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   wp_init(&fa->work_provider, 3, 3, 8.0f);
 
   l_set_tileR(gs->level, fa->location, T_Farm);
-  l_set_tile_contentR(gs->level, fa->location, to_TileContent(fa, &Farm_TileContent_Table));
+  l_set_tile_contentR(gs->level, fa->location, to_TileContent(fa, &WorkProvider_TileContent_Default_Table));
 
   gs_add_object(gs, (SceneObject){.context = fa, &Farm_table});
   return fa;

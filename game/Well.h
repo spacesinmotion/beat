@@ -9,6 +9,8 @@
 typedef struct Well {
   WorkProvider work_provider;
 
+  float temporary_deliver_timer;
+
   G_Object buffer;
   Recti location;
 } Well;
@@ -23,9 +25,14 @@ bool wl_dead(Well *wl) {
 float wl_render_order(Well *wl) { return l_to_y(wl->location.y); }
 
 void wl_update(Well *wl, GameScene *gs, float dt) {
-  (void)wl;
-  (void)gs;
-  (void)dt;
+  if (wl->temporary_deliver_timer > 0.0f) {
+    if ((wl->temporary_deliver_timer -= dt) <= 0.0f) {
+      gs->resource_pool.water += 9;
+      wp_reset(&wl->work_provider);
+    }
+  } else if (wp_is_done(&wl->work_provider)) {
+    wl->temporary_deliver_timer = 5.0;
+  }
 }
 
 void wl_draw(Well *wl, GameScene *gs, Game *g) {
@@ -40,6 +47,8 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
   g_buffer(g, wl->buffer, Img_house_map, p);
   g_color(g, white());
   g_object(g, g_animation_buffer(g), Img_menubar, 3, p);
+  if (wl->temporary_deliver_timer > 0.0f)
+    g_object(g, g_animation_buffer(g), Img_menubar, 7, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&wl->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
@@ -51,35 +60,18 @@ static SceneObjectTable Well_table = {
     .draw = (SceneObjectDrawCB)wl_draw,
 };
 
-void wl_done(WorkProvider *wp, GameScene *gs, Resource r) {
-  assert(r == R_Work);
-
-  wp->clicks_done++;
-  if (wp->clicks_done == 2) {
-    wp->clicks = wp->clicks_claimed = wp->clicks_work = wp->clicks_done = 0;
-    gs->resource_pool.water += 2;
-  }
-}
-
-static TileContentTable Well_TileContent_Table = {
-    .provides = (ProvidesCB)wp_provides,
-    .claim = (ClaimCB)wp_claim,
-    .start = (StartCB)wp_start,
-    .done = (DoneCB)wl_done,
-    .click = (ClickCB)wp_click,
-};
-
 Well *Well_init(Game *g, GameScene *gs, Point p) {
   Well *wl = g_malloc(g, sizeof(Well));
   *wl = (Well){
       .buffer = g_tilerect_buffer(g, 2, 3),
       .location = (Recti){p.x, p.y, 2, 3},
+      .temporary_deliver_timer = 0.0f,
   };
   assert((void *)wl == (void *)&wl->work_provider);
   wp_init(&wl->work_provider, 1, 2, 9.0f);
 
   l_set_tileR(gs->level, wl->location, T_Well);
-  l_set_tile_contentR(gs->level, wl->location, to_TileContent(wl, &Well_TileContent_Table));
+  l_set_tile_contentR(gs->level, wl->location, to_TileContent(wl, &WorkProvider_TileContent_Default_Table));
 
   gs_add_object(gs, (SceneObject){.context = wl, &Well_table});
   return wl;

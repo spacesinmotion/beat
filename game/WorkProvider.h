@@ -15,7 +15,12 @@ typedef struct WorkProvider {
   float work_duration;
 } WorkProvider;
 
+static inline void wp_init(WorkProvider *wp, int c, int r, float work_duration) {
+  *wp = (WorkProvider){c, r, 0, 0, 0, 0, work_duration};
+}
+static inline void wp_reset(WorkProvider *wp) { wp_init(wp, wp->colums, wp->rows, wp->work_duration); }
 static inline int wp_fields(const WorkProvider *wp) { return wp->colums * wp->rows; }
+static inline bool wp_is_done(const WorkProvider *wp) { return wp->clicks_done == wp_fields(wp); }
 
 bool wp_provides(WorkProvider *wp, GameScene *gs, Resource r) {
   (void)gs;
@@ -23,16 +28,19 @@ bool wp_provides(WorkProvider *wp, GameScene *gs, Resource r) {
 }
 void wp_claim(WorkProvider *wp, GameScene *gs, Resource r) {
   (void)gs;
-
   assert(r == R_Work);
   wp->clicks_claimed++;
 }
 float wp_start(WorkProvider *wp, GameScene *gs, Resource r) {
   (void)gs;
-
   assert(r == R_Work);
   wp->clicks_work++;
   return wp->work_duration;
+}
+void wp_done(WorkProvider *wp, GameScene *gs, Resource r) {
+  (void)gs;
+  assert(r == R_Work);
+  wp->clicks_done++;
 }
 void wp_click(WorkProvider *wp, GameScene *gs) {
   (void)gs;
@@ -67,15 +75,12 @@ void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p, bool ignore_e
   }
 }
 
-// static TileContentTable WorkProvider_TileContent_Table = {
-//     .provides = (ProvidesCB)wp_provides,
-//     .claim = (ClaimCB)wp_claim,
-//     .start = (StartCB)wp_start,
-//     // .done = (DoneCB)wp_done,
-//     .click = (ClickCB)wp_click,
-// };
-void wp_init(WorkProvider *wp, int c, int r, float work_duration) {
-  *wp = (WorkProvider){c, r, 0, 0, 0, 0, work_duration};
-}
+static TileContentTable WorkProvider_TileContent_Default_Table = {
+    .provides = (ProvidesCB)wp_provides,
+    .claim = (ClaimCB)wp_claim,
+    .start = (StartCB)wp_start,
+    .done = (DoneCB)wp_done,
+    .click = (ClickCB)wp_click,
+};
 
 #endif

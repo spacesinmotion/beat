@@ -10,6 +10,8 @@
 typedef struct ClickFactory {
   WorkProvider work_provider;
 
+  float temporary_deliver_timer;
+
   G_Object buffer;
   Recti location;
 } ClickFactory;
@@ -24,9 +26,14 @@ bool cf_dead(ClickFactory *cf) {
 float cf_render_order(ClickFactory *cf) { return l_to_y(cf->location.y); }
 
 void cf_update(ClickFactory *cf, GameScene *gs, float dt) {
-  (void)cf;
-  (void)gs;
-  (void)dt;
+  if (cf->temporary_deliver_timer > 0.0f) {
+    if ((cf->temporary_deliver_timer -= dt) <= 0.0f) {
+      gs_produce_click(gs);
+      wp_reset(&cf->work_provider);
+    }
+  } else if (wp_is_done(&cf->work_provider)) {
+    cf->temporary_deliver_timer = 5.0;
+  }
 }
 
 void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
@@ -41,6 +48,8 @@ void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
   g_buffer(g, cf->buffer, Img_house_map, p);
   g_color(g, white());
   g_object(g, g_animation_buffer(g), Img_menubar, 5, p);
+  if (cf->temporary_deliver_timer > 0.0f)
+    g_object(g, g_animation_buffer(g), Img_menubar, 7, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&cf->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
@@ -62,14 +71,6 @@ void cf_done(WorkProvider *cf, GameScene *gs, Resource r) {
   }
 }
 
-static TileContentTable ClickFactory_TileContent_Table = {
-    .provides = (ProvidesCB)wp_provides,
-    .claim = (ClaimCB)wp_claim,
-    .start = (StartCB)wp_start,
-    .done = (DoneCB)cf_done,
-    .click = (ClickCB)wp_click,
-};
-
 ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   ClickFactory *cf = g_malloc(g, sizeof(ClickFactory));
   *cf = (ClickFactory){
@@ -80,7 +81,7 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   wp_init(&cf->work_provider, 2, 2, 12.0f);
 
   l_set_tileR(gs->level, cf->location, T_ClickFactory);
-  l_set_tile_contentR(gs->level, cf->location, to_TileContent(cf, &ClickFactory_TileContent_Table));
+  l_set_tile_contentR(gs->level, cf->location, to_TileContent(cf, &WorkProvider_TileContent_Default_Table));
 
   gs_add_object(gs, (SceneObject){.context = cf, &ClickFactory_table});
   return cf;
