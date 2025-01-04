@@ -513,7 +513,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
       .destination = pos,
       .path = NULL,
       .needs = {.food = 1.0f, .water = 1.0f, .sleep = 1.0f},
-      .need_consumption = {.food = r_float_r(0.35f, 0.5f),
+      .need_consumption = {.food = r_float_r(0.25f, 0.4f),
                            .water = r_float_r(0.5f, 0.75f),
                            .sleep = r_float_r(0.4f, 0.7f)},
       .health = 1.0f,

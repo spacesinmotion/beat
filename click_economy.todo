@@ -8,7 +8,7 @@ Gameplay:
   ☐ _maybe_ leaving buildings faster and more direct
   ☐ need bigger construction objects -> should bind a lot of people
   ✔ control game speed pause, normal, fast, faster @done(25-01-04 10:56)
-  ☐ start a any construction costs one click!!?!!
+  ✔ start a any construction costs one click!!?!! @done(25-01-04 12:22)
   Resources:
     ☐ wood, stone, bricks, ?? -> building stuff
     ☐ construction should take resources
@@ -17,7 +17,7 @@ Gameplay:
     ✔ different icons for entertainment/buildings filled by wearisome on their own @done(25-01-04 10:12)
     ☐ wearisome at home marker for house @high 
     ☐ improve house display
-    ☐ some animation for earning clicks 
+    ☐ some animation for earning/lossing clicks 
     ☐ clicks should be more expensive -> bigger click factory, a church/bank
     ☐ reduce amount of food produced -> use size of market place
     warning signs:

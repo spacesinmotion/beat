@@ -70,8 +70,8 @@ bool gs_construction_available(GameScene *gs) {
   if (!l_freeR(gs->level, gs->r))
     return false;
   if (gs->menu_selected == 0)
-    return gs->clicks > 0;
-  return true;
+    return gs->clicks > 2;
+  return gs->clicks > 1;
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -86,9 +86,10 @@ void gs_draw(GameScene *gs, Game *g) {
   c_printf(g, " %10s: %d\n", "water", gs->resource_pool.water);
   c_printf(g, " %10s: %d\n", "food", gs->resource_pool.food);
   c_printf(g, "----------------------\n\n");
-  c_printf(g, " %10s: %d\n", "all$", gs->clicks_in_houses + gs->clicks);
-  c_printf(g, " %10s: %d\n", "spread$", gs->clicks_in_houses);
-  c_printf(g, " %10s: %d\n", "produced$", gs->clicks_produced);
+  c_printf(g, " %10s: %d\n", "all $", gs->clicks_in_houses + gs->clicks);
+  c_printf(g, " %10s: %d\n", "spread $", gs->clicks_in_houses);
+  c_printf(g, " %10s: %d\n", "produced $", gs->clicks_produced);
+  c_printf(g, " %10s: %d\n", "lost $", gs->clicks_lost);
   c_printf(g, "----------------------\n\n");
 
   StreetMap_draw(gs->street_map, g);
@@ -178,8 +179,10 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->r.w = gs->r.h = 0;
       }
     } else if (gs->menu_selected >= 0) {
-      if (gs_construction_available(gs))
+      if (gs_construction_available(gs)) {
+        gs_loose_click(gs);
         ConstructionSite_init(g, gs, gs->r, gs->menu_selected);
+      }
     } else {
       tc_click(l_content(gs->level, gs->r.x, gs->r.y), gs);
     }
