@@ -23,12 +23,6 @@ bool em_dead(Entertainment *em) {
 
 float em_render_order(Entertainment *em) { return l_to_y(em->location.y); }
 
-void em_update(Entertainment *em, GameScene *gs, float dt) {
-  (void)em;
-  (void)gs;
-  (void)dt;
-}
-
 void em_draw(Entertainment *em, GameScene *gs, Game *g) {
   if (ri_contains(em->location, gs->r.x, gs->r.y)) {
     c_printf(g, "----------------------\n");
@@ -50,7 +44,6 @@ void em_draw(Entertainment *em, GameScene *gs, Game *g) {
       work_claimed_color(g);
     else
       break;
-    // g_color(g, rgb(255, 255, 255));
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 14, v_add(p, l_to_vecP(o[i])), 0.75f);
   }
   g_color(g, rgb(255, 255, 255));
@@ -86,7 +79,6 @@ void em_done(Entertainment *em, GameScene *gs, Resource r) {
 static SceneObjectTable Entertainment_table = {
     .dead = (SceneObjectDeadCB)em_dead,
     .render_order = (SceneObjectRenderOrderCB)em_render_order,
-    .update = (SceneObjectUpdateCB)em_update,
     .draw = (SceneObjectDrawCB)em_draw,
 };
 static TileContentTable Entertainment_TileContent_Table = {

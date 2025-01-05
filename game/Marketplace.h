@@ -22,12 +22,6 @@ bool mp_dead(Marketplace *mp) {
 
 float mp_render_order(Marketplace *mp) { return l_to_y(mp->location.y); }
 
-void mp_update(Marketplace *mp, GameScene *gs, float dt) {
-  (void)mp;
-  (void)gs;
-  (void)dt;
-}
-
 void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {
   if (ri_contains(mp->location, gs->r.x, gs->r.y)) {
     c_printf(g, "----------------------\n");
@@ -45,7 +39,6 @@ void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {
 static SceneObjectTable Marketplace_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)mp_dead,
     .render_order = (SceneObjectRenderOrderCB)mp_render_order,
-    .update = (SceneObjectUpdateCB)mp_update,
     .draw = (SceneObjectDrawCB)mp_draw,
 };
 

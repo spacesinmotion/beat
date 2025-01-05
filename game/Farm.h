@@ -26,7 +26,9 @@ bool fa_dead(Farm *fa) {
 
 float fa_render_order(Farm *fa) { return l_to_y(fa->location.y); }
 
-void fa_update(Farm *fa, GameScene *gs, float dt) {
+void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
+  (void)g;
+
   if (fa->temporary_deliver_timer > 0.0f) {
     if ((fa->temporary_deliver_timer -= dt) <= 0.0f) {
       gs->resource_pool.food += 9;

@@ -10,7 +10,7 @@ typedef struct Game Game;
 
 typedef bool (*SceneObjectDeadCB)(const SceneObject *);
 typedef float (*SceneObjectRenderOrderCB)(const SceneObject *);
-typedef void (*SceneObjectUpdateCB)(SceneObject *, GameScene *, float);
+typedef void (*SceneObjectUpdateCB)(SceneObject *, GameScene *, Game *, float);
 typedef void (*SceneObjectDrawCB)(const SceneObject *, GameScene *gs, Game *);
 
 typedef struct SceneObjectTable {
@@ -37,9 +37,9 @@ static inline float so_render_order(const SceneObject *so) {
   return so->table->render_order ? so->table->render_order(so->context) : FLT_MAX;
 }
 
-static inline void so_update(SceneObject *so, GameScene *gs, float dt) {
+static inline void so_update(SceneObject *so, GameScene *gs, Game *g, float dt) {
   if (so->context && so->table->update)
-    so->table->update(so->context, gs, dt);
+    so->table->update(so->context, gs, g, dt);
 }
 
 static inline void so_draw(const SceneObject *so, GameScene *gs, Game *g) {

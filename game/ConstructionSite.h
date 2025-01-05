@@ -22,22 +22,19 @@ bool cs_dead(ConstructionSite *cs) { return cs->work_provider.clicks_done > wp_f
 
 float cs_render_order(ConstructionSite *cs) { return l_to_y(cs->location.y); }
 
-void cs_update(ConstructionSite *cs, GameScene *gs, float dt) {
-  (void)cs;
-  (void)gs;
+void cs_update(ConstructionSite *cs, GameScene *gs, Game *g, float dt) {
   (void)dt;
-}
-
-void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
-  if (cs_dead(cs))
-    return;
 
   if (wp_is_done(&cs->work_provider)) {
     cs->work_provider.clicks_done++;
     l_clear_tileR(gs->level, cs->location);
     gs_construction_done(gs, g, cs->location, cs->key);
-    return;
   }
+}
+
+void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
+  if (cs_dead(cs))
+    return;
 
   if (ri_contains(cs->location, gs->r.x, gs->r.y)) {
     c_printf(g, "----------------------\n");

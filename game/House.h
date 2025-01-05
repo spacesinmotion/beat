@@ -75,10 +75,10 @@ void h_get_food_done(House *h, GameScene *gs) {
   h->resources.food += 1.0;
 }
 
-void h_update(House *h, GameScene *gs, float dt) {
-  (void)h;
-  (void)gs;
+void h_update(House *h, GameScene *gs, Game *g, float dt) {
+  (void)g;
   (void)dt;
+
   gs->clicks_in_houses += h->resources.clicks;
 }
 

@@ -26,7 +26,9 @@ bool cf_dead(ClickFactory *cf) {
 
 float cf_render_order(ClickFactory *cf) { return l_to_y(cf->location.y); }
 
-void cf_update(ClickFactory *cf, GameScene *gs, float dt) {
+void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
+  (void)g;
+
   if (cf->temporary_deliver_timer > 0.0f) {
     if ((cf->temporary_deliver_timer -= dt) <= 0.0f) {
       gs_produce_click(gs);

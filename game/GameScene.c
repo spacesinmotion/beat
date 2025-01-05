@@ -76,7 +76,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 
   gs->clicks_in_houses = 0;
   for (int i = 0; i < gs->scene_objects.len; ++i)
-    so_update(&gs->scene_objects.data[i], gs, dt);
+    so_update(&gs->scene_objects.data[i], gs, g, dt);
 
   so_vec_filter_dead(&gs->scene_objects);
 
