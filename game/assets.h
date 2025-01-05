@@ -29,4 +29,18 @@ static const char *image_paths[NB_Img] = {
     "assets/maze_pointer.png",   //
 };
 
+typedef enum Font {
+  Assistant_Regular_8 = 0,
+  Assistant_Regular_12,
+  Nb_Font,
+} Font;
+
+static const char *font_paths[Nb_Font] = {
+    "assets/Assistant-Regular.ttf", //
+    "assets/Assistant-Regular.ttf", //
+};
+static int font_size[Nb_Font] = {
+    8,  //
+    12, //
+};
 #endif

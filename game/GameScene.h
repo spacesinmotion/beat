@@ -39,6 +39,15 @@ typedef struct GameScene {
 
   Level *level;
   StreetMap *street_map;
+
+  G_Object click_counter_text;
+  int click_counter_text_cache;
+
+  G_Object water_counter_text;
+  int water_counter_text_cache;
+
+  G_Object food_counter_text;
+  int food_counter_text_cache;
 } GameScene;
 
 typedef struct GameScene GameScene;

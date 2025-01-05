@@ -10,12 +10,15 @@
 
 #include "Scene.h"
 
+const char *str(const char *fmt, ...);
+
 typedef struct G_Object {
   uint32_t vertices, indices, num_elements;
 } G_Object;
 
 typedef bool (*IsSetCB)(void *data, int i, int j);
 G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data);
+void g_create_text(Game *g, G_Object *o, Font ff, const char *text);
 bool G_Object_valid(const G_Object *);
 void G_Object_free(G_Object *);
 
@@ -39,6 +42,8 @@ void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float 
 void g_objectR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot);
 void g_objectS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float scale);
 void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan);
+
+void g_text(Game *g, G_Object buffer, Font f, Vec2 pan);
 
 void *g_malloc(Game *g, size_t size);
 void *g_realloc(Game *g, void *ptr, size_t size);

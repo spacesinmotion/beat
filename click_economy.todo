@@ -19,7 +19,7 @@ Gameplay:
     ☐ improve house display
     ☐ some animation for earning/lossing clicks 
     ☐ clicks should be more expensive -> bigger click factory, a church/bank
-    ☐ reduce amount of food produced -> use size of market place
+    ✘ reduce amount of food produced -> use size of market place @cancelled(25-01-04 15:05)
     warning signs:
       ☐ has resources 
       ☐ wearisome at home
@@ -33,6 +33,7 @@ Gameplay:
   ✔ different jobs should take different time @high @done(25-01-03 10:03)
   ✔ Wearisome should check entertainment somehow like they check for work @done(25-01-03 15:19)
   Overlay:
+    ✔ tt-font rendering @done(25-01-05 12:27)
     ☐ make an overview for resources
     ☐ control game speed
     ☐ a game menu quit/new/...

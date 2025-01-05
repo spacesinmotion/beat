@@ -18,7 +18,17 @@
 #include "math.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
+#include <stdio.h>
 #include <stdlib.h>
+
+const char *str(const char *format, ...) {
+  static char b[256] = {0};
+  va_list args;
+  va_start(args, format);
+  vsnprintf(b, sizeof(b), format, args);
+  va_end(args);
+  return b;
+}
 
 void so_vec_push(SceneObjectVec *vec, SceneObject so) {
   if (vec->len + 1 > vec->cap) {
@@ -64,6 +74,19 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   so_vec_filter_dead(&gs->scene_objects);
 
   qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
+
+  if (gs->clicks != gs->click_counter_text_cache) {
+    g_create_text(g, &gs->click_counter_text, Assistant_Regular_12, str("%d", gs->clicks));
+    gs->click_counter_text_cache = gs->clicks;
+  }
+  if (gs->resource_pool.water != gs->water_counter_text_cache) {
+    g_create_text(g, &gs->water_counter_text, Assistant_Regular_8, str("%d", gs->resource_pool.water));
+    gs->water_counter_text_cache = gs->resource_pool.water;
+  }
+  if (gs->resource_pool.food != gs->food_counter_text_cache) {
+    g_create_text(g, &gs->food_counter_text, Assistant_Regular_8, str("%d", gs->resource_pool.food));
+    gs->food_counter_text_cache = gs->resource_pool.food;
+  }
 }
 
 bool gs_construction_available(GameScene *gs) {
@@ -76,6 +99,7 @@ bool gs_construction_available(GameScene *gs) {
 
 void gs_draw(GameScene *gs, Game *g) {
 
+  c_printf(g, "\n\n\n\n\n");
   c_printf(g, "----------------------\n");
   c_printf(g, " %10s: %g\n", "game speed", gs->game_paused ? 0.0f : gs->game_speed);
   c_printf(g, "----------------------\n");
@@ -125,6 +149,12 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   g_color(g, gs->daytime > 0.75 ? red() : white());
   g_objectRS(g, g_animation_buffer(g), Img_overlay_images, 0, clock_pos, -gs->daytime * M_PI * 2.0f, 2.0f);
   g_objectS(g, g_animation_buffer(g), Img_overlay_images, 1, clock_pos, 2.0f);
+
+  g_color(g, gray(25));
+  g_text(g, gs->click_counter_text, Assistant_Regular_12, (Vec2){5, g_viewport(g).h - 10});
+  g_color(g, gray(45));
+  g_text(g, gs->water_counter_text, Assistant_Regular_8, (Vec2){20, g_viewport(g).h - 8});
+  g_text(g, gs->food_counter_text, Assistant_Regular_8, (Vec2){30, g_viewport(g).h - 8});
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
@@ -198,6 +228,8 @@ typedef enum GameKeys {
 } GameKeys;
 
 void gs_key_up(GameScene *gs, Game *g, int key) {
+  (void)g;
+
   if (key == PAUSE_KEY) {
     gs->game_paused = !gs->game_paused;
   } else if (key == SPEED_1_KEY) {
@@ -258,6 +290,9 @@ void GameScene_init(Game *g) {
       .resource_pool_claimed = {.water = 0, .food = 0},
       .level = g_malloc(g, sizeof(Level)),
       .r = (Recti){-1, -1, 0, 0},
+      .click_counter_text_cache = -1,
+      .water_counter_text_cache = -1,
+      .food_counter_text_cache = -1,
   };
 
   l_init(gs->level);

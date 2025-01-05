@@ -30,6 +30,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "stb/stb_truetype.h"
+
 #define SOKOL_NO_ENTRY
 #define SOKOL_GLCORE
 #define SOKOL_DEBUGTEXT_IMPL
@@ -71,7 +74,8 @@ typedef struct vs_param_t {
 } vs_param_t;
 
 typedef struct fs_param_t {
-  float color[4];
+  Color color;
+  int color_mode;
 } fs_param_t;
 
 typedef struct Assets {
@@ -84,12 +88,20 @@ typedef struct TileRectBuffer {
   int w, h;
 } TileRectBuffer;
 
+typedef struct FontImage {
+  stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
+  sg_image texture;
+  float size;
+  int tw, th;
+} FontImage;
+
 typedef struct Game {
   sg_pipeline pipeline;
 
   struct {
     vs_param_t vs_param;
     fs_param_t fs_param;
+    sg_sampler texture_sampler;
     Vec2 camera_pan;
     float camera_scale;
     float overlay_scale;
@@ -97,9 +109,9 @@ typedef struct Game {
 
   TileRectBuffer tilerect_buffer[16];
   G_Object animation_buffer_4x4;
-  sg_sampler pixel_sampler;
 
   sg_image images[NB_Img];
+  FontImage fonts[Nb_Font];
 
   Scene scene;
 
@@ -115,29 +127,48 @@ Size g_viewport(Game *g) {
   return (Size){sapp_width() / g->render.overlay_scale, sapp_height() / g->render.overlay_scale};
 }
 
-void g_color(Game *game, Color c) {
-  game->render.fs_param.color[0] = c.r;
-  game->render.fs_param.color[1] = c.g;
-  game->render.fs_param.color[2] = c.b;
-  game->render.fs_param.color[3] = c.a;
-}
+void g_color(Game *game, Color c) { game->render.fs_param.color = c; }
 
 sg_image img_load(const char *path) {
   int ww = 0, hh = 0, channel = 0;
 
   uint8_t *pixels = stbi_load(path, &ww, &hh, &channel, 4);
-  printf("img: %s (%d,%d,%d)\n", path, ww, hh, channel);
   if (pixels) {
     sg_image img = sg_alloc_image();
     sg_init_image(img, &(sg_image_desc){.width = ww,
                                         .height = hh,
                                         .pixel_format = SG_PIXELFORMAT_RGBA8,
                                         .data = {.subimage[0][0] = {pixels, (ww * hh * 4)}}});
+    printf("img: %s (%d,%d,%d,%d)\n", path, ww, hh, channel, img.id);
     stbi_image_free(pixels);
     return img;
   }
   assert(false);
   return (sg_image){};
+}
+
+FontImage load_font(const char *path, int size) {
+  uint8_t *ttf_buffer = (uint8_t *)malloc(1048576);
+  FontImage f = {.size = size, .tw = 512, .th = 512};
+  uint8_t *temp_bitmap = (uint8_t *)calloc(f.tw * f.th, 4);
+
+  fread(ttf_buffer, 1ul, 1048576ul, fopen(path, "rb"));
+
+  stbtt_fontinfo font;
+  stbtt_InitFont(&font, ttf_buffer, 0);
+  const int r = stbtt_BakeFontBitmap(ttf_buffer, 0, 8 * size, temp_bitmap, f.tw, f.tw, 32, 96, f.cdata);
+  assert(r < 512);
+
+  f.texture = sg_alloc_image();
+  sg_init_image(f.texture, &(sg_image_desc){.width = f.tw,
+                                            .height = f.th,
+                                            .pixel_format = SG_PIXELFORMAT_R8,
+                                            .data = {.subimage[0][0] = {temp_bitmap, (f.tw * f.th * 1)}}});
+  printf("font: %s %d \n", path, size);
+
+  free(ttf_buffer);
+  free(temp_bitmap);
+  return f;
 }
 
 sg_image g_image(Game *g, Image img) {
@@ -146,7 +177,82 @@ sg_image g_image(Game *g, Image img) {
   return g->images[img];
 }
 
+const FontImage *g_font(Game *g, Font font) {
+  if (g->fonts[font].texture.id == 0)
+    g->fonts[font] = load_font(font_paths[font], font_size[font]);
+
+  return &g->fonts[font];
+}
+
+void g_create_text(Game *g, G_Object *o, Font ff, const char *text) {
+
+  G_Object_free(o);
+  const FontImage *f = g_font(g, ff);
+  vertex_t vertices[1024];
+  uint16_t indices[1024];
+  size_t vlen = 0, ilen = 0;
+  float x = 0.0f, y = -1.0f;
+  const char *t = &text[0];
+
+  for (; *t; ++t) {
+    switch (*t) {
+    case '\r':
+      x = 0.0f;
+    case '\n':
+      x = 0.0f;
+      y += f->size;
+    case '\t':
+      x = (x - fmodf(x, 2.0f)) + 2.0f;
+    default:
+      if ((int)(*t) >= 32 && (int)(*t) < 128) {
+        stbtt_aligned_quad q;
+        stbtt_GetBakedQuad(f->cdata, f->tw, f->th, (int)*t - 32, &x, &y, &q, 1);
+        vertex_t *vx = &vertices[vlen];
+        uint16_t *ix = &indices[ilen];
+        vx[0] =
+            (vertex_t){(Vec2){q.x0 / 8.0f, -q.y0 / 8.0f}, (uint16_t)((q.s0) * 65535.0), (uint16_t)((q.t0) * 65535.0)};
+        vx[1] =
+            (vertex_t){(Vec2){q.x1 / 8.0f, -q.y0 / 8.0f}, (uint16_t)((q.s1) * 65535.0), (uint16_t)((q.t0) * 65535.0)};
+        vx[2] =
+            (vertex_t){(Vec2){q.x1 / 8.0f, -q.y1 / 8.0f}, (uint16_t)((q.s1) * 65535.0), (uint16_t)((q.t1) * 65535.0)};
+        vx[3] =
+            (vertex_t){(Vec2){q.x0 / 8.0f, -q.y1 / 8.0f}, (uint16_t)((q.s0) * 65535.0), (uint16_t)((q.t1) * 65535.0)};
+
+        ix[0] = (vlen + 0ul);
+        ix[1] = (vlen + 1ul);
+        ix[2] = (vlen + 2ul);
+        ix[3] = (vlen + 0ul);
+        ix[4] = (vlen + 2ul);
+        ix[5] = (vlen + 3ul);
+
+        vlen += 4ul;
+        ilen += 6ul;
+      }
+    }
+  }
+  if (vlen == 0ul)
+    *o = (G_Object){0};
+  else {
+    *o = (G_Object){
+        .vertices = sg_make_buffer(&(sg_buffer_desc){
+                                       .type = SG_BUFFERTYPE_VERTEXBUFFER,
+                                       .data = (sg_range){vertices, sizeof(vertex_t) * vlen},
+                                       .label = "vertex-buffer",
+                                   })
+                        .id,
+        .indices = sg_make_buffer(&(sg_buffer_desc){
+                                      .type = SG_BUFFERTYPE_INDEXBUFFER,
+                                      .data = (sg_range){indices, sizeof(uint16_t) * ilen},
+                                      .label = "index-buffer",
+                                  })
+                       .id,
+        .num_elements = ilen,
+    };
+  }
+}
+
 void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {
+  g->render.fs_param.color_mode = 0;
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = 0.0f;
   g->render.vs_param.scale = 1.0f;
@@ -154,7 +260,23 @@ void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
   sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {g_image(g, tex)}, .samplers = {g->pixel_sampler}},
+      .fs = {.images = {g_image(g, tex)}, .samplers = {g->render.texture_sampler}},
+      .vertex_buffers = {{buffer.vertices}},
+      .index_buffer = {buffer.indices},
+  });
+  sg_draw(0, buffer.num_elements, 1);
+}
+
+void g_text(Game *g, G_Object buffer, Font f, Vec2 pan) {
+  g->render.fs_param.color_mode = 1;
+  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
+  g->render.vs_param.rot = 0.0f;
+  g->render.vs_param.scale = 1.0f;
+
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
+  sg_apply_bindings(&(sg_bindings){
+      .fs = {.images = {g_font(g, f)->texture}, .samplers = {g->render.texture_sampler}},
       .vertex_buffers = {{buffer.vertices}},
       .index_buffer = {buffer.indices},
   });
@@ -162,6 +284,7 @@ void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {
 }
 
 void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, float scale) {
+  g->render.fs_param.color_mode = 0;
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = rot;
   g->render.vs_param.scale = scale;
@@ -169,7 +292,7 @@ void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float 
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
   sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {g_image(g, tex)}, .samplers = {g->pixel_sampler}},
+      .fs = {.images = {g_image(g, tex)}, .samplers = {g->render.texture_sampler}},
       .vertex_buffers = {{buffer.vertices}},
       .index_buffer = {buffer.indices},
   });
@@ -350,7 +473,7 @@ static void g_init(Game *g) {
       0.0f,
       1.0f,
   };
-  g->render.fs_param = (fs_param_t){{1, 1, 1, 1}};
+  g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0};
 
   sg_setup(&(sg_desc){
       .environment = sglue_environment(),
@@ -401,6 +524,7 @@ static void g_init(Game *g) {
                    "\n"
                    "uniform sampler2D tex;\n"
                    "uniform vec4 color;\n"
+                   "uniform int color_mode;\n"
                    "\n"
                    "in vec2 p;\n"
                    "in vec2 uv;\n"
@@ -408,8 +532,13 @@ static void g_init(Game *g) {
                    "out vec4 frag_color;\n"
                    "\n"
                    "void main() {\n"
-                   "  vec4 c = texture(tex, uv) * vec4(vec3(1.0),1.0);\n"
-                   "  frag_color = vec4(vec3(color) * vec3(c), color.a * c.a);\n"
+                   "  if (color_mode == 0) {\n"
+                   "    vec4 c = texture(tex, uv);\n"
+                   "    frag_color = vec4(vec3(color) * vec3(c), color.a * c.a);\n"
+                   "  } else {\n"
+                   "    float a = texture(tex, uv).r * color.a;\n"
+                   "    frag_color = vec4(vec3(color), a);\n"
+                   "  }\n"
                    "}\n";
 
   sg_shader shader = sg_make_shader(&(sg_shader_desc){
@@ -432,14 +561,17 @@ static void g_init(Game *g) {
               .uniform_blocks = {{
                   .size = sizeof(fs_param_t),
                   .layout = SG_UNIFORMLAYOUT_NATIVE,
-                  .uniforms = {{"color", SG_UNIFORMTYPE_FLOAT4, 1}},
+                  .uniforms =
+                      {
+                          {"color", SG_UNIFORMTYPE_FLOAT4, 1},
+                          {"color_mode", SG_UNIFORMTYPE_INT, 1},
+                      },
               }},
               .images[0] = {.used = true, .image_type = SG_IMAGETYPE_2D, .sample_type = SG_IMAGESAMPLETYPE_FLOAT},
               .samplers[0] = {.used = true, .sampler_type = SG_SAMPLERTYPE_FILTERING},
               .image_sampler_pairs[0] = {.used = true, .image_slot = 0, .sampler_slot = 0, .glsl_name = "tex"},
           },
   });
-
   g->pipeline = sg_make_pipeline(&(sg_pipeline_desc){
       .shader = shader,
       .layout =
@@ -476,13 +608,13 @@ static void g_init(Game *g) {
   memset(g->tilerect_buffer, 0, sizeof(g->tilerect_buffer));
   g->animation_buffer_4x4 = quad_animation_buffer(-8, -8, 16, 16, 4, 4);
 
-  g->pixel_sampler = sg_make_sampler(&(sg_sampler_desc){
+  g->render.texture_sampler = sg_make_sampler(&(sg_sampler_desc){
       .min_filter = SG_FILTER_LINEAR,
       .mag_filter = SG_FILTER_LINEAR,
-      .mipmap_filter = SG_FILTER_NEAREST,
+      .mipmap_filter = SG_FILTER_LINEAR,
       .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
       .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-      .label = "pixel_sampler",
+      .label = "texture_sampler",
   });
 
   GameScene_init(g);
@@ -514,17 +646,20 @@ void g_update_console(Game *g) {
   sdtx_origin(1, 1);
 }
 
+Vec2 scale_for_screen(const float factor) {
+  return (Vec2){2.0f / sapp_widthf() * factor, 2.0f / sapp_heightf() * factor};
+}
+
 void g_draw_scene(Game *g) {
+  g->render.fs_param.color_mode = 0;
   if (g->scene.table->draw) {
-    g->render.vs_param.to_screen_scale =
-        (Vec2){2.0f / sapp_widthf() * g->render.camera_scale, 2.0f / sapp_heightf() * g->render.camera_scale};
+    g->render.vs_param.to_screen_scale = scale_for_screen(g->render.camera_scale);
     g->scene.table->draw(g->scene.context, g);
   }
 
   if (g->scene.table->draw_overlay) {
     Vec2 pan = g->render.camera_pan;
-    g->render.vs_param.to_screen_scale =
-        (Vec2){2.0f / sapp_widthf() * g->render.overlay_scale, 2.0f / sapp_heightf() * g->render.overlay_scale};
+    g->render.vs_param.to_screen_scale = scale_for_screen(g->render.overlay_scale);
     g->render.camera_pan = (Vec2){0.0f, 0.0};
     g->scene.table->draw_overlay(g->scene.context, g);
     g->render.camera_pan = pan;
@@ -544,6 +679,7 @@ static void g_draw(Game *g) {
 
   sg_apply_pipeline(g->pipeline);
   g_draw_scene(g);
+
   sdtx_draw();
 
   sg_end_pass();
