@@ -21,6 +21,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int count_places(int n) {
+  int p = 1;
+  while ((n /= 10) > 0)
+    ++p;
+  return p;
+}
+
 const char *str(const char *format, ...) {
   static char b[256] = {0};
   va_list args;
@@ -76,16 +83,21 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
 
   if (gs->clicks != gs->click_counter_text_cache) {
-    g_create_text(g, &gs->click_counter_text, Assistant_Regular_12, str("%d", gs->clicks));
+    g_create_text(g, &gs->click_counter_text, Oswald_Regular_12, str("%d", gs->clicks));
     gs->click_counter_text_cache = gs->clicks;
   }
   if (gs->resource_pool.water != gs->water_counter_text_cache) {
-    g_create_text(g, &gs->water_counter_text, Assistant_Regular_8, str("%d", gs->resource_pool.water));
+    g_create_text(g, &gs->water_counter_text, Oswald_Regular_8, str("%d", gs->resource_pool.water));
     gs->water_counter_text_cache = gs->resource_pool.water;
   }
   if (gs->resource_pool.food != gs->food_counter_text_cache) {
-    g_create_text(g, &gs->food_counter_text, Assistant_Regular_8, str("%d", gs->resource_pool.food));
+    g_create_text(g, &gs->food_counter_text, Oswald_Regular_8, str("%d", gs->resource_pool.food));
     gs->food_counter_text_cache = gs->resource_pool.food;
+  }
+  if (gs->resource_pool.construction_material != gs->construction_material_counter_text_cache) {
+    g_create_text(g, &gs->construction_material_counter_text, Oswald_Regular_8,
+                  str("%d", gs->resource_pool.construction_material));
+    gs->construction_material_counter_text_cache = gs->resource_pool.construction_material;
   }
 }
 
@@ -99,16 +111,13 @@ bool gs_construction_available(GameScene *gs) {
 
 void gs_draw(GameScene *gs, Game *g) {
 
-  c_printf(g, "\n\n\n\n\n");
+  c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
+  c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
   c_printf(g, "----------------------\n");
   c_printf(g, " %10s: %g\n", "game speed", gs->game_paused ? 0.0f : gs->game_speed);
   c_printf(g, "----------------------\n");
   c_printf(g, " %10s: %d\n", "day", gs->day);
   c_printf(g, " %10s: %f\n", "daytime", gs->daytime);
-  c_printf(g, "----------------------\n\n");
-  c_printf(g, " %10s: %d\n", "clicks", gs->clicks);
-  c_printf(g, " %10s: %d\n", "water", gs->resource_pool.water);
-  c_printf(g, " %10s: %d\n", "food", gs->resource_pool.food);
   c_printf(g, "----------------------\n\n");
   c_printf(g, " %10s: %d\n", "all $", gs->clicks_in_houses + gs->clicks);
   c_printf(g, " %10s: %d\n", "spread $", gs->clicks_in_houses);
@@ -134,11 +143,11 @@ void gs_draw(GameScene *gs, Game *g) {
 }
 
 void gs_draw_overlay(GameScene *gs, Game *g) {
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < NB_Img; ++i) {
     g_color(g, i == gs->menu_under_mouse ? gray(100) : (gs->menu_selected == i ? gray(25) : gray(75)));
     g_object(g, g_animation_buffer(g), Img_menubar, i % 16, (Vec2){8 + 4 + i * 16, 8 + 4});
   }
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < NB_Img; ++i) {
     g_color(g, i == gs->menu_under_mouse ? red() : (gs->menu_selected == i ? green() : blue()));
     g_object(g, g_animation_buffer(g), Img_marker, i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4,
              (Vec2){8 + 4 + i * 16, 8 + 4});
@@ -150,11 +159,26 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   g_objectRS(g, g_animation_buffer(g), Img_overlay_images, 0, clock_pos, -gs->daytime * M_PI * 2.0f, 2.0f);
   g_objectS(g, g_animation_buffer(g), Img_overlay_images, 1, clock_pos, 2.0f);
 
-  g_color(g, gray(25));
-  g_text(g, gs->click_counter_text, Assistant_Regular_12, (Vec2){5, g_viewport(g).h - 10});
+  g_color(g, rgb(150, 150, 150));
+  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){0, g_viewport(g).h - 52}, 2.5f);
+  g_color(g, rgb(182, 205, 70));
+  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){15, g_viewport(g).h - 3}, 3.0f);
+  g_color(g, gray(75));
+  g_object(g, g_animation_buffer(g), Img_menubar, MI_Click, (Vec2){9, g_viewport(g).h - 9});
+  g_text(g, gs->click_counter_text, Oswald_Regular_12, (Vec2){15, g_viewport(g).h - 13});
+
+  g_color(g, rgb(85, 154, 139));
+  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){5, g_viewport(g).h - 40}, 2.75f);
+
+  const float o = 12;
+  float h = g_viewport(g).h - 30;
   g_color(g, gray(45));
-  g_text(g, gs->water_counter_text, Assistant_Regular_8, (Vec2){20, g_viewport(g).h - 8});
-  g_text(g, gs->food_counter_text, Assistant_Regular_8, (Vec2){30, g_viewport(g).h - 8});
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Water, (Vec2){5, h - 0 * o + 2}, 0.75f);
+  g_text(g, gs->water_counter_text, Oswald_Regular_8, (Vec2){10, h - 0 * o});
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Food, (Vec2){5, h - 1 * o + 2}, 0.75f);
+  g_text(g, gs->food_counter_text, Oswald_Regular_8, (Vec2){10, h - 1 * o});
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_ConstructionMaterial, (Vec2){5, h - 2 * o + 2}, 0.75f);
+  g_text(g, gs->construction_material_counter_text, Oswald_Regular_8, (Vec2){10, h - 2 * o});
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
@@ -179,29 +203,29 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   } else if (button == 0) {
     if (gs->menu_under_mouse >= 0) {
       gs->menu_selected = gs->menu_under_mouse;
-      if (gs->menu_selected == 0) {
+      if (gs->menu_selected == MI_Street) {
         gs->preview = Street_color();
         gs->r.w = gs->r.h = 1;
-      } else if (gs->menu_selected == 1) {
+      } else if (gs->menu_selected == MI_Marketplace) {
         gs->preview = mp_color();
         gs->r.w = 4;
         gs->r.h = 3;
-      } else if (gs->menu_selected == 2) {
+      } else if (gs->menu_selected == MI_House) {
         gs->preview = h_color();
         gs->r.w = gs->r.h = 2;
-      } else if (gs->menu_selected == 3) {
+      } else if (gs->menu_selected == MI_Water) {
         gs->preview = wl_color();
         gs->r.w = 2;
         gs->r.h = 3;
-      } else if (gs->menu_selected == 4) {
+      } else if (gs->menu_selected == MI_Food) {
         gs->preview = fa_color();
         gs->r.w = 4;
         gs->r.h = 4;
-      } else if (gs->menu_selected == 5) {
+      } else if (gs->menu_selected == MI_Click) {
         gs->preview = cf_color();
         gs->r.w = 3;
         gs->r.h = 3;
-      } else if (gs->menu_selected == 6) {
+      } else if (gs->menu_selected == MI_Entertainment) {
         gs->preview = em_color();
         gs->r.w = 3;
         gs->r.h = 2;
@@ -253,17 +277,17 @@ void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
   if (key == 0) {
     l_set_movable(gs->level, r.x, r.y, true);
     StreetMap_update(gs->street_map);
-  } else if (key == 1) {
+  } else if (key == MI_Marketplace) {
     Marketplace_init(g, gs, (Point){r.x, r.y});
-  } else if (key == 2) {
+  } else if (key == MI_House) {
     Wearisome_House_init(g, gs, (Point){r.x, r.y});
-  } else if (key == 3) {
+  } else if (key == MI_Water) {
     Well_init(g, gs, (Point){r.x, r.y});
-  } else if (key == 4) {
+  } else if (key == MI_Food) {
     Farm_init(g, gs, (Point){r.x, r.y});
-  } else if (key == 5) {
+  } else if (key == MI_Click) {
     ClickFactory_init(g, gs, (Point){r.x, r.y});
-  } else if (key == 6) {
+  } else if (key == MI_Entertainment) {
     Entertainment_init(g, gs, (Point){r.x, r.y});
   }
 }
@@ -286,13 +310,14 @@ void GameScene_init(Game *g) {
       .day = 1,
       .daytime = 0.0f,
       .clicks = 0,
-      .resource_pool = {.water = 25, .food = 20},
-      .resource_pool_claimed = {.water = 0, .food = 0},
+      .resource_pool = {.water = 25, .food = 20, .construction_material = 40},
+      .resource_pool_claimed = {.water = 0, .food = 0, .construction_material = 0},
       .level = g_malloc(g, sizeof(Level)),
       .r = (Recti){-1, -1, 0, 0},
       .click_counter_text_cache = -1,
       .water_counter_text_cache = -1,
       .food_counter_text_cache = -1,
+      .construction_material_counter_text_cache = -1,
   };
 
   l_init(gs->level);

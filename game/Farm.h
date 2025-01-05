@@ -5,6 +5,7 @@
 #include "game/Level.h"
 #include "game/TileContent.h"
 #include "game/WorkProvider.h"
+#include "game/assets.h"
 #include <assert.h>
 
 typedef struct Farm {
@@ -47,9 +48,9 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
   g_color(g, fa_color());
   g_buffer(g, fa->buffer, Img_house_map, p);
   g_color(g, white());
-  g_object(g, g_animation_buffer(g), Img_menubar, 4, p);
+  g_object(g, g_animation_buffer(g), Img_menubar, MI_Food, p);
   if (fa->temporary_deliver_timer > 0.0f)
-    g_object(g, g_animation_buffer(g), Img_menubar, 7, v_add(p, l_to_vec(0, 1)));
+    g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&fa->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }

@@ -15,7 +15,7 @@ typedef struct SceneObjectVec {
 } SceneObjectVec;
 
 typedef struct Stuff {
-  int water, food;
+  int water, food, construction_material;
 } Stuff;
 
 typedef struct GameScene {
@@ -42,12 +42,12 @@ typedef struct GameScene {
 
   G_Object click_counter_text;
   int click_counter_text_cache;
-
   G_Object water_counter_text;
   int water_counter_text_cache;
-
   G_Object food_counter_text;
   int food_counter_text_cache;
+  G_Object construction_material_counter_text;
+  int construction_material_counter_text_cache;
 } GameScene;
 
 typedef struct GameScene GameScene;

@@ -16,6 +16,20 @@ typedef enum Image {
   NB_Img,
 } Image;
 
+typedef enum MenuIcon {
+  MI_Street,
+  MI_Marketplace,
+  MI_House,
+  MI_Water,
+  MI_Food,
+  MI_Click,
+  MI_Entertainment,
+  MI_ConstructionMaterial,
+  MI_IndustryOrResearch,
+  MI_Logistics,
+  Nb_MI,
+} MenuIcon;
+
 static const char *image_paths[NB_Img] = {
     "assets/tilemap.png",        //
     "assets/house_map.png",      //
@@ -32,14 +46,20 @@ static const char *image_paths[NB_Img] = {
 typedef enum Font {
   Assistant_Regular_8 = 0,
   Assistant_Regular_12,
+  Oswald_Regular_8,
+  Oswald_Regular_12,
   Nb_Font,
 } Font;
 
 static const char *font_paths[Nb_Font] = {
     "assets/Assistant-Regular.ttf", //
     "assets/Assistant-Regular.ttf", //
+    "assets/Oswald-Regular.ttf",    //
+    "assets/Oswald-Regular.ttf",    //
 };
 static int font_size[Nb_Font] = {
+    8,  //
+    12, //
     8,  //
     12, //
 };

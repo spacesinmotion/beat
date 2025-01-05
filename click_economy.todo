@@ -34,7 +34,7 @@ Gameplay:
   ✔ Wearisome should check entertainment somehow like they check for work @done(25-01-03 15:19)
   Overlay:
     ✔ tt-font rendering @done(25-01-05 12:27)
-    ☐ make an overview for resources
+    ✔ make an overview for resources @done(25-01-05 14:48)
     ☐ control game speed
     ☐ a game menu quit/new/...
 

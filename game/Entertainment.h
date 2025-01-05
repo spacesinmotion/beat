@@ -5,6 +5,7 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
+#include "game/assets.h"
 #include <assert.h>
 
 typedef struct Entertainment {
@@ -39,7 +40,7 @@ void em_draw(Entertainment *em, GameScene *gs, Game *g) {
   g_color(g, em_color());
   g_buffer(g, em->buffer, Img_house_map, p);
   g_color(g, white());
-  g_object(g, g_animation_buffer(g), Img_menubar, 6, p);
+  g_object(g, g_animation_buffer(g), Img_menubar, MI_Entertainment, p);
 
   Point o[] = {{1, 1}, {2, 1}};
   for (int i = 0; i < 2; ++i) {

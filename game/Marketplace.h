@@ -39,7 +39,7 @@ void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {
   g_color(g, mp_color());
   g_buffer(g, mp->buffer, Img_house_map, p);
   g_color(g, white());
-  g_object(g, g_animation_buffer(g), Img_menubar, 1, p);
+  g_object(g, g_animation_buffer(g), Img_menubar, MI_Marketplace, p);
 }
 
 static SceneObjectTable Marketplace_table = (SceneObjectTable){
