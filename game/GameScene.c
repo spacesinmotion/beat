@@ -21,13 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int count_places(int n) {
-  int p = 1;
-  while ((n /= 10) > 0)
-    ++p;
-  return p;
-}
-
 const char *str(const char *format, ...) {
   static char b[256] = {0};
   va_list args;
@@ -143,11 +136,11 @@ void gs_draw(GameScene *gs, Game *g) {
 }
 
 void gs_draw_overlay(GameScene *gs, Game *g) {
-  for (int i = 0; i < NB_Img; ++i) {
+  for (int i = 0; i < Nb_MI; ++i) {
     g_color(g, i == gs->menu_under_mouse ? gray(100) : (gs->menu_selected == i ? gray(25) : gray(75)));
     g_object(g, g_animation_buffer(g), Img_menubar, i % 16, (Vec2){8 + 4 + i * 16, 8 + 4});
   }
-  for (int i = 0; i < NB_Img; ++i) {
+  for (int i = 0; i < Nb_MI; ++i) {
     g_color(g, i == gs->menu_under_mouse ? red() : (gs->menu_selected == i ? green() : blue()));
     g_object(g, g_animation_buffer(g), Img_marker, i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4,
              (Vec2){8 + 4 + i * 16, 8 + 4});
@@ -187,7 +180,7 @@ void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   gs->r.y = (int)((mp.y + 8) / 16.0f);
 
   gs->menu_under_mouse = -1;
-  for (int i = 0; i < 10; ++i)
+  for (int i = 0; i < Nb_MI; ++i)
     if (r_contains((Rect){(Vec2){4 + i * 16, 4}, (Vec2){16, 16}}, op))
       gs->menu_under_mouse = i;
 }

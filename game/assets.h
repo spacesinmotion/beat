@@ -27,6 +27,7 @@ typedef enum MenuIcon {
   MI_ConstructionMaterial,
   MI_IndustryOrResearch,
   MI_Logistics,
+  MI_WareHouse,
   Nb_MI,
 } MenuIcon;
 
