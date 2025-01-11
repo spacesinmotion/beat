@@ -30,6 +30,7 @@ typedef struct GameScene {
   int clicks, clicks_produced, clicks_lost, clicks_in_houses;
   Stuff resource_pool;
   Stuff resource_pool_claimed;
+  Stuff resource_pool_max;
 
   Color preview;
   Recti r;

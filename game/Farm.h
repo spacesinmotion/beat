@@ -30,9 +30,13 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
   (void)g;
 
   if (fa->temporary_deliver_timer > 0.0f) {
-    if ((fa->temporary_deliver_timer -= dt) <= 0.0f) {
-      gs->resource_pool.food += 9;
-      wp_reset(&fa->work_provider);
+    fa->temporary_deliver_timer -= dt;
+    if (fa->temporary_deliver_timer <= 0.0f) {
+      if (gs->resource_pool.food + 9 <= gs->resource_pool_max.food) {
+        gs->resource_pool.food += 9;
+        wp_reset(&fa->work_provider);
+      } else
+        fa->temporary_deliver_timer = 1.0f;
     }
   } else if (wp_is_done(&fa->work_provider)) {
     fa->temporary_deliver_timer = 5.0;

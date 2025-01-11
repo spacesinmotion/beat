@@ -29,9 +29,13 @@ void wl_update(Well *wl, GameScene *gs, Game *g, float dt) {
   (void)g;
 
   if (wl->temporary_deliver_timer > 0.0f) {
-    if ((wl->temporary_deliver_timer -= dt) <= 0.0f) {
-      gs->resource_pool.water += 9;
-      wp_reset(&wl->work_provider);
+    wl->temporary_deliver_timer -= dt;
+    if (wl->temporary_deliver_timer <= 0.0f) {
+      if (gs->resource_pool.water + 2 <= gs->resource_pool_max.water) {
+        gs->resource_pool.water += 2;
+        wp_reset(&wl->work_provider);
+      } else
+        wl->temporary_deliver_timer = 1.0f;
     }
   } else if (wp_is_done(&wl->work_provider)) {
     wl->temporary_deliver_timer = 5.0;

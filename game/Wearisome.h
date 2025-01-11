@@ -515,14 +515,14 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
       .destination = pos,
       .path = NULL,
       .needs = {.food = 1.0f, .water = 1.0f, .sleep = 1.0f},
-      .need_consumption = {.food = r_float_r(0.25f, 0.4f),
-                           .water = r_float_r(0.5f, 0.75f),
+      .need_consumption = {.food = r_float_r(0.2f, 0.3f),
+                           .water = r_float_r(0.4f, 0.6f),
                            .sleep = r_float_r(0.4f, 0.7f)},
       .health = 1.0f,
       .deliver_job = NULL,
       .state = W_AtHome,
       .needs_click = false,
-      .speed = r_float_r(60.0f, 70.0f),
+      .speed = r_float_r(60.0f, 75.0f),
   };
   gs_add_object(gs, (SceneObject){.context = w, &w_table});
   return w;

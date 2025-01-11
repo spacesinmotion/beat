@@ -80,16 +80,18 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     gs->click_counter_text_cache = gs->clicks;
   }
   if (gs->resource_pool.water != gs->water_counter_text_cache) {
-    g_create_text(g, &gs->water_counter_text, Oswald_Regular_8, str("%d", gs->resource_pool.water));
+    g_create_text(g, &gs->water_counter_text, Oswald_Regular_8,
+                  str("%d/%d", gs->resource_pool.water, gs->resource_pool_max.water));
     gs->water_counter_text_cache = gs->resource_pool.water;
   }
   if (gs->resource_pool.food != gs->food_counter_text_cache) {
-    g_create_text(g, &gs->food_counter_text, Oswald_Regular_8, str("%d", gs->resource_pool.food));
+    g_create_text(g, &gs->food_counter_text, Oswald_Regular_8,
+                  str("%d/%d", gs->resource_pool.food, gs->resource_pool_max.food));
     gs->food_counter_text_cache = gs->resource_pool.food;
   }
   if (gs->resource_pool.construction_material != gs->construction_material_counter_text_cache) {
     g_create_text(g, &gs->construction_material_counter_text, Oswald_Regular_8,
-                  str("%d", gs->resource_pool.construction_material));
+                  str("%d/%d", gs->resource_pool.construction_material, gs->resource_pool_max.construction_material));
     gs->construction_material_counter_text_cache = gs->resource_pool.construction_material;
   }
 }
@@ -98,8 +100,8 @@ bool gs_construction_available(GameScene *gs) {
   if (!l_freeR(gs->level, gs->r))
     return false;
   if (gs->menu_selected == 0)
-    return gs->clicks > 1;
-  return gs->clicks > 0;
+    return gs->clicks > 1 && gs->resource_pool.construction_material > 0;
+  return gs->resource_pool.construction_material > 0;
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -227,7 +229,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
       }
     } else if (gs->menu_selected >= 0) {
       if (gs_construction_available(gs)) {
-        gs_loose_click(gs);
+        gs->resource_pool.construction_material--;
         ConstructionSite_init(g, gs, gs->r, gs->menu_selected);
       }
     } else {
@@ -302,9 +304,10 @@ void GameScene_init(Game *g) {
       .menu_selected = -1,
       .day = 1,
       .daytime = 0.0f,
-      .clicks = 0,
-      .resource_pool = {.water = 25, .food = 20, .construction_material = 40},
+      .clicks = 4,
+      .resource_pool = {.water = 25, .food = 25, .construction_material = 30},
       .resource_pool_claimed = {.water = 0, .food = 0, .construction_material = 0},
+      .resource_pool_max = {.water = 30, .food = 30, .construction_material = 30},
       .level = g_malloc(g, sizeof(Level)),
       .r = (Recti){-1, -1, 0, 0},
       .click_counter_text_cache = -1,
@@ -327,10 +330,10 @@ void GameScene_init(Game *g) {
   for (int i = 1; i < 26; ++i)
     l_set_movable(gs->level, 21, i, true);
   for (int i = 0; i < 3; ++i) {
-    h_earn_click(Wearisome_House_init(g, gs, (Point){14, 10 + 4 + 2 * i}), rand() % 3 + 1);
+    // h_earn_click(Wearisome_House_init(g, gs, (Point){14, 10 + 4 + 2 * i}), rand() % 3 + 1);
     h_earn_click(Wearisome_House_init(g, gs, (Point){17, 10 + 4 + 2 * i}), rand() % 3 + 1);
     h_earn_click(Wearisome_House_init(g, gs, (Point){19, 10 + 4 + 2 * i}), rand() % 3 + 1);
-    h_earn_click(Wearisome_House_init(g, gs, (Point){22, 10 + 4 + 2 * i}), rand() % 3 + 1);
+    // h_earn_click(Wearisome_House_init(g, gs, (Point){22, 10 + 4 + 2 * i}), rand() % 3 + 1);
   }
 
   gs->street_map = StreetMap_init(g, gs);
