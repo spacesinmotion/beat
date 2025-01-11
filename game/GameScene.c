@@ -98,8 +98,8 @@ bool gs_construction_available(GameScene *gs) {
   if (!l_freeR(gs->level, gs->r))
     return false;
   if (gs->menu_selected == 0)
-    return gs->clicks > 2;
-  return gs->clicks > 1;
+    return gs->clicks > 1;
+  return gs->clicks > 0;
 }
 
 void gs_draw(GameScene *gs, Game *g) {
