@@ -16,9 +16,9 @@ Gameplay:
     ✔ wood, stone, bricks, ?? -> construction material @done(25-01-11 12:23)
     ✔ construction should take resources @done(25-01-11 12:23)
   Structures:
-    ✔ wearisome at home marker for house @high @done(25-01-11 14:46)
-    ☐ improve house display
     ☐ some animation for earning/lossing clicks 
+    ✔ wearisome at home marker for house @high @done(25-01-11 14:46)
+    ✔ improve house display @done(25-01-11 15:03)
     ✔ search for structures that provide resources -> hard coded marketplace @critical @done(25-01-02 14:12)
     ✔ different icons for entertainment/buildings filled by wearisome on their own @done(25-01-04 10:12)
     ✘ clicks should be more expensive -> bigger click factory, a church/bank @cancelled(25-01-11 12:24)

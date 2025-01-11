@@ -21,6 +21,9 @@ typedef struct House {
   Resources resources;
   Resources resources_maximum;
 
+  G_Object clicks_text;
+  int clicks_cache;
+
   bool highlight;
   bool wearisome_at_home;
   bool wearisome_dead;
@@ -82,6 +85,11 @@ void h_update(House *h, GameScene *gs, Game *g, float dt) {
   (void)dt;
 
   gs->clicks_in_houses += h->resources.clicks;
+
+  if (h->clicks_cache != h->resources.clicks) {
+    g_create_text(g, &h->clicks_text, Oswald_Regular_12, str("%4.d", h->resources.clicks));
+    h->clicks_cache = h->resources.clicks;
+  }
 }
 
 void h_draw(House *h, GameScene *gs, Game *g) {
@@ -100,13 +108,15 @@ void h_draw(House *h, GameScene *gs, Game *g) {
   Vec2 p = l_to_vecP(ri_bottom_right(h->location));
   g_color(g, h->wearisome_dead ? rgb(0, 0, 0) : h_color());
   g_buffer(g, h->buffer, Img_house_map, p);
+  g_color(g, white());
+  g_object(g, g_animation_buffer(g), Img_menubar, MI_House, p);
 
   float x = h->resources.water / h->resources_maximum.water;
   g_color(g, warn(x));
   for (int i = 0; i < 6; ++i) {
     if (i / 6.0f >= x)
       break;
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){-2, -2 + 4 * i}), 0.25);
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){-2, 8 + 2 * i}), 0.25);
   }
 
   x = h->resources.food / h->resources_maximum.food;
@@ -114,16 +124,14 @@ void h_draw(House *h, GameScene *gs, Game *g) {
   for (int i = 0; i < 6; ++i) {
     if (i / 6.0f >= x)
       break;
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, -2 + 4 * i}), 0.25);
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, 8 + 2 * i}), 0.25);
   }
 
   g_color(g, white());
   g_objectS(g, g_animation_buffer(g), Img_wearisome, h->wearisome_at_home ? 14 : 15, v_add(p, l_to_vec(1, 1)), 0.75f);
 
   g_color(g, rgb(255, 215, 0));
-  for (int i = 0; i < h->resources.clicks; ++i) {
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){20, -2 + 4 * i}), 0.25);
-  }
+  g_text(g, h->clicks_text, Oswald_Regular_12, v_add(p, (Vec2){12, -5}));
 }
 
 static SceneObjectTable House_table = (SceneObjectTable){
@@ -139,6 +147,7 @@ House *House_init(Game *g, GameScene *gs, Point p) {
       .location = {p.x, p.y, 2, 2},
       .resources = {.food = 0.0f, .water = 0.0f, .clicks = 0},
       .resources_maximum = {.food = 2.0f, .water = 2.0f, .clicks = 0},
+      .clicks_cache = -1,
       .highlight = false,
       .wearisome_at_home = true,
       .wearisome_dead = false,
