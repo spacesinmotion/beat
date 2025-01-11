@@ -6,6 +6,7 @@
 #include "game/Level.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
+#include "math/Color.h"
 #include "math/Rect.h"
 
 typedef struct Resources {
@@ -21,6 +22,7 @@ typedef struct House {
   Resources resources_maximum;
 
   bool highlight;
+  bool wearisome_at_home;
   bool wearisome_dead;
 } House;
 
@@ -115,6 +117,9 @@ void h_draw(House *h, GameScene *gs, Game *g) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, -2 + 4 * i}), 0.25);
   }
 
+  g_color(g, white());
+  g_objectS(g, g_animation_buffer(g), Img_wearisome, h->wearisome_at_home ? 14 : 15, v_add(p, l_to_vec(1, 1)), 0.75f);
+
   g_color(g, rgb(255, 215, 0));
   for (int i = 0; i < h->resources.clicks; ++i) {
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){20, -2 + 4 * i}), 0.25);
@@ -135,6 +140,7 @@ House *House_init(Game *g, GameScene *gs, Point p) {
       .resources = {.food = 0.0f, .water = 0.0f, .clicks = 0},
       .resources_maximum = {.food = 2.0f, .water = 2.0f, .clicks = 0},
       .highlight = false,
+      .wearisome_at_home = true,
       .wearisome_dead = false,
   };
 

@@ -369,6 +369,7 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
   else
     w->health = f_min(1.0f, w->health + gs->daytime_step / 8.0f);
 
+  w->home->wearisome_at_home = w->state == W_AtHome;
   if ((w->home->wearisome_dead = w->health <= 0.0f))
     return;
 
