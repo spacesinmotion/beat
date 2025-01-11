@@ -64,16 +64,6 @@ static SceneObjectTable ClickFactory_table = {
     .draw = (SceneObjectDrawCB)cf_draw,
 };
 
-void cf_done(WorkProvider *cf, GameScene *gs, Resource r) {
-  assert(r == R_Work);
-
-  cf->clicks_done++;
-  if (cf->clicks_done == 4) {
-    cf->clicks = cf->clicks_claimed = cf->clicks_work = cf->clicks_done = 0;
-    gs_produce_click(gs);
-  }
-}
-
 ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   ClickFactory *cf = g_malloc(g, sizeof(ClickFactory));
   *cf = (ClickFactory){

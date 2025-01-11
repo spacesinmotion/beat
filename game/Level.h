@@ -20,6 +20,7 @@ typedef enum TileType {
   T_Farm,
   T_ClickFactory,
   T_Entertainment,
+  T_ConstructionMaterialFactory,
 
   T_Movable = 1 << 7,
 } TileType;
@@ -149,7 +150,7 @@ bool l_bright_first(Level *level, int start_x, int start_y, SearchHandle handle)
   q_enqueue(&q, (Point){start_x, start_y});
   predecessor[start_x][start_y] = (Point){start_x, start_y}; // self
 
-  int directions[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+  const int directions[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
   while (!q_is_queue_empty(&q)) {
     Point p = q_dequeue(&q);

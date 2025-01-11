@@ -6,19 +6,21 @@ Gameplay:
   ☐ if wearisome gets dead, the house should become a constructionside again
   ☐ _maybe_ leaving buildings faster and more direct
   ☐ need bigger construction objects -> should bind a lot of people
+  ☐ city tiers -> more people more options
+  ☐ research -> new levels new / better buildings
   ✔ SceneObjects need Game pointer in update function @done(25-01-05 16:26)
   ✔ control game speed pause, normal, fast, faster @done(25-01-04 10:56)
   ✔ start a any construction costs one click!!?!! @done(25-01-04 12:22)
   Resources:
-    ☐ wood, stone, bricks, ?? -> building stuff
-    ☐ construction should take resources
+    ✔ wood, stone, bricks, ?? -> construction material @done(25-01-11 12:23)
+    ✔ construction should take resources @done(25-01-11 12:23)
   Structures:
     ☐ wearisome at home marker for house @high 
     ☐ improve house display
     ☐ some animation for earning/lossing clicks 
-    ☐ clicks should be more expensive -> bigger click factory, a church/bank
     ✔ search for structures that provide resources -> hard coded marketplace @critical @done(25-01-02 14:12)
     ✔ different icons for entertainment/buildings filled by wearisome on their own @done(25-01-04 10:12)
+    ✘ clicks should be more expensive -> bigger click factory, a church/bank @cancelled(25-01-11 12:24)
     ✘ reduce amount of food produced -> use size of market place @cancelled(25-01-04 15:05)
     warning signs:
       ☐ has resources 

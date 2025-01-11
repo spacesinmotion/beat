@@ -1,6 +1,7 @@
 
 #include "game/GameScene.h"
 #include "game/ClickFactory.h"
+#include "game/ConstructionMaterialFactory.h"
 #include "game/ConstructionSite.h"
 #include "game/Entertainment.h"
 #include "game/Farm.h"
@@ -99,9 +100,8 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 bool gs_construction_available(GameScene *gs) {
   if (!l_freeR(gs->level, gs->r))
     return false;
-  if (gs->menu_selected == 0)
-    return gs->clicks > 1 && gs->resource_pool.construction_material > 0;
-  return gs->resource_pool.construction_material > 0;
+  const int needed_clicks = (gs->menu_selected == 0) ? 2 : 1;
+  return gs->clicks >= needed_clicks && gs->resource_pool.construction_material >= gs->r.w * gs->r.h;
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -224,12 +224,17 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->preview = em_color();
         gs->r.w = 3;
         gs->r.h = 2;
+      } else if (gs->menu_selected == MI_ConstructionMaterial) {
+        gs->preview = cmf_color();
+        gs->r.w = 3;
+        gs->r.h = 2;
       } else {
         gs->r.w = gs->r.h = 0;
       }
     } else if (gs->menu_selected >= 0) {
-      if (gs_construction_available(gs)) {
-        gs->resource_pool.construction_material--;
+      if (gs_construction_available(gs) && gs->r.w * gs->r.w > 0) {
+        gs_loose_click(gs);
+        gs->resource_pool.construction_material -= gs->r.w * gs->r.w;
         ConstructionSite_init(g, gs, gs->r, gs->menu_selected);
       }
     } else {
@@ -284,6 +289,8 @@ void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
     ClickFactory_init(g, gs, (Point){r.x, r.y});
   } else if (key == MI_Entertainment) {
     Entertainment_init(g, gs, (Point){r.x, r.y});
+  } else if (key == MI_ConstructionMaterial) {
+    ConstructionMaterialFactory_init(g, gs, (Point){r.x, r.y});
   }
 }
 SceneTable GameScene_table = {
