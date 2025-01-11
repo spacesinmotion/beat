@@ -17,6 +17,7 @@
 #include "game/assets.h"
 #include "gc/gc.h"
 #include "math.h"
+#include "math/Color.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
 #include <stdio.h>
@@ -77,7 +78,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
 
   if (gs->clicks != gs->click_counter_text_cache) {
-    g_create_text(g, &gs->click_counter_text, Oswald_Regular_12, str("%d", gs->clicks));
+    g_create_text(g, &gs->click_counter_text, Oswald_Regular_12, str("%.2d", gs->clicks));
     gs->click_counter_text_cache = gs->clicks;
   }
   if (gs->resource_pool.water != gs->water_counter_text_cache) {
@@ -174,6 +175,13 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   g_text(g, gs->food_counter_text, Oswald_Regular_8, (Vec2){10, h - 1 * o});
   g_objectS(g, g_animation_buffer(g), Img_menubar, MI_ConstructionMaterial, (Vec2){5, h - 2 * o + 2}, 0.75f);
   g_text(g, gs->construction_material_counter_text, Oswald_Regular_8, (Vec2){10, h - 2 * o});
+
+  if (tc_can_click(l_content(gs->level, gs->r.x, gs->r.y))) {
+    g_color(g, gray(45));
+    g_object(g, g_animation_buffer(g), Img_wearisome, 12, v_add(gs->mouse_overlay_position, (Vec2){13, -9}));
+    g_color(g, gray(215));
+    g_text(g, gs->click_counter_text, Oswald_Regular_12, v_add(gs->mouse_overlay_position, (Vec2){10, -12}));
+  }
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
@@ -181,6 +189,7 @@ void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   gs->r.x = (int)((mp.x + 8) / 16.0f);
   gs->r.y = (int)((mp.y + 8) / 16.0f);
 
+  gs->mouse_overlay_position = op;
   gs->menu_under_mouse = -1;
   for (int i = 0; i < Nb_MI; ++i)
     if (r_contains((Rect){(Vec2){4 + i * 16, 4}, (Vec2){16, 16}}, op))

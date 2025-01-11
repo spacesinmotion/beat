@@ -49,6 +49,8 @@ typedef struct GameScene {
   int food_counter_text_cache;
   G_Object construction_material_counter_text;
   int construction_material_counter_text_cache;
+
+  Vec2 mouse_overlay_position;
 } GameScene;
 
 typedef struct GameScene GameScene;

@@ -2,13 +2,13 @@ Bugs:
   ☐ sometimes path construction side is not removed -> thay instantly start next work I think
   
 Gameplay:
-  ☐ show remaining clicks near mouse @high
+  ✔ show remaining clicks near mouse @high @done(25-01-11 15:22)
   ☐ right click should stop a construction -> unspent clicks are returned -> remove construction tile claim
   ☐ if wearisome gets dead, the house should become a constructionside again
   ☐ _maybe_ leaving buildings faster and more direct
-  ☐ need bigger construction objects -> should bind a lot of people
   ☐ city tiers -> more people more options
   ☐ research -> new levels new / better buildings
+  ☐ need bigger construction objects -> should bind a lot of people
   ✔ SceneObjects need Game pointer in update function @done(25-01-05 16:26)
   ✔ control game speed pause, normal, fast, faster @done(25-01-04 10:56)
   ✔ start a any construction costs one click!!?!! @done(25-01-04 12:22)

@@ -52,7 +52,8 @@ void tc_done(const TileContent *tc, GameScene *gs, Resource r) {
   if (tc && tc->table->done)
     tc->table->done(tc->context, gs, r);
 }
-void tc_click(const TileContent *tc, GameScene *gs) {
+inline static bool tc_can_click(const TileContent *tc) { return (tc && tc->table->click); }
+inline static void tc_click(const TileContent *tc, GameScene *gs) {
   if (tc && tc->table->click)
     tc->table->click(tc->context, gs);
 }
