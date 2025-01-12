@@ -20,6 +20,7 @@ typedef struct ClickFactory {
   Recti location;
 
   int missing_starts;
+  float highlight;
 } ClickFactory;
 
 Color cf_color() { return rgb(255, 215, 0); }
@@ -34,11 +35,14 @@ float cf_render_order(ClickFactory *cf) { return l_to_y(cf->location.y); }
 void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
   (void)g;
 
+  cf->highlight = f_max(0.0f, cf->highlight - dt);
+
   if (cf->temporary_deliver_timer > 0.0f) {
     if ((cf->temporary_deliver_timer -= dt) <= 0.0f) {
       gs_produce_click(gs);
       wp_reset(&cf->work_provider);
       cf->missing_starts += 15;
+      cf->highlight = 1.0;
     }
   } else if (wp_is_done(&cf->work_provider)) {
     cf->temporary_deliver_timer = 5.0;
@@ -61,7 +65,8 @@ void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
   }
 
   Vec2 p = l_to_vecP(ri_bottom_right(cf->location));
-  g_color(g, cf_color());
+
+  g_color(g, lighter(cf_color(), cf->highlight * cf->highlight));
   g_buffer(g, cf->buffer, Img_house_map, p);
   g_color(g, white());
   g_object(g, g_animation_buffer(g), Img_menubar, MI_Click, p);
@@ -84,6 +89,7 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
       .buffer = g_tilerect_buffer(g, 3, 3),
       .location = (Recti){p.x, p.y, 3, 3},
       .missing_starts = 15,
+      .highlight = 1.0f,
   };
   assert((void *)cf == (void *)&cf->work_provider);
   wp_init(&cf->work_provider, 2, 2, 12.0f);

@@ -1,6 +1,7 @@
 #ifndef MARKETPLACE_H
 #define MARKETPLACE_H
 
+#include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/SceneObject.h"
@@ -31,6 +32,7 @@ void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {
 
   Vec2 p = l_to_vecP(ri_bottom_right(mp->location));
   g_color(g, mp_color());
+
   g_buffer(g, mp->buffer, Img_house_map, p);
   g_color(g, white());
   g_object(g, g_animation_buffer(g), Img_menubar, MI_Marketplace, p);

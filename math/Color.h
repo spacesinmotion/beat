@@ -21,12 +21,15 @@ static inline Color warn(float t) {
     return rgb(216, 170, 43);
   return rgb(177, 53, 30);
 }
-// fn lighter(c Color, t f32) Color {
-//   return Color {
-//     (c.r as f32 * (1.0f - t) + 255.0f * t) as i32, (c.g as f32 * (1.0f - t) + 255.0f * t) as i32,
-//         (c.b as f32 * (1.0f - t) + 255.0f * t) as i32, c.a
-//   }
-// }
+
+static inline Color lighter(Color c, float t) {
+  return (Color){
+      (c.r * (1.0f - t) + t),
+      (c.g * (1.0f - t) + t),
+      (c.b * (1.0f - t) + t),
+      c.a,
+  };
+}
 
 static inline Color alphaf(Color c, float a) { return (Color){c.r, c.g, c.b, a}; }
 
