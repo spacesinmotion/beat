@@ -248,6 +248,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
       }
     } else {
       tc_click(l_content(gs->level, gs->r.x, gs->r.y), gs);
+      Bling_init(g, gs, mp, gray(45));
     }
   }
 }

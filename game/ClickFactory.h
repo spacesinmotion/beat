@@ -6,6 +6,9 @@
 #include "game/TileContent.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
+#include "game/effects/Bling.h"
+#include "math/Vec2.h"
+#include "math/random.h"
 #include <assert.h>
 
 typedef struct ClickFactory {
@@ -15,6 +18,8 @@ typedef struct ClickFactory {
 
   G_Object buffer;
   Recti location;
+
+  int missing_starts;
 } ClickFactory;
 
 Color cf_color() { return rgb(255, 215, 0); }
@@ -33,9 +38,18 @@ void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
     if ((cf->temporary_deliver_timer -= dt) <= 0.0f) {
       gs_produce_click(gs);
       wp_reset(&cf->work_provider);
+      cf->missing_starts += 15;
     }
   } else if (wp_is_done(&cf->work_provider)) {
     cf->temporary_deliver_timer = 5.0;
+  }
+
+  if (cf->missing_starts > 0 && r_float() > 0.9f) {
+    Vec2 p = l_to_vecP(ri_bottom_right(cf->location));
+    Vec2 s = l_to_vec(cf->location.w - 1, cf->location.h - 1);
+    p = v_add(p, (Vec2){r_float() * s.x, r_float() * s.y});
+    Bling_init(g, gs, p, red());
+    cf->missing_starts--;
   }
 }
 
@@ -69,6 +83,7 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   *cf = (ClickFactory){
       .buffer = g_tilerect_buffer(g, 3, 3),
       .location = (Recti){p.x, p.y, 3, 3},
+      .missing_starts = 15,
   };
   assert((void *)cf == (void *)&cf->work_provider);
   wp_init(&cf->work_provider, 2, 2, 12.0f);
