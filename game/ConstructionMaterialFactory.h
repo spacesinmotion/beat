@@ -73,7 +73,7 @@ ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene
       .display = bd_create(g, (Recti){p.x, p.y, 3, 2}),
   };
   assert((void *)cmf == (void *)&cmf->work_provider);
-  wp_init(&cmf->work_provider, 2, 1, 14.0f);
+  wp_init(&cmf->work_provider, 2, 1, 10.0f);
 
   l_set_tileR(gs->level, cmf->display.location, T_ConstructionMaterialFactory);
   l_set_tile_contentR(gs->level, cmf->display.location, to_TileContent(cmf, &WorkProvider_TileContent_Default_Table));

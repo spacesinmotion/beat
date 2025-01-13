@@ -106,8 +106,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 bool gs_construction_available(GameScene *gs) {
   if (!l_freeR(gs->level, gs->r))
     return false;
-  const int needed_clicks = (gs->menu_selected == 0) ? 2 : 1;
-  return gs->clicks >= needed_clicks && gs->resource_pool.construction_material >= gs->r.w * gs->r.h;
+  return gs->clicks > 0 && gs->resource_pool.construction_material >= gs->r.w * gs->r.h;
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -246,9 +245,10 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->r.w = gs->r.h = 0;
       }
     } else if (gs->menu_selected >= 0) {
-      if (gs_construction_available(gs) && gs->r.w * gs->r.w > 0) {
-        gs_loose_click(gs);
-        gs->resource_pool.construction_material -= gs->r.w * gs->r.w;
+      if (gs_construction_available(gs) && gs->r.w * gs->r.h > 0) {
+        if (gs->menu_selected != MI_Street)
+          gs_loose_click(gs);
+        gs->resource_pool.construction_material -= gs->r.w * gs->r.h;
         ConstructionSite_init(g, gs, gs->r, gs->menu_selected);
       }
     } else {

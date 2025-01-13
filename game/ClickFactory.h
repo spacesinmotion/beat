@@ -84,7 +84,7 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
       .missing_starts = 15,
   };
   assert((void *)cf == (void *)&cf->work_provider);
-  wp_init(&cf->work_provider, 2, 2, 12.0f);
+  wp_init(&cf->work_provider, 2, 2, 9.0f);
 
   l_set_tileR(gs->level, cf->display.location, T_ClickFactory);
   l_set_tile_contentR(gs->level, cf->display.location, to_TileContent(cf, &WorkProvider_TileContent_Default_Table));
