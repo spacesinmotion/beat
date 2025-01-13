@@ -25,10 +25,10 @@ bool em_dead(Entertainment *em) {
 float em_render_order(Entertainment *em) { return l_to_y(em->display.location.y); }
 
 void em_update(Entertainment *em, GameScene *gs, Game *g, float dt) {
-  (void)g;
   (void)gs;
+  (void)dt;
 
-  bd_update(&em->display, dt);
+  bd_update(&em->display, g);
 }
 
 void em_draw(Entertainment *em, GameScene *gs, Game *g) {

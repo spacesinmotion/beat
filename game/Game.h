@@ -26,6 +26,7 @@ typedef struct Game Game;
 
 void g_set_scene(Game *g, Scene scene);
 
+float g_animation_delta(Game *g);
 float g_time(Game *g);
 int g_frame(Game *g);
 

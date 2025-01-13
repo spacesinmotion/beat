@@ -21,8 +21,9 @@ bool bl_dead(Bling *bl) { return bl->time * 16.0f > 10.0f; }
 void bl_update(Bling *bl, GameScene *gs, Game *g, float dt) {
   (void)g;
   (void)gs;
+  (void)dt;
 
-  bl->time += dt;
+  bl->time += g_animation_delta(g);
 }
 
 float bl_render_order(Bling *bl) { return bl->location.y + 1000.0; }

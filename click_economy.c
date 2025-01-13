@@ -115,11 +115,12 @@ typedef struct Game {
 
   Scene scene;
 
-  double time;
+  double time, animation_delta;
 } Game;
 
 void g_set_scene(Game *g, Scene scene) { g->scene = scene; }
 
+float g_animation_delta(Game *g) { return g->animation_delta; }
 float g_time(Game *g) { return g->time; }
 int g_frame(Game *g) { return (int)(g->time * 8.0f); }
 
@@ -311,6 +312,7 @@ void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan) {
 }
 
 void g_update_state(Game *g, double dt) {
+  g->animation_delta = dt;
   g->time += dt;
 
   if (g->scene.table->update)

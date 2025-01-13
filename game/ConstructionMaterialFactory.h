@@ -27,9 +27,7 @@ bool cmf_dead(ConstructionMaterialFactory *cmf) {
 float cmf_render_order(ConstructionMaterialFactory *cmf) { return l_to_y(cmf->display.location.y); }
 
 void cmf_update(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g, float dt) {
-  (void)g;
-
-  bd_update(&cmf->display, dt);
+  bd_update(&cmf->display, g);
 
   if (cmf->temporary_deliver_timer > 0.0f) {
     cmf->temporary_deliver_timer -= dt;

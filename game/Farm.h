@@ -27,9 +27,8 @@ bool fa_dead(Farm *fa) {
 float fa_render_order(Farm *fa) { return l_to_y(fa->display.location.y); }
 
 void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
-  (void)g;
 
-  bd_update(&fa->display, dt);
+  bd_update(&fa->display, g);
 
   if (fa->temporary_deliver_timer > 0.0f) {
     fa->temporary_deliver_timer -= dt;

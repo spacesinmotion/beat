@@ -25,9 +25,9 @@ float mp_render_order(Marketplace *mp) { return l_to_y(mp->display.location.y); 
 
 void mp_update(Marketplace *mp, GameScene *gs, Game *g, float dt) {
   (void)gs;
-  (void)g;
+  (void)dt;
 
-  bd_update(&mp->display, dt);
+  bd_update(&mp->display, g);
 }
 
 void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {

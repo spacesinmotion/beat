@@ -22,7 +22,7 @@ BuildingDisplay bd_create(Game *g, Recti l) {
   };
 }
 
-void bd_update(BuildingDisplay *bd, float dt) { bd->flash = f_max(0.0f, bd->flash - dt); }
+void bd_update(BuildingDisplay *bd, Game *g) { bd->flash = f_max(0.0f, bd->flash - g_animation_delta(g)); }
 
 void bd_draw(BuildingDisplay *bd, Game *g, Color c, MenuIcon icon) {
   Vec2 p = l_to_vecP(ri_bottom_right(bd->location));
