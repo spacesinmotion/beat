@@ -2,6 +2,8 @@
 #define GAME
 
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #include "game/assets.h"
 #include "math/Color.h"
@@ -18,7 +20,7 @@ typedef struct G_Object {
 
 typedef bool (*IsSetCB)(void *data, int i, int j);
 G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data);
-void g_create_text(Game *g, G_Object *o, Font ff, const char *text);
+void g_create_text(Game *g, G_Object *o, G_Font ff, const char *text);
 bool G_Object_valid(const G_Object *);
 void G_Object_free(G_Object *);
 
@@ -44,7 +46,7 @@ void g_objectR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float r
 void g_objectS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float scale);
 void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan);
 
-void g_text(Game *g, G_Object buffer, Font f, Vec2 pan);
+void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan);
 
 void *g_malloc(Game *g, size_t size);
 void *g_realloc(Game *g, void *ptr, size_t size);

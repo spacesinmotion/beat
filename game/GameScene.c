@@ -16,12 +16,17 @@
 #include "game/Well.h"
 #include "game/assets.h"
 #include "gc/gc.h"
-#include "math.h"
+// #include "math.h"
 #include "math/Color.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifndef M_PI
+#define M_PI 3.1457
+#endif
 
 const char *str(const char *format, ...) {
   static char b[256] = {0};
