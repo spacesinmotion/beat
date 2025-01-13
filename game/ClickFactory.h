@@ -1,6 +1,7 @@
 #ifndef CLICKFACTORY_H
 #define CLICKFACTORY_H
 
+#include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
@@ -16,11 +17,9 @@ typedef struct ClickFactory {
 
   float temporary_deliver_timer;
 
-  G_Object buffer;
-  Recti location;
+  BuildingDisplay display;
 
   int missing_starts;
-  float highlight;
 } ClickFactory;
 
 Color cf_color() { return rgb(255, 215, 0); }
@@ -30,27 +29,27 @@ bool cf_dead(ClickFactory *cf) {
   return false;
 }
 
-float cf_render_order(ClickFactory *cf) { return l_to_y(cf->location.y); }
+float cf_render_order(ClickFactory *cf) { return l_to_y(cf->display.location.y); }
 
 void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
   (void)g;
 
-  cf->highlight = f_max(0.0f, cf->highlight - dt);
+  bd_update(&cf->display, dt);
 
   if (cf->temporary_deliver_timer > 0.0f) {
     if ((cf->temporary_deliver_timer -= dt) <= 0.0f) {
       gs_produce_click(gs);
       wp_reset(&cf->work_provider);
       cf->missing_starts += 15;
-      cf->highlight = 1.0;
+      bd_flash(&cf->display);
     }
   } else if (wp_is_done(&cf->work_provider)) {
     cf->temporary_deliver_timer = 5.0;
   }
 
   if (cf->missing_starts > 0 && r_float() > 0.9f) {
-    Vec2 p = l_to_vecP(ri_bottom_right(cf->location));
-    Vec2 s = l_to_vec(cf->location.w - 1, cf->location.h - 1);
+    Vec2 p = l_to_vecP(ri_bottom_right(cf->display.location));
+    Vec2 s = l_to_vec(cf->display.location.w - 1, cf->display.location.h - 1);
     p = v_add(p, (Vec2){r_float() * s.x, r_float() * s.y});
     Bling_init(g, gs, p, red());
     cf->missing_starts--;
@@ -58,18 +57,15 @@ void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
 }
 
 void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
-  if (ri_contains(cf->location, gs->r.x, gs->r.y)) {
+  if (ri_contains(cf->display.location, gs->r.x, gs->r.y)) {
     c_printf(g, "----------------------\n");
-    c_printf(g, "  ClickFactory (%d,%d,%d,%d)\n", cf->location.x, cf->location.y, 4, 3);
+    c_printf(g, "  ClickFactory (%d,%d,%d,%d)\n", cf->display.location.x, cf->display.location.y, 4, 3);
     c_printf(g, "----------------------\n");
   }
 
-  Vec2 p = l_to_vecP(ri_bottom_right(cf->location));
+  Vec2 p = l_to_vecP(ri_bottom_right(cf->display.location));
 
-  g_color(g, lighter(cf_color(), cf->highlight * cf->highlight));
-  g_buffer(g, cf->buffer, Img_house_map, p);
-  g_color(g, white());
-  g_object(g, g_animation_buffer(g), Img_menubar, MI_Click, p);
+  bd_draw(&cf->display, g, cf_color(), MI_Click);
   if (cf->temporary_deliver_timer > 0.0f)
     g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
@@ -86,16 +82,14 @@ static SceneObjectTable ClickFactory_table = {
 ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   ClickFactory *cf = g_malloc(g, sizeof(ClickFactory));
   *cf = (ClickFactory){
-      .buffer = g_tilerect_buffer(g, 3, 3),
-      .location = (Recti){p.x, p.y, 3, 3},
+      .display = bd_create(g, (Recti){p.x, p.y, 3, 3}),
       .missing_starts = 15,
-      .highlight = 1.0f,
   };
   assert((void *)cf == (void *)&cf->work_provider);
   wp_init(&cf->work_provider, 2, 2, 12.0f);
 
-  l_set_tileR(gs->level, cf->location, T_ClickFactory);
-  l_set_tile_contentR(gs->level, cf->location, to_TileContent(cf, &WorkProvider_TileContent_Default_Table));
+  l_set_tileR(gs->level, cf->display.location, T_ClickFactory);
+  l_set_tile_contentR(gs->level, cf->display.location, to_TileContent(cf, &WorkProvider_TileContent_Default_Table));
 
   gs_add_object(gs, (SceneObject){.context = cf, &ClickFactory_table});
   return cf;

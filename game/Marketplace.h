@@ -1,6 +1,7 @@
 #ifndef MARKETPLACE_H
 #define MARKETPLACE_H
 
+#include "game/BuildingDisplay.h"
 #include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
@@ -10,8 +11,7 @@
 #include "math/Rect.h"
 
 typedef struct Marketplace {
-  G_Object buffer;
-  Recti location;
+  BuildingDisplay display;
 } Marketplace;
 
 Color mp_color() { return rgb(196, 113, 65); }
@@ -21,27 +21,30 @@ bool mp_dead(Marketplace *mp) {
   return false;
 }
 
-float mp_render_order(Marketplace *mp) { return l_to_y(mp->location.y); }
+float mp_render_order(Marketplace *mp) { return l_to_y(mp->display.location.y); }
+
+void mp_update(Marketplace *mp, GameScene *gs, Game *g, float dt) {
+  (void)gs;
+  (void)g;
+
+  bd_update(&mp->display, dt);
+}
 
 void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {
-  if (ri_contains(mp->location, gs->r.x, gs->r.y)) {
+  if (ri_contains(mp->display.location, gs->r.x, gs->r.y)) {
     c_printf(g, "----------------------\n");
-    c_printf(g, "  Marketplace (%d,%d,%d,%d)\n", mp->location.x, mp->location.y, 4, 3);
+    c_printf(g, "  Marketplace (%d,%d,%d,%d)\n", mp->display.location.x, mp->display.location.y, 4, 3);
     c_printf(g, "----------------------\n");
   }
 
-  Vec2 p = l_to_vecP(ri_bottom_right(mp->location));
-  g_color(g, mp_color());
-
-  g_buffer(g, mp->buffer, Img_house_map, p);
-  g_color(g, white());
-  g_object(g, g_animation_buffer(g), Img_menubar, MI_Marketplace, p);
+  bd_draw(&mp->display, g, mp_color(), MI_Marketplace);
 }
 
 static SceneObjectTable Marketplace_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)mp_dead,
     .render_order = (SceneObjectRenderOrderCB)mp_render_order,
     .draw = (SceneObjectDrawCB)mp_draw,
+    .update = (SceneObjectUpdateCB)mp_update,
 };
 
 bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
@@ -90,14 +93,14 @@ static TileContentTable Marketplace_TileContent_Table = {
 Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
   Marketplace *mp = g_malloc(g, sizeof(Marketplace));
   *mp = (Marketplace){
-      .buffer = g_tilerect_buffer(g, 4, 3),
-      .location = (Recti){p.x, p.y, 4, 3},
+      .display = bd_create(g, (Recti){p.x, p.y, 4, 3}),
   };
 
-  l_set_tileR(gs->level, mp->location, T_Marketplace);
-  l_set_tile_contentR(gs->level, mp->location, to_TileContent(mp, &Marketplace_TileContent_Table));
+  l_set_tileR(gs->level, mp->display.location, T_Marketplace);
+  l_set_tile_contentR(gs->level, mp->display.location, to_TileContent(mp, &Marketplace_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = mp, &Marketplace_table});
   return mp;
 }
+
 #endif // MARKETPLACE_H

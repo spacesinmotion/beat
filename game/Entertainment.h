@@ -1,6 +1,7 @@
 #ifndef ENTERTAINMENT_H
 #define ENTERTAINMENT_H
 
+#include "game/BuildingDisplay.h"
 #include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
@@ -9,8 +10,8 @@
 #include <assert.h>
 
 typedef struct Entertainment {
-  G_Object buffer;
-  Recti location;
+  BuildingDisplay display;
+
   int claimed, started;
 } Entertainment;
 
@@ -21,21 +22,25 @@ bool em_dead(Entertainment *em) {
   return false;
 }
 
-float em_render_order(Entertainment *em) { return l_to_y(em->location.y); }
+float em_render_order(Entertainment *em) { return l_to_y(em->display.location.y); }
+
+void em_update(Entertainment *em, GameScene *gs, Game *g, float dt) {
+  (void)g;
+  (void)gs;
+
+  bd_update(&em->display, dt);
+}
 
 void em_draw(Entertainment *em, GameScene *gs, Game *g) {
-  if (ri_contains(em->location, gs->r.x, gs->r.y)) {
+  if (ri_contains(em->display.location, gs->r.x, gs->r.y)) {
     c_printf(g, "----------------------\n");
-    c_printf(g, "  Entertainment (%d,%d,%d,%d)\n", em->location.x, em->location.y, 4, 3);
+    c_printf(g, "  Entertainment (%d,%d,%d,%d)\n", em->display.location.x, em->display.location.y, 4, 3);
     c_printf(g, "----------------------\n");
   }
 
-  Vec2 p = l_to_vecP(ri_bottom_right(em->location));
-  g_color(g, em_color());
-  g_buffer(g, em->buffer, Img_house_map, p);
-  g_color(g, white());
-  g_object(g, g_animation_buffer(g), Img_menubar, MI_Entertainment, p);
+  bd_draw(&em->display, g, em_color(), MI_Entertainment);
 
+  Vec2 p = l_to_vecP(ri_bottom_right(em->display.location));
   Point o[] = {{1, 1}, {2, 1}};
   for (int i = 0; i < 2; ++i) {
     if (i < em->started)
@@ -80,6 +85,7 @@ static SceneObjectTable Entertainment_table = {
     .dead = (SceneObjectDeadCB)em_dead,
     .render_order = (SceneObjectRenderOrderCB)em_render_order,
     .draw = (SceneObjectDrawCB)em_draw,
+    .update = (SceneObjectUpdateCB)em_update,
 };
 static TileContentTable Entertainment_TileContent_Table = {
     .provides = (ProvidesCB)em_provides,
@@ -90,12 +96,11 @@ static TileContentTable Entertainment_TileContent_Table = {
 Entertainment *Entertainment_init(Game *g, GameScene *gs, Point p) {
   Entertainment *em = g_malloc(g, sizeof(Entertainment));
   *em = (Entertainment){
-      .buffer = g_tilerect_buffer(g, 3, 2),
-      .location = (Recti){p.x, p.y, 3, 2},
+      .display = bd_create(g, (Recti){p.x, p.y, 3, 2}),
   };
 
-  l_set_tileR(gs->level, em->location, T_Entertainment);
-  l_set_tile_contentR(gs->level, em->location, to_TileContent(em, &Entertainment_TileContent_Table));
+  l_set_tileR(gs->level, em->display.location, T_Entertainment);
+  l_set_tile_contentR(gs->level, em->display.location, to_TileContent(em, &Entertainment_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = em, &Entertainment_table});
   return em;

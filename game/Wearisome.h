@@ -135,7 +135,7 @@ void w_u_at_home(Wearisome *w, GameScene *gs, float dt) {
   w_wander_to_random_near_path(w, gs);
   if (!w->path) {
     w->state = W_AtHome;
-    w->current_rect = w->home->location;
+    w->current_rect = w->home->display.location;
   }
 }
 
@@ -147,7 +147,7 @@ void w_u_moving_home(Wearisome *w, float dt) {
       w->path = w->path->next;
     } else {
       w->state = W_AtHome;
-      w->current_rect = w->home->location;
+      w->current_rect = w->home->display.location;
     }
   }
 }
@@ -188,18 +188,20 @@ DeliverJob *h_deliver_job(House *h, GameScene *gs) {
   bool need_food = h->resources_maximum.food - h->resources.food >= 1.0f;
   bool food_is_more_urgent = need_water && need_food && h->resources.water > h->resources.food;
   if (!food_is_more_urgent && need_water && (gs->resource_pool.water - gs->resource_pool_claimed.water > 0)) {
-    Recti marketplace = find_resource_building(gs, h->location, R_Water);
+    Recti marketplace = find_resource_building(gs, h->display.location, R_Water);
     if (marketplace.w > 0) {
       gs->resource_pool_claimed.water++;
       h->resources_maximum.clicks--;
-      return deliver_job(marketplace, h->location, h, (CollectDoneCB)h_pay_water, (DeliverDoneCB)h_get_water_done);
+      return deliver_job(marketplace, h->display.location, h, (CollectDoneCB)h_pay_water,
+                         (DeliverDoneCB)h_get_water_done);
     }
   } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0)) {
-    Recti marketplace = find_resource_building(gs, h->location, R_Food);
+    Recti marketplace = find_resource_building(gs, h->display.location, R_Food);
     if (marketplace.w > 0) {
       gs->resource_pool_claimed.food++;
       h->resources_maximum.clicks--;
-      return deliver_job(marketplace, h->location, h, (CollectDoneCB)h_pay_food, (DeliverDoneCB)h_get_food_done);
+      return deliver_job(marketplace, h->display.location, h, (CollectDoneCB)h_pay_food,
+                         (DeliverDoneCB)h_get_food_done);
     }
   }
   return NULL;
@@ -214,15 +216,15 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
   if (!l_movableP(gs->level, l_to_point(w->destination)))
     return NULL;
 
-  if (gs->daytime > 0.75f && w_move_to_rect(w, gs, w->home->location))
+  if (gs->daytime > 0.75f && w_move_to_rect(w, gs, w->home->display.location))
     w->state = W_MovingHome;
 
-  else if (w->needs.sleep < 0.25f && w_move_to_rect(w, gs, w->home->location))
+  else if (w->needs.sleep < 0.25f && w_move_to_rect(w, gs, w->home->display.location))
     w->state = W_MovingHome;
 
   else if (((w->needs.water < 0.25f && w->home->resources.water > 0.0f) ||
             (w->needs.food < 0.25f && w->home->resources.food > 0.0f)) &&
-           w_move_to_rect(w, gs, w->home->location))
+           w_move_to_rect(w, gs, w->home->display.location))
     w->state = W_MovingHome;
 
   else if ((job = h_deliver_job(w->home, gs))) {
@@ -507,11 +509,11 @@ SceneObjectTable w_table = (SceneObjectTable){
     .draw = (SceneObjectDrawCB)w_draw,
 };
 Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
-  Vec2 pos = l_to_vec(home->location.x, home->location.y);
+  Vec2 pos = l_to_vec(home->display.location.x, home->display.location.y);
   Wearisome *w = g_malloc(g, sizeof(Wearisome));
   *w = (Wearisome){
       .home = home,
-      .current_rect = home->location,
+      .current_rect = home->display.location,
       .position = pos,
       .destination = pos,
       .path = NULL,

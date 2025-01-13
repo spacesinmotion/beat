@@ -1,6 +1,7 @@
 #ifndef HOUSE_H
 #define HOUSE_H
 
+#include "game/BuildingDisplay.h"
 #include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
@@ -15,8 +16,7 @@ typedef struct Resources {
 } Resources;
 
 typedef struct House {
-  G_Object buffer;
-  Recti location;
+  BuildingDisplay display;
 
   Resources resources;
   Resources resources_maximum;
@@ -36,17 +36,17 @@ bool h_dead(House *h) {
   return false;
 }
 
-float h_render_order(House *h) { return l_to_y(h->location.y); }
+float h_render_order(House *h) { return l_to_y(h->display.location.y); }
 
 Point h_current_entry(House *h, Level *l) {
   int options[8][2] = {{-1, 0}, {-1, 1}, {2, 0}, {2, 1}, {0, -1}, {1, -1}, {0, 2}, {1, 2}};
   for (int i = 0; i < 8; ++i) {
-    int ii = h->location.x + options[i][0];
-    int jj = h->location.y + options[i][1];
+    int ii = h->display.location.x + options[i][0];
+    int jj = h->display.location.y + options[i][1];
     if (l_movable(l, ii, jj))
       return (Point){ii, jj};
   }
-  return (Point){h->location.x, h->location.y};
+  return (Point){h->display.location.x, h->display.location.y};
 }
 
 void h_earn_click(House *h, int c) {
@@ -84,6 +84,8 @@ void h_update(House *h, GameScene *gs, Game *g, float dt) {
   (void)g;
   (void)dt;
 
+  bd_update(&h->display, dt);
+
   gs->clicks_in_houses += h->resources.clicks;
 
   if (h->clicks_cache != h->resources.clicks) {
@@ -93,10 +95,10 @@ void h_update(House *h, GameScene *gs, Game *g, float dt) {
 }
 
 void h_draw(House *h, GameScene *gs, Game *g) {
-  h->highlight = ri_contains(h->location, gs->r.x, gs->r.y);
+  h->highlight = ri_contains(h->display.location, gs->r.x, gs->r.y);
   if (h->highlight) {
     c_printf(g, "----------------------\n");
-    c_printf(g, "  HOUSE (%d,%d,%d,%d)\n", h->location.x, h->location.y, 2, 2);
+    c_printf(g, "  HOUSE (%d,%d,%d,%d)\n", h->display.location.x, h->display.location.y, 2, 2);
     c_printf(g, "----------------------\n");
     c_printf(g, " %10s: %d\n", "clicks", h->resources.clicks);
     c_printf(g, " %10s: %d\n", "clicks", h->resources_maximum.clicks);
@@ -105,12 +107,9 @@ void h_draw(House *h, GameScene *gs, Game *g) {
     c_printf(g, "----------------------\n\n");
   }
 
-  Vec2 p = l_to_vecP(ri_bottom_right(h->location));
-  g_color(g, h->wearisome_dead ? rgb(0, 0, 0) : h_color());
-  g_buffer(g, h->buffer, Img_house_map, p);
-  g_color(g, white());
-  g_object(g, g_animation_buffer(g), Img_menubar, MI_House, p);
+  bd_draw(&h->display, g, h_color(), MI_Food);
 
+  Vec2 p = l_to_vecP(ri_bottom_right(h->display.location));
   float x = h->resources.water / h->resources_maximum.water;
   g_color(g, warn(x));
   for (int i = 0; i < 6; ++i) {
@@ -143,8 +142,7 @@ static SceneObjectTable House_table = (SceneObjectTable){
 House *House_init(Game *g, GameScene *gs, Point p) {
   House *h = g_malloc(g, sizeof(House));
   *h = (House){
-      .buffer = g_tilerect_buffer(g, 2, 2),
-      .location = {p.x, p.y, 2, 2},
+      .display = bd_create(g, (Recti){p.x, p.y, 2, 2}),
       .resources = {.food = 0.0f, .water = 0.0f, .clicks = 0},
       .resources_maximum = {.food = 2.0f, .water = 2.0f, .clicks = 0},
       .clicks_cache = -1,
@@ -153,7 +151,7 @@ House *House_init(Game *g, GameScene *gs, Point p) {
       .wearisome_dead = false,
   };
 
-  l_set_tileR(gs->level, h->location, T_House);
+  l_set_tileR(gs->level, h->display.location, T_House);
   gs_add_object(gs, (SceneObject){h, &House_table});
 
   return h;

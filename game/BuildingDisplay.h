@@ -1,0 +1,36 @@
+#ifndef BUILDINGDISPLAY_H
+#define BUILDINGDISPLAY_H
+
+#include "game/Game.h"
+#include "game/Level.h"
+#include "math/Rect.h"
+
+typedef struct BuildingDisplay {
+  G_Object buffer;
+  Recti location;
+
+  float flash;
+
+} BuildingDisplay;
+
+BuildingDisplay bd_create(Game *g, Recti l) {
+  return (BuildingDisplay){
+      .buffer = g_tilerect_buffer(g, l.w, l.h),
+      .location = l,
+      .flash = 1.0f,
+
+  };
+}
+
+void bd_update(BuildingDisplay *bd, float dt) { bd->flash = f_max(0.0f, bd->flash - dt); }
+
+void bd_draw(BuildingDisplay *bd, Game *g, Color c, MenuIcon icon) {
+  Vec2 p = l_to_vecP(ri_bottom_right(bd->location));
+  g_color(g, lighter(c, bd->flash * bd->flash));
+  g_buffer(g, bd->buffer, Img_house_map, p);
+  g_color(g, white());
+  g_object(g, g_animation_buffer(g), Img_menubar, icon, p);
+}
+
+void bd_flash(BuildingDisplay *bd) { bd->flash = 1.0f; }
+#endif
