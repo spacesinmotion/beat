@@ -4,6 +4,8 @@
 #include "game/Game.h"
 #include "game/Level.h"
 #include "math/Rect.h"
+#include "math/random.h"
+#include <math.h>
 
 typedef struct BuildingDisplay {
   G_Object buffer;
@@ -29,7 +31,7 @@ void bd_draw(BuildingDisplay *bd, Game *g, Color c, MenuIcon icon) {
   g_color(g, lighter(c, bd->flash * bd->flash));
   g_buffer(g, bd->buffer, Img_house_map, p);
   g_color(g, white());
-  g_object(g, g_animation_buffer(g), Img_menubar, icon, p);
+  g_objectS(g, g_animation_buffer(g), Img_menubar, icon, p, 1.0f + bd->flash * 0.2f * sin(20.0f * g_time(g)));
 }
 
 void bd_flash(BuildingDisplay *bd) { bd->flash = 1.0f; }
