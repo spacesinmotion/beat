@@ -72,7 +72,7 @@ Well *Well_init(Game *g, GameScene *gs, Point p) {
       .temporary_deliver_timer = 0.0f,
   };
   assert((void *)wl == (void *)&wl->work_provider);
-  wp_init(&wl->work_provider, 1, 2, 9.0f);
+  wp_init(&wl->work_provider, 1, 2, 5.0f);
 
   l_set_tileR(gs->level, wl->display.location, T_Well);
   l_set_tile_contentR(gs->level, wl->display.location, to_TileContent(wl, &WorkProvider_TileContent_Default_Table));

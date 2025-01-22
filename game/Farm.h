@@ -74,7 +74,7 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
       .temporary_deliver_timer = 0.0f,
   };
   assert((void *)fa == (void *)&fa->work_provider);
-  wp_init(&fa->work_provider, 3, 3, 8.0f);
+  wp_init(&fa->work_provider, 3, 3, 6.0f);
 
   l_set_tileR(gs->level, fa->display.location, T_Farm);
   l_set_tile_contentR(gs->level, fa->display.location, to_TileContent(fa, &WorkProvider_TileContent_Default_Table));

@@ -178,14 +178,14 @@ sg_image g_image(Game *g, Image img) {
   return g->images[img];
 }
 
-const FontImage *g_font(Game *g, Font font) {
+const FontImage *g_font(Game *g, G_Font font) {
   if (g->fonts[font].texture.id == 0)
     g->fonts[font] = load_font(font_paths[font], font_size[font]);
 
   return &g->fonts[font];
 }
 
-void g_create_text(Game *g, G_Object *o, Font ff, const char *text) {
+void g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
 
   G_Object_free(o);
   const FontImage *f = g_font(g, ff);
@@ -268,7 +268,7 @@ void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {
   sg_draw(0, buffer.num_elements, 1);
 }
 
-void g_text(Game *g, G_Object buffer, Font f, Vec2 pan) {
+void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
   g->render.fs_param.color_mode = 1;
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = 0.0f;
@@ -773,6 +773,10 @@ void eachFileIn(const char *sDir, dirCB cb, void *ud) {
 
   FindClose(hFind); // Always, Always, clean things up!
 #else
+#ifndef DT_REG
+#define DT_REG 8
+#endif
+
   DIR *dir;
   struct dirent *ent;
   if ((dir = opendir(sDir)) != NULL) {

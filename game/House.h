@@ -54,20 +54,22 @@ void h_earn_click(House *h, int c) {
   h->resources_maximum.clicks += c;
 }
 
-void h_pay_water(House *h, GameScene *gs) {
+bool h_pay_water(House *h, GameScene *gs) {
   (void)h;
   gs->resource_pool.water--;
   gs->resource_pool_claimed.water--;
   gs->clicks++;
   h->resources.clicks--;
+  return true;
 }
 
-void h_pay_food(House *h, GameScene *gs) {
+bool h_pay_food(House *h, GameScene *gs) {
   (void)h;
   gs->resource_pool.food--;
   gs->resource_pool_claimed.food--;
   gs->clicks++;
   h->resources.clicks--;
+  return true;
 }
 
 void h_get_water_done(House *h, GameScene *gs) {
