@@ -737,6 +737,8 @@ static void g_handel_events(const sapp_event *e, Game *g) {
   } else if ((e->type == SAPP_EVENTTYPE_KEY_UP)) {
     if (g->scene.table->key_up)
       g->scene.table->key_up(g->scene.context, g, e->key_code);
+    if (e->key_code == SAPP_KEYCODE_F11)
+      sapp_toggle_fullscreen();
   }
 }
 
