@@ -227,7 +227,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->r.h = 3;
       } else if (gs->menu_selected == MI_Food) {
         gs->preview = fa_color();
-        gs->r.w = 4;
+        gs->r.w = 3;
         gs->r.h = 4;
       } else if (gs->menu_selected == MI_Click) {
         gs->preview = cf_color();

@@ -67,11 +67,11 @@ static SceneObjectTable Farm_table = {
 Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   Farm *fa = g_malloc(g, sizeof(Farm));
   *fa = (Farm){
-      .display = bd_create(g, (Recti){p.x, p.y, 4, 4}),
+      .display = bd_create(g, (Recti){p.x, p.y, 3, 4}),
       .last_day_delivered = gs->day,
   };
   assert((void *)fa == (void *)&fa->work_provider);
-  wp_init(&fa->work_provider, 3, 3, 6.0f);
+  wp_init(&fa->work_provider, 2, 3, 6.0f);
 
   l_set_tileR(gs->level, fa->display.location, T_Farm);
   l_set_tile_contentR(gs->level, fa->display.location, to_TileContent(fa, &WorkProvider_TileContent_Default_Table));
