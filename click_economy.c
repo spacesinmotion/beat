@@ -106,6 +106,9 @@ typedef struct Game {
     float camera_scale;
     float overlay_scale;
   } render;
+  int mouse_x;
+  int mouse_y;
+  float zoom;
 
   TileRectBuffer tilerect_buffer[16];
   G_Object animation_buffer_4x4;
@@ -311,9 +314,22 @@ void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan) {
   g_objectRS(g, buffer, tex, frame, pan, 0.0f, 1.0f);
 }
 
+static Vec2 to_scene(Game *g, float x, float y) {
+  return v_sub(v_diff((Vec2){x, sapp_height() - y}, g->render.camera_scale), g->render.camera_pan);
+}
+static Vec2 to_overlay(Game *g, float x, float y) {
+  return v_diff((Vec2){x, sapp_height() - y}, g->render.overlay_scale);
+}
+
 void g_update_state(Game *g, double dt) {
   g->animation_delta = dt;
   g->time += dt;
+
+  float cs = 0.1f + g->zoom * g->zoom * 8.0f;
+  Vec2 mp_b = to_scene(g, g->mouse_x, g->mouse_y);
+  g->render.camera_scale = g->render.camera_scale * 0.9f + cs * 0.1f;
+  Vec2 mp_a = to_scene(g, g->mouse_x, g->mouse_y);
+  g->render.camera_pan = v_add(g->render.camera_pan, v_sub(mp_a, mp_b));
 
   if (g->scene.table->update)
     g->scene.table->update(g->scene.context, g, dt);
@@ -475,6 +491,7 @@ static void g_init(Game *g) {
       0.0f,
       1.0f,
   };
+  g->zoom = 0.5f;
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0};
 
   sg_setup(&(sg_desc){
@@ -696,20 +713,10 @@ static void g_cleanup(Game *g) {
   sg_shutdown();
 }
 
-static Vec2 to_scene(Game *g, float x, float y) {
-  return v_sub(v_diff((Vec2){x, sapp_height() - y}, g->render.camera_scale), g->render.camera_pan);
-}
-static Vec2 to_overlay(Game *g, float x, float y) {
-  return v_diff((Vec2){x, sapp_height() - y}, g->render.overlay_scale);
-}
-
 bool mid_down = false;
 static void g_handel_events(const sapp_event *e, Game *g) {
   if (e->type == SAPP_EVENTTYPE_MOUSE_SCROLL) {
-    Vec2 mp_b = to_scene(g, e->mouse_x, e->mouse_y);
-    g->render.camera_scale += e->scroll_y * 0.1f;
-    Vec2 mp_a = to_scene(g, e->mouse_x, e->mouse_y);
-    g->render.camera_pan = v_add(g->render.camera_pan, v_sub(mp_a, mp_b));
+    g->zoom = f_min(f_max(0.0f, g->zoom + e->scroll_y * 0.01f), 1.0f);
 
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_DOWN) {
     if (e->mouse_button == 2)
@@ -725,6 +732,8 @@ static void g_handel_events(const sapp_event *e, Game *g) {
       g->scene.table->mouse_up(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y),
                                to_overlay(g, e->mouse_x, e->mouse_y), e->mouse_button);
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
+    g->mouse_x = e->mouse_x;
+    g->mouse_y = e->mouse_y;
     if (mid_down)
       g->render.camera_pan =
           v_add(g->render.camera_pan, v_diff((Vec2){e->mouse_dx, -e->mouse_dy}, g->render.camera_scale));
