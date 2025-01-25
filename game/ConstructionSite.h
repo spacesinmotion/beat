@@ -28,6 +28,7 @@ void cs_update(ConstructionSite *cs, GameScene *gs, Game *g, float dt) {
   if (wp_is_done(&cs->work_provider)) {
     cs->work_provider.clicks_done++;
     l_clear_tileR(gs->level, cs->location);
+    l_set_tile_contentR(gs->level, cs->location, NULL);
     gs_construction_done(gs, g, cs->location, cs->key);
   }
 }
