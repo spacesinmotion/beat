@@ -1,29 +1,19 @@
 Bugs:
-  ☐ sometimes path construction side is not removed -> thay instantly start next work I think
-  
+  ☐ sometimes path construction side is not removed -> they instantly start next work I think
+
 Gameplay:
   ☐ stuff will be produced every day, but only the amount of worked clicks -> there is a cooldown
   ☐ right click should stop a construction -> unspent clicks are returned -> remove construction tile claim
+  ☐ destroy building option -> _think about returning resources_
   ☐ if wearisome gets dead, the house should become a constructionside again
   ☐ _maybe_ leaving buildings faster and more direct
   ☐ city tiers -> more people more options
   ☐ research -> new levels new / better buildings
   ☐ need bigger construction objects -> should bind a lot of people
-  ✔ show remaining clicks near mouse @high @done(25-01-11 15:22)
-  ✔ SceneObjects need Game pointer in update function @done(25-01-05 16:26)
-  ✔ control game speed pause, normal, fast, faster @done(25-01-04 10:56)
-  ✔ start a any construction costs one click!!?!! @done(25-01-04 12:22)
-  Resources:
-    ✔ wood, stone, bricks, ?? -> construction material @done(25-01-11 12:23)
-    ✔ construction should take resources @done(25-01-11 12:23)
+  Visualization:
+    ☐ mouse enter building -> _a corona or something_
   Structures:
     ☐ some animation for earning/lossing clicks 
-    ✔ wearisome at home marker for house @high @done(25-01-11 14:46)
-    ✔ improve house display @done(25-01-11 15:03)
-    ✔ search for structures that provide resources -> hard coded marketplace @critical @done(25-01-02 14:12)
-    ✔ different icons for entertainment/buildings filled by wearisome on their own @done(25-01-04 10:12)
-    ✘ clicks should be more expensive -> bigger click factory, a church/bank @cancelled(25-01-11 12:24)
-    ✘ reduce amount of food produced -> use size of market place @cancelled(25-01-04 15:05)
     warning signs:
       ☐ has resources 
       ☐ wearisome at home
@@ -33,20 +23,14 @@ Gameplay:
     ☐ a _warehouse_ -> limit global pool and increase by this buildings
     ☐ a _Park_ it earns no clicks, but reduces need consumption 
   ☐ Buildings that allow more spent more clicks per click?
-  ✔ path should not be buildable without clicks available @done(25-01-02 12:33) @project(Gameplay)
-  ✔ different jobs should take different time @high @done(25-01-03 10:03)
-  ✔ Wearisome should check entertainment somehow like they check for work @done(25-01-03 15:19)
   Overlay:
     ☐ control game speed
     ☐ a game menu quit/new/...
-    ✔ tt-font rendering @done(25-01-05 12:27)
-    ✔ make an overview for resources @done(25-01-05 14:48)
 
 Engine:
   ☐ add sounds -> play sound files
 
 Refactoring:
-  ✔ refactor workprovider implentation in one class (everyone who provides R_Work) @done(25-01-03 09:28)
   General File Structure:
     ☐ move external stuff to a "extern" sub directory
     ☐ move engine related code to an "engine" directory
@@ -54,6 +38,24 @@ Refactoring:
     ☐ store only the SVG files PNG could be created automatically
 
 Archive:
+  ✔ show remaining clicks near mouse @high @done(25-01-11 15:22) @project(Gameplay)
+  ✔ SceneObjects need Game pointer in update function @done(25-01-05 16:26) @project(Gameplay)
+  ✔ control game speed pause, normal, fast, faster @done(25-01-04 10:56) @project(Gameplay)
+  ✔ start a any construction costs one click!!?!! @done(25-01-04 12:22) @project(Gameplay)
+  ✔ wood, stone, bricks, ?? -> construction material @done(25-01-11 12:23) @project(Gameplay.Resources)
+  ✔ construction should take resources @done(25-01-11 12:23) @project(Gameplay.Resources)
+  ✔ wearisome at home marker for house @high @done(25-01-11 14:46) @project(Gameplay.Structures)
+  ✔ improve house display @done(25-01-11 15:03) @project(Gameplay.Structures)
+  ✔ search for structures that provide resources -> hard coded marketplace @critical @done(25-01-02 14:12) @project(Gameplay.Structures)
+  ✔ different icons for entertainment/buildings filled by wearisome on their own @done(25-01-04 10:12) @project(Gameplay.Structures)
+  ✘ clicks should be more expensive -> bigger click factory, a church/bank @cancelled(25-01-11 12:24) @project(Gameplay.Structures)
+  ✘ reduce amount of food produced -> use size of market place @cancelled(25-01-04 15:05) @project(Gameplay.Structures)
+  ✔ path should not be buildable without clicks available @done(25-01-02 12:33) @project(Gameplay) @project(Gameplay)
+  ✔ different jobs should take different time @high @done(25-01-03 10:03) @project(Gameplay)
+  ✔ Wearisome should check entertainment somehow like they check for work @done(25-01-03 15:19) @project(Gameplay)
+  ✔ tt-font rendering @done(25-01-05 12:27) @project(Gameplay.Overlay)
+  ✔ make an overview for resources @done(25-01-05 14:48) @project(Gameplay.Overlay)
+  ✔ refactor workprovider implentation in one class (everyone who provides R_Work) @done(25-01-03 09:28) @project(Refactoring)
   ✔ construction side could be placed on construction side @critical @started(25-01-02 09:12) @done(25-01-02 09:20) @lasted(8m37s) @project(Bugs)
   ✔ people should not start to work if it is getting late @done(25-01-02 12:11) @project(Gameplay)
   ✔ path build directly applys a click to build it @high @done(25-01-02 09:26) @project(Gameplay)
