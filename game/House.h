@@ -102,13 +102,13 @@ void h_draw(House *h, GameScene *gs, Game *g) {
     c_printf(g, "  HOUSE (%d,%d,%d,%d)\n", h->display.location.x, h->display.location.y, 2, 2);
     c_printf(g, "----------------------\n");
     c_printf(g, " %10s: %d\n", "clicks", h->resources.clicks);
-    c_printf(g, " %10s: %d\n", "clicks", h->resources_maximum.clicks);
+    c_printf(g, " %10s: %d\n", "max clicks", h->resources_maximum.clicks);
     c_printf(g, " %10s: %f\n", "water", h->resources.water);
     c_printf(g, " %10s: %f\n", "food", h->resources.food);
     c_printf(g, "----------------------\n\n");
   }
 
-  bd_draw(&h->display, g, h_color(), MI_Food);
+  bd_draw(&h->display, g, h->wearisome_dead ? gray(25) : h_color(), MI_House);
 
   Vec2 p = l_to_vecP(ri_bottom_right(h->display.location));
   float x = h->resources.water / h->resources_maximum.water;
