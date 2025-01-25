@@ -15,7 +15,7 @@
 typedef struct ClickFactory {
   WorkProvider work_provider;
 
-  float temporary_deliver_timer;
+  int last_day_delivered;
 
   BuildingDisplay display;
 
@@ -34,15 +34,14 @@ float cf_render_order(ClickFactory *cf) { return l_to_y(cf->display.location.y);
 void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
   bd_update(&cf->display, g);
 
-  if (cf->temporary_deliver_timer > 0.0f) {
-    if ((cf->temporary_deliver_timer -= dt) <= 0.0f) {
+  if (gs->day > cf->last_day_delivered) {
+    cf->last_day_delivered = gs->day;
+    if (wp_is_done(&cf->work_provider)) {
       gs_produce_click(gs);
       wp_reset(&cf->work_provider);
       cf->missing_starts += 15;
       bd_flash(&cf->display);
     }
-  } else if (wp_is_done(&cf->work_provider)) {
-    cf->temporary_deliver_timer = 5.0;
   }
 
   if (cf->missing_starts > 0 && r_float() > 0.9f) {
@@ -64,8 +63,8 @@ void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
   Vec2 p = l_to_vecP(ri_bottom_right(cf->display.location));
 
   bd_draw(&cf->display, g, cf_color(), MI_Click);
-  if (cf->temporary_deliver_timer > 0.0f)
-    g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
+  // if (cf->temporary_deliver_timer > 0.0f)
+  //   g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&cf->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
@@ -81,6 +80,7 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   ClickFactory *cf = g_malloc(g, sizeof(ClickFactory));
   *cf = (ClickFactory){
       .display = bd_create(g, (Recti){p.x, p.y, 3, 3}),
+      .last_day_delivered = gs->day,
       .missing_starts = 15,
   };
   assert((void *)cf == (void *)&cf->work_provider);

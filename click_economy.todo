@@ -1,11 +1,13 @@
 Bugs:
+  ☐ new houses show click on hover ... why?
   ☐ sometimes path construction side is not removed -> they instantly start next work I think
 
 Gameplay:
-  ☐ stuff will be produced every day, but only the amount of worked clicks -> there is a cooldown
+  ✔ stuff will be produced every day, but only the amount of worked clicks -> there is a cooldown @done(25-01-25 11:07)
   ☐ right click should stop a construction -> unspent clicks are returned -> remove construction tile claim
   ☐ destroy building option -> _think about returning resources_
   ☐ if wearisome gets dead, the house should become a constructionside again
+  ☐ allow to rotate buildings -> flip width height
   ☐ _maybe_ leaving buildings faster and more direct
   ☐ city tiers -> more people more options
   ☐ research -> new levels new / better buildings

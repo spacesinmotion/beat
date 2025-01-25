@@ -12,7 +12,7 @@
 typedef struct Farm {
   WorkProvider work_provider;
 
-  float temporary_deliver_timer;
+  int last_day_delivered;
 
   BuildingDisplay display;
 } Farm;
@@ -30,18 +30,15 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
 
   bd_update(&fa->display, g);
 
-  if (fa->temporary_deliver_timer > 0.0f) {
-    fa->temporary_deliver_timer -= dt;
-    if (fa->temporary_deliver_timer <= 0.0f) {
-      if (gs->resource_pool.food + 9 <= gs->resource_pool_max.food) {
-        gs->resource_pool.food += 9;
-        wp_reset(&fa->work_provider);
-        bd_flash(&fa->display);
-      } else
-        fa->temporary_deliver_timer = 1.0f;
+  if (gs->day > fa->last_day_delivered) {
+    fa->last_day_delivered = gs->day;
+    while (fa->work_provider.clicks_done > 0 && gs->resource_pool.food + 1 <= gs->resource_pool_max.food) {
+      gs->resource_pool.food++;
+      fa->work_provider.clicks--;
+      fa->work_provider.clicks_claimed--;
+      fa->work_provider.clicks_work--;
+      fa->work_provider.clicks_done--;
     }
-  } else if (wp_is_done(&fa->work_provider)) {
-    fa->temporary_deliver_timer = 5.0;
   }
 }
 
@@ -54,8 +51,8 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
 
   bd_draw(&fa->display, g, fa_color(), MI_Food);
   Vec2 p = l_to_vecP(ri_bottom_right(fa->display.location));
-  if (fa->temporary_deliver_timer > 0.0f)
-    g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
+  // if (fa->temporary_deliver_timer > 0.0f)
+  //   g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&fa->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
@@ -71,7 +68,7 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   Farm *fa = g_malloc(g, sizeof(Farm));
   *fa = (Farm){
       .display = bd_create(g, (Recti){p.x, p.y, 4, 4}),
-      .temporary_deliver_timer = 0.0f,
+      .last_day_delivered = gs->day,
   };
   assert((void *)fa == (void *)&fa->work_provider);
   wp_init(&fa->work_provider, 3, 3, 6.0f);

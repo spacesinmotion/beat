@@ -12,7 +12,7 @@
 typedef struct ConstructionMaterialFactory {
   WorkProvider work_provider;
 
-  float temporary_deliver_timer;
+  int last_day_delivered;
 
   BuildingDisplay display;
 } ConstructionMaterialFactory;
@@ -29,18 +29,16 @@ float cmf_render_order(ConstructionMaterialFactory *cmf) { return l_to_y(cmf->di
 void cmf_update(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g, float dt) {
   bd_update(&cmf->display, g);
 
-  if (cmf->temporary_deliver_timer > 0.0f) {
-    cmf->temporary_deliver_timer -= dt;
-    if (cmf->temporary_deliver_timer <= 0.0f) {
-      if (gs->resource_pool.construction_material + 2 <= gs->resource_pool_max.construction_material) {
-        gs->resource_pool.construction_material += 2;
-        wp_reset(&cmf->work_provider);
-        bd_flash(&cmf->display);
-      } else
-        cmf->temporary_deliver_timer = 1.0f;
+  if (gs->day > cmf->last_day_delivered) {
+    cmf->last_day_delivered = gs->day;
+    while (cmf->work_provider.clicks_done > 0 &&
+           gs->resource_pool.construction_material + 1 <= gs->resource_pool_max.construction_material) {
+      gs->resource_pool.construction_material++;
+      cmf->work_provider.clicks--;
+      cmf->work_provider.clicks_claimed--;
+      cmf->work_provider.clicks_work--;
+      cmf->work_provider.clicks_done--;
     }
-  } else if (wp_is_done(&cmf->work_provider)) {
-    cmf->temporary_deliver_timer = 5.0;
   }
 }
 
@@ -54,8 +52,8 @@ void cmf_draw(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g) {
 
   bd_draw(&cmf->display, g, cmf_color(), MI_ConstructionMaterial);
   Vec2 p = l_to_vecP(ri_bottom_right(cmf->display.location));
-  if (cmf->temporary_deliver_timer > 0.0f)
-    g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
+  // if (cmf->temporary_deliver_timer > 0.0f)
+  //   g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&cmf->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
@@ -71,6 +69,7 @@ ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene
   ConstructionMaterialFactory *cmf = g_malloc(g, sizeof(ConstructionMaterialFactory));
   *cmf = (ConstructionMaterialFactory){
       .display = bd_create(g, (Recti){p.x, p.y, 3, 2}),
+      .last_day_delivered = gs->day,
   };
   assert((void *)cmf == (void *)&cmf->work_provider);
   wp_init(&cmf->work_provider, 2, 1, 10.0f);

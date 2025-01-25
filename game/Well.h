@@ -11,7 +11,7 @@
 typedef struct Well {
   WorkProvider work_provider;
 
-  float temporary_deliver_timer;
+  int last_day_delivered;
 
   BuildingDisplay display;
 } Well;
@@ -28,18 +28,15 @@ float wl_render_order(Well *wl) { return l_to_y(wl->display.location.y); }
 void wl_update(Well *wl, GameScene *gs, Game *g, float dt) {
   bd_update(&wl->display, g);
 
-  if (wl->temporary_deliver_timer > 0.0f) {
-    wl->temporary_deliver_timer -= dt;
-    if (wl->temporary_deliver_timer <= 0.0f) {
-      if (gs->resource_pool.water + 2 <= gs->resource_pool_max.water) {
-        gs->resource_pool.water += 2;
-        wp_reset(&wl->work_provider);
-        bd_flash(&wl->display);
-      } else
-        wl->temporary_deliver_timer = 1.0f;
+  if (gs->day > wl->last_day_delivered) {
+    wl->last_day_delivered = gs->day;
+    while (wl->work_provider.clicks_done > 0 && gs->resource_pool.water + 1 <= gs->resource_pool_max.water) {
+      gs->resource_pool.water++;
+      wl->work_provider.clicks--;
+      wl->work_provider.clicks_claimed--;
+      wl->work_provider.clicks_work--;
+      wl->work_provider.clicks_done--;
     }
-  } else if (wp_is_done(&wl->work_provider)) {
-    wl->temporary_deliver_timer = 5.0;
   }
 }
 
@@ -52,8 +49,8 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
 
   Vec2 p = l_to_vecP(ri_bottom_right(wl->display.location));
   bd_draw(&wl->display, g, wl_color(), MI_Water);
-  if (wl->temporary_deliver_timer > 0.0f)
-    g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
+  // if (wl->temporary_deliver_timer > 0.0f)
+  //   g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&wl->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
@@ -69,7 +66,7 @@ Well *Well_init(Game *g, GameScene *gs, Point p) {
   Well *wl = g_malloc(g, sizeof(Well));
   *wl = (Well){
       .display = bd_create(g, (Recti){p.x, p.y, 2, 3}),
-      .temporary_deliver_timer = 0.0f,
+      .last_day_delivered = gs->day,
   };
   assert((void *)wl == (void *)&wl->work_provider);
   wp_init(&wl->work_provider, 1, 2, 5.0f);
