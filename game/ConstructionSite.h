@@ -5,6 +5,7 @@
 #include "game/Level.h"
 #include "game/TileContent.h"
 #include "game/WorkProvider.h"
+#include "game/assets.h"
 #include <assert.h>
 
 void gs_construction_done(GameScene *gs, Game *g, Recti r, int key);
@@ -62,6 +63,24 @@ static SceneObjectTable ConstructionSite_table = {
     .draw = (SceneObjectDrawCB)cs_draw,
 };
 
+void cs_click(ConstructionSite *cs, GameScene *gs) {
+  if (gs->resource_pool.construction_material > 0 && gs->clicks > 0) {
+    if (cs->work_provider.clicks < wp_fields(&cs->work_provider) && gs->clicks > 0) {
+      cs->work_provider.clicks++;
+      gs->clicks--;
+      gs->resource_pool.construction_material--;
+    }
+  }
+}
+
+static TileContentTable ConstructionSite_TileContent_Table = {
+    .provides = (ProvidesCB)wp_provides,
+    .claim = (ClaimCB)wp_claim,
+    .start = (StartCB)wp_start,
+    .done = (DoneCB)wp_done,
+    .click = (ClickCB)cs_click,
+};
+
 ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key) {
   ConstructionSite *cs = g_malloc(g, sizeof(ConstructionSite));
   *cs = (ConstructionSite){
@@ -69,13 +88,15 @@ ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key
       .key = key,
   };
   assert((void *)cs == (void *)&cs->work_provider);
-  wp_init(&cs->work_provider, r.w, r.h, key == 0 ? 1.0f : 8.0f);
+  wp_init(&cs->work_provider, r.w, r.h, key == MI_Street ? 1.0f : 8.0f);
 
-  l_set_tile_contentR(gs->level, cs->location, to_TileContent(cs, &WorkProvider_TileContent_Default_Table));
+  l_set_tile_contentR(gs->level, cs->location, to_TileContent(cs, &ConstructionSite_TileContent_Table));
   l_set_tileR(gs->level, r, T_ConstructionSite);
 
-  if (key == 0)
-    wp_click(&cs->work_provider, gs);
+  if (key == MI_Street)
+    cs_click(cs, gs);
+  else
+    gs_loose_click(gs);
 
   gs_add_object(gs, (SceneObject){.context = cs, &ConstructionSite_table});
   return cs;
