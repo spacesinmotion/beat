@@ -16,15 +16,21 @@ typedef struct Point {
   int x, y;
 } Point;
 
-typedef struct Size {
+typedef struct Sizei {
   int w, h;
-} Size;
+} Sizei;
 
 typedef struct Recti {
   int x, y, w, h;
 } Recti;
+
 static inline Point ri_bottom_right(Recti r) { return (Point){r.x, r.y}; }
 
 static inline bool ri_contains(Recti r, int x, int y) { return r.x <= x && r.y <= y && r.x + r.w > x && r.y + r.h > y; }
+
+static inline void ri_set_size(Recti *r, Sizei s) {
+  r->w = s.w;
+  r->h = s.h;
+}
 
 #endif

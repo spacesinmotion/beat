@@ -32,7 +32,7 @@ float g_animation_delta(Game *g);
 float g_time(Game *g);
 int g_frame(Game *g);
 
-Size g_viewport(Game *g);
+Sizei g_viewport(Game *g);
 
 G_Object g_tilerect_buffer(Game *g, int w, int h);
 G_Object g_animation_buffer(Game *g);

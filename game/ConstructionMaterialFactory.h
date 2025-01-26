@@ -17,7 +17,8 @@ typedef struct ConstructionMaterialFactory {
   BuildingDisplay display;
 } ConstructionMaterialFactory;
 
-Color cmf_color() { return rgb(85, 84, 80); }
+static inline Color cmf_color() { return rgb(85, 84, 80); }
+static inline Sizei cmf_size() { return (Sizei){3, 3}; }
 
 bool cmf_dead(ConstructionMaterialFactory *cmf) {
   (void)cmf;
@@ -61,13 +62,14 @@ static SceneObjectTable ConstructionMaterialFactory_table = {
 };
 
 ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene *gs, Point p) {
+  const Sizei s = cmf_size();
   ConstructionMaterialFactory *cmf = g_malloc(g, sizeof(ConstructionMaterialFactory));
   *cmf = (ConstructionMaterialFactory){
-      .display = bd_create(g, (Recti){p.x, p.y, 3, 2}),
+      .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
   };
   assert((void *)cmf == (void *)&cmf->work_provider);
-  wp_init(&cmf->work_provider, 2, 1, 10.0f);
+  wp_init(&cmf->work_provider, s.w - 1, s.h - 1, 10.0f);
 
   l_set_tileR(gs->level, cmf->display.location, T_ConstructionMaterialFactory);
   l_set_tile_contentR(gs->level, cmf->display.location, to_TileContent(cmf, &WorkProvider_TileContent_Default_Table));

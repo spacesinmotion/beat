@@ -16,7 +16,8 @@ typedef struct Well {
   BuildingDisplay display;
 } Well;
 
-Color wl_color() { return rgb(0, 80, 133); }
+static inline Color wl_color() { return rgb(0, 80, 133); }
+static inline Sizei wl_size() { return (Sizei){2, 3}; }
 
 bool wl_dead(Well *wl) {
   (void)wl;
@@ -58,13 +59,14 @@ static SceneObjectTable Well_table = {
 };
 
 Well *Well_init(Game *g, GameScene *gs, Point p) {
+  const Sizei s = wl_size();
   Well *wl = g_malloc(g, sizeof(Well));
   *wl = (Well){
-      .display = bd_create(g, (Recti){p.x, p.y, 2, 3}),
+      .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
   };
   assert((void *)wl == (void *)&wl->work_provider);
-  wp_init(&wl->work_provider, 1, 2, 5.0f);
+  wp_init(&wl->work_provider, s.w - 1, s.h - 1, 5.0f);
 
   l_set_tileR(gs->level, wl->display.location, T_Well);
   l_set_tile_contentR(gs->level, wl->display.location, to_TileContent(wl, &WorkProvider_TileContent_Default_Table));

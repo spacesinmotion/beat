@@ -29,7 +29,8 @@ typedef struct House {
   bool wearisome_dead;
 } House;
 
-Color h_color() { return rgb(87, 163, 106); }
+static inline Color h_color() { return rgb(87, 163, 106); }
+static inline Sizei h_size() { return (Sizei){2, 2}; }
 
 bool h_dead(House *h) {
   (void)h;
@@ -141,9 +142,10 @@ static SceneObjectTable House_table = (SceneObjectTable){
     .draw = (SceneObjectDrawCB)h_draw,
 };
 House *House_init(Game *g, GameScene *gs, Point p) {
+  const Sizei s = h_size();
   House *h = g_malloc(g, sizeof(House));
   *h = (House){
-      .display = bd_create(g, (Recti){p.x, p.y, 2, 2}),
+      .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .resources = {.food = 0.0f, .water = 0.0f, .clicks = 0},
       .resources_maximum = {.food = 2.0f, .water = 2.0f, .clicks = 0},
       .clicks_cache = -1,

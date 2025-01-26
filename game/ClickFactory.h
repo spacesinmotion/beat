@@ -8,6 +8,7 @@
 #include "game/WorkProvider.h"
 #include "game/assets.h"
 #include "game/effects/Bling.h"
+#include "math/Rect.h"
 #include "math/Vec2.h"
 #include "math/random.h"
 #include <assert.h>
@@ -22,7 +23,8 @@ typedef struct ClickFactory {
   int missing_starts;
 } ClickFactory;
 
-Color cf_color() { return rgb(255, 215, 0); }
+static inline Color cf_color() { return rgb(255, 215, 0); }
+static inline Sizei cf_size() { return (Sizei){3, 2}; }
 
 bool cf_dead(ClickFactory *cf) {
   (void)cf;
@@ -79,14 +81,15 @@ static SceneObjectTable ClickFactory_table = {
 };
 
 ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
+  Sizei s = cf_size();
   ClickFactory *cf = g_malloc(g, sizeof(ClickFactory));
   *cf = (ClickFactory){
-      .display = bd_create(g, (Recti){p.x, p.y, 3, 3}),
+      .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
       .missing_starts = 15,
   };
   assert((void *)cf == (void *)&cf->work_provider);
-  wp_init(&cf->work_provider, 2, 2, 9.0f);
+  wp_init(&cf->work_provider, s.w - 1, s.h - 1, 9.0f);
 
   l_set_tileR(gs->level, cf->display.location, T_ClickFactory);
   l_set_tile_contentR(gs->level, cf->display.location, to_TileContent(cf, &WorkProvider_TileContent_Default_Table));

@@ -14,7 +14,8 @@ typedef struct Marketplace {
   BuildingDisplay display;
 } Marketplace;
 
-Color mp_color() { return rgb(196, 113, 65); }
+static inline Color mp_color() { return rgb(196, 113, 65); }
+static inline Sizei mp_size() { return (Sizei){4, 3}; }
 
 bool mp_dead(Marketplace *mp) {
   (void)mp;
@@ -91,9 +92,10 @@ static TileContentTable Marketplace_TileContent_Table = {
 };
 
 Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
+  Sizei s = mp_size();
   Marketplace *mp = g_malloc(g, sizeof(Marketplace));
   *mp = (Marketplace){
-      .display = bd_create(g, (Recti){p.x, p.y, 4, 3}),
+      .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
   };
 
   l_set_tileR(gs->level, mp->display.location, T_Marketplace);

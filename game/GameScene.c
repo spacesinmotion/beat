@@ -153,7 +153,7 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
              (Vec2){8 + 4 + i * 16, 8 + 4});
   }
 
-  Size vp = g_viewport(g);
+  Sizei vp = g_viewport(g);
   Vec2 clock_pos = (Vec2){vp.w - 16.0f, vp.h - 16.0f};
   g_color(g, gs->daytime > 0.75 ? red() : white());
   g_objectRS(g, g_animation_buffer(g), Img_overlay_images, 0, clock_pos, -gs->daytime * M_PI * 2.0f, 2.0f);
@@ -216,31 +216,25 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->r.w = gs->r.h = 1;
       } else if (gs->menu_selected == MI_Marketplace) {
         gs->preview = mp_color();
-        gs->r.w = 4;
-        gs->r.h = 3;
+        ri_set_size(&gs->r, mp_size());
       } else if (gs->menu_selected == MI_House) {
         gs->preview = h_color();
-        gs->r.w = gs->r.h = 2;
+        ri_set_size(&gs->r, h_size());
       } else if (gs->menu_selected == MI_Water) {
         gs->preview = wl_color();
-        gs->r.w = 2;
-        gs->r.h = 3;
+        ri_set_size(&gs->r, wl_size());
       } else if (gs->menu_selected == MI_Food) {
         gs->preview = fa_color();
-        gs->r.w = 3;
-        gs->r.h = 4;
+        ri_set_size(&gs->r, fa_size());
       } else if (gs->menu_selected == MI_Click) {
         gs->preview = cf_color();
-        gs->r.w = 3;
-        gs->r.h = 3;
+        ri_set_size(&gs->r, cf_size());
       } else if (gs->menu_selected == MI_Entertainment) {
         gs->preview = em_color();
-        gs->r.w = 3;
-        gs->r.h = 2;
+        ri_set_size(&gs->r, em_size());
       } else if (gs->menu_selected == MI_ConstructionMaterial) {
         gs->preview = cmf_color();
-        gs->r.w = 3;
-        gs->r.h = 2;
+        ri_set_size(&gs->r, cmf_size());
       } else {
         gs->r.w = gs->r.h = 0;
       }

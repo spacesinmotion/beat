@@ -127,8 +127,8 @@ float g_animation_delta(Game *g) { return g->animation_delta; }
 float g_time(Game *g) { return g->time; }
 int g_frame(Game *g) { return (int)(g->time * 8.0f); }
 
-Size g_viewport(Game *g) {
-  return (Size){sapp_width() / g->render.overlay_scale, sapp_height() / g->render.overlay_scale};
+Sizei g_viewport(Game *g) {
+  return (Sizei){sapp_width() / g->render.overlay_scale, sapp_height() / g->render.overlay_scale};
 }
 
 void g_color(Game *game, Color c) { game->render.fs_param.color = c; }

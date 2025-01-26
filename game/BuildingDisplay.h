@@ -4,7 +4,6 @@
 #include "game/Game.h"
 #include "game/Level.h"
 #include "math/Rect.h"
-#include "math/random.h"
 #include <math.h>
 
 typedef struct BuildingDisplay {
@@ -20,7 +19,6 @@ BuildingDisplay bd_create(Game *g, Recti l) {
       .buffer = g_tilerect_buffer(g, l.w, l.h),
       .location = l,
       .flash = 1.0f,
-
   };
 }
 

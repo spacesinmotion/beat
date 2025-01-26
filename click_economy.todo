@@ -1,5 +1,6 @@
 Bugs:
   ☐ sometimes path construction side is not removed -> they instantly start next work I think
+  ☐ streets should not be buildable if there is no construction material
   ✔ new houses show click on hover ... why? @done(25-01-25 11:46)
   ✔ houses don't work on death again @done(25-01-25 11:54)
   ✔ zoom out to much breaks camera @done(25-01-25 16:53)
@@ -17,13 +18,15 @@ Gameplay:
   ☐ need bigger construction objects -> should bind a lot of people
   Visualization:
     ☐ mouse enter building -> _a corona or something_
+    ☐ day night cycle as background color
   Structures:
     ☐ some animation for earning/lossing clicks 
     warning signs:
+      ☐ wearisome dying @critical
       ☐ has no resources 
-      ✔ wearisome at home
       ☐ building not reachable
       ☐ can't reach warehouse
+      ✔ wearisome at home
     ☐ a _Logistics_ building -> new job moving stuff from producer to warehouse
     ☐ a _warehouse_ -> limit global pool and increase by this buildings
     ☐ a _Park_ it earns no clicks, but reduces need consumption 

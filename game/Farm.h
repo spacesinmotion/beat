@@ -7,6 +7,7 @@
 #include "game/TileContent.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
+#include "math/Rect.h"
 #include <assert.h>
 
 typedef struct Farm {
@@ -17,7 +18,8 @@ typedef struct Farm {
   BuildingDisplay display;
 } Farm;
 
-Color fa_color() { return rgb(11, 133, 0); }
+static inline Color fa_color() { return rgb(11, 133, 0); }
+static inline Sizei fa_size() { return (Sizei){3, 4}; }
 
 bool fa_dead(Farm *fa) {
   (void)fa;
@@ -60,13 +62,14 @@ static SceneObjectTable Farm_table = {
 };
 
 Farm *Farm_init(Game *g, GameScene *gs, Point p) {
+  const Sizei s = fa_size();
   Farm *fa = g_malloc(g, sizeof(Farm));
   *fa = (Farm){
-      .display = bd_create(g, (Recti){p.x, p.y, 3, 4}),
+      .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
   };
   assert((void *)fa == (void *)&fa->work_provider);
-  wp_init(&fa->work_provider, 2, 3, 6.0f);
+  wp_init(&fa->work_provider, s.w - 1, s.h - 1, 6.0f);
 
   l_set_tileR(gs->level, fa->display.location, T_Farm);
   l_set_tile_contentR(gs->level, fa->display.location, to_TileContent(fa, &WorkProvider_TileContent_Default_Table));
