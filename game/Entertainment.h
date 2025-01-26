@@ -13,6 +13,7 @@ typedef struct Entertainment {
   BuildingDisplay display;
 
   int claimed, started;
+  bool some_one_is_done;
 } Entertainment;
 
 Color em_color() { return rgb(245, 99, 72); }
@@ -28,6 +29,10 @@ void em_update(Entertainment *em, GameScene *gs, Game *g, float dt) {
   (void)gs;
   (void)dt;
 
+  if (em->some_one_is_done) {
+    em->some_one_is_done = false;
+    bd_flash(&em->display);
+  }
   bd_update(&em->display, g);
 }
 
@@ -97,6 +102,9 @@ Entertainment *Entertainment_init(Game *g, GameScene *gs, Point p) {
   Entertainment *em = g_malloc(g, sizeof(Entertainment));
   *em = (Entertainment){
       .display = bd_create(g, (Recti){p.x, p.y, 3, 2}),
+      .started = 0,
+      .claimed = 0,
+      .some_one_is_done = false,
   };
 
   l_set_tileR(gs->level, em->display.location, T_Entertainment);

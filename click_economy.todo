@@ -20,8 +20,8 @@ Gameplay:
   Structures:
     ☐ some animation for earning/lossing clicks 
     warning signs:
-      ☐ has resources 
-      ☐ wearisome at home
+      ☐ has no resources 
+      ✔ wearisome at home
       ☐ building not reachable
       ☐ can't reach warehouse
     ☐ a _Logistics_ building -> new job moving stuff from producer to warehouse

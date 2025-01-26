@@ -18,7 +18,12 @@ typedef struct WorkProvider {
 static inline void wp_init(WorkProvider *wp, int c, int r, float work_duration) {
   *wp = (WorkProvider){c, r, 0, 0, 0, 0, work_duration};
 }
-static inline void wp_reset(WorkProvider *wp) { wp_init(wp, wp->colums, wp->rows, wp->work_duration); }
+static inline void wp_reduce_clicks(WorkProvider *wp) {
+  wp->clicks--;
+  wp->clicks_claimed--;
+  wp->clicks_work--;
+  wp->clicks_done--;
+}
 static inline int wp_fields(const WorkProvider *wp) { return wp->colums * wp->rows; }
 static inline bool wp_is_done(const WorkProvider *wp) { return wp->clicks_done == wp_fields(wp); }
 
@@ -73,6 +78,16 @@ void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p, bool ignore_e
       ++c;
     }
   }
+}
+
+bool wp_update_resource(WorkProvider *wp, int *resource, int max_resource) {
+  bool need_flash = false;
+  while (wp->clicks_done > 0 && (*resource) + 1 <= max_resource) {
+    (*resource)++;
+    wp_reduce_clicks(wp);
+    need_flash = true;
+  }
+  return need_flash;
 }
 
 static TileContentTable WorkProvider_TileContent_Default_Table = {

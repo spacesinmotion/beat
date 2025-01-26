@@ -30,13 +30,8 @@ void wl_update(Well *wl, GameScene *gs, Game *g, float dt) {
 
   if (gs->day > wl->last_day_delivered) {
     wl->last_day_delivered = gs->day;
-    while (wl->work_provider.clicks_done > 0 && gs->resource_pool.water + 1 <= gs->resource_pool_max.water) {
-      gs->resource_pool.water++;
-      wl->work_provider.clicks--;
-      wl->work_provider.clicks_claimed--;
-      wl->work_provider.clicks_work--;
-      wl->work_provider.clicks_done--;
-    }
+    if (wp_update_resource(&wl->work_provider, &gs->resource_pool.water, gs->resource_pool_max.water))
+      bd_flash(&wl->display);
   }
 }
 

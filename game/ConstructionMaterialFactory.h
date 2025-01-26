@@ -31,14 +31,9 @@ void cmf_update(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g, float 
 
   if (gs->day > cmf->last_day_delivered) {
     cmf->last_day_delivered = gs->day;
-    while (cmf->work_provider.clicks_done > 0 &&
-           gs->resource_pool.construction_material + 1 <= gs->resource_pool_max.construction_material) {
-      gs->resource_pool.construction_material++;
-      cmf->work_provider.clicks--;
-      cmf->work_provider.clicks_claimed--;
-      cmf->work_provider.clicks_work--;
-      cmf->work_provider.clicks_done--;
-    }
+    if (wp_update_resource(&cmf->work_provider, &gs->resource_pool.construction_material,
+                           gs->resource_pool_max.construction_material))
+      bd_flash(&cmf->display);
   }
 }
 

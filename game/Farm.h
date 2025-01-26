@@ -32,13 +32,8 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
 
   if (gs->day > fa->last_day_delivered) {
     fa->last_day_delivered = gs->day;
-    while (fa->work_provider.clicks_done > 0 && gs->resource_pool.food + 1 <= gs->resource_pool_max.food) {
-      gs->resource_pool.food++;
-      fa->work_provider.clicks--;
-      fa->work_provider.clicks_claimed--;
-      fa->work_provider.clicks_work--;
-      fa->work_provider.clicks_done--;
-    }
+    if (wp_update_resource(&fa->work_provider, &gs->resource_pool.food, gs->resource_pool_max.food))
+      bd_flash(&fa->display);
   }
 }
 

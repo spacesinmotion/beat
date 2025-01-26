@@ -36,10 +36,12 @@ void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
 
   if (gs->day > cf->last_day_delivered) {
     cf->last_day_delivered = gs->day;
-    if (wp_is_done(&cf->work_provider)) {
-      gs_produce_click(gs);
-      wp_reset(&cf->work_provider);
-      cf->missing_starts += 15;
+    if (cf->work_provider.clicks_done > 0) {
+      while (cf->work_provider.clicks_done > 0) {
+        gs_produce_click(gs);
+        wp_reduce_clicks(&cf->work_provider);
+        cf->missing_starts += 5;
+      }
       bd_flash(&cf->display);
     }
   }
