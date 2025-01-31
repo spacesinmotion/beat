@@ -102,6 +102,7 @@ typedef struct Game {
     vs_param_t vs_param;
     fs_param_t fs_param;
     sg_sampler texture_sampler;
+    Color background_color;
     Vec2 camera_pan;
     float camera_scale;
     float overlay_scale;
@@ -122,6 +123,7 @@ typedef struct Game {
 } Game;
 
 void g_set_scene(Game *g, Scene scene) { g->scene = scene; }
+void g_set_background_color(Game *g, Color c) { g->render.background_color = c; }
 
 float g_animation_delta(Game *g) { return g->animation_delta; }
 float g_time(Game *g) { return g->time; }
@@ -690,7 +692,7 @@ static void g_draw(Game *g) {
 
   g_update_console(g);
 
-  Color b = rgb(226, 219, 197);
+  Color b = g->render.background_color;
   sg_begin_pass(&(sg_pass){
       .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {b.r, b.g, b.b, b.a}}},
       .swapchain = sglue_swapchain(),

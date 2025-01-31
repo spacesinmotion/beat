@@ -31,6 +31,15 @@ static inline Color lighter(Color c, float t) {
   };
 }
 
+static inline Color c_mix(Color c1, Color c2, float t) {
+  return (Color){
+      (c1.r + t * (c2.r - c1.r)),
+      (c1.g + t * (c2.g - c1.g)),
+      (c1.b + t * (c2.b - c1.b)),
+      (c1.a + t * (c2.a - c1.a)),
+  };
+}
+
 static inline Color alphaf(Color c, float a) { return (Color){c.r, c.g, c.b, a}; }
 
 // fn vec4(c Color) Vec4 {

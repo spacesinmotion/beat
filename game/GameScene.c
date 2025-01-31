@@ -17,6 +17,7 @@
 #include "game/assets.h"
 #include "gc/gc.h"
 // #include "math.h"
+#include "math.h"
 #include "math/Color.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
@@ -73,6 +74,19 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     gs->daytime -= 1.0f;
     gs->day++;
   }
+
+  float t = gs->daytime;
+  if (t < 0.05f)
+    t = 0.5 + t / 0.1f;
+  else if (t < 0.7f)
+    t = 1.0f;
+  else if (t < 0.8f)
+    t = 1.0 - (t - 0.7) / 0.1f;
+  else if (t < 0.95f)
+    t = 0.0;
+  else
+    t = (t - 0.95f) / 0.1f;
+  g_set_background_color(g, c_mix(rgb(66, 64, 78), rgb(226, 219, 197), t));
 
   gs->clicks_in_houses = 0;
   for (int i = 0; i < gs->scene_objects.len; ++i)

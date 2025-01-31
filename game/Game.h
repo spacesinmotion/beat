@@ -27,6 +27,7 @@ void G_Object_free(G_Object *);
 typedef struct Game Game;
 
 void g_set_scene(Game *g, Scene scene);
+void g_set_background_color(Game *g, Color c);
 
 float g_animation_delta(Game *g);
 float g_time(Game *g);
