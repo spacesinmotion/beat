@@ -29,7 +29,7 @@ bool fa_dead(Farm *fa) {
 float fa_render_order(Farm *fa) { return l_to_y(fa->display.location.y); }
 
 void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
-
+  (void)dt;
   bd_update(&fa->display, g);
 
   if (gs->day > fa->last_day_delivered) {

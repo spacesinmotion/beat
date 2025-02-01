@@ -27,6 +27,7 @@ bool wl_dead(Well *wl) {
 float wl_render_order(Well *wl) { return l_to_y(wl->display.location.y); }
 
 void wl_update(Well *wl, GameScene *gs, Game *g, float dt) {
+  (void)dt;
   bd_update(&wl->display, g);
 
   if (gs->day > wl->last_day_delivered) {

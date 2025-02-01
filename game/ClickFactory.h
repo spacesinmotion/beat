@@ -34,6 +34,7 @@ bool cf_dead(ClickFactory *cf) {
 float cf_render_order(ClickFactory *cf) { return l_to_y(cf->display.location.y); }
 
 void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
+  (void)dt;
   bd_update(&cf->display, g);
 
   if (gs->day > cf->last_day_delivered) {
