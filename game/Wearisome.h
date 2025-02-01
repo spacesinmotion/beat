@@ -1,12 +1,14 @@
 #ifndef WEARISOME
 #define WEARISOME
 
+#include "game/Farm.h"
 #include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/House.h"
 #include "game/Level.h"
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
+#include "game/Well.h"
 #include "game/assets.h"
 #include "game/jobs/DeliverJob.h"
 #include "game/search/ResourceProviderSearch.h"
@@ -192,7 +194,7 @@ DeliverJob *h_deliver_job(House *h, GameScene *gs) {
     if (marketplace.w > 0) {
       gs->resource_pool_claimed.water++;
       h->resources_maximum.clicks--;
-      return deliver_job(marketplace, h->display.location, h, (CollectDoneCB)h_pay_water,
+      return deliver_job(marketplace, h->display.location, MI_Water, wl_color(), h, (CollectDoneCB)h_pay_water,
                          (DeliverDoneCB)h_get_water_done);
     }
   } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0)) {
@@ -200,7 +202,7 @@ DeliverJob *h_deliver_job(House *h, GameScene *gs) {
     if (marketplace.w > 0) {
       gs->resource_pool_claimed.food++;
       h->resources_maximum.clicks--;
-      return deliver_job(marketplace, h->display.location, h, (CollectDoneCB)h_pay_food,
+      return deliver_job(marketplace, h->display.location, MI_Food, fa_color(), h, (CollectDoneCB)h_pay_food,
                          (DeliverDoneCB)h_get_food_done);
     }
   }
@@ -441,6 +443,13 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
   g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));
   const int o = (size_t)w / 17;
   g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : (o + g_frame(g)) % 4, p);
+
+  if (w->state == W_Deliver && w->deliver_job) {
+    g_color(g, white());
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, 3}), 0.75f);
+    g_color(g, w->deliver_job->color);
+    g_objectS(g, g_animation_buffer(g), Img_menubar, w->deliver_job->icon, v_add(p, (Vec2){4, 3}), 0.75f);
+  }
 
   if (w->needs.water < 0.75) {
     g_color(g, warn(w->needs.water));

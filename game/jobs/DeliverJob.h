@@ -1,7 +1,9 @@
 #ifndef DELIVERJOB_H
 #define DELIVERJOB_H
 
+#include "game/assets.h"
 #include "gc/gc.h"
+#include "math/Color.h"
 #include "math/Rect.h"
 #include <stdbool.h>
 
@@ -14,11 +16,14 @@ typedef struct DeliverJob {
   CollectDoneCB collect_done;
   DeliverDoneCB deliver_done;
   Recti from, to;
+  MenuIcon icon;
+  Color color;
 } DeliverJob;
 
-DeliverJob *deliver_job(Recti from, Recti to, void *context, CollectDoneCB on_collect, DeliverDoneCB on_delivered) {
+DeliverJob *deliver_job(Recti from, Recti to, MenuIcon icon, Color color, void *context, CollectDoneCB on_collect,
+                        DeliverDoneCB on_delivered) {
   DeliverJob *job = gc_malloc(&gc, sizeof(DeliverJob));
-  *job = (DeliverJob){context, on_collect, on_delivered, from, to};
+  *job = (DeliverJob){context, on_collect, on_delivered, from, to, icon, color};
   return job;
 }
 
