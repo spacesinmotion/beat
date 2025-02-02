@@ -33,8 +33,7 @@ void cmf_update(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g, float 
 
   if (gs->day > cmf->last_day_delivered) {
     cmf->last_day_delivered = gs->day;
-    if (wp_update_resource(&cmf->work_provider, &gs->resource_pool.construction_material,
-                           gs->resource_pool_max.construction_material))
+    if (wp_update_resource(&cmf->work_provider, &gs->resource_pool.construction_material, gs_free_storage(gs)))
       bd_flash(&cmf->display);
   }
 }

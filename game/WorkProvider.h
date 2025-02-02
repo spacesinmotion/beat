@@ -80,9 +80,9 @@ void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p, bool ignore_e
   }
 }
 
-bool wp_update_resource(WorkProvider *wp, int *resource, int max_resource) {
+bool wp_update_resource(WorkProvider *wp, int *resource, int free_storage) {
   bool need_flash = false;
-  while (wp->clicks_done > 0 && (*resource) + 1 <= max_resource) {
+  for (int i = 0; i < free_storage && wp->clicks_done > 0; ++i) {
     (*resource)++;
     wp_reduce_clicks(wp);
     need_flash = true;

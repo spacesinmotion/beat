@@ -101,19 +101,23 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     gs->click_counter_text_cache = gs->clicks;
   }
   if (gs->resource_pool.water != gs->water_counter_text_cache) {
-    g_create_text(g, &gs->water_counter_text, Oswald_Regular_8,
-                  str("%d/%d", gs->resource_pool.water, gs->resource_pool_max.water));
+    g_create_text(g, &gs->water_counter_text, Oswald_Regular_8, str("%d", gs->resource_pool.water));
     gs->water_counter_text_cache = gs->resource_pool.water;
   }
   if (gs->resource_pool.food != gs->food_counter_text_cache) {
-    g_create_text(g, &gs->food_counter_text, Oswald_Regular_8,
-                  str("%d/%d", gs->resource_pool.food, gs->resource_pool_max.food));
+    g_create_text(g, &gs->food_counter_text, Oswald_Regular_8, str("%d", gs->resource_pool.food));
     gs->food_counter_text_cache = gs->resource_pool.food;
   }
   if (gs->resource_pool.construction_material != gs->construction_material_counter_text_cache) {
     g_create_text(g, &gs->construction_material_counter_text, Oswald_Regular_8,
-                  str("%d/%d", gs->resource_pool.construction_material, gs->resource_pool_max.construction_material));
+                  str("%d", gs->resource_pool.construction_material));
     gs->construction_material_counter_text_cache = gs->resource_pool.construction_material;
+  }
+  const int free_storage = gs_free_storage(gs);
+  if (gs->free_storage_text_cache != free_storage) {
+    g_create_text(g, &gs->free_storage_text, Oswald_Regular_8,
+                  str("%d/%d", gs->storage_size - free_storage, gs->storage_size));
+    gs->free_storage_text_cache = free_storage;
   }
 }
 
@@ -173,26 +177,28 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   g_objectRS(g, g_animation_buffer(g), Img_overlay_images, 0, clock_pos, -gs->daytime * M_PI * 2.0f, 2.0f);
   g_objectS(g, g_animation_buffer(g), Img_overlay_images, 1, clock_pos, 2.0f);
 
-  g_color(g, rgb(150, 150, 150));
-  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){0, g_viewport(g).h - 52}, 2.5f);
+  g_color(g, rgb(137, 197, 184));
+  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){5, g_viewport(g).h - 12}, 3.5f);
   g_color(g, rgb(182, 205, 70));
-  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){15, g_viewport(g).h - 3}, 3.0f);
+  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){15, g_viewport(g).h - 1}, 3.0f);
   g_color(g, gray(75));
   g_object(g, g_animation_buffer(g), Img_menubar, MI_Click, (Vec2){9, g_viewport(g).h - 9});
   g_text(g, gs->click_counter_text, Oswald_Regular_12, (Vec2){15, g_viewport(g).h - 13});
 
   g_color(g, rgb(85, 154, 139));
-  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){5, g_viewport(g).h - 40}, 2.75f);
+  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){5, g_viewport(g).h - 53}, 2.75f);
 
   const float o = 12;
   float h = g_viewport(g).h - 30;
   g_color(g, gray(45));
-  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Water, (Vec2){5, h - 0 * o + 2}, 0.75f);
-  g_text(g, gs->water_counter_text, Oswald_Regular_8, (Vec2){10, h - 0 * o});
-  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Food, (Vec2){5, h - 1 * o + 2}, 0.75f);
-  g_text(g, gs->food_counter_text, Oswald_Regular_8, (Vec2){10, h - 1 * o});
-  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_ConstructionMaterial, (Vec2){5, h - 2 * o + 2}, 0.75f);
-  g_text(g, gs->construction_material_counter_text, Oswald_Regular_8, (Vec2){10, h - 2 * o});
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_WareHouse, (Vec2){5, h - 0 * o + 2}, 0.75f);
+  g_text(g, gs->free_storage_text, Oswald_Regular_8, (Vec2){10, h - 0 * o});
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Water, (Vec2){5, h - 1 * o + 2}, 0.75f);
+  g_text(g, gs->water_counter_text, Oswald_Regular_8, (Vec2){10, h - 1 * o});
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Food, (Vec2){5, h - 2 * o + 2}, 0.75f);
+  g_text(g, gs->food_counter_text, Oswald_Regular_8, (Vec2){10, h - 2 * o});
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_ConstructionMaterial, (Vec2){5, h - 3 * o + 2}, 0.75f);
+  g_text(g, gs->construction_material_counter_text, Oswald_Regular_8, (Vec2){10, h - 3 * o});
 
   if (tc_can_click(l_content(gs->level, gs->r.x, gs->r.y))) {
     g_color(g, gray(45));
@@ -334,13 +340,14 @@ void GameScene_init(Game *g) {
       .clicks = 4,
       .resource_pool = {.water = 25, .food = 25, .construction_material = 30},
       .resource_pool_claimed = {.water = 0, .food = 0, .construction_material = 0},
-      .resource_pool_max = {.water = 30, .food = 30, .construction_material = 30},
+      .storage_size = 120,
       .level = g_malloc(g, sizeof(Level)),
       .r = (Recti){-1, -1, 0, 0},
       .click_counter_text_cache = -1,
       .water_counter_text_cache = -1,
       .food_counter_text_cache = -1,
       .construction_material_counter_text_cache = -1,
+      .free_storage_text_cache = -1,
   };
 
   l_init(gs->level);

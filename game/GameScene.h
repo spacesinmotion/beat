@@ -30,7 +30,7 @@ typedef struct GameScene {
   int clicks, clicks_produced, clicks_lost, clicks_in_houses;
   Stuff resource_pool;
   Stuff resource_pool_claimed;
-  Stuff resource_pool_max;
+  int storage_size;
 
   Color preview;
   Recti r;
@@ -49,6 +49,8 @@ typedef struct GameScene {
   int food_counter_text_cache;
   G_Object construction_material_counter_text;
   int construction_material_counter_text_cache;
+  G_Object free_storage_text;
+  int free_storage_text_cache;
 
   Vec2 mouse_overlay_position;
 } GameScene;
@@ -65,6 +67,10 @@ static inline void gs_produce_click(GameScene *gs) {
 static inline void gs_loose_click(GameScene *gs) {
   gs->clicks--;
   gs->clicks_lost++;
+}
+
+static inline int gs_free_storage(GameScene *gs) {
+  return gs->storage_size - gs->resource_pool.water - gs->resource_pool.food - gs->resource_pool.construction_material;
 }
 
 #endif
