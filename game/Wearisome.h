@@ -446,9 +446,9 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
 
   if (w->state == W_Deliver && w->deliver_job) {
     g_color(g, white());
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, 3}), 0.75f);
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, 3}), 0.5f);
     g_color(g, w->deliver_job->color);
-    g_objectS(g, g_animation_buffer(g), Img_menubar, w->deliver_job->icon, v_add(p, (Vec2){4, 3}), 0.75f);
+    g_objectS(g, g_animation_buffer(g), Img_menubar, w->deliver_job->icon, v_add(p, (Vec2){4, 3}), 0.5f);
   }
 
   if (w->needs.water < 0.75) {
