@@ -33,8 +33,15 @@ void cmf_update(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g, float 
 
   if (gs->day > cmf->last_day_delivered) {
     cmf->last_day_delivered = gs->day;
-    if (wp_update_resource(&cmf->work_provider, &gs->resource_pool.construction_material, gs_free_storage(gs)))
+    if (wp_finish_production_cycle(&cmf->work_provider, 8))
       bd_flash(&cmf->display);
+  }
+  if (wp_has_something_stored(&cmf->work_provider) && gs->daytime > 0.25 && gs->daytime < 0.26) {
+    const int free_storage = gs_free_storage(gs);
+    for (int i = 0; i < free_storage && cmf->work_provider.storage > 0; ++i) {
+      cmf->work_provider.storage--;
+      gs->resource_pool.construction_material++;
+    }
   }
 }
 
@@ -48,8 +55,8 @@ void cmf_draw(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g) {
 
   bd_draw(&cmf->display, g, cmf_color(), MI_ConstructionMaterial);
   Vec2 p = l_to_vecP(ri_bottom_right(cmf->display.location));
-  // if (cmf->temporary_deliver_timer > 0.0f)
-  //   g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
+  if (wp_has_something_stored(&cmf->work_provider))
+    g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&cmf->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }

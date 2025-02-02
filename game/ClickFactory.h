@@ -42,7 +42,7 @@ void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
     if (cf->work_provider.clicks_done > 0) {
       while (cf->work_provider.clicks_done > 0) {
         gs_produce_click(gs);
-        wp_reduce_clicks(&cf->work_provider);
+        wp_reduce_clicks(&cf->work_provider, 1);
         cf->missing_starts += 5;
       }
       bd_flash(&cf->display);

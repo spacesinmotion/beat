@@ -34,8 +34,15 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
 
   if (gs->day > fa->last_day_delivered) {
     fa->last_day_delivered = gs->day;
-    if (wp_update_resource(&fa->work_provider, &gs->resource_pool.food, gs_free_storage(gs)))
+    if (wp_finish_production_cycle(&fa->work_provider, 8))
       bd_flash(&fa->display);
+  }
+  if (wp_has_something_stored(&fa->work_provider) && gs->daytime > 0.25 && gs->daytime < 0.26) {
+    const int free_storage = gs_free_storage(gs);
+    for (int i = 0; i < free_storage && fa->work_provider.storage > 0; ++i) {
+      fa->work_provider.storage--;
+      gs->resource_pool.food++;
+    }
   }
 }
 
@@ -48,8 +55,8 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
 
   bd_draw(&fa->display, g, fa_color(), MI_Food);
   Vec2 p = l_to_vecP(ri_bottom_right(fa->display.location));
-  // if (fa->temporary_deliver_timer > 0.0f)
-  //   g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
+  if (wp_has_something_stored(&fa->work_provider))
+    g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&fa->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }

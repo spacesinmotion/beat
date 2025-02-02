@@ -32,8 +32,15 @@ void wl_update(Well *wl, GameScene *gs, Game *g, float dt) {
 
   if (gs->day > wl->last_day_delivered) {
     wl->last_day_delivered = gs->day;
-    if (wp_update_resource(&wl->work_provider, &gs->resource_pool.water, gs_free_storage(gs)))
+    if (wp_finish_production_cycle(&wl->work_provider, 8))
       bd_flash(&wl->display);
+  }
+  if (wp_has_something_stored(&wl->work_provider) && gs->daytime > 0.25 && gs->daytime < 0.26) {
+    const int free_storage = gs_free_storage(gs);
+    for (int i = 0; i < free_storage && wl->work_provider.storage > 0; ++i) {
+      wl->work_provider.storage--;
+      gs->resource_pool.water++;
+    }
   }
 }
 
@@ -46,8 +53,8 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
 
   Vec2 p = l_to_vecP(ri_bottom_right(wl->display.location));
   bd_draw(&wl->display, g, wl_color(), MI_Water);
-  // if (wl->temporary_deliver_timer > 0.0f)
-  //   g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
+  if (wp_has_something_stored(&wl->work_provider))
+    g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&wl->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
