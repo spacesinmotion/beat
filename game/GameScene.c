@@ -86,6 +86,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     t = 0.0;
   else
     t = (t - 0.95f) / 0.1f;
+  t = (1.0f - cos(t * M_PI)) / 2.0f;
   g_set_background_color(g, c_mix(rgb(66, 64, 78), rgb(226, 219, 197), t));
 
   gs->clicks_in_houses = 0;
@@ -161,8 +162,10 @@ void gs_draw(GameScene *gs, Game *g) {
 }
 
 void gs_draw_overlay(GameScene *gs, Game *g) {
+  Color cn = gs->daytime < 0.75f ? gray(25) : gray(225);
+  Color ch = gs->daytime < 0.75f ? gray(75) : gray(175);
   for (int i = 0; i < Nb_MI; ++i) {
-    g_color(g, i == gs->menu_under_mouse ? gray(100) : (gs->menu_selected == i ? gray(25) : gray(75)));
+    g_color(g, i == gs->menu_under_mouse ? gray(100) : (gs->menu_selected == i ? cn : ch));
     g_object(g, g_animation_buffer(g), Img_menubar, i % 16, (Vec2){8 + 4 + i * 16, 8 + 4});
   }
   for (int i = 0; i < Nb_MI; ++i) {
