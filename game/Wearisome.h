@@ -73,7 +73,7 @@ typedef struct Needs {
 
 typedef struct Wearisome {
   House *home;
-  Recti current_rect;
+  Recti current_building;
   Vec2 position, destination;
 
   PathPoint *path;
@@ -105,9 +105,14 @@ bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
 
 float w_render_order(Wearisome *w) { return 10000.0f + w->position.y; }
 
+static inline Recti w_current_rect(Wearisome *w) {
+  Point p = l_to_point(w->destination);
+  return (Recti){p.x, p.y, 1, 1};
+}
+
 static inline bool w_move_to(Wearisome *w, GameScene *gs, Recti dest) {
   Point p = l_to_point(w->destination);
-  w->path = find_path_from_rect_to_rect(gs, p, w->current_rect, dest);
+  w->path = find_path_from_rect_to_rect(gs, p, w->current_building, dest);
   return w->path != NULL;
 }
 static inline bool w_move_to_entertainment(Wearisome *w, GameScene *gs, Recti location) {
@@ -154,7 +159,7 @@ void w_u_at_home(Wearisome *w, GameScene *gs, float dt) {
   w_wander_to_random_near_path(w, gs);
   if (!w->path) {
     w->state = W_AtHome;
-    w->current_rect = w->home->display.location;
+    w->current_building = w->home->display.location;
   }
 }
 
@@ -166,7 +171,7 @@ void w_u_moving_home(Wearisome *w, float dt) {
       w->path = w->path->next;
     } else {
       w->state = W_AtHome;
-      w->current_rect = w->home->display.location;
+      w->current_building = w->home->display.location;
     }
   }
 }
@@ -250,14 +255,12 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
     w_deliver(w, gs, job);
 
   } else if (w_want_entertainment(w)) {
-    Point p = l_to_point(w->destination);
-    TileContent *building = find_resource_building(gs, (Recti){p.x, p.y, 1, 1}, R_Entertainment);
+    TileContent *building = find_resource_building(gs, w_current_rect(w), R_Entertainment);
     if (building)
       tc_claim(building, gs, w, R_Entertainment);
 
   } else if (w_want_to_work(w, gs)) {
-    Point p = l_to_point(w->destination);
-    TileContent *building = find_resource_building(gs, (Recti){p.x, p.y, 1, 1}, R_Work);
+    TileContent *building = find_resource_building(gs, w_current_rect(w), R_Work);
     if (building)
       tc_claim(building, gs, w, R_Work);
   }
@@ -297,7 +300,7 @@ void w_u_deliver_collect(Wearisome *w, GameScene *gs, float dt) {
     } else {
       w->wait_time = 0.5f;
       w->state = W_DeliverWait;
-      w->current_rect = w->deliver_job->from;
+      w->current_building = w->deliver_job->from;
     }
   }
 }
@@ -323,7 +326,7 @@ void w_u_deliver(Wearisome *w, GameScene *gs, float dt) {
       w->destination = w->path->p;
       w->path = w->path->next;
     } else {
-      w->current_rect = w->deliver_job->to;
+      w->current_building = w->deliver_job->to;
       dj_on_delivered(w->deliver_job, gs);
       w->deliver_job = NULL;
       w_wander_to_random_near_path(w, gs);
@@ -389,8 +392,8 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
     return;
 
   Point p = l_to_point(w->destination);
-  if (!ri_contains(w->current_rect, p.x, p.y))
-    w->current_rect = (Recti){0};
+  if (!ri_contains(w->current_building, p.x, p.y))
+    w->current_building = w_current_rect(w);
 
   switch (w->state) {
   case W_None:
@@ -499,7 +502,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
   Wearisome *w = g_malloc(g, sizeof(Wearisome));
   *w = (Wearisome){
       .home = home,
-      .current_rect = home->display.location,
+      .current_building = home->display.location,
       .position = pos,
       .destination = pos,
       .path = NULL,
