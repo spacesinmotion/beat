@@ -11,6 +11,7 @@
 #include "game/Well.h"
 #include "game/assets.h"
 #include "game/jobs/DeliverJob.h"
+#include "game/search/RectSearch.h"
 #include "game/search/ResourceProviderSearch.h"
 #include "math/Color.h"
 #include "math/Rect.h"
@@ -62,6 +63,7 @@ const char *WearisomeState_name(WearisomeState s) {
   case W_GetEntertained:
     return "get entertained";
   }
+  assert(false);
   return "<error>";
 }
 
@@ -88,23 +90,39 @@ typedef struct Wearisome {
   DeliverJob *deliver_job;
 } Wearisome;
 
-float apply_need(float *n, float t) {
+static inline float apply_need(float *n, float t) {
   *n += t;
   float r = f_max(0.0, *n - 1.0f);
   *n -= r;
   return t - r;
 }
 
-void w_sleep(Wearisome *w, float t) { w->needs.sleep = f_min(1.0f, w->needs.sleep + t); }
-float w_drink(Wearisome *w, float t) { return apply_need(&w->needs.water, t); }
-float w_eat(Wearisome *w, float t) { return apply_need(&w->needs.food, t); }
+static inline void w_sleep(Wearisome *w, float t) { w->needs.sleep = f_min(1.0f, w->needs.sleep + t); }
+static inline float w_drink(Wearisome *w, float t) { return apply_need(&w->needs.water, t); }
+static inline float w_eat(Wearisome *w, float t) { return apply_need(&w->needs.food, t); }
 
 bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
 
 float w_render_order(Wearisome *w) { return 10000.0f + w->position.y; }
 
-bool w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest);
-bool w_move_to_rect(Wearisome *w, GameScene *gs, Recti r) { return w_move_to(w, gs, w->current_rect, r); }
+static inline bool w_move_to(Wearisome *w, GameScene *gs, Recti dest) {
+  Point p = l_to_point(w->destination);
+  w->path = find_path_from_rect_to_rect(gs, p, w->current_rect, dest);
+  return w->path != NULL;
+}
+static inline bool w_move_to_entertainment(Wearisome *w, GameScene *gs, Recti location) {
+  if (!w_move_to(w, gs, location))
+    return false;
+  w->state = W_MoveToEntertainment;
+  return true;
+}
+
+static inline bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location) {
+  if (!w_move_to(w, gs, location))
+    return false;
+  w->state = W_MoveToWork;
+  return true;
+}
 
 void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
   Point l = l_to_point(w->destination);
@@ -112,7 +130,7 @@ void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
     int i = l.x + (rand() % 8) - 4;
     int j = l.y + (rand() % 8) - 4;
     if (l_movable(gs->level, i, j)) {
-      if (w_move_to(w, gs, w->current_rect, (Recti){i, j, 1, 1}))
+      if (w_move_to(w, gs, (Recti){i, j, 1, 1}))
         w->state = W_Wandering;
       return;
     }
@@ -189,7 +207,7 @@ DeliverJob *h_deliver_job(House *h, GameScene *gs) {
   bool need_food = h->resources_maximum.food - h->resources.food >= 1.0f;
   bool food_is_more_urgent = need_water && need_food && h->resources.water > h->resources.food;
   if (!food_is_more_urgent && need_water && (gs->resource_pool.water - gs->resource_pool_claimed.water > 0)) {
-    Recti marketplace = find_resource_building(gs, h->display.location, R_Water);
+    Recti marketplace = find_resource_building_rect(gs, h->display.location, R_Water);
     if (marketplace.w > 0) {
       gs->resource_pool_claimed.water++;
       h->resources_maximum.clicks--;
@@ -197,7 +215,7 @@ DeliverJob *h_deliver_job(House *h, GameScene *gs) {
                          (DeliverDoneCB)h_get_water_done);
     }
   } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0)) {
-    Recti marketplace = find_resource_building(gs, h->display.location, R_Food);
+    Recti marketplace = find_resource_building_rect(gs, h->display.location, R_Food);
     if (marketplace.w > 0) {
       gs->resource_pool_claimed.food++;
       h->resources_maximum.clicks--;
@@ -210,27 +228,6 @@ DeliverJob *h_deliver_job(House *h, GameScene *gs) {
 
 bool w_deliver(Wearisome *w, GameScene *gs, DeliverJob *job);
 
-bool w_move_to_recti(Wearisome *w, GameScene *gs, Recti location) {
-  Point p = l_to_point(w->destination);
-  PathPoint *path = find_path_to_rect(gs, (Recti){p.x, p.y, 1, 1}, location);
-  if (!path)
-    return false;
-  w->path = path;
-  return true;
-}
-bool w_move_to_entertainment(Wearisome *w, GameScene *gs, Recti location) {
-  if (!w_move_to_recti(w, gs, location))
-    return false;
-  w->state = W_MoveToEntertainment;
-  return true;
-}
-bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location) {
-  if (!w_move_to_recti(w, gs, location))
-    return false;
-  w->state = W_MoveToWork;
-  return true;
-}
-
 bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
   WearisomeState old_state = w->state;
   DeliverJob *job = NULL;
@@ -238,15 +235,15 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
   if (!l_movableP(gs->level, l_to_point(w->destination)))
     return NULL;
 
-  if (gs->daytime > 0.75f && w_move_to_rect(w, gs, w->home->display.location))
+  if (gs->daytime > 0.75f && w_move_to(w, gs, w->home->display.location))
     w->state = W_MovingHome;
 
-  else if (w->needs.sleep < 0.25f && w_move_to_rect(w, gs, w->home->display.location))
+  else if (w->needs.sleep < 0.25f && w_move_to(w, gs, w->home->display.location))
     w->state = W_MovingHome;
 
   else if (((w->needs.water < 0.25f && w->home->resources.water > 0.0f) ||
             (w->needs.food < 0.25f && w->home->resources.food > 0.0f)) &&
-           w_move_to_rect(w, gs, w->home->display.location))
+           w_move_to(w, gs, w->home->display.location))
     w->state = W_MovingHome;
 
   else if ((job = h_deliver_job(w->home, gs))) {
@@ -254,15 +251,15 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
 
   } else if (w_want_entertainment(w)) {
     Point p = l_to_point(w->destination);
-    PathResult path_result = find_path_to_resource(gs, (Recti){p.x, p.y, 1, 1}, R_Entertainment);
-    if (path_result.path && path_result.building)
-      tc_claim(path_result.building, gs, w, R_Entertainment);
+    TileContent *building = find_resource_building(gs, (Recti){p.x, p.y, 1, 1}, R_Entertainment);
+    if (building)
+      tc_claim(building, gs, w, R_Entertainment);
 
   } else if (w_want_to_work(w, gs)) {
     Point p = l_to_point(w->destination);
-    PathResult path_result = find_path_to_resource(gs, (Recti){p.x, p.y, 1, 1}, R_Work);
-    if (path_result.building)
-      tc_claim(path_result.building, gs, w, R_Work);
+    TileContent *building = find_resource_building(gs, (Recti){p.x, p.y, 1, 1}, R_Work);
+    if (building)
+      tc_claim(building, gs, w, R_Work);
   }
 
   return w->state != old_state;
@@ -310,7 +307,7 @@ void w_u_deliver_wait(Wearisome *w, GameScene *gs, float dt) {
   if (!w->deliver_job)
     w->state = W_Waiting;
   else if (w->wait_time < 0.0f) {
-    if (dj_on_collect(w->deliver_job, gs) && w_move_to_rect(w, gs, w->deliver_job->to)) {
+    if (dj_on_collect(w->deliver_job, gs) && w_move_to(w, gs, w->deliver_job->to)) {
       w->state = W_Deliver;
     } else {
       w->state = W_Waiting;
@@ -479,45 +476,11 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
   }
 }
 
-typedef struct WearisomePathSearchData {
-  GameScene *gs;
-  Recti start_rect;
-  Recti destination;
-  PathPoint *path;
-} WearisomePathSearchData;
-
-bool WearisomePathSearch_moveable(WearisomePathSearchData *data, int x, int y) {
-  return l_movable(data->gs->level, x, y) || ri_contains(data->destination, x, y) ||
-         ri_contains(data->start_rect, x, y);
-}
-
-bool WearisomePathSearch_reached_goal(WearisomePathSearchData *data, int x, int y) {
-  return ri_contains(data->destination, x, y);
-}
-
-void WearisomePathSearch_build_path(WearisomePathSearchData *data, int i, int j) {
-  data->path = PathPoint_init(l_to_vec(i, j), data->path);
-}
-
-bool w_move_to(Wearisome *w, GameScene *gs, Recti cur, Recti dest) {
-  WearisomePathSearchData search_data = {gs, cur, dest, NULL};
-  Point start = l_to_point(w->destination);
-  l_bright_first(gs->level, start.x, start.y,
-                 (SearchHandle){
-                     &search_data,
-                     (CanMoveCB)WearisomePathSearch_moveable,
-                     (GoalReachedCB)WearisomePathSearch_reached_goal,
-                     (PathCB)WearisomePathSearch_build_path,
-                 });
-  w->path = search_data.path;
-  return w->path != NULL;
-}
-
 bool w_is_home(Wearisome *w) { return w->state == W_AtHome; }
-
 bool w_is_free(Wearisome *w) { return w->state == W_Wandering || w->state == W_Waiting; }
+
 bool w_deliver(Wearisome *w, GameScene *gs, DeliverJob *job) {
-  if (w_move_to_rect(w, gs, job->from)) {
+  if (w_move_to(w, gs, job->from)) {
     w->deliver_job = job;
     w->state = W_DeliverCollect;
     return true;

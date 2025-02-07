@@ -3,43 +3,8 @@
 
 #include "game/GameScene.h"
 #include "game/Level.h"
-#include "gc/gc.h"
+#include "game/search/PathPoint.h"
 #include "math/Rect.h"
-
-typedef struct PathPoint {
-  Vec2 p;
-  struct PathPoint *next;
-} PathPoint;
-
-PathPoint *PathPoint_init(Vec2 p, PathPoint *next) {
-  PathPoint *pp = gc_malloc(&gc, sizeof(PathPoint));
-  *pp = (PathPoint){p, next};
-  return pp;
-}
-
-typedef struct RectSearch {
-  Level *level;
-  Recti start, destination;
-  PathPoint *path;
-} RectSearch;
-bool rs_moveable(RectSearch *data, int x, int y) {
-  return l_movable(data->level, x, y) || ri_contains(data->start, x, y) || ri_contains(data->destination, x, y);
-}
-bool rs_reached_goal(RectSearch *data, int x, int y) { return ri_contains(data->destination, x, y); }
-
-void rs_build_path(RectSearch *data, int i, int j) { data->path = PathPoint_init(l_to_vec(i, j), data->path); }
-
-PathPoint *find_path_to_rect(GameScene *gs, Recti start, Recti destination) {
-  RectSearch search_data = {gs->level, start, destination, NULL};
-  l_bright_first(gs->level, start.x, start.y,
-                 (SearchHandle){
-                     &search_data,
-                     (CanMoveCB)rs_moveable,
-                     (GoalReachedCB)rs_reached_goal,
-                     (PathCB)rs_build_path,
-                 });
-  return search_data.path;
-}
 
 typedef struct ResourceProviderSearch {
   GameScene *gs;
@@ -67,11 +32,7 @@ void rps_build_path(ResourceProviderSearch *data, int i, int j) {
   data->path = PathPoint_init(l_to_vec(i, j), data->path);
 }
 
-typedef struct PathResult {
-  PathPoint *path;
-  TileContent *building;
-} PathResult;
-PathResult find_path_to_resource(GameScene *gs, Recti start, Resource r) {
+TileContent *find_resource_building(GameScene *gs, Recti start, Resource r) {
   ResourceProviderSearch search_data = {gs, start, r, {-1, -1}, NULL};
   l_bright_first(gs->level, start.x, start.y,
                  (SearchHandle){
@@ -80,10 +41,10 @@ PathResult find_path_to_resource(GameScene *gs, Recti start, Resource r) {
                      (GoalReachedCB)rps_reached_goal,
                      (PathCB)rps_build_path,
                  });
-  return (PathResult){search_data.path, l_contentP(gs->level, search_data.found)};
+  return l_contentP(gs->level, search_data.found);
 }
 
-Recti find_resource_building(GameScene *gs, Recti start, Resource r) {
+Recti find_resource_building_rect(GameScene *gs, Recti start, Resource r) {
   ResourceProviderSearch search_data = {gs, start, r, {-1, -1}, NULL};
   l_bright_first(gs->level, start.x, start.y,
                  (SearchHandle){
