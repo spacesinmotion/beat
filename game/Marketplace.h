@@ -7,11 +7,16 @@
 #include "game/Level.h"
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
+#include "game/WorkProvider.h"
 #include "game/assets.h"
 #include "math/Rect.h"
 
 typedef struct Marketplace {
+  WorkProvider work_provider;
   BuildingDisplay display;
+
+  int last_day_delivered;
+
 } Marketplace;
 
 static inline Color mp_color() { return rgb(196, 113, 65); }
@@ -28,6 +33,10 @@ void mp_update(Marketplace *mp, GameScene *gs, Game *g, float dt) {
   (void)gs;
   (void)dt;
 
+  if (gs->day > mp->last_day_delivered) {
+    mp->last_day_delivered = gs->day;
+    wp_reduce_clicks(&mp->work_provider, mp->work_provider.clicks_done);
+  }
   bd_update(&mp->display, g);
 }
 
@@ -39,6 +48,9 @@ void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {
   }
 
   bd_draw(&mp->display, g, mp_color(), MI_Marketplace);
+
+  Vec2 p = l_to_vecP(ri_bottom_right(mp->display.location));
+  wp_draw_click_fields(&mp->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
 static SceneObjectTable Marketplace_table = (SceneObjectTable){
@@ -55,6 +67,8 @@ bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
     return gs->resource_pool.water - gs->resource_pool_claimed.water > 0;
   else if (r == R_Food)
     return gs->resource_pool.food - gs->resource_pool_claimed.food > 0;
+  else if (r == R_Work)
+    return wp_provides(&mp->work_provider, gs, r);
   return false;
 }
 
@@ -64,12 +78,14 @@ void mp_claim(Marketplace *mp, GameScene *gs, Resource r) {
     gs->resource_pool_claimed.water++;
   else if (r == R_Food)
     gs->resource_pool_claimed.food++;
+  else if (r == R_Work)
+    return wp_claim(&mp->work_provider, gs, r);
 }
 
 float mp_start(Marketplace *mp, GameScene *gs, Resource r) {
-  (void)mp;
-  (void)gs;
-  (void)r;
+  if (r == R_Work)
+    return wp_start(&mp->work_provider, gs, r);
+
   return 0.1f;
 }
 
@@ -81,7 +97,8 @@ void mp_done(Marketplace *mp, GameScene *gs, Resource r) {
   } else if (r == R_Food) {
     gs->resource_pool_claimed.food--;
     gs->resource_pool.food--;
-  }
+  } else if (r == R_Work)
+    wp_done(&mp->work_provider, gs, r);
 }
 
 static TileContentTable Marketplace_TileContent_Table = {
@@ -89,6 +106,7 @@ static TileContentTable Marketplace_TileContent_Table = {
     .claim = (ClaimCB)mp_claim,
     .start = (StartCB)mp_start,
     .done = (DoneCB)mp_done,
+    .click = (ClickCB)wp_click,
 };
 
 Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
@@ -96,7 +114,10 @@ Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
   Marketplace *mp = g_malloc(g, sizeof(Marketplace));
   *mp = (Marketplace){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
+      .last_day_delivered = gs->day,
   };
+  assert((void *)mp == (void *)&mp->work_provider);
+  wp_init(&mp->work_provider, s.w - 1, s.h - 1, 0.1f);
 
   l_set_tileR(gs->level, mp->display.location, T_Marketplace);
   l_set_tile_contentR(gs->level, mp->display.location, to_TileContent(mp, &Marketplace_TileContent_Table));

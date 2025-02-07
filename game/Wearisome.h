@@ -80,7 +80,6 @@ typedef struct Wearisome {
   Needs needs;
   Needs need_consumption;
   float health;
-  bool needs_click;
 
   float speed;
 
@@ -533,7 +532,6 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
       .health = 1.0f,
       .deliver_job = NULL,
       .state = W_AtHome,
-      .needs_click = false,
       .speed = r_float_r(60.0f, 75.0f),
   };
   gs_add_object(gs, (SceneObject){.context = w, &w_table});
