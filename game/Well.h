@@ -66,6 +66,21 @@ static SceneObjectTable Well_table = {
     .draw = (SceneObjectDrawCB)wl_draw,
 };
 
+bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
+void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
+  assert(r == R_Work);
+  if (w_move_to_work(w, gs, wl->display.location))
+    wp_claim(&wl->work_provider);
+}
+
+static TileContentTable Well_TileContent_Table = {
+    .provides = (ProvidesCB)wp_provides,
+    .claim = (ClaimCB)wl_claim,
+    .start = (StartCB)wp_start,
+    .done = (DoneCB)wp_done,
+    .click = (ClickCB)wp_click,
+};
+
 Well *Well_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = wl_size();
   Well *wl = g_malloc(g, sizeof(Well));
@@ -77,7 +92,7 @@ Well *Well_init(Game *g, GameScene *gs, Point p) {
   wp_init(&wl->work_provider, s.w - 1, s.h - 1, 5.0f);
 
   l_set_tileR(gs->level, wl->display.location, T_Well);
-  l_set_tile_contentR(gs->level, wl->display.location, to_TileContent(wl, &WorkProvider_TileContent_Default_Table));
+  l_set_tile_contentR(gs->level, wl->display.location, to_TileContent(wl, &Well_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = wl, &Well_table});
   return wl;

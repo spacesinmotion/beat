@@ -210,6 +210,27 @@ DeliverJob *h_deliver_job(House *h, GameScene *gs) {
 
 bool w_deliver(Wearisome *w, GameScene *gs, DeliverJob *job);
 
+bool w_move_to_recti(Wearisome *w, GameScene *gs, Recti location) {
+  Point p = l_to_point(w->destination);
+  PathPoint *path = find_path_to_rect(gs, (Recti){p.x, p.y, 1, 1}, location);
+  if (!path)
+    return false;
+  w->path = path;
+  return true;
+}
+bool w_move_to_entertainment(Wearisome *w, GameScene *gs, Recti location) {
+  if (!w_move_to_recti(w, gs, location))
+    return false;
+  w->state = W_MoveToEntertainment;
+  return true;
+}
+bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location) {
+  if (!w_move_to_recti(w, gs, location))
+    return false;
+  w->state = W_MoveToWork;
+  return true;
+}
+
 bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
   WearisomeState old_state = w->state;
   DeliverJob *job = NULL;
@@ -234,20 +255,14 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
   } else if (w_want_entertainment(w)) {
     Point p = l_to_point(w->destination);
     PathResult path_result = find_path_to_resource(gs, (Recti){p.x, p.y, 1, 1}, R_Entertainment);
-    if (path_result.path && path_result.building) {
-      tc_claim(path_result.building, gs, R_Entertainment);
-      w->path = path_result.path;
-      w->state = W_MoveToEntertainment;
-    }
+    if (path_result.path && path_result.building)
+      tc_claim(path_result.building, gs, w, R_Entertainment);
 
   } else if (w_want_to_work(w, gs)) {
     Point p = l_to_point(w->destination);
     PathResult path_result = find_path_to_resource(gs, (Recti){p.x, p.y, 1, 1}, R_Work);
-    if (path_result.path && path_result.building) {
-      tc_claim(path_result.building, gs, R_Work);
-      w->path = path_result.path;
-      w->state = W_MoveToWork;
-    }
+    if (path_result.building)
+      tc_claim(path_result.building, gs, w, R_Work);
   }
 
   return w->state != old_state;

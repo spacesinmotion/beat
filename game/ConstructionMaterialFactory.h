@@ -68,6 +68,21 @@ static SceneObjectTable ConstructionMaterialFactory_table = {
     .draw = (SceneObjectDrawCB)cmf_draw,
 };
 
+bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
+void cmf_claim(ConstructionMaterialFactory *cf, GameScene *gs, Wearisome *w, Resource r) {
+  assert(r == R_Work);
+  if (w_move_to_work(w, gs, cf->display.location))
+    wp_claim(&cf->work_provider);
+}
+
+static TileContentTable ConstructionMaterialFactory_TileContent_Table = {
+    .provides = (ProvidesCB)wp_provides,
+    .claim = (ClaimCB)cmf_claim,
+    .start = (StartCB)wp_start,
+    .done = (DoneCB)wp_done,
+    .click = (ClickCB)wp_click,
+};
+
 ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = cmf_size();
   ConstructionMaterialFactory *cmf = g_malloc(g, sizeof(ConstructionMaterialFactory));
@@ -79,7 +94,8 @@ ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene
   wp_init(&cmf->work_provider, s.w - 1, s.h - 1, 10.0f);
 
   l_set_tileR(gs->level, cmf->display.location, T_ConstructionMaterialFactory);
-  l_set_tile_contentR(gs->level, cmf->display.location, to_TileContent(cmf, &WorkProvider_TileContent_Default_Table));
+  l_set_tile_contentR(gs->level, cmf->display.location,
+                      to_TileContent(cmf, &ConstructionMaterialFactory_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = cmf, &ConstructionMaterialFactory_table});
   return cmf;

@@ -73,9 +73,16 @@ void cs_click(ConstructionSite *cs, GameScene *gs) {
   }
 }
 
+bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
+void cs_claim(ConstructionSite *cs, GameScene *gs, Wearisome *w, Resource r) {
+  assert(r == R_Work);
+  if (w_move_to_work(w, gs, cs->location))
+    wp_claim(&cs->work_provider);
+}
+
 static TileContentTable ConstructionSite_TileContent_Table = {
     .provides = (ProvidesCB)wp_provides,
-    .claim = (ClaimCB)wp_claim,
+    .claim = (ClaimCB)cs_claim,
     .start = (StartCB)wp_start,
     .done = (DoneCB)wp_done,
     .click = (ClickCB)cs_click,

@@ -3,7 +3,6 @@
 
 #include "game/GameScene.h"
 #include "game/Level.h"
-#include "game/TileContent.h"
 #include "gc/gc.h"
 #include "math/Rect.h"
 
@@ -16,6 +15,30 @@ PathPoint *PathPoint_init(Vec2 p, PathPoint *next) {
   PathPoint *pp = gc_malloc(&gc, sizeof(PathPoint));
   *pp = (PathPoint){p, next};
   return pp;
+}
+
+typedef struct RectSearch {
+  Level *level;
+  Recti start, destination;
+  PathPoint *path;
+} RectSearch;
+bool rs_moveable(RectSearch *data, int x, int y) {
+  return l_movable(data->level, x, y) || ri_contains(data->start, x, y) || ri_contains(data->destination, x, y);
+}
+bool rs_reached_goal(RectSearch *data, int x, int y) { return ri_contains(data->destination, x, y); }
+
+void rs_build_path(RectSearch *data, int i, int j) { data->path = PathPoint_init(l_to_vec(i, j), data->path); }
+
+PathPoint *find_path_to_rect(GameScene *gs, Recti start, Recti destination) {
+  RectSearch search_data = {gs->level, start, destination, NULL};
+  l_bright_first(gs->level, start.x, start.y,
+                 (SearchHandle){
+                     &search_data,
+                     (CanMoveCB)rs_moveable,
+                     (GoalReachedCB)rs_reached_goal,
+                     (PathCB)rs_build_path,
+                 });
+  return search_data.path;
 }
 
 typedef struct ResourceProviderSearch {
@@ -37,7 +60,6 @@ bool rps_reached_goal(ResourceProviderSearch *data, int x, int y) {
   if (!tc_provides(c, data->gs, data->resource))
     return false;
   data->found = (Point){x, y};
-  // tc_claim(c, data->gs, data->resource);
   return true;
 }
 

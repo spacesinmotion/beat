@@ -81,6 +81,21 @@ static SceneObjectTable ClickFactory_table = {
     .draw = (SceneObjectDrawCB)cf_draw,
 };
 
+bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
+void cf_claim(ClickFactory *cf, GameScene *gs, Wearisome *w, Resource r) {
+  assert(r == R_Work);
+  if (w_move_to_work(w, gs, cf->display.location))
+    wp_claim(&cf->work_provider);
+}
+
+static TileContentTable ClickFactory_TileContent_Table = {
+    .provides = (ProvidesCB)wp_provides,
+    .claim = (ClaimCB)cf_claim,
+    .start = (StartCB)wp_start,
+    .done = (DoneCB)wp_done,
+    .click = (ClickCB)wp_click,
+};
+
 ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   Sizei s = cf_size();
   ClickFactory *cf = g_malloc(g, sizeof(ClickFactory));
@@ -93,7 +108,7 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   wp_init(&cf->work_provider, s.w - 1, s.h - 1, 9.0f);
 
   l_set_tileR(gs->level, cf->display.location, T_ClickFactory);
-  l_set_tile_contentR(gs->level, cf->display.location, to_TileContent(cf, &WorkProvider_TileContent_Default_Table));
+  l_set_tile_contentR(gs->level, cf->display.location, to_TileContent(cf, &ClickFactory_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = cf, &ClickFactory_table});
   return cf;

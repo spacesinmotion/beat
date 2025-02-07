@@ -72,14 +72,16 @@ bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
   return false;
 }
 
-void mp_claim(Marketplace *mp, GameScene *gs, Resource r) {
+bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
+void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
   (void)mp;
   if (r == R_Water)
     gs->resource_pool_claimed.water++;
   else if (r == R_Food)
     gs->resource_pool_claimed.food++;
   else if (r == R_Work)
-    return wp_claim(&mp->work_provider, gs, r);
+    if (w_move_to_work(w, gs, mp->display.location))
+      return wp_claim(&mp->work_provider);
 }
 
 float mp_start(Marketplace *mp, GameScene *gs, Resource r) {

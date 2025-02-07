@@ -72,11 +72,12 @@ bool em_provides(Entertainment *em, GameScene *gs, Resource r) {
   const Sizei s = em_size();
   return r == R_Entertainment && em->claimed < (s.w - 1) * (s.h - 1);
 }
-void em_claim(Entertainment *em, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Entertainment);
 
-  em->claimed++;
+bool w_move_to_entertainment(Wearisome *w, GameScene *gs, Recti location);
+void em_claim(Entertainment *em, GameScene *gs, Wearisome *w, Resource r) {
+  assert(r == R_Entertainment);
+  if (w_move_to_entertainment(w, gs, em->display.location))
+    em->claimed++;
 }
 float em_start(Entertainment *em, GameScene *gs, Resource r) {
   (void)gs;

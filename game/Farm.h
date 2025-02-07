@@ -68,6 +68,21 @@ static SceneObjectTable Farm_table = {
     .draw = (SceneObjectDrawCB)fa_draw,
 };
 
+bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
+void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
+  assert(r == R_Work);
+  if (w_move_to_work(w, gs, fa->display.location))
+    wp_claim(&fa->work_provider);
+}
+
+static TileContentTable Farm_TileContent_Table = {
+    .provides = (ProvidesCB)wp_provides,
+    .claim = (ClaimCB)fa_claim,
+    .start = (StartCB)wp_start,
+    .done = (DoneCB)wp_done,
+    .click = (ClickCB)wp_click,
+};
+
 Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = fa_size();
   Farm *fa = g_malloc(g, sizeof(Farm));
@@ -79,7 +94,7 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   wp_init(&fa->work_provider, s.w - 1, s.h - 1, 6.0f);
 
   l_set_tileR(gs->level, fa->display.location, T_Farm);
-  l_set_tile_contentR(gs->level, fa->display.location, to_TileContent(fa, &WorkProvider_TileContent_Default_Table));
+  l_set_tile_contentR(gs->level, fa->display.location, to_TileContent(fa, &Farm_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = fa, &Farm_table});
   return fa;

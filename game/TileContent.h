@@ -17,9 +17,10 @@ typedef enum Resource {
 
 typedef struct TileContent TileContent;
 typedef struct GameScene GameScene;
+typedef struct Wearisome Wearisome;
 
 typedef bool (*ProvidesCB)(void *, GameScene *gs, Resource r);
-typedef void (*ClaimCB)(void *, GameScene *gs, Resource r);
+typedef void (*ClaimCB)(void *, GameScene *gs, Wearisome *w, Resource r);
 typedef float (*StartCB)(void *, GameScene *gs, Resource r);
 typedef void (*DoneCB)(void *, GameScene *gs, Resource r);
 typedef void (*ClickCB)(const TileContent *, GameScene *gs);
@@ -39,9 +40,9 @@ typedef struct TileContent {
 bool tc_provides(const TileContent *tc, GameScene *gs, Resource r) {
   return tc && tc->table->provides && tc->table->provides(tc->context, gs, r);
 }
-void tc_claim(const TileContent *tc, GameScene *gs, Resource r) {
+void tc_claim(const TileContent *tc, GameScene *gs, Wearisome *w, Resource r) {
   if (tc && tc->table->claim)
-    tc->table->claim(tc->context, gs, r);
+    tc->table->claim(tc->context, gs, w, r);
 }
 float tc_start(const TileContent *tc, GameScene *gs, Resource r) {
   if (tc && tc->table->start)

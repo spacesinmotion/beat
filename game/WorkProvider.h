@@ -32,11 +32,7 @@ bool wp_provides(WorkProvider *wp, GameScene *gs, Resource r) {
   (void)gs;
   return r == R_Work && wp->clicks - wp->clicks_claimed > 0;
 }
-void wp_claim(WorkProvider *wp, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Work);
-  wp->clicks_claimed++;
-}
+void wp_claim(WorkProvider *wp) { wp->clicks_claimed++; }
 float wp_start(WorkProvider *wp, GameScene *gs, Resource r) {
   (void)gs;
   assert(r == R_Work);
@@ -93,12 +89,12 @@ static inline bool wp_finish_production_cycle(WorkProvider *wp, int max_storage)
 
 static inline bool wp_has_something_stored(const WorkProvider *wp) { return wp->storage > 0; }
 
-static TileContentTable WorkProvider_TileContent_Default_Table = {
-    .provides = (ProvidesCB)wp_provides,
-    .claim = (ClaimCB)wp_claim,
-    .start = (StartCB)wp_start,
-    .done = (DoneCB)wp_done,
-    .click = (ClickCB)wp_click,
-};
+// static TileContentTable WorkProvider_TileContent_Default_Table = {
+//     .provides = (ProvidesCB)wp_provides,
+//     .claim = (ClaimCB)wp_claim,
+//     .start = (StartCB)wp_start,
+//     .done = (DoneCB)wp_done,
+//     .click = (ClickCB)wp_click,
+// };
 
 #endif
