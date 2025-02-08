@@ -11,6 +11,7 @@
 #include "game/Well.h"
 #include "game/assets.h"
 #include "game/jobs/DeliverJob.h"
+#include "game/jobs/QueueItem.h"
 #include "game/search/RectSearch.h"
 #include "game/search/ResourceProviderSearch.h"
 #include "math/Color.h"
@@ -35,6 +36,8 @@ typedef enum WearisomeState {
 
   W_MoveToWork,
   W_Working,
+
+  W_QueueMove,
 
   W_MoveToEntertainment,
   W_GetEntertained,
@@ -68,6 +71,8 @@ const char *WearisomeState_name(WearisomeState s) {
     return "move to work";
   case W_Working:
     return "working";
+  case W_QueueMove:
+    return "queue job move";
   case W_MoveToEntertainment:
     return "move to entertainment";
   case W_GetEntertained:
@@ -95,6 +100,7 @@ typedef struct Wearisome {
 
   float speed;
 
+  QueueItem queue;
   WearisomeState state;
 
   DeliverJob *deliver_job;
@@ -136,6 +142,13 @@ static inline bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location) {
   if (!w_move_to(w, gs, location))
     return false;
   w->state = W_MoveToWork;
+  return true;
+}
+static inline bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi) {
+  if (!w_move_to(w, gs, location))
+    return false;
+  w->queue = qi;
+  w->state = W_QueueMove;
   return true;
 }
 
@@ -370,6 +383,20 @@ void w_u_move_to_work(Wearisome *w, GameScene *gs, float dt) {
   }
 }
 
+void w_u_queue_move(Wearisome *w, GameScene *gs, float dt) {
+  (void)gs;
+
+  w->position = v_lerp_about(w->position, w->destination, dt * w->speed);
+  if (v_eq(w->position, w->destination)) {
+    if (w->path) {
+      w->destination = w->path->p;
+      w->path = w->path->next;
+    } else if (!qi_on_done(&w->queue, w, gs)) {
+      w->state = W_Waiting;
+    }
+  }
+}
+
 void w_u_working(Wearisome *w, GameScene *gs, float dt) {
   (void)gs;
 
@@ -447,6 +474,10 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
   case W_MoveToEntertainment:
     w_u_move_to_work(w, gs, dt);
     break;
+  case W_QueueMove:
+    w_u_queue_move(w, gs, dt);
+    break;
+
   case W_Working:
   case W_GetEntertained:
     w_u_working(w, gs, dt);

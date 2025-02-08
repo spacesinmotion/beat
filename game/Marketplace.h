@@ -9,6 +9,7 @@
 #include "game/TileContent.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
+#include "game/jobs/QueueItem.h"
 #include "math/Rect.h"
 
 typedef struct Marketplace {
@@ -74,7 +75,19 @@ bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
   return false;
 }
 
-bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
+bool mp_random_move_mp(void *context, Wearisome *w, GameScene *gs) {
+  (void)w;
+  Marketplace *mp = (Marketplace *)context;
+  wp_done(&mp->work_provider, gs, R_Work);
+  return false;
+}
+
+bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi);
+bool mp_random_move_done(void *context, Wearisome *w, GameScene *gs) {
+  Marketplace *mp = (Marketplace *)context;
+  return w_queue_move_to(w, gs, mp->display.location, (QueueItem){mp, mp_random_move_mp});
+}
+
 void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
   (void)mp;
   if (r == R_Water)
@@ -83,9 +96,19 @@ void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
     gs->resource_pool_claimed.food++;
   else if (r == R_ConstructionMaterial)
     gs->resource_pool_claimed.construction_material++;
-  else if (r == R_Work)
-    if (w_move_to_work(w, gs, mp->display.location))
+  else if (r == R_Work) {
+    Point l = (Point){mp->display.location.x, mp->display.location.y};
+    for (int i = 0; i < 1000; i++) {
+      int i = l.x + (rand() % 18) - 9;
+      int j = l.y + (rand() % 18) - 9;
+      if (l_movable(gs->level, i, j)) {
+        l = (Point){i, j};
+        break;
+      }
+    }
+    if (w_queue_move_to(w, gs, (Recti){l.x, l.y, 1, 1}, (QueueItem){mp, mp_random_move_done}))
       return wp_claim(&mp->work_provider);
+  }
 }
 
 float mp_start(Marketplace *mp, GameScene *gs, Resource r) {
