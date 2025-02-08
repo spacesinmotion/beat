@@ -29,6 +29,10 @@ typedef enum WearisomeState {
   W_DeliverWait,
   W_Deliver,
 
+  W_WorkDeliverCollect,
+  W_WorkDeliverWait,
+  W_WorkDeliver,
+
   W_MoveToWork,
   W_Working,
 
@@ -54,6 +58,12 @@ const char *WearisomeState_name(WearisomeState s) {
     return "wait for deliver";
   case W_Deliver:
     return "deliver something";
+  case W_WorkDeliverCollect:
+    return "collect something for work";
+  case W_WorkDeliverWait:
+    return "wait for deliver for work";
+  case W_WorkDeliver:
+    return "deliver something for work";
   case W_MoveToWork:
     return "move to work";
   case W_Working:
@@ -299,7 +309,7 @@ void w_u_deliver_collect(Wearisome *w, GameScene *gs, float dt) {
       w->path = w->path->next;
     } else {
       w->wait_time = 0.5f;
-      w->state = W_DeliverWait;
+      w->state = w->state == W_DeliverCollect ? W_DeliverWait : W_WorkDeliverWait;
       w->current_building = w->deliver_job->from;
     }
   }
@@ -311,7 +321,7 @@ void w_u_deliver_wait(Wearisome *w, GameScene *gs, float dt) {
     w->state = W_Waiting;
   else if (w->wait_time < 0.0f) {
     if (dj_on_collect(w->deliver_job, gs) && w_move_to(w, gs, w->deliver_job->to)) {
-      w->state = W_Deliver;
+      w->state = w->state == W_DeliverWait ? W_Deliver : W_WorkDeliver;
     } else {
       w->state = W_Waiting;
       w->deliver_job = NULL;
@@ -329,7 +339,11 @@ void w_u_deliver(Wearisome *w, GameScene *gs, float dt) {
       w->current_building = w->deliver_job->to;
       dj_on_delivered(w->deliver_job, gs);
       w->deliver_job = NULL;
-      w_wander_to_random_near_path(w, gs);
+      if (w->state == W_WorkDeliver) {
+        w->wait_time = tc_start(l_contentP(gs->level, l_to_point(w->destination)), gs, R_Work);
+        w->state = W_Working;
+      } else
+        w_wander_to_random_near_path(w, gs);
     }
   }
 }
@@ -349,7 +363,7 @@ void w_u_move_to_work(Wearisome *w, GameScene *gs, float dt) {
         h_earn_click(w->home, -1);
         gs->clicks++;
       }
-      w->state = w->state == W_MoveToWork ? W_Working : W_GetEntertained;
+      w->state = (w->state == W_MoveToWork) ? W_Working : W_GetEntertained;
 
       // w->current_rect = w->deliver_job->from;
     }
@@ -417,12 +431,15 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
     break;
 
   case W_DeliverCollect:
+  case W_WorkDeliverCollect:
     w_u_deliver_collect(w, gs, dt);
     break;
   case W_DeliverWait:
+  case W_WorkDeliverWait:
     w_u_deliver_wait(w, gs, dt);
     break;
   case W_Deliver:
+  case W_WorkDeliver:
     w_u_deliver(w, gs, dt);
     break;
 
@@ -458,11 +475,13 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
   const int o = (size_t)w / 17;
   g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : (o + g_frame(g)) % 4, p);
 
-  if (w->state == W_Deliver && w->deliver_job) {
+  if (w->state == W_Deliver || w->state == W_WorkDeliver) {
     g_color(g, white());
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, 3}), 0.5f);
-    g_color(g, w->deliver_job->color);
-    g_objectS(g, g_animation_buffer(g), Img_menubar, w->deliver_job->icon, v_add(p, (Vec2){4, 3}), 0.5f);
+    if (w->deliver_job) {
+      g_color(g, w->deliver_job->color);
+      g_objectS(g, g_animation_buffer(g), Img_menubar, w->deliver_job->icon, v_add(p, (Vec2){4, 3}), 0.5f);
+    }
   }
 
   if (w->needs.water < 0.75) {
@@ -486,6 +505,14 @@ bool w_deliver(Wearisome *w, GameScene *gs, DeliverJob *job) {
   if (w_move_to(w, gs, job->from)) {
     w->deliver_job = job;
     w->state = W_DeliverCollect;
+    return true;
+  }
+  return false;
+}
+bool w_deliver_work(Wearisome *w, GameScene *gs, DeliverJob *job) {
+  if (w_move_to(w, gs, job->from)) {
+    w->deliver_job = job;
+    w->state = W_WorkDeliverCollect;
     return true;
   }
   return false;

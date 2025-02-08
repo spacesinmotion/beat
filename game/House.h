@@ -56,7 +56,6 @@ void h_earn_click(House *h, int c) {
 }
 
 bool h_pay_water(House *h, GameScene *gs) {
-  (void)h;
   gs->resource_pool.water--;
   gs->resource_pool_claimed.water--;
   gs->clicks++;
@@ -65,7 +64,6 @@ bool h_pay_water(House *h, GameScene *gs) {
 }
 
 bool h_pay_food(House *h, GameScene *gs) {
-  (void)h;
   gs->resource_pool.food--;
   gs->resource_pool_claimed.food--;
   gs->clicks++;

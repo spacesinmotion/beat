@@ -67,6 +67,8 @@ bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
     return gs->resource_pool.water - gs->resource_pool_claimed.water > 0;
   else if (r == R_Food)
     return gs->resource_pool.food - gs->resource_pool_claimed.food > 0;
+  else if (r == R_ConstructionMaterial)
+    return gs->resource_pool.construction_material - gs->resource_pool_claimed.construction_material > 0;
   else if (r == R_Work)
     return wp_provides(&mp->work_provider, gs, r);
   return false;
@@ -79,6 +81,8 @@ void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
     gs->resource_pool_claimed.water++;
   else if (r == R_Food)
     gs->resource_pool_claimed.food++;
+  else if (r == R_ConstructionMaterial)
+    gs->resource_pool_claimed.construction_material++;
   else if (r == R_Work)
     if (w_move_to_work(w, gs, mp->display.location))
       return wp_claim(&mp->work_provider);
@@ -99,6 +103,9 @@ void mp_done(Marketplace *mp, GameScene *gs, Resource r) {
   } else if (r == R_Food) {
     gs->resource_pool_claimed.food--;
     gs->resource_pool.food--;
+  } else if (r == R_ConstructionMaterial) {
+    gs->resource_pool_claimed.construction_material--;
+    gs->resource_pool.construction_material--;
   } else if (r == R_Work)
     wp_done(&mp->work_provider, gs, r);
 }

@@ -6,6 +6,8 @@
 #include "game/TileContent.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
+#include "game/jobs/DeliverJob.h"
+#include "game/search/ResourceProviderSearch.h"
 #include <assert.h>
 
 void gs_construction_done(GameScene *gs, Game *g, Recti r, int key);
@@ -68,16 +70,37 @@ void cs_click(ConstructionSite *cs, GameScene *gs) {
     if (cs->work_provider.clicks < wp_fields(&cs->work_provider) && gs->clicks > 0) {
       cs->work_provider.clicks++;
       gs->clicks--;
-      gs->resource_pool.construction_material--;
+      // gs->resource_pool.construction_material--;
     }
   }
 }
 
+bool cs_take_constructionmaterial(ConstructionSite *cs, GameScene *gs) {
+  (void)cs;
+  gs->resource_pool.construction_material--;
+  gs->resource_pool_claimed.construction_material--;
+  return true;
+}
+
+void cs_get_constructionmaterial_done(ConstructionSite *cs, GameScene *gs) {
+  (void)cs;
+  (void)gs;
+}
+
 bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
+bool w_deliver_work(Wearisome *w, GameScene *gs, DeliverJob *job);
 void cs_claim(ConstructionSite *cs, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
-  if (w_move_to_work(w, gs, cs->location))
-    wp_claim(&cs->work_provider);
+
+  Recti marketplace = find_resource_building_rect(gs, cs->location, R_ConstructionMaterial);
+  if (marketplace.w > 0) {
+    gs->resource_pool_claimed.construction_material++;
+    DeliverJob *job =
+        deliver_job(marketplace, cs->location, MI_ConstructionMaterial, cs_color(), cs,
+                    (CollectDoneCB)cs_take_constructionmaterial, (DeliverDoneCB)cs_get_constructionmaterial_done);
+    if (w_deliver_work(w, gs, job))
+      wp_claim(&cs->work_provider);
+  }
 }
 
 static TileContentTable ConstructionSite_TileContent_Table = {
