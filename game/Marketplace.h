@@ -2,15 +2,8 @@
 #define MARKETPLACE_H
 
 #include "game/BuildingDisplay.h"
-#include "game/Game.h"
-#include "game/GameScene.h"
-#include "game/Level.h"
-#include "game/SceneObject.h"
-#include "game/TileContent.h"
+#include "game/Wearisome.h"
 #include "game/WorkProvider.h"
-#include "game/assets.h"
-#include "game/jobs/QueueItem.h"
-#include "math/Rect.h"
 
 typedef struct Marketplace {
   WorkProvider work_provider;
@@ -82,13 +75,11 @@ bool mp_random_at_mp(void *context, Wearisome *w, GameScene *gs) {
   return false;
 }
 
-bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi);
 bool mp_random_move_done(void *context, Wearisome *w, GameScene *gs) {
   Marketplace *mp = (Marketplace *)context;
   return w_queue_move_to(w, gs, mp->display.location, (QueueItem){mp, mp_random_at_mp});
 }
 
-bool w_queue_wait_for(Wearisome *w, float time, QueueItem qi);
 bool mp_random_move_wait(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
   Marketplace *mp = (Marketplace *)context;

@@ -1,23 +1,13 @@
 #ifndef WEARISOME
 #define WEARISOME
 
-#include "game/Farm.h"
 #include "game/Game.h"
-#include "game/GameScene.h"
 #include "game/House.h"
-#include "game/Level.h"
-#include "game/SceneObject.h"
-#include "game/TileContent.h"
-#include "game/Well.h"
-#include "game/assets.h"
-#include "game/jobs/DeliverJob.h"
-#include "game/jobs/QueueItem.h"
 #include "game/search/RectSearch.h"
 #include "game/search/ResourceProviderSearch.h"
-#include "math/Color.h"
-#include "math/Rect.h"
-#include "math/Vec2.h"
 #include "math/random.h"
+
+#include <assert.h>
 
 typedef enum WearisomeState {
   W_None = 0,
@@ -25,14 +15,6 @@ typedef enum WearisomeState {
   W_MovingHome,
   W_Waiting,
   W_Wandering,
-
-  W_DeliverCollect,
-  W_DeliverWait,
-  W_Deliver,
-
-  W_WorkDeliverCollect,
-  W_WorkDeliverWait,
-  W_WorkDeliver,
 
   W_MoveToWork,
   W_Working,
@@ -56,18 +38,6 @@ const char *WearisomeState_name(WearisomeState s) {
     return "waiting";
   case W_Wandering:
     return "wandering";
-  case W_DeliverCollect:
-    return "collect something";
-  case W_DeliverWait:
-    return "wait for deliver";
-  case W_Deliver:
-    return "deliver something";
-  case W_WorkDeliverCollect:
-    return "collect something for work";
-  case W_WorkDeliverWait:
-    return "wait for deliver for work";
-  case W_WorkDeliver:
-    return "deliver something for work";
   case W_MoveToWork:
     return "move to work";
   case W_Working:
@@ -105,8 +75,6 @@ typedef struct Wearisome {
 
   QueueItem queue;
   WearisomeState state;
-
-  DeliverJob *deliver_job;
 } Wearisome;
 
 static inline float apply_need(float *n, float t) {
@@ -238,41 +206,11 @@ bool w_want_entertainment(Wearisome *w) {
   return r_float() < ref;
 }
 
-DeliverJob *h_deliver_job(House *h, GameScene *gs) {
-  if (h->resources_maximum.clicks <= 0)
-    return NULL;
-
-  bool need_water = h->resources_maximum.water - h->resources.water >= 1.0f;
-  bool need_food = h->resources_maximum.food - h->resources.food >= 1.0f;
-  bool food_is_more_urgent = need_water && need_food && h->resources.water > h->resources.food;
-  if (!food_is_more_urgent && need_water && (gs->resource_pool.water - gs->resource_pool_claimed.water > 0)) {
-    Recti marketplace = find_resource_building_rect(gs, h->display.location, R_Water);
-    if (marketplace.w > 0) {
-      gs->resource_pool_claimed.water++;
-      h->resources_maximum.clicks--;
-      return deliver_job(marketplace, h->display.location, MI_Water, wl_color(), h, (CollectDoneCB)h_pay_water,
-                         (DeliverDoneCB)h_get_water_done);
-    }
-  } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0)) {
-    Recti marketplace = find_resource_building_rect(gs, h->display.location, R_Food);
-    if (marketplace.w > 0) {
-      gs->resource_pool_claimed.food++;
-      h->resources_maximum.clicks--;
-      return deliver_job(marketplace, h->display.location, MI_Food, fa_color(), h, (CollectDoneCB)h_pay_food,
-                         (DeliverDoneCB)h_get_food_done);
-    }
-  }
-  return NULL;
-}
-
-bool w_deliver(Wearisome *w, GameScene *gs, DeliverJob *job);
-
 bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
   WearisomeState old_state = w->state;
-  DeliverJob *job = NULL;
 
   if (!l_movableP(gs->level, l_to_point(w->destination)))
-    return NULL;
+    return false;
 
   if (gs->daytime > 0.75f && w_move_to(w, gs, w->home->display.location))
     w->state = W_MovingHome;
@@ -285,8 +223,8 @@ bool w_check_what_to_do_next(Wearisome *w, GameScene *gs) {
            w_move_to(w, gs, w->home->display.location))
     w->state = W_MovingHome;
 
-  else if ((job = h_deliver_job(w->home, gs))) {
-    w_deliver(w, gs, job);
+  else if (h_check_needs(w->home, gs, w)) {
+    return true;
 
   } else if (w_want_entertainment(w)) {
     TileContent *building = find_resource_building(gs, w_current_rect(w), R_Entertainment);
@@ -319,55 +257,6 @@ void w_u_wandering(Wearisome *w, GameScene *gs, float dt) {
         w->wait_time = r_float_r(1.25f, 3.4f);
         w->state = W_Waiting;
       }
-    }
-  }
-}
-
-void w_u_deliver_collect(Wearisome *w, GameScene *gs, float dt) {
-  (void)gs;
-
-  w->position = v_lerp_about(w->position, w->destination, dt * w->speed);
-  if (v_eq(w->position, w->destination)) {
-    if (w->path) {
-      w->destination = w->path->p;
-      w->path = w->path->next;
-    } else {
-      w->wait_time = 0.5f;
-      w->state = w->state == W_DeliverCollect ? W_DeliverWait : W_WorkDeliverWait;
-      w->current_building = w->deliver_job->from;
-    }
-  }
-}
-
-void w_u_deliver_wait(Wearisome *w, GameScene *gs, float dt) {
-  w->wait_time -= dt;
-  if (!w->deliver_job)
-    w->state = W_Waiting;
-  else if (w->wait_time < 0.0f) {
-    if (dj_on_collect(w->deliver_job, gs) && w_move_to(w, gs, w->deliver_job->to)) {
-      w->state = w->state == W_DeliverWait ? W_Deliver : W_WorkDeliver;
-    } else {
-      w->state = W_Waiting;
-      w->deliver_job = NULL;
-    }
-  }
-}
-
-void w_u_deliver(Wearisome *w, GameScene *gs, float dt) {
-  w->position = v_lerp_about(w->position, w->destination, dt * w->speed);
-  if (v_eq(w->position, w->destination)) {
-    if (w->path) {
-      w->destination = w->path->p;
-      w->path = w->path->next;
-    } else {
-      w->current_building = w->deliver_job->to;
-      dj_on_delivered(w->deliver_job, gs);
-      w->deliver_job = NULL;
-      if (w->state == W_WorkDeliver) {
-        w->wait_time = tc_start(l_contentP(gs->level, l_to_point(w->destination)), gs, R_Work);
-        w->state = W_Working;
-      } else
-        w_wander_to_random_near_path(w, gs);
     }
   }
 }
@@ -479,19 +368,6 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
     w_u_wandering(w, gs, dt);
     break;
 
-  case W_DeliverCollect:
-  case W_WorkDeliverCollect:
-    w_u_deliver_collect(w, gs, dt);
-    break;
-  case W_DeliverWait:
-  case W_WorkDeliverWait:
-    w_u_deliver_wait(w, gs, dt);
-    break;
-  case W_Deliver:
-  case W_WorkDeliver:
-    w_u_deliver(w, gs, dt);
-    break;
-
   case W_MoveToWork:
   case W_MoveToEntertainment:
     w_u_move_to_work(w, gs, dt);
@@ -535,14 +411,14 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
   else
     g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : (o + g_frame(g)) % 4, p);
 
-  if (w->state == W_Deliver || w->state == W_WorkDeliver) {
-    g_color(g, white());
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, 3}), 0.5f);
-    if (w->deliver_job) {
-      g_color(g, w->deliver_job->color);
-      g_objectS(g, g_animation_buffer(g), Img_menubar, w->deliver_job->icon, v_add(p, (Vec2){4, 3}), 0.5f);
-    }
-  }
+  // if (w->state == W_Deliver || w->state == W_WorkDeliver) {
+  //   g_color(g, white());
+  //   g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, 3}), 0.5f);
+  //   if (w->deliver_job) {
+  //     g_color(g, w->deliver_job->color);
+  //     g_objectS(g, g_animation_buffer(g), Img_menubar, w->deliver_job->icon, v_add(p, (Vec2){4, 3}), 0.5f);
+  //   }
+  // }
 
   if (w->needs.water < 0.75) {
     g_color(g, warn(w->needs.water));
@@ -560,23 +436,6 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
 
 bool w_is_home(Wearisome *w) { return w->state == W_AtHome; }
 bool w_is_free(Wearisome *w) { return w->state == W_Wandering || w->state == W_Waiting; }
-
-bool w_deliver(Wearisome *w, GameScene *gs, DeliverJob *job) {
-  if (w_move_to(w, gs, job->from)) {
-    w->deliver_job = job;
-    w->state = W_DeliverCollect;
-    return true;
-  }
-  return false;
-}
-bool w_deliver_work(Wearisome *w, GameScene *gs, DeliverJob *job) {
-  if (w_move_to(w, gs, job->from)) {
-    w->deliver_job = job;
-    w->state = W_WorkDeliverCollect;
-    return true;
-  }
-  return false;
-}
 
 SceneObjectTable w_table = (SceneObjectTable){
     .dead = (SceneObjectDeadCB)w_dead,
@@ -598,7 +457,6 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
                            .water = r_float_r(0.35f, 0.45f),
                            .sleep = r_float_r(0.5f, 0.7f)},
       .health = 1.0f,
-      .deliver_job = NULL,
       .state = W_AtHome,
       .speed = r_float_r(60.0f, 75.0f),
   };

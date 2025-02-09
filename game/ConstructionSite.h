@@ -2,14 +2,8 @@
 #define CONSTRUCTIONSITE_H
 
 #include "game/GameScene.h"
-#include "game/Level.h"
-#include "game/Marketplace.h"
-#include "game/TileContent.h"
+#include "game/Wearisome.h"
 #include "game/WorkProvider.h"
-#include "game/assets.h"
-#include "game/jobs/DeliverJob.h"
-#include "game/search/ResourceProviderSearch.h"
-#include <assert.h>
 
 void gs_construction_done(GameScene *gs, Game *g, Recti r, int key);
 

@@ -2,12 +2,8 @@
 #define FARM_H
 
 #include "game/BuildingDisplay.h"
-#include "game/GameScene.h"
-#include "game/Level.h"
-#include "game/TileContent.h"
 #include "game/WorkProvider.h"
-#include "game/assets.h"
-#include "math/Rect.h"
+
 #include <assert.h>
 
 typedef struct Farm {

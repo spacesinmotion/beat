@@ -2,13 +2,8 @@
 #define HOUSE_H
 
 #include "game/BuildingDisplay.h"
-#include "game/Game.h"
 #include "game/GameScene.h"
-#include "game/Level.h"
-#include "game/SceneObject.h"
-#include "game/assets.h"
-#include "math/Color.h"
-#include "math/Rect.h"
+#include "game/jobs/QueueItem.h"
 
 typedef struct Resources {
   float food, water;
@@ -55,30 +50,36 @@ void h_earn_click(House *h, int c) {
   h->resources_maximum.clicks += c;
 }
 
-bool h_pay_water(House *h, GameScene *gs) {
+bool h_get_water_done(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
+  (void)w;
+  ((House *)context)->resources.water += 1.0;
+  return false;
+}
+bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi);
+bool h_pay_water(void *context, Wearisome *w, GameScene *gs) {
+  House *h = (House *)context;
   gs->resource_pool.water--;
   gs->resource_pool_claimed.water--;
   gs->clicks++;
   h->resources.clicks--;
-  return true;
+  return w_queue_move_to(w, gs, h->display.location, (QueueItem){h, h_get_water_done});
 }
 
-bool h_pay_food(House *h, GameScene *gs) {
+bool h_get_food_done(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
+  (void)w;
+  House *h = (House *)context;
+  h->resources.food += 1.0;
+  return false;
+}
+bool h_pay_food(void *context, Wearisome *w, GameScene *gs) {
+  House *h = (House *)context;
   gs->resource_pool.food--;
   gs->resource_pool_claimed.food--;
   gs->clicks++;
   h->resources.clicks--;
-  return true;
-}
-
-void h_get_water_done(House *h, GameScene *gs) {
-  (void)gs;
-  h->resources.water += 1.0;
-}
-
-void h_get_food_done(House *h, GameScene *gs) {
-  (void)gs;
-  h->resources.food += 1.0;
+  return w_queue_move_to(w, gs, h->display.location, (QueueItem){h, h_get_food_done});
 }
 
 void h_update(House *h, GameScene *gs, Game *g, float dt) {
@@ -131,6 +132,30 @@ void h_draw(House *h, GameScene *gs, Game *g) {
 
   g_color(g, rgb(255, 215, 0));
   g_text(g, h->clicks_text, Oswald_Regular_12, v_add(p, (Vec2){12, -5}));
+}
+
+Recti find_resource_building_rect(GameScene *gs, Recti start, Resource r);
+bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
+  if (h->resources_maximum.clicks <= 0)
+    return NULL;
+
+  bool need_water = h->resources_maximum.water - h->resources.water >= 1.0f;
+  bool need_food = h->resources_maximum.food - h->resources.food >= 1.0f;
+  bool food_is_more_urgent = need_water && need_food && h->resources.water > h->resources.food;
+  if (!food_is_more_urgent && need_water && (gs->resource_pool.water - gs->resource_pool_claimed.water > 0)) {
+    Recti waterProvider = find_resource_building_rect(gs, h->display.location, R_Water);
+    if (waterProvider.w > 0 && w_queue_move_to(w, gs, waterProvider, (QueueItem){h, h_pay_water})) {
+      gs->resource_pool_claimed.water++;
+      h->resources_maximum.clicks--;
+    }
+  } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0)) {
+    Recti foodProvider = find_resource_building_rect(gs, h->display.location, R_Food);
+    if (foodProvider.w > 0 && w_queue_move_to(w, gs, foodProvider, (QueueItem){h, h_pay_food})) {
+      gs->resource_pool_claimed.food++;
+      h->resources_maximum.clicks--;
+    }
+  }
+  return false;
 }
 
 static SceneObjectTable House_table = (SceneObjectTable){
