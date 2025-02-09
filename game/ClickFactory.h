@@ -7,8 +7,6 @@
 #include "game/effects/Bling.h"
 #include "math/random.h"
 
-#include <assert.h>
-
 typedef struct ClickFactory {
   WorkProvider work_provider;
 

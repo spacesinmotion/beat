@@ -5,8 +5,6 @@
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 
-#include <assert.h>
-
 typedef struct ConstructionMaterialFactory {
   WorkProvider work_provider;
 
