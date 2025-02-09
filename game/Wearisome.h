@@ -16,9 +16,6 @@ typedef enum WearisomeState {
   W_Waiting,
   W_Wandering,
 
-  W_MoveToWork,
-  W_Working,
-
   W_QueueMove,
   W_QueueWait,
 } WearisomeState;
@@ -37,10 +34,6 @@ const char *WearisomeState_name(WearisomeState s) {
     return "waiting";
   case W_Wandering:
     return "wandering";
-  case W_MoveToWork:
-    return "move to work";
-  case W_Working:
-    return "working";
   case W_QueueMove:
     return "queue job move";
   case W_QueueWait:
@@ -97,19 +90,6 @@ static inline bool w_move_to(Wearisome *w, GameScene *gs, Recti dest) {
   Point p = l_to_point(w->destination);
   w->path = find_path_from_rect_to_rect(gs, p, w->current_building, dest);
   return w->path != NULL;
-}
-// static inline bool w_move_to_entertainment(Wearisome *w, GameScene *gs, Recti location) {
-//   if (!w_move_to(w, gs, location))
-//     return false;
-//   w->state = W_MoveToEntertainment;
-//   return true;
-// }
-
-static inline bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location) {
-  if (!w_move_to(w, gs, location))
-    return false;
-  w->state = W_MoveToWork;
-  return true;
 }
 static inline bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi) {
   if (!w_move_to(w, gs, location))
@@ -257,21 +237,6 @@ void w_u_wandering(Wearisome *w, GameScene *gs, float dt) {
   }
 }
 
-void w_u_move_to_work(Wearisome *w, GameScene *gs, float dt) {
-  (void)gs;
-
-  w->position = v_lerp_about(w->position, w->destination, dt * w->speed);
-  if (v_eq(w->position, w->destination)) {
-    if (w->path) {
-      w->destination = w->path->p;
-      w->path = w->path->next;
-    } else {
-      w->wait_time = tc_start(l_contentP(gs->level, l_to_point(w->destination)), gs, R_Work);
-      w->state = W_Working;
-    }
-  }
-}
-
 void w_u_queue_move(Wearisome *w, GameScene *gs, float dt) {
   (void)gs;
 
@@ -297,18 +262,6 @@ void w_u_queue_wait(Wearisome *w, GameScene *gs, float dt) {
   }
 }
 
-void w_u_working(Wearisome *w, GameScene *gs, float dt) {
-  (void)gs;
-
-  w->wait_time -= dt;
-  if (w->wait_time < 0.0f) {
-    tc_done(l_contentP(gs->level, l_to_point(w->destination)), gs, R_Work);
-    if (w->state == W_Working)
-      h_earn_click(w->home, 1);
-    w_wander_to_random_near_path(w, gs);
-  }
-}
-
 static Needs one_factor = {.food = 1.0f, .water = 1.0f, .sleep = 1.0f};
 static Needs working_factor = {.food = 1.3f, .water = 1.15f, .sleep = 1.4f};
 static Needs entertainment_factor = {.food = 0.2f, .water = 0.2f, .sleep = 1.0f};
@@ -318,7 +271,7 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
   if (w_dead(w))
     return;
 
-  const Needs *factor = w->state == W_Working
+  const Needs *factor = w->need_mode == W_IsWorking
                             ? &working_factor
                             : (w->need_mode == W_GetEntertainment ? &entertainment_factor : &one_factor);
   w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step * w->need_consumption.water * factor->water);
@@ -358,19 +311,11 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
     w_u_wandering(w, gs, dt);
     break;
 
-  case W_MoveToWork:
-    w_u_move_to_work(w, gs, dt);
-    break;
-
   case W_QueueMove:
     w_u_queue_move(w, gs, dt);
     break;
   case W_QueueWait:
     w_u_queue_wait(w, gs, dt);
-    break;
-
-  case W_Working:
-    w_u_working(w, gs, dt);
     break;
   }
 }
@@ -389,7 +334,7 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
     c_printf(g, " %10s: %f\n", "food", w->needs.food);
   }
 
-  if (w->state == W_Working || w->state == W_AtHome)
+  if (w->need_mode == W_IsWorking || w->need_mode == W_GetEntertainment || w->state == W_AtHome)
     return;
   Vec2 p = v_add(w->position, (Vec2){0, 2});
   g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));

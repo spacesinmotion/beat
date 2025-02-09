@@ -5,8 +5,6 @@
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 
-void gs_construction_done(GameScene *gs, Game *g, Recti r, int key);
-
 typedef struct ConstructionSite {
   WorkProvider work_provider;
 
@@ -20,6 +18,7 @@ bool cs_dead(ConstructionSite *cs) { return cs->work_provider.clicks_done > wp_f
 
 float cs_render_order(ConstructionSite *cs) { return l_to_y(cs->location.y); }
 
+void gs_construction_done(GameScene *gs, Game *g, Recti r, int key);
 void cs_update(ConstructionSite *cs, GameScene *gs, Game *g, float dt) {
   (void)dt;
 
@@ -75,11 +74,13 @@ bool cs_work_construction_done(void *context, Wearisome *w, GameScene *gs) {
   ConstructionSite *cs = (ConstructionSite *)context;
   wp_done(&cs->work_provider, gs, R_Work);
   w_earn_clicks(w, 1);
+  w->need_mode = W_Normal;
   return false;
 }
 bool cs_work_start_construction(void *context, Wearisome *w, GameScene *gs) {
   ConstructionSite *cs = (ConstructionSite *)context;
   wp_start(&cs->work_provider, gs, R_Work);
+  w->need_mode = W_IsWorking;
   return w_queue_wait_for(w, cs->key == MI_Street ? 1.0f : 8.0f, (QueueItem){cs, cs_work_construction_done});
 }
 bool cs_work_collect_construction_material(void *context, Wearisome *w, GameScene *gs) {
