@@ -3,6 +3,7 @@
 
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
+#include "game/assets.h"
 #include "game/jobs/QueueItem.h"
 
 typedef struct Resources {
@@ -50,12 +51,15 @@ void h_earn_click(House *h, int c) {
   h->resources_maximum.clicks += c;
 }
 
+void w_deliver_clear(Wearisome *w);
 bool h_get_water_done(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
-  (void)w;
+  w_deliver_clear(w);
   ((House *)context)->resources.water += 1.0;
   return false;
 }
+Color wl_color();
+void w_deliver(Wearisome *w, MenuIcon mi, Color c);
 bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi);
 bool h_pay_water(void *context, Wearisome *w, GameScene *gs) {
   House *h = (House *)context;
@@ -63,22 +67,24 @@ bool h_pay_water(void *context, Wearisome *w, GameScene *gs) {
   gs->resource_pool_claimed.water--;
   gs->clicks++;
   h->resources.clicks--;
+  w_deliver(w, MI_Water, wl_color());
   return w_queue_move_to(w, gs, h->display.location, (QueueItem){h, h_get_water_done});
 }
 
 bool h_get_food_done(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
-  (void)w;
-  House *h = (House *)context;
-  h->resources.food += 1.0;
+  w_deliver_clear(w);
+  ((House *)context)->resources.food += 1.0;
   return false;
 }
+Color fa_color();
 bool h_pay_food(void *context, Wearisome *w, GameScene *gs) {
   House *h = (House *)context;
   gs->resource_pool.food--;
   gs->resource_pool_claimed.food--;
   gs->clicks++;
   h->resources.clicks--;
+  w_deliver(w, MI_Food, fa_color());
   return w_queue_move_to(w, gs, h->display.location, (QueueItem){h, h_get_food_done});
 }
 

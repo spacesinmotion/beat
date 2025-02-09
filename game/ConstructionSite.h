@@ -81,12 +81,15 @@ bool cs_work_start_construction(void *context, Wearisome *w, GameScene *gs) {
   ConstructionSite *cs = (ConstructionSite *)context;
   wp_start(&cs->work_provider, gs, R_Work);
   w->need_mode = W_IsWorking;
+  w_deliver_clear(w);
   return w_queue_wait_for(w, cs->key == MI_Street ? 1.0f : 8.0f, (QueueItem){cs, cs_work_construction_done});
 }
+Color cmf_color();
 bool cs_work_collect_construction_material(void *context, Wearisome *w, GameScene *gs) {
   ConstructionSite *cs = (ConstructionSite *)context;
   gs->resource_pool.construction_material--;
   gs->resource_pool_claimed.construction_material--;
+  w_deliver(w, MI_ConstructionMaterial, cmf_color());
   return w_queue_move_to(w, gs, cs->location, (QueueItem){cs, cs_work_start_construction});
 }
 

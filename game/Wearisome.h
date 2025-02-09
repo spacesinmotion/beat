@@ -3,6 +3,7 @@
 
 #include "game/Game.h"
 #include "game/House.h"
+#include "game/assets.h"
 #include "game/search/RectSearch.h"
 #include "game/search/ResourceProviderSearch.h"
 #include "math/random.h"
@@ -64,6 +65,9 @@ typedef struct Wearisome {
   QueueItem queue;
   WearisomeState state;
   WearisomeNeedMode need_mode;
+
+  MenuIcon deliver_icon;
+  Color deliver_color;
 } Wearisome;
 
 static inline float apply_need(float *n, float t) {
@@ -106,6 +110,11 @@ static inline bool w_queue_wait_for(Wearisome *w, float time, QueueItem qi) {
 }
 
 static inline void w_earn_clicks(Wearisome *w, int c) { h_earn_click(w->home, c); }
+static inline void w_deliver(Wearisome *w, MenuIcon mi, Color c) {
+  w->deliver_icon = mi;
+  w->deliver_color = c;
+}
+static inline void w_deliver_clear(Wearisome *w) { w->deliver_icon = Nb_MI; }
 
 void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
   Point l = l_to_point(w->destination);
@@ -344,14 +353,12 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
   else
     g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : (o + g_frame(g)) % 4, p);
 
-  // if (w->state == W_Deliver || w->state == W_WorkDeliver) {
-  //   g_color(g, white());
-  //   g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, 3}), 0.5f);
-  //   if (w->deliver_job) {
-  //     g_color(g, w->deliver_job->color);
-  //     g_objectS(g, g_animation_buffer(g), Img_menubar, w->deliver_job->icon, v_add(p, (Vec2){4, 3}), 0.5f);
-  //   }
-  // }
+  if (w->deliver_icon < Nb_MI) {
+    g_color(g, white());
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){4, 3}), 0.5f);
+    g_color(g, w->deliver_color);
+    g_objectS(g, g_animation_buffer(g), Img_menubar, w->deliver_icon, v_add(p, (Vec2){4, 3}), 0.5f);
+  }
 
   if (w->needs.water < 0.75) {
     g_color(g, warn(w->needs.water));
@@ -393,6 +400,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
       .state = W_AtHome,
       .need_mode = W_Normal,
       .speed = r_float_r(60.0f, 75.0f),
+      .deliver_icon = Nb_MI,
   };
   gs_add_object(gs, (SceneObject){.context = w, &w_table});
   return w;
