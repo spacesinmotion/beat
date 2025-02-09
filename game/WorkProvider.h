@@ -3,10 +3,7 @@
 
 #include "game/GameColors.h"
 #include "game/GameScene.h"
-#include "game/Level.h"
-#include "game/TileContent.h"
-#include "math/Color.h"
-#include "math/Vec2.h"
+#include "game/Wearisome.h"
 
 typedef struct WorkProvider {
   int colums, rows;
@@ -37,8 +34,15 @@ void wp_click(WorkProvider *wp, GameScene *gs) {
 }
 
 void wp_claim(WorkProvider *wp) { wp->clicks_claimed++; }
-void wp_start(WorkProvider *wp) { wp->clicks_work++; }
-void wp_done(WorkProvider *wp) { wp->clicks_done++; }
+void wp_start(WorkProvider *wp, Wearisome *w) {
+  wp->clicks_work++;
+  w->need_mode = W_IsWorking;
+}
+void wp_done(WorkProvider *wp, Wearisome *w) {
+  wp->clicks_done++;
+  w_earn_clicks(w, 1);
+  w->need_mode = W_Normal;
+}
 
 static inline void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p, bool ignore_empty) {
   int c = 0;

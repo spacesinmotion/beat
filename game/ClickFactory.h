@@ -76,20 +76,16 @@ static SceneObjectTable ClickFactory_table = {
 };
 
 bool cf_done_entainment(void *context, Wearisome *w, GameScene *gs) {
-  (void)w;
   (void)gs;
 
   ClickFactory *cf = (ClickFactory *)context;
-  wp_done(&cf->work_provider);
-  w_earn_clicks(w, 1);
-  w->need_mode = W_Normal;
+  wp_done(&cf->work_provider, w);
   return false;
 }
 bool cf_start_entainment(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
   ClickFactory *cf = (ClickFactory *)context;
-  wp_start(&cf->work_provider);
-  w->need_mode = W_IsWorking;
+  wp_start(&cf->work_provider, w);
   return w_queue_wait_for(w, 9.0f, (QueueItem){cf, cf_done_entainment});
 }
 void cf_claim(ClickFactory *cf, GameScene *gs, Wearisome *w, Resource r) {

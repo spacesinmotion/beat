@@ -69,11 +69,10 @@ bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
 }
 
 bool mp_random_at_mp(void *context, Wearisome *w, GameScene *gs) {
-  (void)w;
   (void)gs;
 
   Marketplace *mp = (Marketplace *)context;
-  wp_done(&mp->work_provider);
+  wp_done(&mp->work_provider, w);
   return false;
 }
 

@@ -67,17 +67,14 @@ bool wl_done_entainment(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
   (void)w;
   Well *wl = (Well *)context;
-  wp_done(&wl->work_provider);
-  w_earn_clicks(w, 1);
-  w->need_mode = W_Normal;
+  wp_done(&wl->work_provider, w);
   return false;
 }
 bool wl_start_entainment(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
 
   Well *wl = (Well *)context;
-  wp_start(&wl->work_provider);
-  w->need_mode = W_IsWorking;
+  wp_start(&wl->work_provider, w);
   return w_queue_wait_for(w, 5.0f, (QueueItem){wl, wl_done_entainment});
 }
 void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
