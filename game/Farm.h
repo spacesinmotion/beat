@@ -2,6 +2,7 @@
 #define FARM_H
 
 #include "game/BuildingDisplay.h"
+#include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 
 #include <assert.h>
@@ -64,18 +65,30 @@ static SceneObjectTable Farm_table = {
     .draw = (SceneObjectDrawCB)fa_draw,
 };
 
-bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
+bool fa_done_entainment(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
+  (void)w;
+  Farm *fa = (Farm *)context;
+  wp_done(&fa->work_provider, gs, R_Work);
+  w_earn_clicks(w, 1);
+  w->need_mode = W_Normal;
+  return false;
+}
+bool fa_start_entainment(void *context, Wearisome *w, GameScene *gs) {
+  Farm *fa = (Farm *)context;
+  wp_start(&fa->work_provider, gs, R_Work);
+  w->need_mode = W_IsWorking;
+  return w_queue_wait_for(w, 15.0, (QueueItem){fa, fa_done_entainment});
+}
 void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
-  if (w_move_to_work(w, gs, fa->display.location))
+  if (w_queue_move_to(w, gs, fa->display.location, (QueueItem){fa, fa_start_entainment}))
     wp_claim(&fa->work_provider);
 }
 
 static TileContentTable Farm_TileContent_Table = {
     .provides = (ProvidesCB)wp_provides,
     .claim = (ClaimCB)fa_claim,
-    .start = (StartCB)wp_start,
-    .done = (DoneCB)wp_done,
     .click = (ClickCB)wp_click,
 };
 

@@ -147,12 +147,14 @@ bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
     if (waterProvider.w > 0 && w_queue_move_to(w, gs, waterProvider, (QueueItem){h, h_pay_water})) {
       gs->resource_pool_claimed.water++;
       h->resources_maximum.clicks--;
+      return true;
     }
   } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0)) {
     Recti foodProvider = find_resource_building_rect(gs, h->display.location, R_Food);
     if (foodProvider.w > 0 && w_queue_move_to(w, gs, foodProvider, (QueueItem){h, h_pay_food})) {
       gs->resource_pool_claimed.food++;
       h->resources_maximum.clicks--;
+      return true;
     }
   }
   return false;

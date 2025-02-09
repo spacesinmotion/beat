@@ -2,15 +2,11 @@
 #define CLICKFACTORY_H
 
 #include "game/BuildingDisplay.h"
-#include "game/GameScene.h"
-#include "game/Level.h"
-#include "game/TileContent.h"
+#include "game/Wearisome.h"
 #include "game/WorkProvider.h"
-#include "game/assets.h"
 #include "game/effects/Bling.h"
-#include "math/Rect.h"
-#include "math/Vec2.h"
 #include "math/random.h"
+
 #include <assert.h>
 
 typedef struct ClickFactory {
@@ -81,18 +77,30 @@ static SceneObjectTable ClickFactory_table = {
     .draw = (SceneObjectDrawCB)cf_draw,
 };
 
-bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
+bool cf_done_entainment(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
+  (void)w;
+  ClickFactory *cf = (ClickFactory *)context;
+  wp_done(&cf->work_provider, gs, R_Work);
+  w_earn_clicks(w, 1);
+  w->need_mode = W_Normal;
+  return false;
+}
+bool cf_start_entainment(void *context, Wearisome *w, GameScene *gs) {
+  ClickFactory *cf = (ClickFactory *)context;
+  wp_start(&cf->work_provider, gs, R_Work);
+  w->need_mode = W_IsWorking;
+  return w_queue_wait_for(w, 15.0, (QueueItem){cf, cf_done_entainment});
+}
 void cf_claim(ClickFactory *cf, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
-  if (w_move_to_work(w, gs, cf->display.location))
+  if (w_queue_move_to(w, gs, cf->display.location, (QueueItem){cf, cf_start_entainment}))
     wp_claim(&cf->work_provider);
 }
 
 static TileContentTable ClickFactory_TileContent_Table = {
     .provides = (ProvidesCB)wp_provides,
     .claim = (ClaimCB)cf_claim,
-    .start = (StartCB)wp_start,
-    .done = (DoneCB)wp_done,
     .click = (ClickCB)wp_click,
 };
 

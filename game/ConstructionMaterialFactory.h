@@ -2,11 +2,9 @@
 #define CONSTRUCTIONMATERIALFACTORY_H
 
 #include "game/BuildingDisplay.h"
-#include "game/GameScene.h"
-#include "game/Level.h"
-#include "game/TileContent.h"
+#include "game/Wearisome.h"
 #include "game/WorkProvider.h"
-#include "game/assets.h"
+
 #include <assert.h>
 
 typedef struct ConstructionMaterialFactory {
@@ -68,18 +66,29 @@ static SceneObjectTable ConstructionMaterialFactory_table = {
     .draw = (SceneObjectDrawCB)cmf_draw,
 };
 
-bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
-void cmf_claim(ConstructionMaterialFactory *cf, GameScene *gs, Wearisome *w, Resource r) {
-  assert(r == R_Work);
-  if (w_move_to_work(w, gs, cf->display.location))
-    wp_claim(&cf->work_provider);
+bool cmf_done_entainment(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
+  (void)w;
+  ConstructionMaterialFactory *cmf = (ConstructionMaterialFactory *)context;
+  wp_done(&cmf->work_provider, gs, R_Work);
+  w_earn_clicks(w, 1);
+  w->need_mode = W_Normal;
+  return false;
 }
-
+bool cmf_start_entainment(void *context, Wearisome *w, GameScene *gs) {
+  ConstructionMaterialFactory *cmf = (ConstructionMaterialFactory *)context;
+  wp_start(&cmf->work_provider, gs, R_Work);
+  w->need_mode = W_IsWorking;
+  return w_queue_wait_for(w, 15.0, (QueueItem){cmf, cmf_done_entainment});
+}
+void cmf_claim(ConstructionMaterialFactory *wl, GameScene *gs, Wearisome *w, Resource r) {
+  assert(r == R_Work);
+  if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, cmf_start_entainment}))
+    wp_claim(&wl->work_provider);
+}
 static TileContentTable ConstructionMaterialFactory_TileContent_Table = {
     .provides = (ProvidesCB)wp_provides,
     .claim = (ClaimCB)cmf_claim,
-    .start = (StartCB)wp_start,
-    .done = (DoneCB)wp_done,
     .click = (ClickCB)wp_click,
 };
 
