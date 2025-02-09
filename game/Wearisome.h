@@ -38,6 +38,7 @@ typedef enum WearisomeState {
   W_Working,
 
   W_QueueMove,
+  W_QueueWait,
 
   W_MoveToEntertainment,
   W_GetEntertained,
@@ -73,6 +74,8 @@ const char *WearisomeState_name(WearisomeState s) {
     return "working";
   case W_QueueMove:
     return "queue job move";
+  case W_QueueWait:
+    return "queue job wait";
   case W_MoveToEntertainment:
     return "move to entertainment";
   case W_GetEntertained:
@@ -149,6 +152,12 @@ static inline bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, 
     return false;
   w->queue = qi;
   w->state = W_QueueMove;
+  return true;
+}
+static inline bool w_queue_wait_for(Wearisome *w, float time, QueueItem qi) {
+  w->wait_time = time;
+  w->queue = qi;
+  w->state = W_QueueWait;
   return true;
 }
 
@@ -397,6 +406,14 @@ void w_u_queue_move(Wearisome *w, GameScene *gs, float dt) {
   }
 }
 
+void w_u_queue_wait(Wearisome *w, GameScene *gs, float dt) {
+  w->wait_time -= dt;
+  if (w->wait_time < 0.0f) {
+    if (!qi_on_done(&w->queue, w, gs))
+      w->state = W_Waiting;
+  }
+}
+
 void w_u_working(Wearisome *w, GameScene *gs, float dt) {
   (void)gs;
 
@@ -474,8 +491,12 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
   case W_MoveToEntertainment:
     w_u_move_to_work(w, gs, dt);
     break;
+
   case W_QueueMove:
     w_u_queue_move(w, gs, dt);
+    break;
+  case W_QueueWait:
+    w_u_queue_wait(w, gs, dt);
     break;
 
   case W_Working:
@@ -504,7 +525,10 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
   Vec2 p = v_add(w->position, (Vec2){0, 2});
   g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));
   const int o = (size_t)w / 17;
-  g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : (o + g_frame(g)) % 4, p);
+  if (w->state == W_QueueWait || w->state == W_Waiting)
+    g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : 1, p);
+  else
+    g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : (o + g_frame(g)) % 4, p);
 
   if (w->state == W_Deliver || w->state == W_WorkDeliver) {
     g_color(g, white());

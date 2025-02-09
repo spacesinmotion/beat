@@ -75,7 +75,7 @@ bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
   return false;
 }
 
-bool mp_random_move_mp(void *context, Wearisome *w, GameScene *gs) {
+bool mp_random_at_mp(void *context, Wearisome *w, GameScene *gs) {
   (void)w;
   Marketplace *mp = (Marketplace *)context;
   wp_done(&mp->work_provider, gs, R_Work);
@@ -85,7 +85,13 @@ bool mp_random_move_mp(void *context, Wearisome *w, GameScene *gs) {
 bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi);
 bool mp_random_move_done(void *context, Wearisome *w, GameScene *gs) {
   Marketplace *mp = (Marketplace *)context;
-  return w_queue_move_to(w, gs, mp->display.location, (QueueItem){mp, mp_random_move_mp});
+  return w_queue_move_to(w, gs, mp->display.location, (QueueItem){mp, mp_random_at_mp});
+}
+
+bool w_queue_wait_for(Wearisome *w, float time, QueueItem qi);
+bool mp_random_move_wait(void *context, Wearisome *w, GameScene *gs) {
+  Marketplace *mp = (Marketplace *)context;
+  return w_queue_wait_for(w, 3.0, (QueueItem){mp, mp_random_move_done});
 }
 
 void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
@@ -106,7 +112,7 @@ void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
         break;
       }
     }
-    if (w_queue_move_to(w, gs, (Recti){l.x, l.y, 1, 1}, (QueueItem){mp, mp_random_move_done}))
+    if (w_queue_move_to(w, gs, (Recti){l.x, l.y, 1, 1}, (QueueItem){mp, mp_random_move_wait}))
       return wp_claim(&mp->work_provider);
   }
 }
