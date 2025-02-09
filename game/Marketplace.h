@@ -111,28 +111,6 @@ void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
   }
 }
 
-float mp_start(Marketplace *mp, GameScene *gs, Resource r) {
-  (void)gs;
-  if (r == R_Work)
-    wp_start(&mp->work_provider);
-  return 0.1f;
-}
-
-void mp_done(Marketplace *mp, GameScene *gs, Resource r) {
-  (void)mp;
-  if (r == R_Water) {
-    gs->resource_pool_claimed.water--;
-    gs->resource_pool.water--;
-  } else if (r == R_Food) {
-    gs->resource_pool_claimed.food--;
-    gs->resource_pool.food--;
-  } else if (r == R_ConstructionMaterial) {
-    gs->resource_pool_claimed.construction_material--;
-    gs->resource_pool.construction_material--;
-  } else if (r == R_Work)
-    wp_done(&mp->work_provider);
-}
-
 static TileContentTable Marketplace_TileContent_Table = {
     .provides = (ProvidesCB)mp_provides,
     .claim = (ClaimCB)mp_claim,

@@ -22,15 +22,11 @@ typedef struct Wearisome Wearisome;
 
 typedef bool (*ProvidesCB)(void *, GameScene *gs, Resource r);
 typedef void (*ClaimCB)(void *, GameScene *gs, Wearisome *w, Resource r);
-typedef float (*StartCB)(void *, GameScene *gs, Resource r);
-typedef void (*DoneCB)(void *, GameScene *gs, Resource r);
 typedef void (*ClickCB)(const TileContent *, GameScene *gs);
 
 typedef struct TileContentTable {
   ProvidesCB provides;
   ClaimCB claim;
-  StartCB start;
-  DoneCB done;
   ClickCB click;
 } TileContentTable;
 typedef struct TileContent {
@@ -45,15 +41,7 @@ void tc_claim(const TileContent *tc, GameScene *gs, Wearisome *w, Resource r) {
   if (tc && tc->table->claim)
     tc->table->claim(tc->context, gs, w, r);
 }
-float tc_start(const TileContent *tc, GameScene *gs, Resource r) {
-  if (tc && tc->table->start)
-    return tc->table->start(tc->context, gs, r);
-  return 1.0;
-}
-void tc_done(const TileContent *tc, GameScene *gs, Resource r) {
-  if (tc && tc->table->done)
-    tc->table->done(tc->context, gs, r);
-}
+
 inline static bool tc_can_click(const TileContent *tc) { return (tc && tc->table->click); }
 inline static void tc_click(const TileContent *tc, GameScene *gs) {
   if (tc && tc->table->click)
