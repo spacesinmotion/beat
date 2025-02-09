@@ -21,10 +21,9 @@ typedef enum WearisomeState {
 
   W_QueueMove,
   W_QueueWait,
-
-  W_MoveToEntertainment,
-  W_GetEntertained,
 } WearisomeState;
+
+typedef enum WearisomeNeedMode { W_Normal, W_IsWorking, W_GetEntertainment } WearisomeNeedMode;
 
 const char *WearisomeState_name(WearisomeState s) {
   switch (s) {
@@ -46,10 +45,6 @@ const char *WearisomeState_name(WearisomeState s) {
     return "queue job move";
   case W_QueueWait:
     return "queue job wait";
-  case W_MoveToEntertainment:
-    return "move to entertainment";
-  case W_GetEntertained:
-    return "get entertained";
   }
   assert(false);
   return "<error>";
@@ -75,6 +70,7 @@ typedef struct Wearisome {
 
   QueueItem queue;
   WearisomeState state;
+  WearisomeNeedMode need_mode;
 } Wearisome;
 
 static inline float apply_need(float *n, float t) {
@@ -102,12 +98,12 @@ static inline bool w_move_to(Wearisome *w, GameScene *gs, Recti dest) {
   w->path = find_path_from_rect_to_rect(gs, p, w->current_building, dest);
   return w->path != NULL;
 }
-static inline bool w_move_to_entertainment(Wearisome *w, GameScene *gs, Recti location) {
-  if (!w_move_to(w, gs, location))
-    return false;
-  w->state = W_MoveToEntertainment;
-  return true;
-}
+// static inline bool w_move_to_entertainment(Wearisome *w, GameScene *gs, Recti location) {
+//   if (!w_move_to(w, gs, location))
+//     return false;
+//   w->state = W_MoveToEntertainment;
+//   return true;
+// }
 
 static inline bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location) {
   if (!w_move_to(w, gs, location))
@@ -270,15 +266,8 @@ void w_u_move_to_work(Wearisome *w, GameScene *gs, float dt) {
       w->destination = w->path->p;
       w->path = w->path->next;
     } else {
-      w->wait_time = tc_start(l_contentP(gs->level, l_to_point(w->destination)), gs,
-                              w->state == W_MoveToEntertainment ? R_Entertainment : R_Work);
-      if (w->state == W_MoveToEntertainment) {
-        h_earn_click(w->home, -1);
-        gs->clicks++;
-      }
-      w->state = (w->state == W_MoveToWork) ? W_Working : W_GetEntertained;
-
-      // w->current_rect = w->deliver_job->from;
+      w->wait_time = tc_start(l_contentP(gs->level, l_to_point(w->destination)), gs, R_Work);
+      w->state = W_Working;
     }
   }
 }
@@ -313,7 +302,7 @@ void w_u_working(Wearisome *w, GameScene *gs, float dt) {
 
   w->wait_time -= dt;
   if (w->wait_time < 0.0f) {
-    tc_done(l_contentP(gs->level, l_to_point(w->destination)), gs, w->state == W_Working ? R_Work : R_Entertainment);
+    tc_done(l_contentP(gs->level, l_to_point(w->destination)), gs, R_Work);
     if (w->state == W_Working)
       h_earn_click(w->home, 1);
     w_wander_to_random_near_path(w, gs);
@@ -329,8 +318,9 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
   if (w_dead(w))
     return;
 
-  const Needs *factor =
-      w->state == W_Working ? &working_factor : (w->state == W_GetEntertained ? &entertainment_factor : &one_factor);
+  const Needs *factor = w->state == W_Working
+                            ? &working_factor
+                            : (w->need_mode == W_GetEntertainment ? &entertainment_factor : &one_factor);
   w->needs.water = f_max(0.0f, w->needs.water - gs->daytime_step * w->need_consumption.water * factor->water);
   w->needs.food = f_max(0.0f, w->needs.food - gs->daytime_step * w->need_consumption.food * factor->food);
   w->needs.sleep = f_max(0.0f, w->needs.sleep - gs->daytime_step * w->need_consumption.sleep * factor->sleep);
@@ -369,7 +359,6 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
     break;
 
   case W_MoveToWork:
-  case W_MoveToEntertainment:
     w_u_move_to_work(w, gs, dt);
     break;
 
@@ -381,7 +370,6 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
     break;
 
   case W_Working:
-  case W_GetEntertained:
     w_u_working(w, gs, dt);
     break;
   }
@@ -401,7 +389,7 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
     c_printf(g, " %10s: %f\n", "food", w->needs.food);
   }
 
-  if (w->state == W_Working || w->state == W_GetEntertained || w->state == W_AtHome)
+  if (w->state == W_Working || w->state == W_AtHome)
     return;
   Vec2 p = v_add(w->position, (Vec2){0, 2});
   g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));
@@ -458,6 +446,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
                            .sleep = r_float_r(0.5f, 0.7f)},
       .health = 1.0f,
       .state = W_AtHome,
+      .need_mode = W_Normal,
       .speed = r_float_r(60.0f, 75.0f),
   };
   gs_add_object(gs, (SceneObject){.context = w, &w_table});

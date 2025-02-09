@@ -4,10 +4,9 @@
 #include "game/BuildingDisplay.h"
 #include "game/GameColors.h"
 #include "game/GameScene.h"
-#include "game/Level.h"
-#include "game/TileContent.h"
-#include "game/assets.h"
-#include "math/Rect.h"
+#include "game/House.h"
+#include "game/Wearisome.h"
+
 #include <assert.h>
 
 typedef struct Entertainment {
@@ -73,25 +72,27 @@ bool em_provides(Entertainment *em, GameScene *gs, Resource r) {
   return r == R_Entertainment && em->claimed < (s.w - 1) * (s.h - 1);
 }
 
-bool w_move_to_entertainment(Wearisome *w, GameScene *gs, Recti location);
-void em_claim(Entertainment *em, GameScene *gs, Wearisome *w, Resource r) {
-  assert(r == R_Entertainment);
-  if (w_move_to_entertainment(w, gs, em->display.location))
-    em->claimed++;
-}
-float em_start(Entertainment *em, GameScene *gs, Resource r) {
+bool em_done_entainment(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
-  assert(r == R_Entertainment);
-
-  em->started++;
-  return 15.0;
-}
-void em_done(Entertainment *em, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Entertainment);
-
+  (void)w;
+  Entertainment *em = (Entertainment *)context;
   em->started--;
   em->claimed--;
+  w->need_mode = W_Normal;
+  return false;
+}
+bool em_start_entainment(void *context, Wearisome *w, GameScene *gs) {
+  Entertainment *em = (Entertainment *)context;
+  em->started++;
+  w_earn_clicks(w, -1);
+  gs->clicks++;
+  w->need_mode = W_GetEntertainment;
+  return w_queue_wait_for(w, 15.0, (QueueItem){em, em_done_entainment});
+}
+void em_claim(Entertainment *em, GameScene *gs, Wearisome *w, Resource r) {
+  assert(r == R_Entertainment);
+  if (w_queue_move_to(w, gs, em->display.location, (QueueItem){em, em_start_entainment}))
+    em->claimed++;
 }
 
 static SceneObjectTable Entertainment_table = {
@@ -103,8 +104,6 @@ static SceneObjectTable Entertainment_table = {
 static TileContentTable Entertainment_TileContent_Table = {
     .provides = (ProvidesCB)em_provides,
     .claim = (ClaimCB)em_claim,
-    .start = (StartCB)em_start,
-    .done = (DoneCB)em_done,
 };
 Entertainment *Entertainment_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = em_size();
