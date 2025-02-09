@@ -72,14 +72,16 @@ void w_earn_clicks(Wearisome *w, int c);
 bool cs_work_construction_done(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
   ConstructionSite *cs = (ConstructionSite *)context;
-  wp_done(&cs->work_provider, gs, R_Work);
+  wp_done(&cs->work_provider);
   w_earn_clicks(w, 1);
   w->need_mode = W_Normal;
   return false;
 }
 bool cs_work_start_construction(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
+
   ConstructionSite *cs = (ConstructionSite *)context;
-  wp_start(&cs->work_provider, gs, R_Work);
+  wp_start(&cs->work_provider);
   w->need_mode = W_IsWorking;
   w_deliver_clear(w);
   return w_queue_wait_for(w, cs->key == MI_Street ? 1.0f : 8.0f, (QueueItem){cs, cs_work_construction_done});

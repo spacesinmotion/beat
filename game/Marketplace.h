@@ -70,8 +70,10 @@ bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
 
 bool mp_random_at_mp(void *context, Wearisome *w, GameScene *gs) {
   (void)w;
+  (void)gs;
+
   Marketplace *mp = (Marketplace *)context;
-  wp_done(&mp->work_provider, gs, R_Work);
+  wp_done(&mp->work_provider);
   return false;
 }
 
@@ -110,9 +112,9 @@ void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
 }
 
 float mp_start(Marketplace *mp, GameScene *gs, Resource r) {
+  (void)gs;
   if (r == R_Work)
-    return wp_start(&mp->work_provider, gs, r);
-
+    wp_start(&mp->work_provider);
   return 0.1f;
 }
 
@@ -128,14 +130,12 @@ void mp_done(Marketplace *mp, GameScene *gs, Resource r) {
     gs->resource_pool_claimed.construction_material--;
     gs->resource_pool.construction_material--;
   } else if (r == R_Work)
-    wp_done(&mp->work_provider, gs, r);
+    wp_done(&mp->work_provider);
 }
 
 static TileContentTable Marketplace_TileContent_Table = {
     .provides = (ProvidesCB)mp_provides,
     .claim = (ClaimCB)mp_claim,
-    .start = (StartCB)mp_start,
-    .done = (DoneCB)mp_done,
     .click = (ClickCB)wp_click,
 };
 

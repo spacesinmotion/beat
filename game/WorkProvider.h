@@ -7,7 +7,6 @@
 #include "game/TileContent.h"
 #include "math/Color.h"
 #include "math/Vec2.h"
-#include <assert.h>
 
 typedef struct WorkProvider {
   int colums, rows;
@@ -32,18 +31,6 @@ bool wp_provides(WorkProvider *wp, GameScene *gs, Resource r) {
   (void)gs;
   return r == R_Work && wp->clicks - wp->clicks_claimed > 0;
 }
-void wp_claim(WorkProvider *wp) { wp->clicks_claimed++; }
-float wp_start(WorkProvider *wp, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Work);
-  wp->clicks_work++;
-  return wp->work_duration;
-}
-void wp_done(WorkProvider *wp, GameScene *gs, Resource r) {
-  (void)gs;
-  assert(r == R_Work);
-  wp->clicks_done++;
-}
 void wp_click(WorkProvider *wp, GameScene *gs) {
   (void)gs;
   if (wp->clicks < wp_fields(wp) && gs->clicks > 0) {
@@ -51,6 +38,10 @@ void wp_click(WorkProvider *wp, GameScene *gs) {
     gs->clicks--;
   }
 }
+
+void wp_claim(WorkProvider *wp) { wp->clicks_claimed++; }
+void wp_start(WorkProvider *wp) { wp->clicks_work++; }
+void wp_done(WorkProvider *wp) { wp->clicks_done++; }
 
 static inline void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p, bool ignore_empty) {
   int c = 0;

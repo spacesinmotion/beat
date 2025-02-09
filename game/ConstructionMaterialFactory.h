@@ -70,14 +70,16 @@ bool cmf_done_entainment(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
   (void)w;
   ConstructionMaterialFactory *cmf = (ConstructionMaterialFactory *)context;
-  wp_done(&cmf->work_provider, gs, R_Work);
+  wp_done(&cmf->work_provider);
   w_earn_clicks(w, 1);
   w->need_mode = W_Normal;
   return false;
 }
 bool cmf_start_entainment(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
+
   ConstructionMaterialFactory *cmf = (ConstructionMaterialFactory *)context;
-  wp_start(&cmf->work_provider, gs, R_Work);
+  wp_start(&cmf->work_provider);
   w->need_mode = W_IsWorking;
   return w_queue_wait_for(w, 15.0, (QueueItem){cmf, cmf_done_entainment});
 }
