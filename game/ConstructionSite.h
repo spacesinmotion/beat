@@ -3,6 +3,7 @@
 
 #include "game/GameScene.h"
 #include "game/Level.h"
+#include "game/Marketplace.h"
 #include "game/TileContent.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
@@ -70,35 +71,37 @@ void cs_click(ConstructionSite *cs, GameScene *gs) {
     if (cs->work_provider.clicks < wp_fields(&cs->work_provider) && gs->clicks > 0) {
       cs->work_provider.clicks++;
       gs->clicks--;
-      // gs->resource_pool.construction_material--;
     }
   }
 }
 
-bool cs_take_constructionmaterial(ConstructionSite *cs, GameScene *gs) {
-  (void)cs;
+void w_earn_clicks(Wearisome *w, int c);
+bool cs_work_construction_done(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
+  ConstructionSite *cs = (ConstructionSite *)context;
+  wp_done(&cs->work_provider, gs, R_Work);
+  w_earn_clicks(w, 1);
+  return false;
+}
+bool cs_work_start_construction(void *context, Wearisome *w, GameScene *gs) {
+  ConstructionSite *cs = (ConstructionSite *)context;
+  wp_start(&cs->work_provider, gs, R_Work);
+  return w_queue_wait_for(w, cs->key == MI_Street ? 1.0f : 8.0f, (QueueItem){cs, cs_work_construction_done});
+}
+bool cs_work_collect_construction_material(void *context, Wearisome *w, GameScene *gs) {
+  ConstructionSite *cs = (ConstructionSite *)context;
   gs->resource_pool.construction_material--;
   gs->resource_pool_claimed.construction_material--;
-  return true;
+  return w_queue_move_to(w, gs, cs->location, (QueueItem){cs, cs_work_start_construction});
 }
 
-void cs_get_constructionmaterial_done(ConstructionSite *cs, GameScene *gs) {
-  (void)cs;
-  (void)gs;
-}
-
-bool w_move_to_work(Wearisome *w, GameScene *gs, Recti location);
-bool w_deliver_work(Wearisome *w, GameScene *gs, DeliverJob *job);
 void cs_claim(ConstructionSite *cs, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
 
   Recti marketplace = find_resource_building_rect(gs, cs->location, R_ConstructionMaterial);
   if (marketplace.w > 0) {
     gs->resource_pool_claimed.construction_material++;
-    DeliverJob *job =
-        deliver_job(marketplace, cs->location, MI_ConstructionMaterial, cs_color(), cs,
-                    (CollectDoneCB)cs_take_constructionmaterial, (DeliverDoneCB)cs_get_constructionmaterial_done);
-    if (w_deliver_work(w, gs, job))
+    if (w_queue_move_to(w, gs, marketplace, (QueueItem){cs, cs_work_collect_construction_material}))
       wp_claim(&cs->work_provider);
   }
 }
@@ -106,8 +109,6 @@ void cs_claim(ConstructionSite *cs, GameScene *gs, Wearisome *w, Resource r) {
 static TileContentTable ConstructionSite_TileContent_Table = {
     .provides = (ProvidesCB)wp_provides,
     .claim = (ClaimCB)cs_claim,
-    .start = (StartCB)wp_start,
-    .done = (DoneCB)wp_done,
     .click = (ClickCB)cs_click,
 };
 

@@ -90,6 +90,7 @@ bool mp_random_move_done(void *context, Wearisome *w, GameScene *gs) {
 
 bool w_queue_wait_for(Wearisome *w, float time, QueueItem qi);
 bool mp_random_move_wait(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
   Marketplace *mp = (Marketplace *)context;
   return w_queue_wait_for(w, 3.0, (QueueItem){mp, mp_random_move_done});
 }

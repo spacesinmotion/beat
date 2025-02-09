@@ -161,6 +161,8 @@ static inline bool w_queue_wait_for(Wearisome *w, float time, QueueItem qi) {
   return true;
 }
 
+static inline void w_earn_clicks(Wearisome *w, int c) { h_earn_click(w->home, c); }
+
 void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
   Point l = l_to_point(w->destination);
   for (int i = 0; i < 1000; i++) {
@@ -401,6 +403,7 @@ void w_u_queue_move(Wearisome *w, GameScene *gs, float dt) {
       w->destination = w->path->p;
       w->path = w->path->next;
     } else if (!qi_on_done(&w->queue, w, gs)) {
+      qi_clear(&w->queue);
       w->state = W_Waiting;
     }
   }
@@ -409,8 +412,10 @@ void w_u_queue_move(Wearisome *w, GameScene *gs, float dt) {
 void w_u_queue_wait(Wearisome *w, GameScene *gs, float dt) {
   w->wait_time -= dt;
   if (w->wait_time < 0.0f) {
-    if (!qi_on_done(&w->queue, w, gs))
+    if (!qi_on_done(&w->queue, w, gs)) {
+      qi_clear(&w->queue);
       w->state = W_Waiting;
+    }
   }
 }
 
