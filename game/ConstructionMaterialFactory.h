@@ -81,7 +81,7 @@ bool cmf_start_entainment(void *context, Wearisome *w, GameScene *gs) {
   ConstructionMaterialFactory *cmf = (ConstructionMaterialFactory *)context;
   wp_start(&cmf->work_provider);
   w->need_mode = W_IsWorking;
-  return w_queue_wait_for(w, 15.0, (QueueItem){cmf, cmf_done_entainment});
+  return w_queue_wait_for(w, 10.0f, (QueueItem){cmf, cmf_done_entainment});
 }
 void cmf_claim(ConstructionMaterialFactory *wl, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
@@ -102,7 +102,7 @@ ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene
       .last_day_delivered = gs->day,
   };
   assert((void *)cmf == (void *)&cmf->work_provider);
-  wp_init(&cmf->work_provider, s.w - 1, s.h - 1, 10.0f);
+  wp_init(&cmf->work_provider, s.w - 1, s.h - 1);
 
   l_set_tileR(gs->level, cmf->display.location, T_ConstructionMaterialFactory);
   l_set_tile_contentR(gs->level, cmf->display.location,

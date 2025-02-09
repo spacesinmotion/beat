@@ -119,7 +119,7 @@ ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key
       .key = key,
   };
   assert((void *)cs == (void *)&cs->work_provider);
-  wp_init(&cs->work_provider, r.w, r.h, key == MI_Street ? 1.0f : 8.0f);
+  wp_init(&cs->work_provider, r.w, r.h);
 
   l_set_tile_contentR(gs->level, cs->location, to_TileContent(cs, &ConstructionSite_TileContent_Table));
   l_set_tileR(gs->level, r, T_ConstructionSite);

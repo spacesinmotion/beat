@@ -79,7 +79,7 @@ bool wl_start_entainment(void *context, Wearisome *w, GameScene *gs) {
   Well *wl = (Well *)context;
   wp_start(&wl->work_provider);
   w->need_mode = W_IsWorking;
-  return w_queue_wait_for(w, 15.0, (QueueItem){wl, wl_done_entainment});
+  return w_queue_wait_for(w, 5.0f, (QueueItem){wl, wl_done_entainment});
 }
 void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
@@ -101,7 +101,7 @@ Well *Well_init(Game *g, GameScene *gs, Point p) {
       .last_day_delivered = gs->day,
   };
   assert((void *)wl == (void *)&wl->work_provider);
-  wp_init(&wl->work_provider, s.w - 1, s.h - 1, 5.0f);
+  wp_init(&wl->work_provider, s.w - 1, s.h - 1);
 
   l_set_tileR(gs->level, wl->display.location, T_Well);
   l_set_tile_contentR(gs->level, wl->display.location, to_TileContent(wl, &Well_TileContent_Table));

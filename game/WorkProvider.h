@@ -12,12 +12,9 @@ typedef struct WorkProvider {
   int colums, rows;
   int clicks, clicks_claimed, clicks_work, clicks_done;
   int storage;
-  float work_duration;
 } WorkProvider;
 
-static inline void wp_init(WorkProvider *wp, int c, int r, float work_duration) {
-  *wp = (WorkProvider){c, r, 0, 0, 0, 0, 0, work_duration};
-}
+static inline void wp_init(WorkProvider *wp, int c, int r) { *wp = (WorkProvider){c, r, 0, 0, 0, 0, 0}; }
 static inline void wp_reduce_clicks(WorkProvider *wp, int count) {
   wp->clicks -= count;
   wp->clicks_claimed -= count;

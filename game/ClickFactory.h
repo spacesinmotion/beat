@@ -92,7 +92,7 @@ bool cf_start_entainment(void *context, Wearisome *w, GameScene *gs) {
   ClickFactory *cf = (ClickFactory *)context;
   wp_start(&cf->work_provider);
   w->need_mode = W_IsWorking;
-  return w_queue_wait_for(w, 15.0, (QueueItem){cf, cf_done_entainment});
+  return w_queue_wait_for(w, 9.0f, (QueueItem){cf, cf_done_entainment});
 }
 void cf_claim(ClickFactory *cf, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
@@ -115,7 +115,7 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
       .missing_starts = 15,
   };
   assert((void *)cf == (void *)&cf->work_provider);
-  wp_init(&cf->work_provider, s.w - 1, s.h - 1, 9.0f);
+  wp_init(&cf->work_provider, s.w - 1, s.h - 1);
 
   l_set_tileR(gs->level, cf->display.location, T_ClickFactory);
   l_set_tile_contentR(gs->level, cf->display.location, to_TileContent(cf, &ClickFactory_TileContent_Table));

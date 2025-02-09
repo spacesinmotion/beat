@@ -125,7 +125,7 @@ Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
       .last_day_delivered = gs->day,
   };
   assert((void *)mp == (void *)&mp->work_provider);
-  wp_init(&mp->work_provider, s.w - 1, s.h - 1, 0.1f);
+  wp_init(&mp->work_provider, s.w - 1, s.h - 1);
 
   l_set_tileR(gs->level, mp->display.location, T_Marketplace);
   l_set_tile_contentR(gs->level, mp->display.location, to_TileContent(mp, &Marketplace_TileContent_Table));

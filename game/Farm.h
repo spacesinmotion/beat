@@ -80,7 +80,7 @@ bool fa_start_entainment(void *context, Wearisome *w, GameScene *gs) {
   Farm *fa = (Farm *)context;
   wp_start(&fa->work_provider);
   w->need_mode = W_IsWorking;
-  return w_queue_wait_for(w, 15.0, (QueueItem){fa, fa_done_entainment});
+  return w_queue_wait_for(w, 6.0f, (QueueItem){fa, fa_done_entainment});
 }
 void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
@@ -102,7 +102,7 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
       .last_day_delivered = gs->day,
   };
   assert((void *)fa == (void *)&fa->work_provider);
-  wp_init(&fa->work_provider, s.w - 1, s.h - 1, 6.0f);
+  wp_init(&fa->work_provider, s.w - 1, s.h - 1);
 
   l_set_tileR(gs->level, fa->display.location, T_Farm);
   l_set_tile_contentR(gs->level, fa->display.location, to_TileContent(fa, &Farm_TileContent_Table));
