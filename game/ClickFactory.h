@@ -75,22 +75,22 @@ static SceneObjectTable ClickFactory_table = {
     .draw = (SceneObjectDrawCB)cf_draw,
 };
 
-bool cf_done_entainment(void *context, Wearisome *w, GameScene *gs) {
+bool cf_done_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
 
   ClickFactory *cf = (ClickFactory *)context;
   wp_done(&cf->work_provider, w);
   return false;
 }
-bool cf_start_entainment(void *context, Wearisome *w, GameScene *gs) {
+bool cf_start_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
   ClickFactory *cf = (ClickFactory *)context;
   wp_start(&cf->work_provider, w);
-  return w_queue_wait_for(w, 9.0f, (QueueItem){cf, cf_done_entainment});
+  return w_queue_wait_for(w, 9.0f, (QueueItem){cf, cf_done_work});
 }
 void cf_claim(ClickFactory *cf, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
-  if (w_queue_move_to(w, gs, cf->display.location, (QueueItem){cf, cf_start_entainment}))
+  if (w_queue_move_to(w, gs, cf->display.location, (QueueItem){cf, cf_start_work}))
     wp_claim(&cf->work_provider);
 }
 

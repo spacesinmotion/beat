@@ -64,23 +64,23 @@ static SceneObjectTable ConstructionMaterialFactory_table = {
     .draw = (SceneObjectDrawCB)cmf_draw,
 };
 
-bool cmf_done_entainment(void *context, Wearisome *w, GameScene *gs) {
+bool cmf_done_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
 
   ConstructionMaterialFactory *cmf = (ConstructionMaterialFactory *)context;
   wp_done(&cmf->work_provider, w);
   return false;
 }
-bool cmf_start_entainment(void *context, Wearisome *w, GameScene *gs) {
+bool cmf_start_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
 
   ConstructionMaterialFactory *cmf = (ConstructionMaterialFactory *)context;
   wp_start(&cmf->work_provider, w);
-  return w_queue_wait_for(w, 10.0f, (QueueItem){cmf, cmf_done_entainment});
+  return w_queue_wait_for(w, 10.0f, (QueueItem){cmf, cmf_done_work});
 }
 void cmf_claim(ConstructionMaterialFactory *wl, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
-  if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, cmf_start_entainment}))
+  if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, cmf_start_work}))
     wp_claim(&wl->work_provider);
 }
 static TileContentTable ConstructionMaterialFactory_TileContent_Table = {

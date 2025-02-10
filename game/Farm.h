@@ -63,23 +63,23 @@ static SceneObjectTable Farm_table = {
     .draw = (SceneObjectDrawCB)fa_draw,
 };
 
-bool fa_done_entainment(void *context, Wearisome *w, GameScene *gs) {
+bool fa_done_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
   (void)w;
   Farm *fa = (Farm *)context;
   wp_done(&fa->work_provider, w);
   return false;
 }
-bool fa_start_entainment(void *context, Wearisome *w, GameScene *gs) {
+bool fa_start_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
 
   Farm *fa = (Farm *)context;
   wp_start(&fa->work_provider, w);
-  return w_queue_wait_for(w, 6.0f, (QueueItem){fa, fa_done_entainment});
+  return w_queue_wait_for(w, 6.0f, (QueueItem){fa, fa_done_work});
 }
 void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
-  if (w_queue_move_to(w, gs, fa->display.location, (QueueItem){fa, fa_start_entainment}))
+  if (w_queue_move_to(w, gs, fa->display.location, (QueueItem){fa, fa_start_work}))
     wp_claim(&fa->work_provider);
 }
 

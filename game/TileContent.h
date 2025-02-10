@@ -22,7 +22,7 @@ typedef struct Wearisome Wearisome;
 
 typedef bool (*ProvidesCB)(void *, GameScene *gs, Resource r);
 typedef void (*ClaimCB)(void *, GameScene *gs, Wearisome *w, Resource r);
-typedef void (*ClickCB)(const TileContent *, GameScene *gs);
+typedef void (*ClickCB)(const void *, GameScene *gs);
 
 typedef struct TileContentTable {
   ProvidesCB provides;
