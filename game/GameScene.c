@@ -344,6 +344,7 @@ void GameScene_init(Game *g) {
       .resource_pool = {.water = 25, .food = 25, .construction_material = 30},
       .resource_pool_claimed = {.water = 0, .food = 0, .construction_material = 0},
       .storage_size = 120,
+      .storage_claimed = 0,
       .level = g_malloc(g, sizeof(Level)),
       .r = (Recti){-1, -1, 0, 0},
       .click_counter_text_cache = -1,

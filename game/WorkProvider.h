@@ -8,10 +8,10 @@
 typedef struct WorkProvider {
   int colums, rows;
   int clicks, clicks_claimed, clicks_work, clicks_done;
-  int storage;
+  int storage, storage_claimed;
 } WorkProvider;
 
-static inline void wp_init(WorkProvider *wp, int c, int r) { *wp = (WorkProvider){c, r, 0, 0, 0, 0, 0}; }
+static inline void wp_init(WorkProvider *wp, int c, int r) { *wp = (WorkProvider){c, r, 0, 0, 0, 0, 0, 0}; }
 static inline void wp_reduce_clicks(WorkProvider *wp, int count) {
   wp->clicks -= count;
   wp->clicks_claimed -= count;
@@ -80,5 +80,6 @@ static inline bool wp_finish_production_cycle(WorkProvider *wp, int max_storage)
 }
 
 static inline bool wp_has_something_stored(const WorkProvider *wp) { return wp->storage > 0; }
+static inline bool wp_has_something_to_deliver(const WorkProvider *wp) { return wp->storage - wp->storage_claimed > 0; }
 
 #endif

@@ -32,13 +32,6 @@ void wl_update(Well *wl, GameScene *gs, Game *g, float dt) {
     if (wp_finish_production_cycle(&wl->work_provider, 8))
       bd_flash(&wl->display);
   }
-  if (wp_has_something_stored(&wl->work_provider) && gs->daytime > 0.25 && gs->daytime < 0.26) {
-    const int free_storage = gs_free_storage(gs);
-    for (int i = 0; i < free_storage && wl->work_provider.storage > 0; ++i) {
-      wl->work_provider.storage--;
-      gs->resource_pool.water++;
-    }
-  }
 }
 
 void wl_draw(Well *wl, GameScene *gs, Game *g) {
@@ -63,9 +56,16 @@ static SceneObjectTable Well_table = {
     .draw = (SceneObjectDrawCB)wl_draw,
 };
 
+bool wl_provides(Well *wl, GameScene *gs, Resource r) {
+  (void)gs;
+  if (r == R_Work)
+    return wp_provides(&wl->work_provider, gs, r);
+  return r == R_Deliver && wp_has_something_to_deliver(&wl->work_provider);
+}
+
 bool wl_done_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
-  (void)w;
+
   Well *wl = (Well *)context;
   wp_done(&wl->work_provider, w);
   return false;
@@ -77,14 +77,31 @@ bool wl_start_work(void *context, Wearisome *w, GameScene *gs) {
   wp_start(&wl->work_provider, w);
   return w_queue_wait_for(w, 5.0f, (QueueItem){wl, wl_done_work});
 }
+bool wl_collect_storage(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
+
+  Well *wl = (Well *)context;
+  w_deliver(w, MI_Water, wl_color());
+  if (qi_on_done(&w->queue_follow_up, w, gs)) {
+    // if (w_queue_move_to(w, gs, mp->display.location, (QueueItem){wl, mp_deliver_storage})) {
+    wl->work_provider.storage_claimed--;
+    wl->work_provider.storage--;
+    return true;
+  }
+  return false;
+}
 void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
-  assert(r == R_Work);
-  if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, wl_start_work}))
-    wp_claim(&wl->work_provider);
+  if (r == R_Work) {
+    if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, wl_start_work}))
+      wp_claim(&wl->work_provider);
+  } else if (r == R_Deliver) {
+    if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, wl_collect_storage}))
+      wl->work_provider.storage_claimed++;
+  }
 }
 
 static TileContentTable Well_TileContent_Table = {
-    .provides = (ProvidesCB)wp_provides,
+    .provides = (ProvidesCB)wl_provides,
     .claim = (ClaimCB)wl_claim,
     .click = (ClickCB)wp_click,
 };

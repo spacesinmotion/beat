@@ -30,7 +30,7 @@ typedef struct GameScene {
   int clicks, clicks_produced, clicks_lost, clicks_in_houses;
   Stuff resource_pool;
   Stuff resource_pool_claimed;
-  int storage_size;
+  int storage_size, storage_claimed;
 
   Color preview;
   Recti r;
@@ -70,7 +70,8 @@ static inline void gs_loose_click(GameScene *gs) {
 }
 
 static inline int gs_free_storage(GameScene *gs) {
-  return gs->storage_size - gs->resource_pool.water - gs->resource_pool.food - gs->resource_pool.construction_material;
+  return gs->storage_size - gs->storage_claimed - gs->resource_pool.water - gs->resource_pool.food -
+         gs->resource_pool.construction_material;
 }
 
 #endif

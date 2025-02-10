@@ -2,8 +2,15 @@
 #define MARKETPLACE_H
 
 #include "game/BuildingDisplay.h"
+#include "game/House.h"
+#include "game/Level.h"
+#include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
+#include "game/jobs/QueueItem.h"
+#include "math/Rect.h"
+
+#include <assert.h>
 
 typedef struct Marketplace {
   WorkProvider work_provider;
@@ -64,27 +71,51 @@ bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
   else if (r == R_ConstructionMaterial)
     return gs->resource_pool.construction_material - gs->resource_pool_claimed.construction_material > 0;
   else if (r == R_Work)
-    return wp_provides(&mp->work_provider, gs, r);
+    return wp_provides(&mp->work_provider, gs, r) &&
+           find_resource_building(gs, mp->display.location, R_Deliver) != NULL && gs_free_storage(gs) > 0;
+
   return false;
 }
 
-bool mp_random_at_mp(void *context, Wearisome *w, GameScene *gs) {
+bool mp_deliver_resource_done(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
+
+  switch (w->deliver_icon) {
+  case MI_Water:
+    gs->resource_pool.water++;
+    gs->storage_claimed--;
+    break;
+  case MI_Food:
+    gs->resource_pool.food++;
+    gs->storage_claimed--;
+    break;
+  case MI_ConstructionMaterial:
+    gs->resource_pool.construction_material++;
+    gs->storage_claimed--;
+    break;
+  case MI_Street:
+  case MI_Marketplace:
+  case MI_House:
+  case MI_Click:
+  case MI_Entertainment:
+  case MI_IndustryOrResearch:
+  case MI_Logistics:
+  case MI_WareHouse:
+  case Nb_MI:
+    assert(false);
+    break;
+  }
+  w_deliver_clear(w);
 
   Marketplace *mp = (Marketplace *)context;
   wp_done(&mp->work_provider, w);
   return false;
 }
 
-bool mp_random_move_done(void *context, Wearisome *w, GameScene *gs) {
+bool mp_collect_resource_done(void *context, Wearisome *w, GameScene *gs) {
   Marketplace *mp = (Marketplace *)context;
-  return w_queue_move_to(w, gs, mp->display.location, (QueueItem){mp, mp_random_at_mp});
-}
-
-bool mp_random_move_wait(void *context, Wearisome *w, GameScene *gs) {
-  (void)gs;
-  Marketplace *mp = (Marketplace *)context;
-  return w_queue_wait_for(w, 3.0, (QueueItem){mp, mp_random_move_done});
+  w->need_mode = W_Normal;
+  return w_queue_move_to(w, gs, mp->display.location, (QueueItem){mp, mp_deliver_resource_done});
 }
 
 void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
@@ -96,17 +127,13 @@ void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
   else if (r == R_ConstructionMaterial)
     gs->resource_pool_claimed.construction_material++;
   else if (r == R_Work) {
-    Point l = (Point){mp->display.location.x, mp->display.location.y};
-    for (int i = 0; i < 1000; i++) {
-      int i = l.x + (rand() % 18) - 9;
-      int j = l.y + (rand() % 18) - 9;
-      if (l_movable(gs->level, i, j)) {
-        l = (Point){i, j};
-        break;
-      }
+    TileContent *tc = find_resource_building(gs, mp->display.location, R_Deliver);
+    if (tc) {
+      tc_claim(tc, gs, w, R_Deliver);
+      wp_claim(&mp->work_provider);
+      gs->storage_claimed++;
+      w->queue_follow_up = (QueueItem){mp, mp_collect_resource_done};
     }
-    if (w_queue_move_to(w, gs, (Recti){l.x, l.y, 1, 1}, (QueueItem){mp, mp_random_move_wait}))
-      return wp_claim(&mp->work_provider);
   }
 }
 

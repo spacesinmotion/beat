@@ -62,7 +62,7 @@ typedef struct Wearisome {
 
   float speed;
 
-  QueueItem queue;
+  QueueItem queue, queue_follow_up;
   WearisomeState state;
   WearisomeNeedMode need_mode;
 
@@ -256,6 +256,7 @@ void w_u_queue_move(Wearisome *w, GameScene *gs, float dt) {
       w->path = w->path->next;
     } else if (!qi_on_done(&w->queue, w, gs)) {
       qi_clear(&w->queue);
+      qi_clear(&w->queue_follow_up);
       w->state = W_Waiting;
     }
   }
@@ -266,6 +267,7 @@ void w_u_queue_wait(Wearisome *w, GameScene *gs, float dt) {
   if (w->wait_time < 0.0f) {
     if (!qi_on_done(&w->queue, w, gs)) {
       qi_clear(&w->queue);
+      qi_clear(&w->queue_follow_up);
       w->state = W_Waiting;
     }
   }
