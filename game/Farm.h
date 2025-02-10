@@ -32,13 +32,6 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
     if (wp_finish_production_cycle(&fa->work_provider, 8))
       bd_flash(&fa->display);
   }
-  if (wp_has_something_stored(&fa->work_provider) && gs->daytime > 0.25 && gs->daytime < 0.26) {
-    const int free_storage = gs_free_storage(gs);
-    for (int i = 0; i < free_storage && fa->work_provider.storage > 0; ++i) {
-      fa->work_provider.storage--;
-      gs->resource_pool.food++;
-    }
-  }
 }
 
 void fa_draw(Farm *fa, GameScene *gs, Game *g) {
@@ -63,6 +56,13 @@ static SceneObjectTable Farm_table = {
     .draw = (SceneObjectDrawCB)fa_draw,
 };
 
+bool fa_provides(Farm *fa, GameScene *gs, Resource r) {
+  (void)gs;
+  if (r == R_Work)
+    return wp_provides(&fa->work_provider, gs, r);
+  return r == R_Deliver && wp_has_something_to_deliver(&fa->work_provider);
+}
+
 bool fa_done_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
   (void)w;
@@ -77,14 +77,32 @@ bool fa_start_work(void *context, Wearisome *w, GameScene *gs) {
   wp_start(&fa->work_provider, w);
   return w_queue_wait_for(w, 6.0f, (QueueItem){fa, fa_done_work});
 }
+
+bool fa_collect_storage(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
+
+  Farm *fa = (Farm *)context;
+  w_deliver(w, MI_Food, fa_color());
+  if (qi_on_done(&w->queue_follow_up, w, gs)) {
+    fa->work_provider.storage_claimed--;
+    fa->work_provider.storage--;
+    return true;
+  }
+  return false;
+}
+
 void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
-  assert(r == R_Work);
-  if (w_queue_move_to(w, gs, fa->display.location, (QueueItem){fa, fa_start_work}))
-    wp_claim(&fa->work_provider);
+  if (r == R_Work) {
+    if (w_queue_move_to(w, gs, fa->display.location, (QueueItem){fa, fa_start_work}))
+      wp_claim(&fa->work_provider);
+  } else if (r == R_Deliver) {
+    if (w_queue_move_to(w, gs, fa->display.location, (QueueItem){fa, fa_collect_storage}))
+      fa->work_provider.storage_claimed++;
+  }
 }
 
 static TileContentTable Farm_TileContent_Table = {
-    .provides = (ProvidesCB)wp_provides,
+    .provides = (ProvidesCB)fa_provides,
     .claim = (ClaimCB)fa_claim,
     .click = (ClickCB)wp_click,
 };

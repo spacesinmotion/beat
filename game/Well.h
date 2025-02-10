@@ -83,7 +83,6 @@ bool wl_collect_storage(void *context, Wearisome *w, GameScene *gs) {
   Well *wl = (Well *)context;
   w_deliver(w, MI_Water, wl_color());
   if (qi_on_done(&w->queue_follow_up, w, gs)) {
-    // if (w_queue_move_to(w, gs, mp->display.location, (QueueItem){wl, mp_deliver_storage})) {
     wl->work_provider.storage_claimed--;
     wl->work_provider.storage--;
     return true;

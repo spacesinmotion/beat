@@ -32,13 +32,6 @@ void cmf_update(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g, float 
     if (wp_finish_production_cycle(&cmf->work_provider, 8))
       bd_flash(&cmf->display);
   }
-  if (wp_has_something_stored(&cmf->work_provider) && gs->daytime > 0.25 && gs->daytime < 0.26) {
-    const int free_storage = gs_free_storage(gs);
-    for (int i = 0; i < free_storage && cmf->work_provider.storage > 0; ++i) {
-      cmf->work_provider.storage--;
-      gs->resource_pool.construction_material++;
-    }
-  }
 }
 
 void cmf_draw(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g) {
@@ -64,6 +57,13 @@ static SceneObjectTable ConstructionMaterialFactory_table = {
     .draw = (SceneObjectDrawCB)cmf_draw,
 };
 
+bool cmf_provides(ConstructionMaterialFactory *cmf, GameScene *gs, Resource r) {
+  (void)gs;
+  if (r == R_Work)
+    return wp_provides(&cmf->work_provider, gs, r);
+  return r == R_Deliver && wp_has_something_to_deliver(&cmf->work_provider);
+}
+
 bool cmf_done_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
 
@@ -78,13 +78,31 @@ bool cmf_start_work(void *context, Wearisome *w, GameScene *gs) {
   wp_start(&cmf->work_provider, w);
   return w_queue_wait_for(w, 10.0f, (QueueItem){cmf, cmf_done_work});
 }
-void cmf_claim(ConstructionMaterialFactory *wl, GameScene *gs, Wearisome *w, Resource r) {
-  assert(r == R_Work);
-  if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, cmf_start_work}))
-    wp_claim(&wl->work_provider);
+
+bool cmf_collect_storage(void *context, Wearisome *w, GameScene *gs) {
+  (void)gs;
+
+  ConstructionMaterialFactory *cmf = (ConstructionMaterialFactory *)context;
+  w_deliver(w, MI_ConstructionMaterial, cmf_color());
+  if (qi_on_done(&w->queue_follow_up, w, gs)) {
+    cmf->work_provider.storage_claimed--;
+    cmf->work_provider.storage--;
+    return true;
+  }
+  return false;
+}
+
+void cmf_claim(ConstructionMaterialFactory *cmf, GameScene *gs, Wearisome *w, Resource r) {
+  if (r == R_Work) {
+    if (w_queue_move_to(w, gs, cmf->display.location, (QueueItem){cmf, cmf_start_work}))
+      wp_claim(&cmf->work_provider);
+  } else if (r == R_Deliver) {
+    if (w_queue_move_to(w, gs, cmf->display.location, (QueueItem){cmf, cmf_collect_storage}))
+      cmf->work_provider.storage_claimed++;
+  }
 }
 static TileContentTable ConstructionMaterialFactory_TileContent_Table = {
-    .provides = (ProvidesCB)wp_provides,
+    .provides = (ProvidesCB)cmf_provides,
     .claim = (ClaimCB)cmf_claim,
     .click = (ClickCB)wp_click,
 };
