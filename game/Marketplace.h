@@ -82,16 +82,16 @@ bool mp_deliver_resource_done(void *context, Wearisome *w, GameScene *gs) {
 
   switch (w->deliver_icon) {
   case MI_Water:
-    gs->resource_pool.water++;
-    gs->storage_claimed--;
+    gs->resource_pool.water += w->deliver_count;
+    gs->storage_claimed -= w->deliver_count;
     break;
   case MI_Food:
-    gs->resource_pool.food++;
-    gs->storage_claimed--;
+    gs->resource_pool.food += w->deliver_count;
+    gs->storage_claimed -= w->deliver_count;
     break;
   case MI_ConstructionMaterial:
-    gs->resource_pool.construction_material++;
-    gs->storage_claimed--;
+    gs->resource_pool.construction_material += w->deliver_count;
+    gs->storage_claimed -= w->deliver_count;
     break;
   case MI_Street:
   case MI_Marketplace:
@@ -131,7 +131,6 @@ void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
     if (tc) {
       tc_claim(tc, gs, w, R_Deliver);
       wp_claim(&mp->work_provider);
-      gs->storage_claimed++;
       w->queue_follow_up = (QueueItem){mp, mp_collect_resource_done};
     }
   }

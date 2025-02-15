@@ -82,11 +82,8 @@ bool wl_collect_storage(void *context, Wearisome *w, GameScene *gs) {
 
   Well *wl = (Well *)context;
   w_deliver(w, MI_Water, wl_color());
-  if (qi_on_done(&w->queue_follow_up, w, gs)) {
-    wl->work_provider.storage_claimed--;
-    wl->work_provider.storage--;
-    return true;
-  }
+  if (qi_on_done(&w->queue_follow_up, w, gs))
+    return wp_storage_taken(&wl->work_provider, w);
   return false;
 }
 void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
@@ -95,7 +92,7 @@ void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
       wp_claim(&wl->work_provider);
   } else if (r == R_Deliver) {
     if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, wl_collect_storage}))
-      wl->work_provider.storage_claimed++;
+      wp_claim_storage(&wl->work_provider, gs, w);
   }
 }
 

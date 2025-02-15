@@ -82,4 +82,16 @@ static inline bool wp_finish_production_cycle(WorkProvider *wp, int max_storage)
 static inline bool wp_has_something_stored(const WorkProvider *wp) { return wp->storage > 0; }
 static inline bool wp_has_something_to_deliver(const WorkProvider *wp) { return wp->storage - wp->storage_claimed > 0; }
 
+static inline void wp_claim_storage(WorkProvider *wp, GameScene *gs, Wearisome *w) {
+  const int count = (wp->storage - wp->storage_claimed) > 1 ? 2 : 1;
+  wp->storage_claimed += count;
+  gs->storage_claimed += count;
+  w_deliver_claim(w, count);
+}
+static inline bool wp_storage_taken(WorkProvider *wp, Wearisome *w) {
+  wp->storage_claimed -= w->deliver_count;
+  wp->storage -= w->deliver_count;
+  return true;
+}
+
 #endif

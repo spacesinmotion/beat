@@ -68,6 +68,7 @@ typedef struct Wearisome {
 
   MenuIcon deliver_icon;
   Color deliver_color;
+  int deliver_count;
 } Wearisome;
 
 static inline float apply_need(float *n, float t) {
@@ -110,6 +111,7 @@ static inline bool w_queue_wait_for(Wearisome *w, float time, QueueItem qi) {
 }
 
 static inline void w_earn_clicks(Wearisome *w, int c) { h_earn_click(w->home, c); }
+static inline void w_deliver_claim(Wearisome *w, int count) { w->deliver_count = count; }
 static inline void w_deliver(Wearisome *w, MenuIcon mi, Color c) {
   w->deliver_icon = mi;
   w->deliver_color = c;
@@ -403,6 +405,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
       .need_mode = W_Normal,
       .speed = r_float_r(60.0f, 75.0f),
       .deliver_icon = Nb_MI,
+      .deliver_count = 0,
   };
   gs_add_object(gs, (SceneObject){.context = w, &w_table});
   return w;

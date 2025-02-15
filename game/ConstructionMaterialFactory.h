@@ -84,11 +84,8 @@ bool cmf_collect_storage(void *context, Wearisome *w, GameScene *gs) {
 
   ConstructionMaterialFactory *cmf = (ConstructionMaterialFactory *)context;
   w_deliver(w, MI_ConstructionMaterial, cmf_color());
-  if (qi_on_done(&w->queue_follow_up, w, gs)) {
-    cmf->work_provider.storage_claimed--;
-    cmf->work_provider.storage--;
-    return true;
-  }
+  if (qi_on_done(&w->queue_follow_up, w, gs))
+    return wp_storage_taken(&cmf->work_provider, w);
   return false;
 }
 
@@ -98,7 +95,7 @@ void cmf_claim(ConstructionMaterialFactory *cmf, GameScene *gs, Wearisome *w, Re
       wp_claim(&cmf->work_provider);
   } else if (r == R_Deliver) {
     if (w_queue_move_to(w, gs, cmf->display.location, (QueueItem){cmf, cmf_collect_storage}))
-      cmf->work_provider.storage_claimed++;
+      wp_claim_storage(&cmf->work_provider, gs, w);
   }
 }
 static TileContentTable ConstructionMaterialFactory_TileContent_Table = {

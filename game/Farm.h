@@ -83,11 +83,8 @@ bool fa_collect_storage(void *context, Wearisome *w, GameScene *gs) {
 
   Farm *fa = (Farm *)context;
   w_deliver(w, MI_Food, fa_color());
-  if (qi_on_done(&w->queue_follow_up, w, gs)) {
-    fa->work_provider.storage_claimed--;
-    fa->work_provider.storage--;
-    return true;
-  }
+  if (qi_on_done(&w->queue_follow_up, w, gs))
+    return wp_storage_taken(&fa->work_provider, w);
   return false;
 }
 
@@ -97,7 +94,7 @@ void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
       wp_claim(&fa->work_provider);
   } else if (r == R_Deliver) {
     if (w_queue_move_to(w, gs, fa->display.location, (QueueItem){fa, fa_collect_storage}))
-      fa->work_provider.storage_claimed++;
+      wp_claim_storage(&fa->work_provider, gs, w);
   }
 }
 
