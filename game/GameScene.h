@@ -18,6 +18,12 @@ typedef struct Stuff {
   int water, food, construction_material;
 } Stuff;
 
+typedef void (*OnClickCB)(GameScene *);
+typedef struct PickRect {
+  Recti rect;
+  OnClickCB click;
+} PickRect;
+
 typedef struct GameScene {
   SceneObjectVec scene_objects;
 
@@ -53,6 +59,9 @@ typedef struct GameScene {
   int free_storage_text_cache;
 
   Vec2 mouse_overlay_position;
+
+  PickRect pick_rects[32];
+  int pick_rect_count;
 } GameScene;
 
 typedef struct GameScene GameScene;

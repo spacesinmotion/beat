@@ -33,7 +33,7 @@ Gameplay:
     ☐ a _Park_ it earns no clicks, but reduces need consumption 
   ☐ manager buildings that multiply and spread clicks
   Overlay:
-    ☐ control game speed
+    ✔ control game speed @done(25-02-16 14:59)
     ☐ a game menu quit/new/...
 
 Engine:
