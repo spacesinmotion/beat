@@ -18,10 +18,11 @@ typedef struct Stuff {
   int water, food, construction_material;
 } Stuff;
 
-typedef void (*OnClickCB)(GameScene *);
+typedef void (*OnClickCB)(GameScene *, int id);
 typedef struct PickRect {
   Recti rect;
   OnClickCB click;
+  int id;
 } PickRect;
 
 typedef struct GameScene {
@@ -41,7 +42,6 @@ typedef struct GameScene {
   Color preview;
   Recti r;
 
-  int menu_under_mouse;
   int menu_selected;
 
   Level *level;
@@ -62,6 +62,7 @@ typedef struct GameScene {
 
   PickRect pick_rects[32];
   int pick_rect_count;
+  int pick_under_mouse;
 } GameScene;
 
 typedef struct GameScene GameScene;

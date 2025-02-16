@@ -63,15 +63,44 @@ int so_render_order_compare(const void *va, const void *vb) {
   return a < b ? -1 : (a > b ? 1 : 0);
 }
 
-void gs_toggle_pause(GameScene *gs) { gs->game_paused = !gs->game_paused; }
-void gs_game_speed_normal(GameScene *gs) { gs->game_speed = 2.0; }
-void gs_game_speed_fast(GameScene *gs) { gs->game_speed = 4.0; }
-void gs_game_speed_fastest(GameScene *gs) { gs->game_speed = 8.0; }
+void gs_toggle_pause(GameScene *gs, int id) { (void)id, gs->game_paused = !gs->game_paused; }
+void gs_set_game_speed(GameScene *gs, int speed) { gs->game_speed = (float)speed; }
 
-bool gs_pick(GameScene *gs, OnClickCB onclick, Vec2 p, float s) {
+void gs_select_bottom_menu(GameScene *gs, int button) {
+  gs->menu_selected = button;
+  if (button == MI_Street) {
+    gs->preview = Street_color();
+    gs->r.w = gs->r.h = 1;
+  } else if (button == MI_Marketplace) {
+    gs->preview = mp_color();
+    ri_set_size(&gs->r, mp_size());
+  } else if (button == MI_House) {
+    gs->preview = h_color();
+    ri_set_size(&gs->r, h_size());
+  } else if (button == MI_Water) {
+    gs->preview = wl_color();
+    ri_set_size(&gs->r, wl_size());
+  } else if (button == MI_Food) {
+    gs->preview = fa_color();
+    ri_set_size(&gs->r, fa_size());
+  } else if (button == MI_Click) {
+    gs->preview = cf_color();
+    ri_set_size(&gs->r, cf_size());
+  } else if (button == MI_Entertainment) {
+    gs->preview = em_color();
+    ri_set_size(&gs->r, em_size());
+  } else if (button == MI_ConstructionMaterial) {
+    gs->preview = cmf_color();
+    ri_set_size(&gs->r, cmf_size());
+  } else {
+    gs->r.w = gs->r.h = 0;
+  }
+}
+
+bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
   assert(gs->pick_rect_count < (int)(sizeof(gs->pick_rects) / sizeof(PickRect)));
   Recti r = (Recti){p.x - 8 * s, p.y - 8 * s, 16 * s, 16 * s};
-  gs->pick_rects[gs->pick_rect_count] = (PickRect){.rect = r, .click = onclick};
+  gs->pick_rects[gs->pick_rect_count] = (PickRect){.rect = r, .click = onclick, .id = id};
   ++gs->pick_rect_count;
   return ri_contains(r, gs->mouse_overlay_position.x, gs->mouse_overlay_position.y);
 }
@@ -142,7 +171,6 @@ bool gs_construction_available(GameScene *gs) {
 }
 
 void gs_draw(GameScene *gs, Game *g) {
-
   c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
   c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
   c_printf(g, "----------------------\n");
@@ -162,7 +190,7 @@ void gs_draw(GameScene *gs, Game *g) {
   for (int i = 0; i < gs->scene_objects.len; ++i)
     so_draw(&gs->scene_objects.data[i], gs, g);
 
-  if (gs->menu_under_mouse < 0 && l_validR(gs->level, gs->r)) {
+  if (gs->pick_under_mouse < 0 && l_validR(gs->level, gs->r)) {
     if (gs->r.h > 0 && gs->r.w > 0) {
       g_color(g, gs->preview);
       g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), Img_house_map, l_to_vec(gs->r.x, gs->r.y));
@@ -175,16 +203,15 @@ void gs_draw(GameScene *gs, Game *g) {
 }
 
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
-  Color cn = gs->daytime < 0.75f ? gray(25) : gray(225);
-  Color ch = gs->daytime < 0.75f ? gray(75) : gray(175);
+  const Color cn = gs->daytime < 0.75f ? gray(25) : gray(225);
+  const Color ch = gs->daytime < 0.75f ? gray(75) : gray(175);
   for (int i = 0; i < Nb_MI; ++i) {
-    g_color(g, i == gs->menu_under_mouse ? gray(100) : (gs->menu_selected == i ? cn : ch));
-    g_object(g, g_animation_buffer(g), Img_menubar, i % 16, (Vec2){8 + 4 + i * 16, 8 + 4});
-  }
-  for (int i = 0; i < Nb_MI; ++i) {
-    g_color(g, i == gs->menu_under_mouse ? red() : (gs->menu_selected == i ? green() : blue()));
-    g_object(g, g_animation_buffer(g), Img_marker, i == gs->menu_under_mouse ? g_frame(g) % 4 : i % 4,
-             (Vec2){8 + 4 + i * 16, 8 + 4});
+    const Vec2 p = (Vec2){8 + 4 + i * 16, 8 + 4};
+    const bool hover = gs_pick(gs, gs_select_bottom_menu, i, p, 1.0f);
+    g_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
+    g_object(g, g_animation_buffer(g), Img_menubar, i % 16, p);
+    g_color(g, hover ? red() : (gs->menu_selected == i ? green() : blue()));
+    g_object(g, g_animation_buffer(g), Img_marker, hover ? g_frame(g) % 4 : i % 4, p);
   }
 }
 
@@ -201,22 +228,22 @@ void gs_draw_clock_overlay(GameScene *gs, Game *g) {
 
   int i = 0;
   Vec2 p = v_add(clock_pos, (Vec2){-86 + i * 16, 16});
-  bool hover = gs_pick(gs, gs_toggle_pause, p, 1.0f);
+  bool hover = gs_pick(gs, gs_toggle_pause, 0, p, 1.0f);
   g_color(g, hover ? gray(200) : gs->game_paused ? red() : white());
   g_object(g, g_animation_buffer(g), Img_overlay_images, 4 + i, p);
   ++i;
   p = v_add(clock_pos, (Vec2){-86 + i * 16, 16});
-  hover = gs_pick(gs, gs_game_speed_normal, p, 1.0f);
+  hover = gs_pick(gs, gs_set_game_speed, 2, p, 1.0f);
   g_color(g, hover ? gray(200) : gs->game_speed == 2.0 ? red() : white());
   g_object(g, g_animation_buffer(g), Img_overlay_images, 4 + i, p);
   ++i;
   p = v_add(clock_pos, (Vec2){-86 + i * 16, 16});
-  hover = gs_pick(gs, gs_game_speed_fast, p, 1.0f);
+  hover = gs_pick(gs, gs_set_game_speed, 4, p, 1.0f);
   g_color(g, hover ? gray(200) : gs->game_speed == 4.0 ? red() : white());
   g_object(g, g_animation_buffer(g), Img_overlay_images, 4 + i, p);
   ++i;
   p = v_add(clock_pos, (Vec2){-86 + i * 16, 16});
-  hover = gs_pick(gs, gs_game_speed_fastest, p, 1.0f);
+  hover = gs_pick(gs, gs_set_game_speed, 8, p, 1.0f);
   g_color(g, hover ? gray(200) : gs->game_speed == 8.0 ? red() : white());
   g_object(g, g_animation_buffer(g), Img_overlay_images, 4 + i, p);
 }
@@ -266,65 +293,35 @@ void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   gs->r.y = (int)((mp.y + 8) / 16.0f);
 
   gs->mouse_overlay_position = op;
-  gs->menu_under_mouse = -1;
-  for (int i = 0; i < Nb_MI; ++i)
-    if (r_contains((Rect){(Vec2){4 + i * 16, 4}, (Vec2){16, 16}}, op))
-      gs->menu_under_mouse = i;
+  gs->pick_under_mouse = -1;
+  for (int i = 0; i < gs->pick_rect_count; ++i) {
+    if (ri_contains(gs->pick_rects[i].rect, op.x, op.y)) {
+      gs->pick_under_mouse = i;
+      break;
+    }
+  }
 }
 
 void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
-  (void)mp;
   (void)op;
 
-  if (button == 1) {
-    gs->menu_selected = -1;
-    gs->r.w = gs->r.h = 0;
+  if (button == 0) {
 
-  } else if (button == 0) {
-    for (int i = 0; i < gs->pick_rect_count; ++i) {
-      if (!ri_contains(gs->pick_rects[i].rect, op.x, op.y))
-        continue;
-      gs->pick_rects[i].click(gs);
-      return;
-    }
+    if (gs->pick_under_mouse >= 0)
+      gs->pick_rects[gs->pick_under_mouse].click(gs, gs->pick_rects[gs->pick_under_mouse].id);
 
-    if (gs->menu_under_mouse >= 0) {
-      gs->menu_selected = gs->menu_under_mouse;
-      if (gs->menu_selected == MI_Street) {
-        gs->preview = Street_color();
-        gs->r.w = gs->r.h = 1;
-      } else if (gs->menu_selected == MI_Marketplace) {
-        gs->preview = mp_color();
-        ri_set_size(&gs->r, mp_size());
-      } else if (gs->menu_selected == MI_House) {
-        gs->preview = h_color();
-        ri_set_size(&gs->r, h_size());
-      } else if (gs->menu_selected == MI_Water) {
-        gs->preview = wl_color();
-        ri_set_size(&gs->r, wl_size());
-      } else if (gs->menu_selected == MI_Food) {
-        gs->preview = fa_color();
-        ri_set_size(&gs->r, fa_size());
-      } else if (gs->menu_selected == MI_Click) {
-        gs->preview = cf_color();
-        ri_set_size(&gs->r, cf_size());
-      } else if (gs->menu_selected == MI_Entertainment) {
-        gs->preview = em_color();
-        ri_set_size(&gs->r, em_size());
-      } else if (gs->menu_selected == MI_ConstructionMaterial) {
-        gs->preview = cmf_color();
-        ri_set_size(&gs->r, cmf_size());
-      } else {
-        gs->r.w = gs->r.h = 0;
-      }
-    } else if (gs->menu_selected >= 0) {
-      if (gs_construction_available(gs) && gs->r.w * gs->r.h > 0) {
+    else if (gs->menu_selected >= 0) {
+      if (gs_construction_available(gs) && gs->r.w * gs->r.h > 0)
         ConstructionSite_init(g, gs, gs->r, gs->menu_selected);
-      }
+
     } else {
       tc_click(l_content(gs->level, gs->r.x, gs->r.y), gs);
       Bling_init(g, gs, mp, gray(45));
     }
+    
+  } else if (button == 1) {
+    gs->menu_selected = -1;
+    gs->r.w = gs->r.h = 0;
   }
 }
 
@@ -392,7 +389,6 @@ void GameScene_init(Game *g) {
       .scene_objects = (SceneObjectVec){NULL, 0, 0},
       .game_speed = 2.0f,
       .game_paused = false,
-      .menu_under_mouse = -1,
       .menu_selected = -1,
       .day = 1,
       .daytime = 0.0f,
@@ -410,6 +406,7 @@ void GameScene_init(Game *g) {
       .free_storage_text_cache = -1,
       .pick_rects = {},
       .pick_rect_count = 0,
+      .pick_under_mouse = -1,
   };
 
   l_init(gs->level);
