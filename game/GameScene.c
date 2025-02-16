@@ -64,7 +64,10 @@ int so_render_order_compare(const void *va, const void *vb) {
 }
 
 void gs_toggle_pause(GameScene *gs, int id) { (void)id, gs->game_paused = !gs->game_paused; }
-void gs_set_game_speed(GameScene *gs, int speed) { gs->game_speed = (float)speed; }
+void gs_set_game_speed(GameScene *gs, int speed) {
+  gs->game_paused = false;
+  gs->game_speed = (float)speed;
+}
 
 void gs_select_bottom_menu(GameScene *gs, int button) {
   gs->menu_selected = button;
@@ -318,7 +321,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
       tc_click(l_content(gs->level, gs->r.x, gs->r.y), gs);
       Bling_init(g, gs, mp, gray(45));
     }
-    
+
   } else if (button == 1) {
     gs->menu_selected = -1;
     gs->r.w = gs->r.h = 0;
@@ -336,21 +339,16 @@ typedef enum GameKeys {
 void gs_key_up(GameScene *gs, Game *g, int key) {
   (void)g;
 
-  if (key == PAUSE_KEY) {
-    gs->game_paused = !gs->game_paused;
-  } else if (key == SPEED_1_KEY) {
-    gs->game_paused = false;
-    gs->game_speed = 1.0f;
-  } else if (key == SPEED_2_KEY) {
-    gs->game_speed = 2.0f;
-    gs->game_paused = false;
-  } else if (key == SPEED_4_KEY) {
-    gs->game_speed = 4.0f;
-    gs->game_paused = false;
-  } else if (key == SPEED_8_KEY) {
-    gs->game_speed = 8.0f;
-    gs->game_paused = false;
-  }
+  if (key == PAUSE_KEY)
+    gs_toggle_pause(gs, 0);
+  else if (key == SPEED_1_KEY)
+    gs_set_game_speed(gs, 1);
+  else if (key == SPEED_2_KEY)
+    gs_set_game_speed(gs, 2);
+  else if (key == SPEED_4_KEY)
+    gs_set_game_speed(gs, 4);
+  else if (key == SPEED_8_KEY)
+    gs_set_game_speed(gs, 8);
 }
 
 void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
