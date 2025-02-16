@@ -285,17 +285,18 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   if (tc_can_click(l_content(gs->level, gs->r.x, gs->r.y))) {
     g_color(g, gray(45));
     g_object(g, g_animation_buffer(g), Img_wearisome, 12, v_add(gs->mouse_overlay_position, (Vec2){13, -9}));
-    g_color(g, gray(215));
+    g_color(g, gray(200));
     g_text(g, gs->click_counter_text, Oswald_Regular_12, v_add(gs->mouse_overlay_position, (Vec2){10, -12}));
   }
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   (void)g;
+  gs->mouse_overlay_position = op;
+
   gs->r.x = (int)((mp.x + 8) / 16.0f);
   gs->r.y = (int)((mp.y + 8) / 16.0f);
 
-  gs->mouse_overlay_position = op;
   gs->pick_under_mouse = -1;
   for (int i = 0; i < gs->pick_rect_count; ++i) {
     if (ri_contains(gs->pick_rects[i].rect, op.x, op.y)) {

@@ -6,9 +6,8 @@ Bugs:
   ✔ zoom out to much breaks camera @done(25-01-25 16:53)
 
 Gameplay:
-  ✔ stuff will be produced every day, but only the amount of worked clicks -> there is a cooldown @done(25-01-25 11:07)
-  ✔ construction material is reduced while spent a click -> wearisomes bring the construction material first @done(25-01-25 12:55)
   ☐ right click should stop a construction -> unspent clicks are returned -> remove construction tile claim
+  ☐ manager buildings that multiply and spread clicks
   ☐ destroy building option -> _think about returning resources_
   ☐ if wearisome gets dead, the house should become a constructionside again -> after a click
   ☐ allow to rotate buildings -> flip width height if it helps
@@ -17,7 +16,11 @@ Gameplay:
   ☐ research -> new levels new / better buildings
   ☐ need bigger construction objects -> should bind a lot of people
   ☐ *click factory* should actually be a *trading outpost* that sells things instead of creat clicks
+  ☐ load and save a game
+  ✔ stuff will be produced every day, but only the amount of worked clicks -> there is a cooldown @done(25-01-25 11:07)
+  ✔ construction material is reduced while spent a click -> wearisomes bring the construction material first @done(25-01-25 12:55)
   Visualization:
+    ☐ enter a small 4x4 grid to structures with storage waiting to be collected
     ☐ mouse enter building -> _a corona or something_
     ✔ wearisome actually carry things they deliver @done(25-02-01 11:20)
     ✔ day night cycle as background color @done(25-01-31 17:03)
@@ -28,13 +31,14 @@ Gameplay:
       ☐ building not reachable
       ☐ can't reach warehouse
       ✔ wearisome at home
+    ☐ a _Park_ it earns no clicks, but reduces need consumption 
     ✘ a _Logistics_ building -> new job moving stuff from producer to warehouse @cancelled(25-02-16 09:35)
     ✔ a _warehouse_ -> limit global pool and increase by this buildings @done(25-02-16 09:35)
-    ☐ a _Park_ it earns no clicks, but reduces need consumption 
-  ☐ manager buildings that multiply and spread clicks
   Overlay:
-    ✔ control game speed @done(25-02-16 14:59)
+    ☐ add current day in center of clock -> see oxygen not included
+    ☐ a wearisome counter
     ☐ a game menu quit/new/...
+    ✔ control game speed @done(25-02-16 14:59)
 
 Engine:
   ☐ extract camera and make it smooth
