@@ -57,6 +57,8 @@ typedef struct GameScene {
   int construction_material_counter_text_cache;
   G_Object free_storage_text;
   int free_storage_text_cache;
+  G_Object day_counter_text;
+  int day_counter_text_cache;
 
   Vec2 mouse_overlay_position;
 

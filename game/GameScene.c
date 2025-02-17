@@ -165,6 +165,10 @@ void gs_update(GameScene *gs, Game *g, float dt) {
                   str("%d/%d", gs->storage_size - free_storage, gs->storage_size));
     gs->free_storage_text_cache = free_storage;
   }
+  if (gs->day != gs->day_counter_text_cache) {
+    g_create_text(g, &gs->day_counter_text, Oswald_Regular_12, str("day %d", gs->day));
+    gs->day_counter_text_cache = gs->day;
+  }
 }
 
 bool gs_construction_available(GameScene *gs) {
@@ -218,6 +222,7 @@ void gs_draw_menu_overlay(GameScene *gs, Game *g) {
   }
 }
 
+int center_num(int num) { return (num / 10 > 0) ? -10 : -8; }
 void gs_draw_clock_overlay(GameScene *gs, Game *g) {
   Sizei vp = g_viewport(g);
   Vec2 clock_pos = (Vec2){vp.w - 24.0f, vp.h - 24.0f};
@@ -228,6 +233,8 @@ void gs_draw_clock_overlay(GameScene *gs, Game *g) {
   g_color(g, gs->daytime > 0.75 ? rgb(102, 121, 129) : white());
   g_objectRS(g, g_animation_buffer(g), Img_overlay_images, 0, clock_pos, -gs->daytime * M_PI * 2.0f, 3.0f);
   g_objectS(g, g_animation_buffer(g), Img_overlay_images, 1, clock_pos, 3.0f);
+  g_color(g, gs->daytime > 0.75 ? gray(200) : gray(45));
+  g_text(g, gs->day_counter_text, Oswald_Regular_12, v_add(clock_pos, (Vec2){center_num(gs->day), -3}));
 
   int i = 0;
   Vec2 p = v_add(clock_pos, (Vec2){-86 + i * 16, 16});
@@ -403,6 +410,7 @@ void GameScene_init(Game *g) {
       .food_counter_text_cache = -1,
       .construction_material_counter_text_cache = -1,
       .free_storage_text_cache = -1,
+      .day_counter_text_cache = -1,
       .pick_rects = {},
       .pick_rect_count = 0,
       .pick_under_mouse = -1,
