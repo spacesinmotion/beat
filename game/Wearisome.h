@@ -280,10 +280,10 @@ static Needs working_factor = {.food = 1.3f, .water = 1.15f, .sleep = 1.4f};
 static Needs entertainment_factor = {.food = 0.2f, .water = 0.2f, .sleep = 1.0f};
 void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
   (void)g;
-
   if (w_dead(w))
     return;
 
+  gs->wearisome_count++;
   const Needs *factor = w->need_mode == W_IsWorking
                             ? &working_factor
                             : (w->need_mode == W_GetEntertainment ? &entertainment_factor : &one_factor);

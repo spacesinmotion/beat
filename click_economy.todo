@@ -22,10 +22,11 @@ Gameplay:
   Visualization:
     ☐ enter a small 4x4 grid to structures with storage waiting to be collected
     ☐ mouse enter building -> _a corona or something_
+    ☐ working animation for buildings
+    ☐ some animation for earning/lossing clicks 
     ✔ wearisome actually carry things they deliver @done(25-02-01 11:20)
     ✔ day night cycle as background color @done(25-01-31 17:03)
   Structures:
-    ☐ some animation for earning/lossing clicks 
     warning signs:
       ☐ has no resources; wearisome dying @critical
       ☐ building not reachable
@@ -35,8 +36,8 @@ Gameplay:
     ✘ a _Logistics_ building -> new job moving stuff from producer to warehouse @cancelled(25-02-16 09:35)
     ✔ a _warehouse_ -> limit global pool and increase by this buildings @done(25-02-16 09:35)
   Overlay:
-    ☐ a wearisome counter
     ☐ a game menu quit/new/...
+    ✔ a wearisome counter @done(25-02-17 10:54)
     ✔ add current day in center of clock -> see oxygen not included @done(25-02-17 08:59)
     ✔ control game speed @done(25-02-16 14:59)
 

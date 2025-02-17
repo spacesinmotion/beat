@@ -155,7 +155,7 @@ sg_image img_load(const char *path) {
 
 FontImage load_font(const char *path, int size) {
   uint8_t *ttf_buffer = (uint8_t *)malloc(1048576);
-  FontImage f = {.size = size, .tw = 512, .th = 512};
+  FontImage f = {.size = 8 * size, .tw = 512, .th = 512};
   uint8_t *temp_bitmap = (uint8_t *)calloc(f.tw * f.th, 4);
 
   fread(ttf_buffer, 1ul, 1048576ul, fopen(path, "rb"));
@@ -191,7 +191,6 @@ const FontImage *g_font(Game *g, G_Font font) {
 }
 
 void g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
-
   G_Object_free(o);
   const FontImage *f = g_font(g, ff);
   vertex_t vertices[1024];

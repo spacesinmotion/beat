@@ -135,6 +135,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   g_set_background_color(g, c_mix(rgb(66, 64, 78), rgb(226, 219, 197), t));
 
   gs->clicks_in_houses = 0;
+  gs->wearisome_count = 0;
   for (int i = 0; i < gs->scene_objects.len; ++i)
     so_update(&gs->scene_objects.data[i], gs, g, dt);
 
@@ -169,6 +170,10 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     g_create_text(g, &gs->day_counter_text, Oswald_Regular_12, str("day %d", gs->day));
     gs->day_counter_text_cache = gs->day;
   }
+  if (gs->wearisome_count != gs->bot_counter_text_cache) {
+    g_create_text(g, &gs->bot_counter_text, Oswald_Regular_12, str("%d", gs->wearisome_count));
+    gs->bot_counter_text_cache = gs->wearisome_count;
+  }
 }
 
 bool gs_construction_available(GameScene *gs) {
@@ -185,6 +190,7 @@ void gs_draw(GameScene *gs, Game *g) {
   c_printf(g, "----------------------\n");
   c_printf(g, " %10s: %d\n", "day", gs->day);
   c_printf(g, " %10s: %f\n", "daytime", gs->daytime);
+  c_printf(g, " %10s: %d\n", "bots", gs->wearisome_count);
   c_printf(g, "----------------------\n\n");
   c_printf(g, " %10s: %d\n", "all $", gs->clicks_in_houses + gs->clicks);
   c_printf(g, " %10s: %d\n", "spread $", gs->clicks_in_houses);
@@ -226,7 +232,7 @@ int center_num(int num) { return (num / 10 > 0) ? -10 : -8; }
 void gs_draw_clock_overlay(GameScene *gs, Game *g) {
   Sizei vp = g_viewport(g);
   Vec2 clock_pos = (Vec2){vp.w - 24.0f, vp.h - 24.0f};
-  g_color(g, rgb(137, 197, 184));
+  g_color(g, rgba(137, 197, 184, 150));
   g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(clock_pos, (Vec2){-58, 44}), 5.5f);
   g_color(g, rgb(182, 205, 70));
   g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(clock_pos, (Vec2){4, 4}), 4.5f);
@@ -236,8 +242,16 @@ void gs_draw_clock_overlay(GameScene *gs, Game *g) {
   g_color(g, gs->daytime > 0.75 ? gray(200) : gray(45));
   g_text(g, gs->day_counter_text, Oswald_Regular_12, v_add(clock_pos, (Vec2){center_num(gs->day), -3}));
 
+  g_color(g, rgba(255, 255, 255, 150));
+  Vec2 p = v_add(clock_pos, (Vec2){-110, 21});
+  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, p, 1.5f);
+  g_color(g, white());
+  g_objectS(g, g_animation_buffer(g), Img_wearisome, 0, v_add(p, (Vec2){-4, -4}), 0.5f);
+  g_color(g, gray(45));
+  g_text(g, gs->bot_counter_text, Oswald_Regular_12, v_add(p, (Vec2){center_num(gs->wearisome_count) + 10, -7}));
+
   int i = 0;
-  Vec2 p = v_add(clock_pos, (Vec2){-86 + i * 16, 16});
+  p = v_add(clock_pos, (Vec2){-86 + i * 16, 16});
   bool hover = gs_pick(gs, gs_toggle_pause, 0, p, 1.0f);
   g_color(g, hover ? gray(200) : gs->game_paused ? red() : white());
   g_object(g, g_animation_buffer(g), Img_overlay_images, 4 + i, p);
@@ -399,6 +413,8 @@ void GameScene_init(Game *g) {
       .day = 1,
       .daytime = 0.0f,
       .clicks = 4,
+      .clicks_in_houses = 0,
+      .wearisome_count = 0,
       .resource_pool = {.water = 25, .food = 25, .construction_material = 30},
       .resource_pool_claimed = {.water = 0, .food = 0, .construction_material = 0},
       .storage_size = 120,
@@ -411,6 +427,7 @@ void GameScene_init(Game *g) {
       .construction_material_counter_text_cache = -1,
       .free_storage_text_cache = -1,
       .day_counter_text_cache = -1,
+      .bot_counter_text_cache = -1,
       .pick_rects = {},
       .pick_rect_count = 0,
       .pick_under_mouse = -1,

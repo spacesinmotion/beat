@@ -35,6 +35,7 @@ typedef struct GameScene {
   int day;
 
   int clicks, clicks_produced, clicks_lost, clicks_in_houses;
+  int wearisome_count;
   Stuff resource_pool;
   Stuff resource_pool_claimed;
   int storage_size, storage_claimed;
@@ -59,6 +60,8 @@ typedef struct GameScene {
   int free_storage_text_cache;
   G_Object day_counter_text;
   int day_counter_text_cache;
+  G_Object bot_counter_text;
+  int bot_counter_text_cache;
 
   Vec2 mouse_overlay_position;
 
