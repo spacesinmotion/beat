@@ -51,16 +51,17 @@ void h_earn_click(House *h, int c) {
   h->resources_maximum.clicks += c;
 }
 
-void w_deliver_clear(Wearisome *w);
+static void w_deliver_clear(Wearisome *w);
 bool h_get_water_done(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
   w_deliver_clear(w);
   ((House *)context)->resources.water += 1.0;
   return false;
 }
-Color wl_color();
-void w_deliver(Wearisome *w, MenuIcon mi, Color c);
-bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi);
+
+static Color wl_color();
+static void w_deliver(Wearisome *w, MenuIcon mi, Color c);
+static bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi);
 bool h_pay_water(void *context, Wearisome *w, GameScene *gs) {
   House *h = (House *)context;
   gs->resource_pool.water--;
@@ -77,7 +78,7 @@ bool h_get_food_done(void *context, Wearisome *w, GameScene *gs) {
   ((House *)context)->resources.food += 1.0;
   return false;
 }
-Color fa_color();
+static Color fa_color();
 bool h_pay_food(void *context, Wearisome *w, GameScene *gs) {
   House *h = (House *)context;
   gs->resource_pool.food--;
