@@ -10,6 +10,7 @@
 #include "game/Level.h"
 #include "game/Marketplace.h"
 #include "game/SceneObject.h"
+#include "game/ScienceBuilding.h"
 #include "game/StreetMap.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
@@ -95,6 +96,9 @@ void gs_select_bottom_menu(GameScene *gs, int button) {
   } else if (button == MI_ConstructionMaterial) {
     gs->preview = cmf_color();
     ri_set_size(&gs->r, cmf_size());
+  } else if (button == MI_Science) {
+    gs->preview = scb_color();
+    ri_set_size(&gs->r, scb_size());
   } else {
     gs->r.w = gs->r.h = 0;
   }
@@ -218,7 +222,7 @@ void gs_draw(GameScene *gs, Game *g) {
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
   const Color cn = gs->daytime < 0.75f ? gray(25) : gray(225);
   const Color ch = gs->daytime < 0.75f ? gray(75) : gray(175);
-  for (int i = 0; i < Nb_MI; ++i) {
+  for (int i = 0; i <= MI_Science; ++i) {
     const Vec2 p = (Vec2){8 + 4 + i * 16, 8 + 4};
     const bool hover = gs_pick(gs, gs_select_bottom_menu, i, p, 1.0f);
     g_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
@@ -393,6 +397,8 @@ void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
     Entertainment_init(g, gs, (Point){r.x, r.y});
   } else if (key == MI_ConstructionMaterial) {
     ConstructionMaterialFactory_init(g, gs, (Point){r.x, r.y});
+  } else if (key == MI_Science) {
+    ScienceBuilding_init(g, gs, (Point){r.x, r.y});
   }
 }
 SceneTable GameScene_table = {
@@ -431,6 +437,8 @@ void GameScene_init(Game *g) {
       .pick_rects = {},
       .pick_rect_count = 0,
       .pick_under_mouse = -1,
+      .research_level = 0.0f,
+      .reasearch_needed = 10.0f,
   };
 
   l_init(gs->level);

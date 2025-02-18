@@ -68,6 +68,8 @@ typedef struct GameScene {
   PickRect pick_rects[32];
   int pick_rect_count;
   int pick_under_mouse;
+
+  float research_level, reasearch_needed;
 } GameScene;
 
 typedef struct GameScene GameScene;

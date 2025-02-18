@@ -7,6 +7,7 @@
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
+#include "game/assets.h"
 #include "game/jobs/QueueItem.h"
 #include "math/Rect.h"
 
@@ -98,9 +99,10 @@ bool mp_deliver_resource_done(void *context, Wearisome *w, GameScene *gs) {
   case MI_House:
   case MI_Click:
   case MI_Entertainment:
-  case MI_IndustryOrResearch:
+  case MI_Science:
   case MI_Logistics:
   case MI_WareHouse:
+  case MI_Industry:
   case Nb_MI:
     assert(false);
     break;

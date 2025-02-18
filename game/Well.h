@@ -57,7 +57,6 @@ static SceneObjectTable Well_table = {
 };
 
 bool wl_provides(Well *wl, GameScene *gs, Resource r) {
-  (void)gs;
   if (r == R_Work)
     return wp_provides(&wl->work_provider, gs, r);
   return r == R_Deliver && wp_has_something_to_deliver(&wl->work_provider);
