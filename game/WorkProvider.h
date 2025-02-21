@@ -48,12 +48,16 @@ static inline void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p,
   int c = 0;
   for (int j = wp->rows - 1; j >= 0; --j) {
     for (int i = 0; i < wp->colums; ++i) {
+      float r = 0.0f;
+      float s = 0.75f;
       int img = 12;
       if (c < wp->clicks_done)
         done_color(g);
-      else if (c < wp->clicks_work)
+      else if (c < wp->clicks_work) {
         working_color(g);
-      else if (c < wp->clicks_claimed)
+        r += 0.05f * sin(26.0 * g_time(g) + i * j);
+        s += 0.01f * sin(17.0 * g_time(g) + i * j);
+      } else if (c < wp->clicks_claimed)
         work_claimed_color(g);
       else if (c < wp->clicks)
         clicked_color(g);
@@ -63,7 +67,7 @@ static inline void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p,
         g_color(g, rgb(255, 255, 255));
         img = 13;
       }
-      g_objectS(g, g_animation_buffer(g), Img_wearisome, img, v_add(p, l_to_vec(i, j)), 0.75f);
+      g_objectRS(g, g_animation_buffer(g), Img_wearisome, img, v_add(p, l_to_vec(i, j)), r, s);
       ++c;
     }
   }

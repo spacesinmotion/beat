@@ -51,16 +51,20 @@ void em_draw(Entertainment *em, GameScene *gs, Game *g) {
   int c = 0;
   for (int j = s.h - 2; j >= 0; --j) {
     for (int i = 0; i < s.w - 1; ++i) {
+      float r = 0.0f;
+      float s = 0.75f;
       int img = 14;
-      if (c < em->started)
+      if (c < em->started) {
+        r += 0.05f * sin(26.0 * g_time(g) + i * j);
+        s += 0.01f * sin(17.0 * g_time(g) + i * j);
         working_color(g);
-      else if (c < em->claimed)
+      } else if (c < em->claimed)
         work_claimed_color(g);
       else {
         g_color(g, rgb(255, 255, 255));
         img = 15;
       }
-      g_objectS(g, g_animation_buffer(g), Img_wearisome, img, v_add(p, l_to_vec(i + 1, j + 1)), 0.75f);
+      g_objectRS(g, g_animation_buffer(g), Img_wearisome, img, v_add(p, l_to_vec(i + 1, j + 1)), r, s);
       ++c;
     }
   }
