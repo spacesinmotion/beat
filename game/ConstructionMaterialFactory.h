@@ -9,6 +9,7 @@ typedef struct ConstructionMaterialFactory {
   WorkProvider work_provider;
 
   int last_day_delivered;
+  int manager_click_counter;
 
   BuildingDisplay display;
 } ConstructionMaterialFactory;
@@ -29,6 +30,7 @@ void cmf_update(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g, float 
 
   if (gs->day > cmf->last_day_delivered) {
     cmf->last_day_delivered = gs->day;
+    cmf->manager_click_counter = 0;
     if (wp_finish_production_cycle(&cmf->work_provider, 8))
       bd_flash(&cmf->display);
   }
@@ -60,8 +62,8 @@ static SceneObjectTable ConstructionMaterialFactory_table = {
 bool cmf_provides(ConstructionMaterialFactory *cmf, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&cmf->work_provider, gs, r);
-  if (r == R_ManagerWork)
-    return wp_has_work(&cmf->work_provider, gs);
+  if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
+    return r > cmf->manager_click_counter && wp_has_work(&cmf->work_provider, gs);
   return r == R_Deliver && wp_has_something_to_deliver(&cmf->work_provider);
 }
 
@@ -97,7 +99,8 @@ void cmf_claim(ConstructionMaterialFactory *cmf, GameScene *gs, Wearisome *w, Re
   } else if (r == R_Deliver) {
     if (w_queue_move_to(w, gs, cmf->display.location, (QueueItem){cmf, cmf_collect_storage}))
       wp_claim_storage(&cmf->work_provider, gs, w);
-  }
+  } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
+    cmf->manager_click_counter = r;
 }
 static TileContentTable ConstructionMaterialFactory_TileContent_Table = {
     .provides = (ProvidesCB)cmf_provides,
@@ -111,6 +114,7 @@ ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene
   *cmf = (ConstructionMaterialFactory){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
+      .manager_click_counter = 0,
   };
   assert((void *)cmf == (void *)&cmf->work_provider);
   wp_init(&cmf->work_provider, s.w - 1, s.h - 1);

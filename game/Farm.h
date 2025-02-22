@@ -9,6 +9,7 @@ typedef struct Farm {
   WorkProvider work_provider;
 
   int last_day_delivered;
+  int manager_click_counter;
 
   BuildingDisplay display;
 } Farm;
@@ -29,6 +30,7 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
 
   if (gs->day > fa->last_day_delivered) {
     fa->last_day_delivered = gs->day;
+    fa->manager_click_counter = 0;
     if (wp_finish_production_cycle(&fa->work_provider, 8))
       bd_flash(&fa->display);
   }
@@ -59,8 +61,8 @@ static SceneObjectTable Farm_table = {
 bool fa_provides(Farm *fa, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&fa->work_provider, gs, r);
-  if (r == R_ManagerWork)
-    return wp_has_work(&fa->work_provider, gs);
+  if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
+    return r > fa->manager_click_counter && wp_has_work(&fa->work_provider, gs);
   return r == R_Deliver && wp_has_something_to_deliver(&fa->work_provider);
 }
 
@@ -96,7 +98,8 @@ void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
   } else if (r == R_Deliver) {
     if (w_queue_move_to(w, gs, fa->display.location, (QueueItem){fa, fa_collect_storage}))
       wp_claim_storage(&fa->work_provider, gs, w);
-  }
+  } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
+    fa->manager_click_counter = r;
 }
 
 static TileContentTable Farm_TileContent_Table = {
@@ -111,6 +114,7 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   *fa = (Farm){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
+      .manager_click_counter = 0,
   };
   assert((void *)fa == (void *)&fa->work_provider);
   wp_init(&fa->work_provider, s.w - 1, s.h - 1);

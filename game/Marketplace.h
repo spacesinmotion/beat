@@ -18,7 +18,7 @@ typedef struct Marketplace {
   BuildingDisplay display;
 
   int last_day_delivered;
-
+  int manager_click_counter;
 } Marketplace;
 
 static inline Color mp_color() { return rgb(196, 113, 65); }
@@ -32,11 +32,11 @@ bool mp_dead(Marketplace *mp) {
 float mp_render_order(Marketplace *mp) { return l_to_y(mp->display.location.y); }
 
 void mp_update(Marketplace *mp, GameScene *gs, Game *g, float dt) {
-  (void)gs;
   (void)dt;
 
   if (gs->day > mp->last_day_delivered) {
     mp->last_day_delivered = gs->day;
+    mp->manager_click_counter = 0;
     wp_reduce_clicks(&mp->work_provider, mp->work_provider.clicks_done);
   }
   bd_update(&mp->display, g);
@@ -74,8 +74,8 @@ bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
   else if (r == R_Work)
     return wp_provides(&mp->work_provider, gs, r) &&
            find_resource_building(gs, mp->display.location, R_Deliver) != NULL && gs_free_storage(gs) > 0;
-  else if (r == R_ManagerWork)
-    return wp_has_work(&mp->work_provider, gs);
+  else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
+    return r > mp->manager_click_counter && wp_has_work(&mp->work_provider, gs);
 
   return false;
 }
@@ -102,6 +102,7 @@ bool mp_deliver_resource_done(void *context, Wearisome *w, GameScene *gs) {
   case MI_Click:
   case MI_Entertainment:
   case MI_Science:
+  case MI_Manager:
   case MI_Logistics:
   case MI_WareHouse:
   case MI_Industry:
@@ -137,7 +138,8 @@ void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
       wp_claim(&mp->work_provider);
       w->queue_follow_up = (QueueItem){mp, mp_collect_resource_done};
     }
-  }
+  } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
+    mp->manager_click_counter = r;
 }
 
 static TileContentTable Marketplace_TileContent_Table = {
@@ -152,6 +154,7 @@ Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
   *mp = (Marketplace){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
+      .manager_click_counter = 0,
   };
   assert((void *)mp == (void *)&mp->work_provider);
   wp_init(&mp->work_provider, s.w - 1, s.h - 1);

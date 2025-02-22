@@ -2,6 +2,7 @@
 #define WELL_H
 
 #include "game/BuildingDisplay.h"
+#include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 
@@ -9,6 +10,7 @@ typedef struct Well {
   WorkProvider work_provider;
 
   int last_day_delivered;
+  int manager_click_counter;
 
   BuildingDisplay display;
 } Well;
@@ -29,6 +31,7 @@ void wl_update(Well *wl, GameScene *gs, Game *g, float dt) {
 
   if (gs->day > wl->last_day_delivered) {
     wl->last_day_delivered = gs->day;
+    wl->manager_click_counter = 0;
     if (wp_finish_production_cycle(&wl->work_provider, 8))
       bd_flash(&wl->display);
   }
@@ -59,8 +62,8 @@ static SceneObjectTable Well_table = {
 bool wl_provides(Well *wl, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&wl->work_provider, gs, r);
-  if (r == R_ManagerWork)
-    return wp_has_work(&wl->work_provider, gs);
+  if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
+    return r > wl->manager_click_counter && wp_has_work(&wl->work_provider, gs);
   return r == R_Deliver && wp_has_something_to_deliver(&wl->work_provider);
 }
 
@@ -94,7 +97,8 @@ void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
   } else if (r == R_Deliver) {
     if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, wl_collect_storage}))
       wp_claim_storage(&wl->work_provider, gs, w);
-  }
+  } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
+    wl->manager_click_counter = r;
 }
 
 static TileContentTable Well_TileContent_Table = {
@@ -109,6 +113,7 @@ Well *Well_init(Game *g, GameScene *gs, Point p) {
   *wl = (Well){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
+      .manager_click_counter = 0,
   };
   assert((void *)wl == (void *)&wl->work_provider);
   wp_init(&wl->work_provider, s.w - 1, s.h - 1);

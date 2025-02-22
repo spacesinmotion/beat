@@ -15,6 +15,7 @@ typedef struct Manager {
 
   int last_day_delivered;
   int click_used;
+  Resource used_manager_counter;
 
   BuildingDisplay display;
 } Manager;
@@ -75,8 +76,10 @@ bool mg_click_building(void *context, Wearisome *w, GameScene *gs) {
   Manager *mg = (Manager *)context;
 
   TileContent *tc = l_contentP(gs->level, l_to_point(w->destination));
-  if (tc)
+  if (tc) {
+    tc_claim(tc, gs, w, mg->used_manager_counter);
     tc_click(tc, gs);
+  }
 
   return w_leave_building(w, gs, (QueueItem){mg, mg_find_manager_work});
 }
@@ -89,7 +92,20 @@ bool mg_find_manager_work(void *context, Wearisome *w, GameScene *gs) {
   }
 
   mg->click_used--;
-  Recti r = find_resource_building_rect(gs, mg->display.location, R_ManagerWork);
+  mg->used_manager_counter = R_ManagerWork1;
+  Recti r = find_resource_building_rect(gs, mg->display.location, mg->used_manager_counter);
+  if (r.w <= 0) {
+    mg->used_manager_counter = R_ManagerWork2;
+    r = find_resource_building_rect(gs, mg->display.location, mg->used_manager_counter);
+  }
+  if (r.w <= 0) {
+    mg->used_manager_counter = R_ManagerWork3;
+    r = find_resource_building_rect(gs, mg->display.location, mg->used_manager_counter);
+  }
+  if (r.w <= 0) {
+    mg->used_manager_counter = R_ManagerWork4;
+    r = find_resource_building_rect(gs, mg->display.location, mg->used_manager_counter);
+  }
 
   if (r.w > 0 && w_queue_move_to(w, gs, r, (QueueItem){mg, mg_click_building}))
     return true;
@@ -123,6 +139,7 @@ Manager *Manager_init(Game *g, GameScene *gs, Point p) {
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
       .click_used = 8,
+      .used_manager_counter = R_None,
   };
   assert((void *)mg == (void *)&mg->work_provider);
   wp_init(&mg->work_provider, s.w - 1, s.h - 1);

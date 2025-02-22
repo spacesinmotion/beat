@@ -7,7 +7,7 @@ Bugs:
 
 Gameplay:
   ☐ right click should stop a construction -> unspent clicks are returned -> remove construction tile claim
-  ☐ manager buildings that multiply and spread clicks
+  ✔ manager buildings that multiply and spread clicks @done(25-02-22 16:32)
   ☐ destroy building option -> _think about returning resources_
   ☐ if wearisome gets dead, the house should become a constructionside again -> after a click
   ☐ allow to rotate buildings -> flip width height if it helps
