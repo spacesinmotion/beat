@@ -8,7 +8,9 @@
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
+#include "math/Color.h"
 #include "math/Rect.h"
+#include "math/Vec2.h"
 
 typedef struct Manager {
   WorkProvider work_provider;
@@ -18,6 +20,9 @@ typedef struct Manager {
   Resource used_manager_counter;
 
   BuildingDisplay display;
+
+  G_Object click_used_text;
+  int click_used_cache;
 } Manager;
 
 static inline Color mg_color() { return rgb(116, 31, 38); }
@@ -37,10 +42,14 @@ void mg_update(Manager *mg, GameScene *gs, Game *g, float dt) {
   if (gs->day > mg->last_day_delivered) {
     mg->last_day_delivered = gs->day;
     if (mg->work_provider.clicks_done > 0) {
-      mg->click_used = 8;
       wp_reduce_clicks(&mg->work_provider, mg->work_provider.clicks_done);
       bd_flash(&mg->display);
     }
+  }
+
+  if (mg->click_used != mg->click_used_cache) {
+    g_create_text(g, &mg->click_used_text, Oswald_Regular_12, str("%4.d", mg->click_used));
+    mg->click_used_cache = mg->click_used;
   }
 }
 
@@ -56,6 +65,9 @@ void mg_draw(Manager *mg, GameScene *gs, Game *g) {
   bd_draw(&mg->display, g, mg_color(), MI_Manager);
 
   wp_draw_click_fields(&mg->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
+
+  g_color(g, white());
+  g_text(g, mg->click_used_text, Oswald_Regular_12, v_add(p, (Vec2){12, -5}));
 }
 
 static SceneObjectTable Manager_table = {
@@ -79,6 +91,8 @@ bool mg_click_building(void *context, Wearisome *w, GameScene *gs) {
   if (tc) {
     tc_claim(tc, gs, w, mg->used_manager_counter);
     tc_click(tc, gs);
+    gs->clicks++; // clicks already taken
+    mg->click_used--;
   }
 
   return w_leave_building(w, gs, (QueueItem){mg, mg_find_manager_work});
@@ -91,7 +105,6 @@ bool mg_find_manager_work(void *context, Wearisome *w, GameScene *gs) {
     return false;
   }
 
-  mg->click_used--;
   mg->used_manager_counter = R_ManagerWork1;
   Recti r = find_resource_building_rect(gs, mg->display.location, mg->used_manager_counter);
   if (r.w <= 0) {
@@ -116,6 +129,8 @@ bool mg_start_work(void *context, Wearisome *w, GameScene *gs) {
   Manager *mg = (Manager *)context;
   wp_start(&mg->work_provider, w);
   w->need_mode = W_Normal;
+  mg->click_used = i_min(8, gs->clicks);
+  gs->clicks -= mg->click_used;
   return mg_find_manager_work(mg, w, gs);
 }
 
@@ -138,8 +153,9 @@ Manager *Manager_init(Game *g, GameScene *gs, Point p) {
   *mg = (Manager){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
-      .click_used = 8,
+      .click_used = 0,
       .used_manager_counter = R_None,
+      .click_used_cache = -1,
   };
   assert((void *)mg == (void *)&mg->work_provider);
   wp_init(&mg->work_provider, s.w - 1, s.h - 1);

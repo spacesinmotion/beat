@@ -63,7 +63,7 @@ bool wl_provides(Well *wl, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&wl->work_provider, gs, r);
   if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
-    return r > wl->manager_click_counter && wp_has_work(&wl->work_provider, gs);
+    return r > wl->manager_click_counter && wp_has_work(&wl->work_provider);
   return r == R_Deliver && wp_has_something_to_deliver(&wl->work_provider);
 }
 

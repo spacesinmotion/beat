@@ -7,7 +7,6 @@ Bugs:
 
 Gameplay:
   ☐ right click should stop a construction -> unspent clicks are returned -> remove construction tile claim
-  ✔ manager buildings that multiply and spread clicks @done(25-02-22 16:32)
   ☐ destroy building option -> _think about returning resources_
   ☐ if wearisome gets dead, the house should become a constructionside again -> after a click
   ☐ allow to rotate buildings -> flip width height if it helps
@@ -17,6 +16,8 @@ Gameplay:
   ☐ need bigger construction objects -> should bind a lot of people
   ☐ *click factory* should actually be a *trading outpost* that sells things instead of creat clicks
   ☐ load and save a game @high 
+  ☐ improve manager building selection -> find the 8 nearest buildings that take clicks and cycle throug them
+  ✔ manager buildings that multiply and spread clicks @done(25-02-22 16:32)
   ✔ stuff will be produced every day, but only the amount of worked clicks -> there is a cooldown @done(25-01-25 11:07)
   ✔ construction material is reduced while spent a click -> wearisomes bring the construction material first @done(25-01-25 12:55)
   Visualization:

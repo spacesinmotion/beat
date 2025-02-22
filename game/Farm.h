@@ -62,7 +62,7 @@ bool fa_provides(Farm *fa, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&fa->work_provider, gs, r);
   if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
-    return r > fa->manager_click_counter && wp_has_work(&fa->work_provider, gs);
+    return r > fa->manager_click_counter && wp_has_work(&fa->work_provider);
   return r == R_Deliver && wp_has_something_to_deliver(&fa->work_provider);
 }
 

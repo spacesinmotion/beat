@@ -75,7 +75,7 @@ bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
     return wp_provides(&mp->work_provider, gs, r) &&
            find_resource_building(gs, mp->display.location, R_Deliver) != NULL && gs_free_storage(gs) > 0;
   else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
-    return r > mp->manager_click_counter && wp_has_work(&mp->work_provider, gs);
+    return r > mp->manager_click_counter && wp_has_work(&mp->work_provider);
 
   return false;
 }
