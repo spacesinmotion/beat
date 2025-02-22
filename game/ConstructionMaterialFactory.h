@@ -58,9 +58,10 @@ static SceneObjectTable ConstructionMaterialFactory_table = {
 };
 
 bool cmf_provides(ConstructionMaterialFactory *cmf, GameScene *gs, Resource r) {
-  (void)gs;
   if (r == R_Work)
     return wp_provides(&cmf->work_provider, gs, r);
+  if (r == R_ManagerWork)
+    return wp_has_work(&cmf->work_provider, gs);
   return r == R_Deliver && wp_has_something_to_deliver(&cmf->work_provider);
 }
 

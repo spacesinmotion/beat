@@ -57,9 +57,10 @@ static SceneObjectTable Farm_table = {
 };
 
 bool fa_provides(Farm *fa, GameScene *gs, Resource r) {
-  (void)gs;
   if (r == R_Work)
     return wp_provides(&fa->work_provider, gs, r);
+  if (r == R_ManagerWork)
+    return wp_has_work(&fa->work_provider, gs);
   return r == R_Deliver && wp_has_something_to_deliver(&fa->work_provider);
 }
 

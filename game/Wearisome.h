@@ -6,6 +6,7 @@
 #include "game/assets.h"
 #include "game/search/RectSearch.h"
 #include "game/search/ResourceProviderSearch.h"
+#include "game/search/StreetSearch.h"
 #include "math/random.h"
 
 #include <assert.h>
@@ -107,6 +108,14 @@ static inline bool w_queue_wait_for(Wearisome *w, float time, QueueItem qi) {
   w->wait_time = time;
   w->queue = qi;
   w->state = W_QueueWait;
+  return true;
+}
+static inline bool w_leave_building(Wearisome *w, GameScene *gs, QueueItem qi) {
+  w->path = find_street(gs, w->current_building);
+  if (!w->path)
+    return false;
+  w->queue = qi;
+  w->state = W_QueueMove;
   return true;
 }
 

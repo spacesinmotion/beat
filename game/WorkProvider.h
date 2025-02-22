@@ -25,9 +25,10 @@ bool wp_provides(WorkProvider *wp, GameScene *gs, Resource r) {
   (void)gs;
   return r == R_Work && wp->clicks - wp->clicks_claimed > 0;
 }
+static inline bool wp_has_work(WorkProvider *wp, GameScene *gs) { return gs->clicks > 0 && wp->clicks < wp_fields(wp); }
 void wp_click(WorkProvider *wp, GameScene *gs) {
   (void)gs;
-  if (wp->clicks < wp_fields(wp) && gs->clicks > 0) {
+  if (wp_has_work(wp, gs)) {
     wp->clicks++;
     gs->clicks--;
   }

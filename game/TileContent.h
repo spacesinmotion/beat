@@ -10,6 +10,7 @@ typedef enum Resource {
 
   R_Work,
   R_Entertainment,
+  R_ManagerWork,
 
   R_Water,
   R_Food,

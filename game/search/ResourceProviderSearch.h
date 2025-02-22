@@ -3,6 +3,7 @@
 
 #include "game/GameScene.h"
 #include "game/Level.h"
+#include "game/TileContent.h"
 #include "game/search/PathPoint.h"
 #include "math/Rect.h"
 

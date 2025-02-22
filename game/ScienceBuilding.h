@@ -110,7 +110,7 @@ ScienceBuilding *ScienceBuilding_init(Game *g, GameScene *gs, Point p) {
   assert((void *)scb == (void *)&scb->work_provider);
   wp_init(&scb->work_provider, s.w - 1, s.h - 1);
 
-  l_set_tileR(gs->level, scb->display.location, T_Well);
+  l_set_tileR(gs->level, scb->display.location, T_ScienceBuilding);
   l_set_tile_contentR(gs->level, scb->display.location, to_TileContent(scb, &ScienceBuilding_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = scb, &ScienceBuilding_table});

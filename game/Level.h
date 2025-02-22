@@ -21,6 +21,8 @@ typedef enum TileType {
   T_ClickFactory,
   T_Entertainment,
   T_ConstructionMaterialFactory,
+  T_ScienceBuilding,
+  T_Manager,
 
   T_Movable = 1 << 7,
 } TileType;
