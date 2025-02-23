@@ -4,6 +4,7 @@
 #include "game/Game.h"
 #include "game/House.h"
 #include "game/assets.h"
+#include "game/effects/Dust.h"
 #include "game/search/RectSearch.h"
 #include "game/search/ResourceProviderSearch.h"
 #include "game/search/StreetSearch.h"
@@ -70,6 +71,8 @@ typedef struct Wearisome {
   MenuIcon deliver_icon;
   Color deliver_color;
   int deliver_count;
+
+  int need_dust_frame;
 } Wearisome;
 
 static inline float apply_need(float *n, float t) {
@@ -340,6 +343,11 @@ void w_update(Wearisome *w, GameScene *gs, Game *g, float dt) {
     w_u_queue_wait(w, gs, dt);
     break;
   }
+
+  if (w->need_dust_frame == g_frame(g)) {
+    Dust_init(g, gs, v_add(w->position, (Vec2){0, -2}));
+    w->need_dust_frame = -1;
+  }
 }
 
 void w_draw(Wearisome *w, GameScene *gs, Game *g) {
@@ -363,8 +371,12 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
   const int o = (size_t)w / 17;
   if (w->state == W_QueueWait || w->state == W_Waiting)
     g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : 1, p);
-  else
-    g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : (o + g_frame(g)) % 4, p);
+  else {
+    const int f = g_frame(g);
+    g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : (o + f) % 4, p);
+    if ((o + f) % 4 == 0)
+      w->need_dust_frame = f + 1;
+  }
 
   if (w->deliver_icon < Nb_MI) {
     g_color(g, white());
@@ -415,6 +427,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
       .speed = r_float_r(60.0f, 75.0f),
       .deliver_icon = Nb_MI,
       .deliver_count = 0,
+      .need_dust_frame = -1,
   };
   gs_add_object(gs, (SceneObject){.context = w, &w_table});
   return w;
