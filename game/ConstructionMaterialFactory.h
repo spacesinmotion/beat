@@ -2,6 +2,7 @@
 #define CONSTRUCTIONMATERIALFACTORY_H
 
 #include "game/BuildingDisplay.h"
+#include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 
@@ -59,6 +60,8 @@ static SceneObjectTable ConstructionMaterialFactory_table = {
     .draw = (SceneObjectDrawCB)cmf_draw,
 };
 
+Recti cmf_location(const ConstructionMaterialFactory *cmf) { return cmf->display.location; }
+
 bool cmf_provides(ConstructionMaterialFactory *cmf, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&cmf->work_provider, gs, r);
@@ -103,6 +106,7 @@ void cmf_claim(ConstructionMaterialFactory *cmf, GameScene *gs, Wearisome *w, Re
     cmf->manager_click_counter = r;
 }
 static TileContentTable ConstructionMaterialFactory_TileContent_Table = {
+    .location = (LocationCb)cmf_location,
     .provides = (ProvidesCB)cmf_provides,
     .claim = (ClaimCB)cmf_claim,
     .click = (ClickCB)wp_click,

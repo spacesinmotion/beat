@@ -5,7 +5,9 @@
 #include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/House.h"
+#include "game/TileContent.h"
 #include "game/Wearisome.h"
+#include "math/Rect.h"
 
 #include <assert.h>
 
@@ -70,6 +72,15 @@ void em_draw(Entertainment *em, GameScene *gs, Game *g) {
   }
 }
 
+static SceneObjectTable Entertainment_table = {
+    .dead = (SceneObjectDeadCB)em_dead,
+    .render_order = (SceneObjectRenderOrderCB)em_render_order,
+    .draw = (SceneObjectDrawCB)em_draw,
+    .update = (SceneObjectUpdateCB)em_update,
+};
+
+Recti em_location(const Entertainment *em) { return em->display.location; }
+
 bool em_provides(Entertainment *em, GameScene *gs, Resource r) {
   (void)gs;
   const Sizei s = em_size();
@@ -99,13 +110,8 @@ void em_claim(Entertainment *em, GameScene *gs, Wearisome *w, Resource r) {
     em->claimed++;
 }
 
-static SceneObjectTable Entertainment_table = {
-    .dead = (SceneObjectDeadCB)em_dead,
-    .render_order = (SceneObjectRenderOrderCB)em_render_order,
-    .draw = (SceneObjectDrawCB)em_draw,
-    .update = (SceneObjectUpdateCB)em_update,
-};
 static TileContentTable Entertainment_TileContent_Table = {
+    .location = (LocationCb)em_location,
     .provides = (ProvidesCB)em_provides,
     .claim = (ClaimCB)em_claim,
 };

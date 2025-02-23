@@ -2,8 +2,10 @@
 #define CONSTRUCTIONSITE_H
 
 #include "game/GameScene.h"
+#include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
+#include "math/Rect.h"
 
 typedef struct ConstructionSite {
   WorkProvider work_provider;
@@ -58,6 +60,8 @@ static SceneObjectTable ConstructionSite_table = {
     .draw = (SceneObjectDrawCB)cs_draw,
 };
 
+Recti cs_location(const ConstructionSite *cs) { return cs->location; }
+
 void cs_click(ConstructionSite *cs, GameScene *gs) {
   if (gs->resource_pool.construction_material > 0 && gs->clicks > 0) {
     if (cs->work_provider.clicks < wp_fields(&cs->work_provider) && gs->clicks > 0) {
@@ -104,6 +108,7 @@ void cs_claim(ConstructionSite *cs, GameScene *gs, Wearisome *w, Resource r) {
 }
 
 static TileContentTable ConstructionSite_TileContent_Table = {
+    .location = (LocationCb)cs_location,
     .provides = (ProvidesCB)wp_provides,
     .claim = (ClaimCB)cs_claim,
     .click = (ClickCB)cs_click,

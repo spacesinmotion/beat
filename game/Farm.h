@@ -2,6 +2,7 @@
 #define FARM_H
 
 #include "game/BuildingDisplay.h"
+#include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 
@@ -58,6 +59,8 @@ static SceneObjectTable Farm_table = {
     .draw = (SceneObjectDrawCB)fa_draw,
 };
 
+Recti fa_location(const Farm *fa) { return fa->display.location; }
+
 bool fa_provides(Farm *fa, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&fa->work_provider, gs, r);
@@ -103,6 +106,7 @@ void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
 }
 
 static TileContentTable Farm_TileContent_Table = {
+    .location = (LocationCb)fa_location,
     .provides = (ProvidesCB)fa_provides,
     .claim = (ClaimCB)fa_claim,
     .click = (ClickCB)wp_click,

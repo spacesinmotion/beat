@@ -3,6 +3,8 @@
 #define TILECONTENT_H
 
 #include "gc/gc.h"
+#include "math/Rect.h"
+#include <assert.h>
 #include <stdbool.h>
 
 typedef enum Resource {
@@ -27,11 +29,13 @@ typedef struct TileContent TileContent;
 typedef struct GameScene GameScene;
 typedef struct Wearisome Wearisome;
 
+typedef Recti (*LocationCb)(const void *);
 typedef bool (*ProvidesCB)(void *, GameScene *gs, Resource r);
 typedef void (*ClaimCB)(void *, GameScene *gs, Wearisome *w, Resource r);
 typedef void (*ClickCB)(const void *, GameScene *gs);
 
 typedef struct TileContentTable {
+  LocationCb location;
   ProvidesCB provides;
   ClaimCB claim;
   ClickCB click;
@@ -41,6 +45,7 @@ typedef struct TileContent {
   const TileContentTable *table;
 } TileContent;
 
+Recti tc_location(const TileContent *tc) { return tc->table->location(tc->context); }
 bool tc_provides(const TileContent *tc, GameScene *gs, Resource r) {
   return tc && tc->table->provides && tc->table->provides(tc->context, gs, r);
 }
@@ -56,6 +61,7 @@ inline static void tc_click(const TileContent *tc, GameScene *gs) {
 }
 
 TileContent *to_TileContent(void *d, const TileContentTable *t) {
+  assert(t->location);
   TileContent *tile_content = gc_malloc(&gc, sizeof(TileContent));
   *tile_content = (TileContent){d, t};
   return tile_content;

@@ -77,6 +77,8 @@ static SceneObjectTable Manager_table = {
     .draw = (SceneObjectDrawCB)mg_draw,
 };
 
+Recti mg_location(const Manager *mg) { return mg->display.location; }
+
 bool mg_provides(Manager *mg, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&mg->work_provider, gs, r);
@@ -142,6 +144,7 @@ void mg_claim(Manager *mg, GameScene *gs, Wearisome *w, Resource r) {
 }
 
 static TileContentTable Manager_TileContent_Table = {
+    .location = (LocationCb)mg_location,
     .provides = (ProvidesCB)mg_provides,
     .claim = (ClaimCB)mg_claim,
     .click = (ClickCB)wp_click,

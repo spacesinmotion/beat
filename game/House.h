@@ -176,7 +176,10 @@ static SceneObjectTable House_table = (SceneObjectTable){
     .update = (SceneObjectUpdateCB)h_update,
     .draw = (SceneObjectDrawCB)h_draw,
 };
-static TileContentTable House_TileContent_Table = (TileContentTable){NULL, NULL, NULL};
+
+Recti h_location(const House *mp) { return mp->display.location; }
+
+static TileContentTable House_TileContent_Table = (TileContentTable){.location = (LocationCb)h_location};
 
 House *House_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = h_size();

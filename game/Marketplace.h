@@ -73,6 +73,8 @@ static SceneObjectTable Marketplace_table = (SceneObjectTable){
     .update = (SceneObjectUpdateCB)mp_update,
 };
 
+Recti mp_location(const Marketplace *mp) { return mp->display.location; }
+
 bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
   (void)mp;
 
@@ -156,6 +158,7 @@ void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
 }
 
 static TileContentTable Marketplace_TileContent_Table = {
+    .location = (LocationCb)mp_location,
     .provides = (ProvidesCB)mp_provides,
     .claim = (ClaimCB)mp_claim,
     .click = (ClickCB)wp_click,

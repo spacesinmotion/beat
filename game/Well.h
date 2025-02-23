@@ -5,6 +5,7 @@
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
+#include "math/Rect.h"
 
 typedef struct Well {
   WorkProvider work_provider;
@@ -59,6 +60,7 @@ static SceneObjectTable Well_table = {
     .draw = (SceneObjectDrawCB)wl_draw,
 };
 
+Recti wl_location(const Well *wl) { return wl->display.location; }
 bool wl_provides(Well *wl, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&wl->work_provider, gs, r);
@@ -102,6 +104,7 @@ void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
 }
 
 static TileContentTable Well_TileContent_Table = {
+    .location = (LocationCb)wl_location,
     .provides = (ProvidesCB)wl_provides,
     .claim = (ClaimCB)wl_claim,
     .click = (ClickCB)wp_click,

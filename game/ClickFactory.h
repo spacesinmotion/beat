@@ -6,6 +6,7 @@
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 #include "game/effects/Bling.h"
+#include "math/Rect.h"
 #include "math/random.h"
 
 typedef struct ClickFactory {
@@ -76,6 +77,8 @@ static SceneObjectTable ClickFactory_table = {
     .draw = (SceneObjectDrawCB)cf_draw,
 };
 
+Recti cf_location(const ClickFactory *cf) { return cf->display.location; }
+
 bool cf_done_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
 
@@ -96,6 +99,7 @@ void cf_claim(ClickFactory *cf, GameScene *gs, Wearisome *w, Resource r) {
 }
 
 static TileContentTable ClickFactory_TileContent_Table = {
+    .location = (LocationCb)cf_location,
     .provides = (ProvidesCB)wp_provides,
     .claim = (ClaimCB)cf_claim,
     .click = (ClickCB)wp_click,

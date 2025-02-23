@@ -2,9 +2,11 @@
 #define SCIENCEBUILDING_H
 
 #include "game/BuildingDisplay.h"
+#include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
+#include "math/Rect.h"
 
 typedef struct ScienceBuilding {
   WorkProvider work_provider;
@@ -67,6 +69,8 @@ static SceneObjectTable ScienceBuilding_table = {
     .draw = (SceneObjectDrawCB)scb_draw,
 };
 
+Recti scb_location(const ScienceBuilding *scb) { return scb->display.location; }
+
 bool scb_provides(ScienceBuilding *scb, GameScene *gs, Resource r) {
   return r == R_Work && gs->reasearch_needed > gs->research_level && wp_provides(&scb->work_provider, gs, r);
 }
@@ -95,6 +99,7 @@ void scb_claim(ScienceBuilding *scb, GameScene *gs, Wearisome *w, Resource r) {
 }
 
 static TileContentTable ScienceBuilding_TileContent_Table = {
+    .location = (LocationCb)scb_location,
     .provides = (ProvidesCB)scb_provides,
     .claim = (ClaimCB)scb_claim,
     .click = (ClickCB)wp_click,
