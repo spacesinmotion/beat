@@ -127,7 +127,7 @@ void g_set_background_color(Game *g, Color c) { g->render.background_color = c; 
 
 float g_animation_delta(Game *g) { return g->animation_delta; }
 float g_time(Game *g) { return g->time; }
-int g_frame(Game *g) { return (int)(g->time * 8.0f); }
+int g_frame(Game *g) { return (int)(g->time * 12.0f); }
 
 Sizei g_viewport(Game *g) {
   return (Sizei){sapp_width() / g->render.overlay_scale, sapp_height() / g->render.overlay_scale};
