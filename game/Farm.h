@@ -14,7 +14,7 @@ typedef struct Farm {
   BuildingDisplay display;
 } Farm;
 
-static inline Color fa_color() { return rgb(11, 133, 0); }
+Color fa_color() { return rgb(11, 133, 0); }
 static inline Sizei fa_size() { return (Sizei){3, 4}; }
 
 bool fa_dead(Farm *fa) {
@@ -62,7 +62,7 @@ bool fa_provides(Farm *fa, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&fa->work_provider, gs, r);
   if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
-    return r > fa->manager_click_counter && wp_has_work(&fa->work_provider);
+    return (int)r > fa->manager_click_counter && wp_has_work(&fa->work_provider);
   return r == R_Deliver && wp_has_something_to_deliver(&fa->work_provider);
 }
 
@@ -119,7 +119,6 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   assert((void *)fa == (void *)&fa->work_provider);
   wp_init(&fa->work_provider, s.w - 1, s.h - 1);
 
-  l_set_tileR(gs->level, fa->display.location, T_Farm);
   l_set_tile_contentR(gs->level, fa->display.location, to_TileContent(fa, &Farm_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = fa, &Farm_table});

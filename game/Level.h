@@ -11,25 +11,9 @@
 #define LEVEL_WIDTH 48
 #define LEVEL_HEIGHT 32
 
-typedef enum TileType {
-  T_None = 0,
-  T_ConstructionSite,
-  T_Marketplace,
-  T_House,
-  T_Well,
-  T_Farm,
-  T_ClickFactory,
-  T_Entertainment,
-  T_ConstructionMaterialFactory,
-  T_ScienceBuilding,
-  T_Manager,
-
-  T_Movable = 1 << 7,
-} TileType;
-
 typedef struct TileContent TileContent;
 typedef struct Tile {
-  uint8_t val;
+  bool movable;
   TileContent *content;
 } Tile;
 typedef struct Level {
@@ -51,7 +35,9 @@ static inline bool l_validR(Level *level, Recti r) {
   return true;
 }
 
-bool l_free(Level *level, int x, int y) { return l_valid(level, x, y) && level->tiles[x][y].val == T_None; }
+bool l_free(Level *level, int x, int y) {
+  return l_valid(level, x, y) && !level->tiles[x][y].movable && level->tiles[x][y].content == NULL;
+}
 bool l_freeP(Level *level, Point p) { return l_free(level, p.x, p.y); }
 bool l_freeR(Level *level, Recti r) {
   for (int i = r.x; i < r.x + r.w; ++i)
@@ -61,39 +47,11 @@ bool l_freeR(Level *level, Recti r) {
   return true;
 }
 
-static inline bool l_movable(Level *level, int x, int y) {
-  return l_valid(level, x, y) && ((level->tiles[x][y].val & T_Movable) == T_Movable);
-}
+static inline bool l_movable(Level *level, int x, int y) { return l_valid(level, x, y) && level->tiles[x][y].movable; }
 static inline bool l_movableP(Level *level, Point p) { return l_movable(level, p.x, p.y); }
 static inline void l_set_movable(Level *level, int x, int y, bool movable) {
-  if (l_valid(level, x, y)) {
-    if (movable)
-      level->tiles[x][y].val |= T_Movable;
-    else
-      level->tiles[x][y].val &= ~T_Movable;
-  }
-}
-
-static inline TileType l_tile(Level *level, int x, int y) {
-  return l_valid(level, x, y) ? (TileType)(level->tiles[x][y].val & ~T_Movable) : T_None;
-}
-static inline void l_set_tile(Level *level, int x, int y, TileType tile) {
   if (l_valid(level, x, y))
-    level->tiles[x][y].val = l_movable(level, x, y) ? tile | T_Movable : tile;
-}
-static inline void l_set_tileR(Level *level, Recti r, TileType tile) {
-  for (int i = r.x; i < r.x + r.w; ++i)
-    for (int j = r.y; j < r.y + r.h; ++j)
-      l_set_tile(level, i, j, tile);
-}
-static inline void l_clear_tile(Level *level, int x, int y) {
-  if (l_valid(level, x, y))
-    level->tiles[x][y].val = l_movable(level, x, y) ? T_Movable : T_None;
-}
-static inline void l_clear_tileR(Level *level, Recti r) {
-  for (int i = r.x; i < r.x + r.w; ++i)
-    for (int j = r.y; j < r.y + r.h; ++j)
-      l_clear_tile(level, i, j);
+    level->tiles[x][y].movable = movable;
 }
 
 static inline void l_set_tile_content(Level *level, int x, int y, TileContent *c) {

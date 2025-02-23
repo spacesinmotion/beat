@@ -63,7 +63,7 @@ bool cmf_provides(ConstructionMaterialFactory *cmf, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&cmf->work_provider, gs, r);
   if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
-    return r > cmf->manager_click_counter && wp_has_work(&cmf->work_provider);
+    return (int)r > cmf->manager_click_counter && wp_has_work(&cmf->work_provider);
   return r == R_Deliver && wp_has_something_to_deliver(&cmf->work_provider);
 }
 
@@ -119,7 +119,6 @@ ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene
   assert((void *)cmf == (void *)&cmf->work_provider);
   wp_init(&cmf->work_provider, s.w - 1, s.h - 1);
 
-  l_set_tileR(gs->level, cmf->display.location, T_ConstructionMaterialFactory);
   l_set_tile_contentR(gs->level, cmf->display.location,
                       to_TileContent(cmf, &ConstructionMaterialFactory_TileContent_Table));
 

@@ -119,7 +119,6 @@ Entertainment *Entertainment_init(Game *g, GameScene *gs, Point p) {
       .some_one_is_done = false,
   };
 
-  l_set_tileR(gs->level, em->display.location, T_Entertainment);
   l_set_tile_contentR(gs->level, em->display.location, to_TileContent(em, &Entertainment_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = em, &Entertainment_table});

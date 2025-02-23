@@ -160,7 +160,6 @@ Manager *Manager_init(Game *g, GameScene *gs, Point p) {
   assert((void *)mg == (void *)&mg->work_provider);
   wp_init(&mg->work_provider, s.w - 1, s.h - 1);
 
-  l_set_tileR(gs->level, mg->display.location, T_Manager);
   l_set_tile_contentR(gs->level, mg->display.location, to_TileContent(mg, &Manager_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = mg, &Manager_table});

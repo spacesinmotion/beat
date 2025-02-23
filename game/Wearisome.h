@@ -100,7 +100,7 @@ static inline bool w_move_to(Wearisome *w, GameScene *gs, Recti dest) {
   w->path = find_path_from_rect_to_rect(gs, p, w->current_building, dest);
   return w->path != NULL;
 }
-static inline bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi) {
+bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi) {
   if (!w_move_to(w, gs, location))
     return false;
   w->queue = qi;
@@ -124,11 +124,11 @@ static inline bool w_leave_building(Wearisome *w, GameScene *gs, QueueItem qi) {
 
 static inline void w_earn_clicks(Wearisome *w, int c) { h_earn_click(w->home, c); }
 static inline void w_deliver_claim(Wearisome *w, int count) { w->deliver_count = count; }
-static inline void w_deliver(Wearisome *w, MenuIcon mi, Color c) {
+void w_deliver(Wearisome *w, MenuIcon mi, Color c) {
   w->deliver_icon = mi;
   w->deliver_color = c;
 }
-static inline void w_deliver_clear(Wearisome *w) { w->deliver_icon = Nb_MI; }
+void w_deliver_clear(Wearisome *w) { w->deliver_icon = Nb_MI; }
 
 void w_wander_to_random_near_path(Wearisome *w, GameScene *gs) {
   Point l = l_to_point(w->destination);
@@ -368,7 +368,7 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
     return;
   Vec2 p = v_add(w->position, (Vec2){0, 2});
   g_color(g, w_dead(w) ? rgb(0, 0, 0) : warn(w->health));
-  const int o = (size_t)w / 17;
+  const int o = (size_t)w % 17;
   if (w->state == W_QueueWait || w->state == W_Waiting)
     g_object(g, g_animation_buffer(g), Img_wearisome, w_dead(w) ? 0 : 1, p);
   else {

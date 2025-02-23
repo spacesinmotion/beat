@@ -24,7 +24,6 @@ void cs_update(ConstructionSite *cs, GameScene *gs, Game *g, float dt) {
 
   if (wp_is_done(&cs->work_provider)) {
     cs->work_provider.clicks_done++;
-    l_clear_tileR(gs->level, cs->location);
     l_set_tile_contentR(gs->level, cs->location, NULL);
     gs_construction_done(gs, g, cs->location, cs->key);
   }
@@ -120,7 +119,6 @@ ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key
   wp_init(&cs->work_provider, r.w, r.h);
 
   l_set_tile_contentR(gs->level, cs->location, to_TileContent(cs, &ConstructionSite_TileContent_Table));
-  l_set_tileR(gs->level, r, T_ConstructionSite);
 
   if (key == MI_Street)
     cs_click(cs, gs);

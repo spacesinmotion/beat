@@ -86,7 +86,7 @@ bool mp_provides(Marketplace *mp, GameScene *gs, Resource r) {
     return wp_provides(&mp->work_provider, gs, r) &&
            find_resource_building(gs, mp->display.location, R_Deliver) != NULL && gs_free_storage(gs) > 0;
   else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
-    return r > mp->manager_click_counter && wp_has_work(&mp->work_provider);
+    return (int)r > mp->manager_click_counter && wp_has_work(&mp->work_provider);
 
   return false;
 }
@@ -174,7 +174,6 @@ Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
   assert((void *)mp == (void *)&mp->work_provider);
   wp_init(&mp->work_provider, s.w - 1, s.h - 1);
 
-  l_set_tileR(gs->level, mp->display.location, T_Marketplace);
   l_set_tile_contentR(gs->level, mp->display.location, to_TileContent(mp, &Marketplace_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = mp, &Marketplace_table});

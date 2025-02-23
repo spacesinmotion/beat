@@ -7,6 +7,7 @@
 #include "game/TileContent.h"
 #include "game/assets.h"
 #include "game/jobs/QueueItem.h"
+#include <string.h>
 
 typedef struct Resources {
   float food, water;
@@ -175,6 +176,8 @@ static SceneObjectTable House_table = (SceneObjectTable){
     .update = (SceneObjectUpdateCB)h_update,
     .draw = (SceneObjectDrawCB)h_draw,
 };
+static TileContentTable House_TileContent_Table = (TileContentTable){NULL, NULL, NULL};
+
 House *House_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = h_size();
   House *h = g_malloc(g, sizeof(House));
@@ -188,7 +191,8 @@ House *House_init(Game *g, GameScene *gs, Point p) {
       .wearisome_dead = false,
   };
 
-  l_set_tileR(gs->level, h->display.location, T_House);
+  l_set_tile_contentR(gs->level, h->display.location, to_TileContent(h, &House_TileContent_Table));
+
   gs_add_object(gs, (SceneObject){h, &House_table});
 
   return h;

@@ -15,7 +15,7 @@ typedef struct Well {
   BuildingDisplay display;
 } Well;
 
-static inline Color wl_color() { return rgb(0, 80, 133); }
+Color wl_color() { return rgb(0, 80, 133); }
 static inline Sizei wl_size() { return (Sizei){2, 3}; }
 
 bool wl_dead(Well *wl) {
@@ -63,7 +63,7 @@ bool wl_provides(Well *wl, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&wl->work_provider, gs, r);
   if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
-    return r > wl->manager_click_counter && wp_has_work(&wl->work_provider);
+    return (int)r > wl->manager_click_counter && wp_has_work(&wl->work_provider);
   return r == R_Deliver && wp_has_something_to_deliver(&wl->work_provider);
 }
 
@@ -118,7 +118,6 @@ Well *Well_init(Game *g, GameScene *gs, Point p) {
   assert((void *)wl == (void *)&wl->work_provider);
   wp_init(&wl->work_provider, s.w - 1, s.h - 1);
 
-  l_set_tileR(gs->level, wl->display.location, T_Well);
   l_set_tile_contentR(gs->level, wl->display.location, to_TileContent(wl, &Well_TileContent_Table));
 
   gs_add_object(gs, (SceneObject){.context = wl, &Well_table});
