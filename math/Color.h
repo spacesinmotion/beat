@@ -11,6 +11,7 @@ static inline Color gray(int g) { return rgb(g, g, g); }
 
 static inline Color white() { return rgb(255, 255, 255); }
 static inline Color red() { return rgb(255, 0, 0); }
+static inline Color yellow() { return rgb(255, 255, 0); }
 static inline Color green() { return rgb(0, 255, 0); }
 static inline Color blue() { return rgb(0, 0, 255); }
 

@@ -8,8 +8,10 @@
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
+#include "game/effects/Bling.h"
 #include "game/jobs/QueueItem.h"
 #include "math/Rect.h"
+#include "math/Vec2.h"
 
 #include <assert.h>
 
@@ -19,6 +21,7 @@ typedef struct Marketplace {
 
   int last_day_delivered;
   int manager_click_counter;
+  int missing_blings;
 } Marketplace;
 
 static inline Color mp_color() { return rgb(196, 113, 65); }
@@ -40,6 +43,14 @@ void mp_update(Marketplace *mp, GameScene *gs, Game *g, float dt) {
     wp_reduce_clicks(&mp->work_provider, mp->work_provider.clicks_done);
   }
   bd_update(&mp->display, g);
+
+  if (mp->missing_blings > 0 && r_float() > 0.9f) {
+    Vec2 p = l_to_vecP(ri_bottom_right(mp->display.location));
+    Vec2 s = l_to_vec(mp->display.location.w - 1, mp->display.location.h - 1);
+    p = v_add(p, (Vec2){r_float() * s.x, r_float() * s.y});
+    Bling_init(g, gs, p, yellow());
+    mp->missing_blings = i_min(mp->missing_blings - 1, 15);
+  }
 }
 
 void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {
@@ -124,14 +135,16 @@ bool mp_collect_resource_done(void *context, Wearisome *w, GameScene *gs) {
 }
 
 void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
-  (void)mp;
-  if (r == R_Water)
+  if (r == R_Water) {
     gs->resource_pool_claimed.water++;
-  else if (r == R_Food)
+    mp->missing_blings += 5;
+  } else if (r == R_Food) {
     gs->resource_pool_claimed.food++;
-  else if (r == R_ConstructionMaterial)
+    mp->missing_blings += 5;
+  } else if (r == R_ConstructionMaterial) {
     gs->resource_pool_claimed.construction_material++;
-  else if (r == R_Work) {
+    mp->missing_blings += 5;
+  } else if (r == R_Work) {
     TileContent *tc = find_resource_building(gs, mp->display.location, R_Deliver);
     if (tc) {
       tc_claim(tc, gs, w, R_Deliver);
@@ -155,7 +168,9 @@ Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
       .manager_click_counter = 0,
+      .missing_blings = 0,
   };
+
   assert((void *)mp == (void *)&mp->work_provider);
   wp_init(&mp->work_provider, s.w - 1, s.h - 1);
 

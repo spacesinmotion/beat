@@ -3,6 +3,8 @@
 
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
+#include "game/Level.h"
+#include "game/TileContent.h"
 #include "game/assets.h"
 #include "game/jobs/QueueItem.h"
 
@@ -152,14 +154,14 @@ bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
   if (!food_is_more_urgent && need_water && (gs->resource_pool.water - gs->resource_pool_claimed.water > 0)) {
     Recti waterProvider = find_resource_building_rect(gs, h->display.location, R_Water);
     if (waterProvider.w > 0 && w_queue_move_to(w, gs, waterProvider, (QueueItem){h, h_pay_water})) {
-      gs->resource_pool_claimed.water++;
+      tc_claim(l_content(gs->level, waterProvider.x, waterProvider.y), gs, w, R_Water);
       h->resources_maximum.clicks--;
       return true;
     }
   } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0)) {
     Recti foodProvider = find_resource_building_rect(gs, h->display.location, R_Food);
     if (foodProvider.w > 0 && w_queue_move_to(w, gs, foodProvider, (QueueItem){h, h_pay_food})) {
-      gs->resource_pool_claimed.food++;
+      tc_claim(l_content(gs->level, foodProvider.x, foodProvider.y), gs, w, R_Water);
       h->resources_maximum.clicks--;
       return true;
     }

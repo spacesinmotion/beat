@@ -15,7 +15,7 @@ typedef struct ClickFactory {
 
   BuildingDisplay display;
 
-  int missing_starts;
+  int missing_blings;
 } ClickFactory;
 
 static inline Color cf_color() { return rgb(255, 215, 0); }
@@ -38,18 +38,18 @@ void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
       while (cf->work_provider.clicks_done > 0) {
         gs_produce_click(gs);
         wp_reduce_clicks(&cf->work_provider, 1);
-        cf->missing_starts += 5;
+        cf->missing_blings += 5;
       }
       bd_flash(&cf->display);
     }
   }
 
-  if (cf->missing_starts > 0 && r_float() > 0.9f) {
+  if (cf->missing_blings > 0 && r_float() > 0.9f) {
     Vec2 p = l_to_vecP(ri_bottom_right(cf->display.location));
     Vec2 s = l_to_vec(cf->display.location.w - 1, cf->display.location.h - 1);
     p = v_add(p, (Vec2){r_float() * s.x, r_float() * s.y});
     Bling_init(g, gs, p, red());
-    cf->missing_starts--;
+    cf->missing_blings--;
   }
 }
 
@@ -107,7 +107,7 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   *cf = (ClickFactory){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,
-      .missing_starts = 15,
+      .missing_blings = 15,
   };
   assert((void *)cf == (void *)&cf->work_provider);
   wp_init(&cf->work_provider, s.w - 1, s.h - 1);
