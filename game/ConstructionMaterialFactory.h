@@ -47,8 +47,7 @@ void cmf_draw(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g) {
 
   bd_draw(&cmf->display, g, cmf_color(), MI_ConstructionMaterial);
   Vec2 p = l_to_vecP(ri_bottom_right(cmf->display.location));
-  if (wp_has_something_stored(&cmf->work_provider))
-    g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
+  g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&cmf->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }

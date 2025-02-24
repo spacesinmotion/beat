@@ -5,6 +5,7 @@
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
+#include "game/assets.h"
 #include "math/Rect.h"
 
 typedef struct Well {
@@ -47,8 +48,7 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
 
   Vec2 p = l_to_vecP(ri_bottom_right(wl->display.location));
   bd_draw(&wl->display, g, wl_color(), MI_Water);
-  if (wp_has_something_stored(&wl->work_provider))
-    g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
+  g_object(g, g_animation_buffer(g), Img_storage_indicator, wl->work_provider.storage, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&wl->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
