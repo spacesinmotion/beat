@@ -13,7 +13,6 @@ typedef enum Image {
   Img_house,
   Img_menubar,
   Img_maze_pointer,
-  Img_storage_indicator,
 
   NB_Img,
 } Image;
@@ -36,18 +35,17 @@ typedef enum MenuIcon {
 } MenuIcon;
 
 static const char *image_paths[NB_Img] = {
-    "assets/tilemap.png",           //
-    "assets/house_map.png",         //
-    "assets/wearisome.png",         //
-    "assets/weapons.png",           //
-    "assets/marker.png",            //
-    "assets/bling.png",             //
-    "assets/overlay_images.png",    //
-    "assets/street.png",            //
-    "assets/house.png",             //
-    "assets/menubar.png",           //
-    "assets/maze_pointer.png",      //
-    "assets/storage_indicator.png", //
+    "assets/tilemap.png",        //
+    "assets/house_map.png",      //
+    "assets/wearisome.png",      //
+    "assets/weapons.png",        //
+    "assets/marker.png",         //
+    "assets/bling.png",          //
+    "assets/overlay_images.png", //
+    "assets/street.png",         //
+    "assets/house.png",          //
+    "assets/menubar.png",        //
+    "assets/maze_pointer.png",   //
 };
 
 typedef enum G_Font {
