@@ -32,8 +32,6 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
   if (gs->day > fa->last_day_delivered) {
     fa->last_day_delivered = gs->day;
     fa->manager_click_counter = 0;
-    if (wp_finish_production_cycle(&fa->work_provider, 8))
-      bd_flash(&fa->display);
   }
 }
 
@@ -89,7 +87,7 @@ bool fa_collect_storage(void *context, Wearisome *w, GameScene *gs) {
   Farm *fa = (Farm *)context;
   w_deliver(w, MI_Food, fa_color());
   if (qi_on_done(&w->queue_follow_up, w, gs))
-    return wp_storage_taken(&fa->work_provider, w);
+    return wp_deliver_taken(&fa->work_provider);
   return false;
 }
 
@@ -99,7 +97,7 @@ void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
       wp_claim(&fa->work_provider);
   } else if (r == R_Deliver) {
     if (w_queue_move_to(w, gs, fa->display.location, (QueueItem){fa, fa_collect_storage}))
-      wp_claim_storage(&fa->work_provider, gs, w);
+      wp_claim_deliver(&fa->work_provider, gs);
   } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
     fa->manager_click_counter = r;
 }

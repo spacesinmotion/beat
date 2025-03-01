@@ -34,8 +34,6 @@ void wl_update(Well *wl, GameScene *gs, Game *g, float dt) {
   if (gs->day > wl->last_day_delivered) {
     wl->last_day_delivered = gs->day;
     wl->manager_click_counter = 0;
-    if (wp_finish_production_cycle(&wl->work_provider, 8))
-      bd_flash(&wl->display);
   }
 }
 
@@ -48,7 +46,7 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
 
   Vec2 p = l_to_vecP(ri_bottom_right(wl->display.location));
   bd_draw(&wl->display, g, wl_color(), MI_Water);
-  g_object(g, g_animation_buffer(g), Img_storage_indicator, wl->work_provider.storage, v_add(p, l_to_vec(0, 1)));
+  g_object(g, g_animation_buffer(g), Img_storage_indicator, wl->work_provider.clicks_done, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&wl->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
@@ -89,7 +87,7 @@ bool wl_collect_storage(void *context, Wearisome *w, GameScene *gs) {
   Well *wl = (Well *)context;
   w_deliver(w, MI_Water, wl_color());
   if (qi_on_done(&w->queue_follow_up, w, gs))
-    return wp_storage_taken(&wl->work_provider, w);
+    return wp_deliver_taken(&wl->work_provider);
   return false;
 }
 void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
@@ -98,7 +96,7 @@ void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
       wp_claim(&wl->work_provider);
   } else if (r == R_Deliver) {
     if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, wl_collect_storage}))
-      wp_claim_storage(&wl->work_provider, gs, w);
+      wp_claim_deliver(&wl->work_provider, gs);
   } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
     wl->manager_click_counter = r;
 }

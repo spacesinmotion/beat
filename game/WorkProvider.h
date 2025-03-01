@@ -7,11 +7,10 @@
 
 typedef struct WorkProvider {
   int colums, rows;
-  int clicks, clicks_claimed, clicks_work, clicks_done;
-  int storage, storage_claimed;
+  int clicks, clicks_claimed, clicks_work, clicks_done, clicks_claimed_for_deliver;
 } WorkProvider;
 
-static inline void wp_init(WorkProvider *wp, int c, int r) { *wp = (WorkProvider){c, r, 0, 0, 0, 0, 0, 0}; }
+static inline void wp_init(WorkProvider *wp, int c, int r) { *wp = (WorkProvider){c, r, 0, 0, 0, 0, 0}; }
 static inline void wp_reduce_clicks(WorkProvider *wp, int count) {
   wp->clicks -= count;
   wp->clicks_claimed -= count;
@@ -74,28 +73,18 @@ static inline void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p,
   }
 }
 
-static inline bool wp_finish_production_cycle(WorkProvider *wp, int max_storage) {
-  bool need_flash = false;
-  for (int i = wp->storage; i < max_storage && wp->clicks_done > 0; ++i) {
-    wp->storage++;
-    wp_reduce_clicks(wp, 1);
-    need_flash = true;
-  }
-  return need_flash;
+static inline bool wp_has_something_stored(const WorkProvider *wp) { return wp->clicks_done > 0; }
+static inline bool wp_has_something_to_deliver(const WorkProvider *wp) {
+  return wp->clicks_done - wp->clicks_claimed_for_deliver > 0;
 }
 
-static inline bool wp_has_something_stored(const WorkProvider *wp) { return wp->storage > 0; }
-static inline bool wp_has_something_to_deliver(const WorkProvider *wp) { return wp->storage - wp->storage_claimed > 0; }
-
-static inline void wp_claim_storage(WorkProvider *wp, GameScene *gs, Wearisome *w) {
-  const int count = (wp->storage - wp->storage_claimed) > 1 ? 2 : 1;
-  wp->storage_claimed += count;
-  gs->storage_claimed += count;
-  w_deliver_claim(w, count);
+static inline void wp_claim_deliver(WorkProvider *wp, GameScene *gs) {
+  wp->clicks_claimed_for_deliver++;
+  gs->storage_claimed++;
 }
-static inline bool wp_storage_taken(WorkProvider *wp, Wearisome *w) {
-  wp->storage_claimed -= w->deliver_count;
-  wp->storage -= w->deliver_count;
+static inline bool wp_deliver_taken(WorkProvider *wp) {
+  wp->clicks_claimed_for_deliver--;
+  wp_reduce_clicks(wp, 1);
   return true;
 }
 
