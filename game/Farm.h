@@ -111,7 +111,7 @@ static TileContentTable Farm_TileContent_Table = {
 
 Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = fa_size();
-  Farm *fa = g_malloc(g, sizeof(Farm));
+  Farm *fa = g_malloc(sizeof(Farm));
   *fa = (Farm){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,

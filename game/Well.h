@@ -109,7 +109,7 @@ static TileContentTable Well_TileContent_Table = {
 
 Well *Well_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = wl_size();
-  Well *wl = g_malloc(g, sizeof(Well));
+  Well *wl = g_malloc(sizeof(Well));
   *wl = (Well){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,

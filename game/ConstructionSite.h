@@ -115,8 +115,8 @@ static TileContentTable ConstructionSite_TileContent_Table = {
     .click = (ClickCBx)cs_click,
 };
 
-ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key) {
-  ConstructionSite *cs = g_malloc(g, sizeof(ConstructionSite));
+ConstructionSite *ConstructionSite_init(GameScene *gs, Recti r, int key) {
+  ConstructionSite *cs = g_malloc(sizeof(ConstructionSite));
   *cs = (ConstructionSite){
       .location = r,
       .key = key,

@@ -146,7 +146,7 @@ static TileContentTable Combinator_TileContent_Table = {
 
 Combinator *Combinator_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = cb_size();
-  Combinator *cb = g_malloc(g, sizeof(Combinator));
+  Combinator *cb = g_malloc(sizeof(Combinator));
   *cb = (Combinator){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,

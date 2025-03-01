@@ -7,7 +7,6 @@
 #include "math/Vec2.h"
 
 typedef struct Dust {
-  G_Object buffer;
   Vec2 location;
   int start_frame, frame;
 } Dust;
@@ -39,9 +38,8 @@ static SceneObjectTable Dust_table = (SceneObjectTable){
 };
 
 Dust *Dust_init(Game *g, GameScene *gs, Vec2 l) {
-  Dust *h = g_malloc(g, sizeof(Dust));
+  Dust *h = g_malloc(sizeof(Dust));
   *h = (Dust){
-      .buffer = g_animation_buffer(g),
       .location = l,
       .frame = 0,
       .start_frame = g_frame(g),

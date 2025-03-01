@@ -340,6 +340,7 @@ void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
 }
 
 void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
+  (void)g;
   (void)op;
 
   if (button == 0) {
@@ -352,7 +353,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
 
     else if (gs->menu_selected >= 0) {
       if (gs_construction_available(gs) && gs->r.w * gs->r.h > 0)
-        ConstructionSite_init(g, gs, gs->r, gs->menu_selected);
+        ConstructionSite_init(gs, gs->r, gs->menu_selected);
 
     } else {
       tc_click(l_contentP(gs->level, p), p, gs);
@@ -427,7 +428,7 @@ SceneTable GameScene_table = {
     .key_up = (SceneKeyCB)gs_key_up,
 };
 void GameScene_init(Game *g) {
-  GameScene *gs = g_malloc(g, sizeof(GameScene));
+  GameScene *gs = g_malloc(sizeof(GameScene));
   *gs = (GameScene){
       .scene_objects = (SceneObjectVec){NULL, 0, 0},
       .game_speed = 2.0f,
@@ -442,7 +443,7 @@ void GameScene_init(Game *g) {
       .resource_pool_claimed = {.water = 0, .food = 0, .construction_material = 0},
       .storage_size = 120,
       .storage_claimed = 0,
-      .level = g_malloc(g, sizeof(Level)),
+      .level = g_malloc(sizeof(Level)),
       .r = (Recti){-1, -1, 0, 0},
       .click_counter_text_cache = -1,
       .water_counter_text_cache = -1,
@@ -478,7 +479,7 @@ void GameScene_init(Game *g) {
     // h_earn_click(Wearisome_House_init(g, gs, (Point){22, 10 + 4 + 2 * i}), rand() % 3 + 1);
   }
 
-  gs->street_map = StreetMap_init(g, gs);
+  gs->street_map = StreetMap_init(gs);
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }

@@ -168,7 +168,7 @@ static TileContentTable Marketplace_TileContent_Table = {
 
 Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
   Sizei s = mp_size();
-  Marketplace *mp = g_malloc(g, sizeof(Marketplace));
+  Marketplace *mp = g_malloc(sizeof(Marketplace));
   *mp = (Marketplace){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,

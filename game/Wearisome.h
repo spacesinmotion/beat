@@ -406,9 +406,9 @@ SceneObjectTable w_table = (SceneObjectTable){
     .update = (SceneObjectUpdateCB)w_update,
     .draw = (SceneObjectDrawCB)w_draw,
 };
-Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
+Wearisome *Wearisome_init(GameScene *gs, House *home) {
   Vec2 pos = l_to_vec(home->display.location.x, home->display.location.y);
-  Wearisome *w = g_malloc(g, sizeof(Wearisome));
+  Wearisome *w = g_malloc(sizeof(Wearisome));
   *w = (Wearisome){
       .home = home,
       .current_building = home->display.location,
@@ -432,7 +432,7 @@ Wearisome *Wearisome_init(Game *g, GameScene *gs, House *home) {
 
 House *Wearisome_House_init(Game *g, GameScene *gs, Point p) {
   House *h = House_init(g, gs, p);
-  Wearisome_init(g, gs, h);
+  Wearisome_init(gs, h);
   return h;
 }
 

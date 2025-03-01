@@ -107,7 +107,7 @@ static TileContentTable ClickFactory_TileContent_Table = {
 
 ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   Sizei s = cf_size();
-  ClickFactory *cf = g_malloc(g, sizeof(ClickFactory));
+  ClickFactory *cf = g_malloc(sizeof(ClickFactory));
   *cf = (ClickFactory){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,

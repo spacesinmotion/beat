@@ -183,7 +183,7 @@ static TileContentTable House_TileContent_Table = (TileContentTable){.location =
 
 House *House_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = h_size();
-  House *h = g_malloc(g, sizeof(House));
+  House *h = g_malloc(sizeof(House));
   *h = (House){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .resources = {.food = 0.0f, .water = 0.0f, .clicks = 0},

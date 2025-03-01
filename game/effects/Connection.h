@@ -4,7 +4,6 @@
 #include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/assets.h"
-#include "gc/gc.h"
 #include "math/Vec2.h"
 
 typedef enum ConnectionState { CS_Defining, CS_Running, CS_Dead } ConnectionState;
@@ -46,7 +45,7 @@ static SceneObjectTable Connection_table = (SceneObjectTable){
 };
 
 Connection *Connection_init(GameScene *gs, Vec2 s, Vec2 e) {
-  Connection *h = gc_malloc(&gc, sizeof(Connection));
+  Connection *h = g_malloc(sizeof(Connection));
   *h = (Connection){
       .start = s,
       .stop = e,

@@ -4,7 +4,6 @@
 #include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/assets.h"
-#include "gc/gc.h"
 #include "math.h"
 #include "math/Vec2.h"
 #include "math/random.h"
@@ -19,7 +18,6 @@ typedef struct Bling {
 bool bl_dead(Bling *bl) { return bl->time * 16.0f > 10.0f; }
 
 void bl_update(Bling *bl, GameScene *gs, Game *g, float dt) {
-  (void)g;
   (void)gs;
   (void)dt;
 
@@ -44,7 +42,7 @@ static SceneObjectTable Bling_table = (SceneObjectTable){
 };
 
 Bling *Bling_init(GameScene *gs, Vec2 l, Color c) {
-  Bling *h = gc_malloc(&gc, sizeof(Bling));
+  Bling *h = g_malloc(sizeof(Bling));
   *h = (Bling){
       .color = c,
       .location = l,

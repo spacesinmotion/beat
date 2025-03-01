@@ -113,7 +113,7 @@ static TileContentTable ConstructionMaterialFactory_TileContent_Table = {
 
 ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = cmf_size();
-  ConstructionMaterialFactory *cmf = g_malloc(g, sizeof(ConstructionMaterialFactory));
+  ConstructionMaterialFactory *cmf = g_malloc(sizeof(ConstructionMaterialFactory));
   *cmf = (ConstructionMaterialFactory){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,

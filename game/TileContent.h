@@ -2,7 +2,7 @@
 #ifndef TILECONTENT_H
 #define TILECONTENT_H
 
-#include "gc/gc.h"
+#include "game/Game.h"
 #include "math/Rect.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -62,7 +62,7 @@ inline static void tc_click(const TileContent *tc, Point p, GameScene *gs) {
 
 static inline TileContent *to_TileContent(void *d, const TileContentTable *t) {
   assert(t->location);
-  TileContent *tile_content = gc_malloc(&gc, sizeof(TileContent));
+  TileContent *tile_content = g_malloc(sizeof(TileContent));
   *tile_content = (TileContent){d, t};
   return tile_content;
 }

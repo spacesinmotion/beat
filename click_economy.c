@@ -53,14 +53,8 @@
 
 #include "game/GameScene.h"
 
-void *g_malloc(Game *g, size_t size) {
-  (void)g;
-  return gc_malloc(&gc, size);
-}
-void *g_realloc(Game *g, void *ptr, size_t size) {
-  (void)g;
-  return gc_realloc(&gc, ptr, size);
-}
+void *g_malloc(size_t size) { return gc_malloc(&gc, size); }
+void *g_realloc(void *ptr, size_t size) { return gc_realloc(&gc, ptr, size); }
 
 typedef struct vertex_t {
   Vec2 p;

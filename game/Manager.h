@@ -152,7 +152,7 @@ static TileContentTable Manager_TileContent_Table = {
 
 Manager *Manager_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = mg_size();
-  Manager *mg = g_malloc(g, sizeof(Manager));
+  Manager *mg = g_malloc(sizeof(Manager));
   *mg = (Manager){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .last_day_delivered = gs->day,

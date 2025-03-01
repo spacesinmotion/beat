@@ -117,7 +117,7 @@ static TileContentTable Entertainment_TileContent_Table = {
 };
 Entertainment *Entertainment_init(Game *g, GameScene *gs, Point p) {
   const Sizei s = em_size();
-  Entertainment *em = g_malloc(g, sizeof(Entertainment));
+  Entertainment *em = g_malloc(sizeof(Entertainment));
   *em = (Entertainment){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.w}),
       .started = 0,
