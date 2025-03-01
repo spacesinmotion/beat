@@ -32,8 +32,6 @@ void cmf_update(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g, float 
   if (gs->day > cmf->last_day_delivered) {
     cmf->last_day_delivered = gs->day;
     cmf->manager_click_counter = 0;
-    // if (wp_finish_production_cycle(&cmf->work_provider, 8))
-    //   bd_flash(&cmf->display);
   }
 }
 
@@ -46,9 +44,8 @@ void cmf_draw(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g) {
   }
 
   bd_draw(&cmf->display, g, cmf_color(), MI_ConstructionMaterial);
-  Vec2 p = l_to_vecP(ri_bottom_right(cmf->display.location));
-  g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
+  const Vec2 p = l_to_vecP(ri_bottom_right(cmf->display.location));
   wp_draw_click_fields(&cmf->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
