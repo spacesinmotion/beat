@@ -108,7 +108,7 @@ static TileContentTable ConstructionMaterialFactory_TileContent_Table = {
     .location = (LocationCb)cmf_location,
     .provides = (ProvidesCB)cmf_provides,
     .claim = (ClaimCB)cmf_claim,
-    .click = (ClickCB)wp_click,
+    .click = (ClickCBx)wp_click,
 };
 
 ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene *gs, Point p) {

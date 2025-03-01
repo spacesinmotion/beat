@@ -32,35 +32,35 @@ typedef struct Wearisome Wearisome;
 typedef Recti (*LocationCb)(const void *);
 typedef bool (*ProvidesCB)(void *, GameScene *gs, Resource r);
 typedef void (*ClaimCB)(void *, GameScene *gs, Wearisome *w, Resource r);
-typedef void (*ClickCB)(const void *, GameScene *gs);
+typedef void (*ClickCBx)(const void *, Point p, GameScene *gs);
 
 typedef struct TileContentTable {
   LocationCb location;
   ProvidesCB provides;
   ClaimCB claim;
-  ClickCB click;
+  ClickCBx click;
 } TileContentTable;
 typedef struct TileContent {
   void *context;
   const TileContentTable *table;
 } TileContent;
 
-Recti tc_location(const TileContent *tc) { return tc->table->location(tc->context); }
-bool tc_provides(const TileContent *tc, GameScene *gs, Resource r) {
+static inline Recti tc_location(const TileContent *tc) { return tc->table->location(tc->context); }
+static inline bool tc_provides(const TileContent *tc, GameScene *gs, Resource r) {
   return tc && tc->table->provides && tc->table->provides(tc->context, gs, r);
 }
-void tc_claim(const TileContent *tc, GameScene *gs, Wearisome *w, Resource r) {
+static inline void tc_claim(const TileContent *tc, GameScene *gs, Wearisome *w, Resource r) {
   if (tc && tc->table->claim)
     tc->table->claim(tc->context, gs, w, r);
 }
 
 inline static bool tc_can_click(const TileContent *tc) { return (tc && tc->table->click); }
-inline static void tc_click(const TileContent *tc, GameScene *gs) {
+inline static void tc_click(const TileContent *tc, Point p, GameScene *gs) {
   if (tc && tc->table->click)
-    tc->table->click(tc->context, gs);
+    tc->table->click(tc->context, p, gs);
 }
 
-TileContent *to_TileContent(void *d, const TileContentTable *t) {
+static inline TileContent *to_TileContent(void *d, const TileContentTable *t) {
   assert(t->location);
   TileContent *tile_content = gc_malloc(&gc, sizeof(TileContent));
   *tile_content = (TileContent){d, t};

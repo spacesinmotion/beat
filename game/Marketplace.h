@@ -48,7 +48,7 @@ void mp_update(Marketplace *mp, GameScene *gs, Game *g, float dt) {
     Vec2 p = l_to_vecP(ri_bottom_right(mp->display.location));
     Vec2 s = l_to_vec(mp->display.location.w - 1, mp->display.location.h - 1);
     p = v_add(p, (Vec2){r_float() * s.x, r_float() * s.y});
-    Bling_init(g, gs, p, yellow());
+    Bling_init(gs, p, yellow());
     mp->missing_blings = i_min(mp->missing_blings - 1, 15);
   }
 }
@@ -116,9 +116,11 @@ bool mp_deliver_resource_done(void *context, Wearisome *w, GameScene *gs) {
   case MI_Entertainment:
   case MI_Science:
   case MI_Manager:
+  case MI_Combinator:
+  case MI___empty:
+  case MI_Industry:
   case MI_Logistics:
   case MI_WareHouse:
-  case MI_Industry:
   case Nb_MI:
     assert(false);
     break;
@@ -161,7 +163,7 @@ static TileContentTable Marketplace_TileContent_Table = {
     .location = (LocationCb)mp_location,
     .provides = (ProvidesCB)mp_provides,
     .claim = (ClaimCB)mp_claim,
-    .click = (ClickCB)wp_click,
+    .click = (ClickCBx)wp_click,
 };
 
 Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {

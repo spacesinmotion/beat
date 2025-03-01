@@ -16,6 +16,8 @@ typedef struct Point {
   int x, y;
 } Point;
 
+static inline bool p_eq(Point a, Point b) { return a.x == b.x && a.y == b.y; }
+
 typedef struct Sizei {
   int w, h;
 } Sizei;

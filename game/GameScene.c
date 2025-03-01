@@ -1,6 +1,7 @@
 
 #include "game/GameScene.h"
 #include "game/ClickFactory.h"
+#include "game/Combinator.h"
 #include "game/ConstructionMaterialFactory.h"
 #include "game/ConstructionSite.h"
 #include "game/Entertainment.h"
@@ -103,6 +104,9 @@ void gs_select_bottom_menu(GameScene *gs, int button) {
   } else if (button == MI_Manager) {
     gs->preview = mg_color();
     ri_set_size(&gs->r, mg_size());
+  } else if (button == MI_Combinator) {
+    gs->preview = cb_color();
+    ri_set_size(&gs->r, cb_size());
   } else {
     gs->r.w = gs->r.h = 0;
   }
@@ -226,7 +230,7 @@ void gs_draw(GameScene *gs, Game *g) {
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
   const Color cn = gs->daytime < 0.75f ? gray(25) : gray(225);
   const Color ch = gs->daytime < 0.75f ? gray(75) : gray(175);
-  for (int i = 0; i <= MI_Manager; ++i) {
+  for (int i = 0; i <= MI_Combinator; ++i) {
     const Vec2 p = (Vec2){8 + 4 + i * 16, 8 + 4};
     const bool hover = gs_pick(gs, gs_select_bottom_menu, i, p, 1.0f);
     g_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
@@ -339,20 +343,25 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   (void)op;
 
   if (button == 0) {
-
+    const Point p = (Point){gs->r.x, gs->r.y};
     if (gs->pick_under_mouse >= 0)
       gs->pick_rects[gs->pick_under_mouse].click(gs, gs->pick_rects[gs->pick_under_mouse].id);
+
+    else if (gs->special_click_handler)
+      gs->special_click_handler(gs->special_click_handler_data, p, gs);
 
     else if (gs->menu_selected >= 0) {
       if (gs_construction_available(gs) && gs->r.w * gs->r.h > 0)
         ConstructionSite_init(g, gs, gs->r, gs->menu_selected);
 
     } else {
-      tc_click(l_content(gs->level, gs->r.x, gs->r.y), gs);
-      Bling_init(g, gs, mp, gray(45));
+      tc_click(l_contentP(gs->level, p), p, gs);
+      Bling_init(gs, mp, gray(45));
     }
 
   } else if (button == 1) {
+    gs->special_click_handler = NULL;
+    gs->special_click_handler_data = NULL;
     gs->menu_selected = -1;
     gs->r.w = gs->r.h = 0;
   }
@@ -405,6 +414,8 @@ void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
     ScienceBuilding_init(g, gs, (Point){r.x, r.y});
   } else if (key == MI_Manager) {
     Manager_init(g, gs, (Point){r.x, r.y});
+  } else if (key == MI_Combinator) {
+    Combinator_init(g, gs, (Point){r.x, r.y});
   }
 }
 SceneTable GameScene_table = {

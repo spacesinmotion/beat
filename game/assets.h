@@ -13,6 +13,7 @@ typedef enum Image {
   Img_house,
   Img_menubar,
   Img_maze_pointer,
+  Img_connections,
 
   NB_Img,
 } Image;
@@ -28,9 +29,11 @@ typedef enum MenuIcon {
   MI_ConstructionMaterial,
   MI_Science,
   MI_Manager,
+  MI_Combinator,
+  MI___empty,
+  MI_Industry,
   MI_Logistics,
   MI_WareHouse,
-  MI_Industry,
   Nb_MI,
 } MenuIcon;
 
@@ -46,6 +49,7 @@ static const char *image_paths[NB_Img] = {
     "assets/house.png",          //
     "assets/menubar.png",        //
     "assets/maze_pointer.png",   //
+    "assets/connections.png",    //
 };
 
 typedef enum G_Font {

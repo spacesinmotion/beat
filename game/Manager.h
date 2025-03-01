@@ -92,7 +92,7 @@ bool mg_click_building(void *context, Wearisome *w, GameScene *gs) {
   TileContent *tc = l_contentP(gs->level, l_to_point(w->destination));
   if (tc) {
     tc_claim(tc, gs, w, mg->used_manager_counter);
-    tc_click(tc, gs);
+    tc_click(tc, (Point){-1, -1}, gs);
     gs->clicks++; // clicks already taken
     mg->click_used--;
   }
@@ -147,7 +147,7 @@ static TileContentTable Manager_TileContent_Table = {
     .location = (LocationCb)mg_location,
     .provides = (ProvidesCB)mg_provides,
     .claim = (ClaimCB)mg_claim,
-    .click = (ClickCB)wp_click,
+    .click = (ClickCBx)wp_click,
 };
 
 Manager *Manager_init(Game *g, GameScene *gs, Point p) {

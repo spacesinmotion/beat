@@ -104,7 +104,7 @@ static TileContentTable Well_TileContent_Table = {
     .location = (LocationCb)wl_location,
     .provides = (ProvidesCB)wl_provides,
     .claim = (ClaimCB)wl_claim,
-    .click = (ClickCB)wp_click,
+    .click = (ClickCBx)wp_click,
 };
 
 Well *Well_init(Game *g, GameScene *gs, Point p) {

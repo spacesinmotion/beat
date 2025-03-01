@@ -106,7 +106,7 @@ static TileContentTable Farm_TileContent_Table = {
     .location = (LocationCb)fa_location,
     .provides = (ProvidesCB)fa_provides,
     .claim = (ClaimCB)fa_claim,
-    .click = (ClickCB)wp_click,
+    .click = (ClickCBx)wp_click,
 };
 
 Farm *Farm_init(Game *g, GameScene *gs, Point p) {

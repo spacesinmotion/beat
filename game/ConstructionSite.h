@@ -62,7 +62,8 @@ static SceneObjectTable ConstructionSite_table = {
 
 Recti cs_location(const ConstructionSite *cs) { return cs->location; }
 
-void cs_click(ConstructionSite *cs, GameScene *gs) {
+void cs_click(ConstructionSite *cs, Point p, GameScene *gs) {
+  (void)p;
   if (gs->resource_pool.construction_material > 0 && gs->clicks > 0) {
     if (cs->work_provider.clicks < wp_fields(&cs->work_provider) && gs->clicks > 0) {
       cs->work_provider.clicks++;
@@ -111,7 +112,7 @@ static TileContentTable ConstructionSite_TileContent_Table = {
     .location = (LocationCb)cs_location,
     .provides = (ProvidesCB)wp_provides,
     .claim = (ClaimCB)cs_claim,
-    .click = (ClickCB)cs_click,
+    .click = (ClickCBx)cs_click,
 };
 
 ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key) {
@@ -126,7 +127,7 @@ ConstructionSite *ConstructionSite_init(Game *g, GameScene *gs, Recti r, int key
   l_set_tile_contentR(gs->level, cs->location, to_TileContent(cs, &ConstructionSite_TileContent_Table));
 
   if (key == MI_Street)
-    cs_click(cs, gs);
+    cs_click(cs, (Point){}, gs);
   else
     gs_loose_click(gs);
 

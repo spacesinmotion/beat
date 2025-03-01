@@ -102,7 +102,7 @@ static TileContentTable ScienceBuilding_TileContent_Table = {
     .location = (LocationCb)scb_location,
     .provides = (ProvidesCB)scb_provides,
     .claim = (ClaimCB)scb_claim,
-    .click = (ClickCB)wp_click,
+    .click = (ClickCBx)wp_click,
 };
 
 ScienceBuilding *ScienceBuilding_init(Game *g, GameScene *gs, Point p) {

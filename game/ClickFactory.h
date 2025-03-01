@@ -49,7 +49,7 @@ void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
     Vec2 p = l_to_vecP(ri_bottom_right(cf->display.location));
     Vec2 s = l_to_vec(cf->display.location.w - 1, cf->display.location.h - 1);
     p = v_add(p, (Vec2){r_float() * s.x, r_float() * s.y});
-    Bling_init(g, gs, p, red());
+    Bling_init(gs, p, red());
     cf->missing_blings--;
   }
 }
@@ -102,7 +102,7 @@ static TileContentTable ClickFactory_TileContent_Table = {
     .location = (LocationCb)cf_location,
     .provides = (ProvidesCB)wp_provides,
     .claim = (ClaimCB)cf_claim,
-    .click = (ClickCB)wp_click,
+    .click = (ClickCBx)wp_click,
 };
 
 ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {

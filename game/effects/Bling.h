@@ -4,12 +4,12 @@
 #include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/assets.h"
+#include "gc/gc.h"
 #include "math.h"
 #include "math/Vec2.h"
 #include "math/random.h"
 
 typedef struct Bling {
-  G_Object buffer;
   Color color;
   Vec2 location;
   float rotation;
@@ -43,10 +43,9 @@ static SceneObjectTable Bling_table = (SceneObjectTable){
     .draw = (SceneObjectDrawCB)bl_draw,
 };
 
-Bling *Bling_init(Game *g, GameScene *gs, Vec2 l, Color c) {
-  Bling *h = g_malloc(g, sizeof(Bling));
+Bling *Bling_init(GameScene *gs, Vec2 l, Color c) {
+  Bling *h = gc_malloc(&gc, sizeof(Bling));
   *h = (Bling){
-      .buffer = g_animation_buffer(g),
       .color = c,
       .location = l,
       .rotation = r_float_r(0, M_PI * 2.0f),

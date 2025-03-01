@@ -2,7 +2,8 @@
 #define GAME_SCENE
 
 #include "Game.h"
-#include "SceneObject.h"
+#include "game/SceneObject.h"
+#include "game/TileContent.h"
 #include "math/Rect.h"
 
 typedef struct Level Level;
@@ -68,6 +69,9 @@ typedef struct GameScene {
   PickRect pick_rects[32];
   int pick_rect_count;
   int pick_under_mouse;
+
+  ClickCBx special_click_handler;
+  void *special_click_handler_data;
 
   float research_level, reasearch_needed;
 } GameScene;
