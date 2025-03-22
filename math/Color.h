@@ -1,6 +1,8 @@
 #ifndef COLOR
 #define COLOR
 
+#include "extern/cjsonh/cjsonh.h"
+#include <math.h>
 typedef struct Color {
   float r, g, b, a;
 } Color;
@@ -43,20 +45,11 @@ static inline Color c_mix(Color c1, Color c2, float t) {
 
 static inline Color alphaf(Color c, float a) { return (Color){c.r, c.g, c.b, a}; }
 
-// fn vec4(c Color) Vec4 {
-//   return Vec4 { c.r as f32 / 255.0f, c.g as f32 / 255.0f, c.b as f32 / 255.0f, c.a as f32 / 255.0f, }
-// }
-
-// fn bg_color() Color{return rgba(65, 70, 70, 200)}
-
-// fn highlight() Color{return rgb(187, 134, 74)}
-
-// fn error_color() Color{return rgb(240, 105, 87)}
-
-// fn good_color() Color{return rgb(87, 240, 168)}
-
-// fn disabled_color() Color {
-//   return rgb(99, 99, 99)
-// }
+static inline void c_to_json(CJHArray *a, const Color *c) {
+  cjh_a_add_number(a, roundf(c->r * 255.0f));
+  cjh_a_add_number(a, roundf(c->g * 255.0f));
+  cjh_a_add_number(a, roundf(c->b * 255.0f));
+  cjh_a_add_number(a, roundf(c->a * 255.0f));
+}
 
 #endif

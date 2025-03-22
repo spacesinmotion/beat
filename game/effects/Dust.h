@@ -30,7 +30,8 @@ void du_draw(Dust *du, GameScene *gs, Game *g) {
   g_object(g, g_animation_buffer(g), Img_wearisome, du->frame / 6 + 4, du->location);
 }
 
-static SceneObjectTable Dust_table = (SceneObjectTable){
+static SceneObjectTable Dust_table = {
+    .type = "Dust",
     .dead = (SceneObjectDeadCB)du_dead,
     .render_order = (SceneObjectRenderOrderCB)du_render_order,
     .update = (SceneObjectUpdateCB)du_update,

@@ -1,6 +1,7 @@
 #ifndef COMBINATOR_H
 #define COMBINATOR_H
 
+#include "extern/cjsonh/cjsonh.h"
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
@@ -57,11 +58,25 @@ void cb_draw(Combinator *cb, GameScene *gs, Game *g) {
   wp_draw_click_fields(&cb->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
+void cb_sources_to_json(CJHArray *a, Combinator *cb) {
+  for (int i = 0; i < 2; ++i)
+    cjh_a_add_object(a, (CJHWriteObjectCB)co_to_json_ref, cb->sources[i]);
+}
+void cb_to_json(CJHObject *o, Combinator *cb) {
+  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &cb->work_provider);
+  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &cb->display);
+  cjh_o_add_number(o, "last_day_delivered", cb->last_day_delivered);
+  cjh_o_add_number(o, "manager_click_counter", cb->manager_click_counter);
+  cjh_o_add_array(o, "source", (CJHWriteArrayCB)cb_sources_to_json, cb);
+}
+
 static SceneObjectTable Combinator_table = {
+    .type = "Combinator",
     .dead = (SceneObjectDeadCB)cb_dead,
     .render_order = (SceneObjectRenderOrderCB)cb_render_order,
     .update = (SceneObjectUpdateCB)cb_update,
     .draw = (SceneObjectDrawCB)cb_draw,
+    .save = (SceneObjectSaveCB)cb_to_json,
 };
 
 Recti cb_location(const Combinator *cb) { return cb->display.location; }
@@ -85,7 +100,7 @@ bool cb_start_work(void *context, Wearisome *w, GameScene *gs) {
 
   Combinator *cb = (Combinator *)context;
   wp_start(&cb->work_provider, w);
-  return w_queue_wait_for(w, 5.0f, (QueueItem){cb, cb_done_work});
+  return w_queue_wait_for(w, 5.0f, QI(cb, cb_done_work));
 }
 bool cb_collect_storage(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
@@ -98,10 +113,10 @@ bool cb_collect_storage(void *context, Wearisome *w, GameScene *gs) {
 }
 void cb_claim(Combinator *cb, GameScene *gs, Wearisome *w, Resource r) {
   if (r == R_Work) {
-    if (w_queue_move_to(w, gs, cb->display.location, (QueueItem){cb, cb_start_work}))
+    if (w_queue_move_to(w, gs, cb->display.location, QI(cb, cb_start_work)))
       wp_claim(&cb->work_provider);
   } else if (r == R_Deliver) {
-    if (w_queue_move_to(w, gs, cb->display.location, (QueueItem){cb, cb_collect_storage}))
+    if (w_queue_move_to(w, gs, cb->display.location, QI(cb, cb_collect_storage)))
       wp_claim_deliver(&cb->work_provider, gs);
   } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
     cb->manager_click_counter = r;

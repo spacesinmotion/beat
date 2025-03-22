@@ -15,4 +15,12 @@ PathPoint *PathPoint_init(Vec2 p, PathPoint *next) {
   return pp;
 }
 
+static inline void pp_to_json(CJHArray *a, const PathPoint *pp) {
+  const PathPoint *x = pp;
+  while (x) {
+    cjh_a_add_array(a, (CJHWriteArrayCB)v_to_json, (void *)&x->p);
+    x = x->next;
+  }
+}
+
 #endif

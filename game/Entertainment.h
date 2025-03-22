@@ -72,11 +72,20 @@ void em_draw(Entertainment *em, GameScene *gs, Game *g) {
   }
 }
 
+void em_to_json(CJHObject *o, Entertainment *em) {
+  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &em->display);
+  cjh_o_add_number(o, "claimed", em->claimed);
+  cjh_o_add_number(o, "started", em->started);
+  cjh_o_add_bool(o, "some_one_is_done", em->some_one_is_done);
+}
+
 static SceneObjectTable Entertainment_table = {
+    .type = "Entertainment",
     .dead = (SceneObjectDeadCB)em_dead,
     .render_order = (SceneObjectRenderOrderCB)em_render_order,
     .draw = (SceneObjectDrawCB)em_draw,
     .update = (SceneObjectUpdateCB)em_update,
+    .save = (SceneObjectSaveCB)em_to_json,
 };
 
 Recti em_location(const Entertainment *em) { return em->display.location; }
@@ -102,11 +111,11 @@ bool em_start_entainment(void *context, Wearisome *w, GameScene *gs) {
   w_earn_clicks(w, -1);
   gs->clicks++;
   w->need_mode = W_GetEntertainment;
-  return w_queue_wait_for(w, 15.0, (QueueItem){em, em_done_entainment});
+  return w_queue_wait_for(w, 15.0, QI(em, em_done_entainment));
 }
 void em_claim(Entertainment *em, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Entertainment);
-  if (w_queue_move_to(w, gs, em->display.location, (QueueItem){em, em_start_entainment}))
+  if (w_queue_move_to(w, gs, em->display.location, QI(em, em_start_entainment)))
     em->claimed++;
 }
 

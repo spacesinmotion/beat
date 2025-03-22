@@ -1,6 +1,7 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
+#include "extern/cjsonh/cjsonh.h"
 #include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/assets.h"
@@ -8,6 +9,7 @@
 
 typedef enum ConnectionState { CS_Defining, CS_Running, CS_Dead } ConnectionState;
 typedef struct Connection {
+  int id;
   Vec2 start, stop;
   ConnectionState state;
 } Connection;
@@ -37,16 +39,33 @@ void co_draw(Connection *co, GameScene *gs, Game *g) {
   g_object(g, g_animation_buffer(g), Img_connections, 0, co->start);
 }
 
-static SceneObjectTable Connection_table = (SceneObjectTable){
+void co_to_json(CJHObject *o, Connection *co) {
+  cjh_o_add_number(o, "id", co->id);
+  cjh_o_add_array(o, "start", (CJHWriteArrayCB)v_to_json, &co->start);
+  cjh_o_add_array(o, "stop", (CJHWriteArrayCB)v_to_json, &co->stop);
+  const char *state_test = "Defining";
+  if (co->state == CS_Running)
+    state_test = "Running";
+  else if (co->state == CS_Dead)
+    state_test = "Dead";
+  cjh_o_add_string(o, "state", state_test);
+}
+
+static SceneObjectTable Connection_table = {
+    .type = "Connection",
     .dead = (SceneObjectDeadCB)co_dead,
     .render_order = (SceneObjectRenderOrderCB)co_render_order,
     .update = (SceneObjectUpdateCB)co_update,
     .draw = (SceneObjectDrawCB)co_draw,
+    .save = (SceneObjectSaveCB)co_to_json,
 };
+
+void co_to_json_ref(CJHObject *o, Connection *co) { cjh_o_add_number(o, Connection_table.type, co ? co->id : 0); }
 
 Connection *Connection_init(GameScene *gs, Vec2 s, Vec2 e) {
   Connection *h = g_malloc(sizeof(Connection));
   *h = (Connection){
+      .id = unique_id(h),
       .start = s,
       .stop = e,
       .state = CS_Defining,

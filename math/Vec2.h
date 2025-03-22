@@ -1,6 +1,7 @@
 #ifndef VEC2
 #define VEC2
 
+#include "extern/cjsonh/cjsonh.h"
 #include <math.h>
 #include <stdbool.h>
 
@@ -37,6 +38,11 @@ static inline Vec2 v_lerp_about(Vec2 a, Vec2 b, float t) {
   const Vec2 v = v_sub(b, a);
   const float l = v_length(v);
   return (l <= t) ? b : v_add(a, v_mulf(v_diff(v, l), t));
+}
+
+static inline void v_to_json(CJHArray *a, const Vec2 *v) {
+  cjh_a_add_number(a, v->x);
+  cjh_a_add_number(a, v->y);
 }
 
 #endif

@@ -10,10 +10,9 @@
 
 typedef struct ScienceBuilding {
   WorkProvider work_provider;
+  BuildingDisplay display;
 
   int last_day_delivered;
-
-  BuildingDisplay display;
 } ScienceBuilding;
 
 static inline Color scb_color() { return rgb(102, 51, 153); }
@@ -62,11 +61,19 @@ void scb_draw(ScienceBuilding *scb, GameScene *gs, Game *g) {
   }
 }
 
+void scb_to_json(CJHObject *o, ScienceBuilding *scb) {
+  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &scb->work_provider);
+  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &scb->display);
+  cjh_o_add_number(o, "last_day_delivered", scb->last_day_delivered);
+}
+
 static SceneObjectTable ScienceBuilding_table = {
+    .type = "ScienceBuilding",
     .dead = (SceneObjectDeadCB)scb_dead,
     .render_order = (SceneObjectRenderOrderCB)scb_render_order,
     .update = (SceneObjectUpdateCB)scb_update,
     .draw = (SceneObjectDrawCB)scb_draw,
+    .save = (SceneObjectSaveCB)scb_to_json,
 };
 
 Recti scb_location(const ScienceBuilding *scb) { return scb->display.location; }
@@ -88,12 +95,12 @@ bool scb_start_work(void *context, Wearisome *w, GameScene *gs) {
 
   ScienceBuilding *scb = (ScienceBuilding *)context;
   wp_start(&scb->work_provider, w);
-  return w_queue_wait_for(w, 5.0f, (QueueItem){scb, scb_done_work});
+  return w_queue_wait_for(w, 5.0f, QI(scb, scb_done_work));
 }
 
 void scb_claim(ScienceBuilding *scb, GameScene *gs, Wearisome *w, Resource r) {
   if (r == R_Work) {
-    if (w_queue_move_to(w, gs, scb->display.location, (QueueItem){scb, scb_start_work}))
+    if (w_queue_move_to(w, gs, scb->display.location, QI(scb, scb_start_work)))
       wp_claim(&scb->work_provider);
   }
 }

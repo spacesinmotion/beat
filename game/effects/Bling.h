@@ -34,7 +34,8 @@ void bl_draw(Bling *bl, GameScene *gs, Game *g) {
   g_objectR(g, g_animation_buffer(g), Img_bling, frame % 10, bl->location, bl->rotation);
 }
 
-static SceneObjectTable Bling_table = (SceneObjectTable){
+static SceneObjectTable Bling_table = {
+    .type = "Bling",
     .dead = (SceneObjectDeadCB)bl_dead,
     .render_order = (SceneObjectRenderOrderCB)bl_render_order,
     .update = (SceneObjectUpdateCB)bl_update,

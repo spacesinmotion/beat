@@ -10,11 +10,10 @@
 
 typedef struct Well {
   WorkProvider work_provider;
+  BuildingDisplay display;
 
   int last_day_delivered;
   int manager_click_counter;
-
-  BuildingDisplay display;
 } Well;
 
 Color wl_color() { return rgb(0, 80, 133); }
@@ -50,11 +49,20 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
   wp_draw_click_fields(&wl->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
+void wl_to_json(CJHObject *o, Well *wl) {
+  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &wl->work_provider);
+  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &wl->display);
+  cjh_o_add_number(o, "last_day_delivered", wl->last_day_delivered);
+  cjh_o_add_number(o, "manager_click_counter", wl->manager_click_counter);
+}
+
 static SceneObjectTable Well_table = {
+    .type = "Well",
     .dead = (SceneObjectDeadCB)wl_dead,
     .render_order = (SceneObjectRenderOrderCB)wl_render_order,
     .update = (SceneObjectUpdateCB)wl_update,
     .draw = (SceneObjectDrawCB)wl_draw,
+    .save = (SceneObjectSaveCB)wl_to_json,
 };
 
 Recti wl_location(const Well *wl) { return wl->display.location; }
@@ -78,7 +86,7 @@ bool wl_start_work(void *context, Wearisome *w, GameScene *gs) {
 
   Well *wl = (Well *)context;
   wp_start(&wl->work_provider, w);
-  return w_queue_wait_for(w, 5.0f, (QueueItem){wl, wl_done_work});
+  return w_queue_wait_for(w, 5.0f, QI(wl, wl_done_work));
 }
 bool wl_collect_storage(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
@@ -91,10 +99,10 @@ bool wl_collect_storage(void *context, Wearisome *w, GameScene *gs) {
 }
 void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
   if (r == R_Work) {
-    if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, wl_start_work}))
+    if (w_queue_move_to(w, gs, wl->display.location, QI(wl, wl_start_work)))
       wp_claim(&wl->work_provider);
   } else if (r == R_Deliver) {
-    if (w_queue_move_to(w, gs, wl->display.location, (QueueItem){wl, wl_collect_storage}))
+    if (w_queue_move_to(w, gs, wl->display.location, QI(wl, wl_collect_storage)))
       wp_claim_deliver(&wl->work_provider, gs);
   } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
     wl->manager_click_counter = r;

@@ -11,11 +11,9 @@
 
 typedef struct ClickFactory {
   WorkProvider work_provider;
-
-  int last_day_delivered;
-
   BuildingDisplay display;
 
+  int last_day_delivered;
   int missing_blings;
 } ClickFactory;
 
@@ -64,17 +62,24 @@ void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
   Vec2 p = l_to_vecP(ri_bottom_right(cf->display.location));
 
   bd_draw(&cf->display, g, cf_color(), MI_Click);
-  // if (cf->temporary_deliver_timer > 0.0f)
-  //   g_object(g, g_animation_buffer(g), Img_menubar, MI_Logistics, v_add(p, l_to_vec(0, 1)));
 
   wp_draw_click_fields(&cf->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
+void cf_to_json(CJHObject *o, ClickFactory *cf) {
+  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &cf->work_provider);
+  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &cf->display);
+  cjh_o_add_number(o, "last_day_delivered", cf->last_day_delivered);
+  cjh_o_add_number(o, "missing_blings", cf->missing_blings);
+}
+
 static SceneObjectTable ClickFactory_table = {
+    .type = "ClickFactory",
     .dead = (SceneObjectDeadCB)cf_dead,
     .render_order = (SceneObjectRenderOrderCB)cf_render_order,
     .update = (SceneObjectUpdateCB)cf_update,
     .draw = (SceneObjectDrawCB)cf_draw,
+    .save = (SceneObjectSaveCB)cf_to_json,
 };
 
 Recti cf_location(const ClickFactory *cf) { return cf->display.location; }
@@ -90,11 +95,11 @@ bool cf_start_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
   ClickFactory *cf = (ClickFactory *)context;
   wp_start(&cf->work_provider, w);
-  return w_queue_wait_for(w, 9.0f, (QueueItem){cf, cf_done_work});
+  return w_queue_wait_for(w, 9.0f, QI(cf, cf_done_work));
 }
 void cf_claim(ClickFactory *cf, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
-  if (w_queue_move_to(w, gs, cf->display.location, (QueueItem){cf, cf_start_work}))
+  if (w_queue_move_to(w, gs, cf->display.location, QI(cf, cf_start_work)))
     wp_claim(&cf->work_provider);
 }
 

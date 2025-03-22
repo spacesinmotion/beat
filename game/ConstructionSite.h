@@ -9,7 +9,6 @@
 
 typedef struct ConstructionSite {
   WorkProvider work_provider;
-
   Recti location;
   int key;
 } ConstructionSite;
@@ -53,11 +52,19 @@ void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
   g_object(g, g_animation_buffer(g), Img_menubar, cs->key, p);
 }
 
+void cs_to_json(CJHObject *o, ConstructionSite *cs) {
+  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &cs->work_provider);
+  cjh_o_add_array(o, "display", (CJHWriteArrayCB)ri_to_json, &cs->location);
+  cjh_o_add_number(o, "key", cs->key);
+}
+
 static SceneObjectTable ConstructionSite_table = {
+    .type = "ConstructionSite",
     .dead = (SceneObjectDeadCB)cs_dead,
     .render_order = (SceneObjectRenderOrderCB)cs_render_order,
     .update = (SceneObjectUpdateCB)cs_update,
     .draw = (SceneObjectDrawCB)cs_draw,
+    .save = (SceneObjectSaveCB)cs_to_json,
 };
 
 Recti cs_location(const ConstructionSite *cs) { return cs->location; }
@@ -86,7 +93,7 @@ bool cs_work_start_construction(void *context, Wearisome *w, GameScene *gs) {
   ConstructionSite *cs = (ConstructionSite *)context;
   wp_start(&cs->work_provider, w);
   w_deliver_clear(w);
-  return w_queue_wait_for(w, cs->key == MI_Street ? 1.0f : 8.0f, (QueueItem){cs, cs_work_construction_done});
+  return w_queue_wait_for(w, cs->key == MI_Street ? 1.0f : 8.0f, QI(cs, cs_work_construction_done));
 }
 Color cmf_color();
 bool cs_work_collect_construction_material(void *context, Wearisome *w, GameScene *gs) {
@@ -94,7 +101,7 @@ bool cs_work_collect_construction_material(void *context, Wearisome *w, GameScen
   gs->resource_pool.construction_material--;
   gs->resource_pool_claimed.construction_material--;
   w_deliver(w, MI_ConstructionMaterial, cmf_color());
-  return w_queue_move_to(w, gs, cs->location, (QueueItem){cs, cs_work_start_construction});
+  return w_queue_move_to(w, gs, cs->location, QI(cs, cs_work_start_construction));
 }
 
 void cs_claim(ConstructionSite *cs, GameScene *gs, Wearisome *w, Resource r) {
@@ -103,7 +110,7 @@ void cs_claim(ConstructionSite *cs, GameScene *gs, Wearisome *w, Resource r) {
   Recti marketplace = find_resource_building_rect(gs, cs->location, R_ConstructionMaterial);
   if (marketplace.w > 0) {
     gs->resource_pool_claimed.construction_material++;
-    if (w_queue_move_to(w, gs, marketplace, (QueueItem){cs, cs_work_collect_construction_material}))
+    if (w_queue_move_to(w, gs, marketplace, QI(cs, cs_work_collect_construction_material)))
       wp_claim(&cs->work_provider);
   }
 }

@@ -1,5 +1,6 @@
 
 #include "game/GameScene.h"
+#include "extern/cjsonh/cjsonh.h"
 #include "game/ClickFactory.h"
 #include "game/Combinator.h"
 #include "game/ConstructionMaterialFactory.h"
@@ -376,6 +377,7 @@ typedef enum GameKeys {
   SPEED_8_KEY = 52,
 } GameKeys;
 
+void gs_save(GameScene *gs);
 void gs_key_up(GameScene *gs, Game *g, int key) {
   (void)g;
 
@@ -389,6 +391,10 @@ void gs_key_up(GameScene *gs, Game *g, int key) {
     gs_set_game_speed(gs, 4);
   else if (key == SPEED_8_KEY)
     gs_set_game_speed(gs, 8);
+  else if (key == 294)
+    gs_save(gs);
+  else
+    printf("KEY UP (%d)\n", key);
 }
 
 void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
@@ -483,3 +489,42 @@ void GameScene_init(Game *g) {
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }
+
+void gs_stuff_to_json(CJHObject *o, void *ud) {
+  const Stuff *s = (Stuff *)ud;
+  cjh_o_add_number(o, "water", s->water);
+  cjh_o_add_number(o, "food", s->food);
+  cjh_o_add_number(o, "construction_material", s->construction_material);
+}
+
+void gs_sceneobjects_to_json(CJHArray *a, void *ud) {
+  SceneObjectVec *s = (SceneObjectVec *)ud;
+  for (int i = 0; i < s->len; ++i)
+    if (so_can_be_stored(&s->data[i]))
+      cjh_a_add_object(a, (CJHWriteObjectCB)so_to_json, &s->data[i]);
+}
+
+void gs_to_json(CJHObject *o, void *ud) {
+  GameScene *gs = (GameScene *)ud;
+  cjh_o_add_array(o, "scene_objects", gs_sceneobjects_to_json, &gs->scene_objects);
+  cjh_o_add_number(o, "game_speed", gs->game_speed);
+  cjh_o_add_bool(o, "game_paused", gs->game_paused);
+  cjh_o_add_number(o, "daytime_step", gs->daytime_step);
+  cjh_o_add_number(o, "daytime", gs->daytime);
+  cjh_o_add_number(o, "day", gs->day);
+  cjh_o_add_number_if(o, "clicks", gs->clicks, 0);
+  cjh_o_add_number_if(o, "clicks_produced", gs->clicks_produced, 0);
+  cjh_o_add_number_if(o, "clicks_lost", gs->clicks_lost, 0);
+  cjh_o_add_number_if(o, "clicks_in_houses", gs->clicks_in_houses, 0);
+  cjh_o_add_number(o, "wearisome_count", gs->wearisome_count);
+  cjh_o_add_object(o, "resource_pool", gs_stuff_to_json, &gs->resource_pool);
+  cjh_o_add_object(o, "resource_pool_claimed", gs_stuff_to_json, &gs->resource_pool_claimed);
+  cjh_o_add_number_if(o, "storage_size", gs->storage_size, 0);
+  cjh_o_add_number_if(o, "storage_claimed", gs->storage_claimed, 0);
+  cjh_o_add_number_if(o, "research_level", gs->research_level, 0);
+  cjh_o_add_number_if(o, "reasearch_needed", gs->reasearch_needed, 0);
+  cjh_o_add_object(o, "level", (CJHWriteObjectCB)l_to_json, gs->level);
+  // StreetMap *street_map;
+}
+
+void gs_save(GameScene *gs) { cjh_write("savegame.json", gs_to_json, gs); }

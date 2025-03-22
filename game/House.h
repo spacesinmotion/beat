@@ -1,9 +1,11 @@
 #ifndef HOUSE_H
 #define HOUSE_H
 
+#include "extern/cjsonh/cjsonh.h"
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
+#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/assets.h"
 #include "game/jobs/QueueItem.h"
@@ -16,6 +18,8 @@ typedef struct Resources {
 
 typedef struct House {
   BuildingDisplay display;
+
+  int id;
 
   Resources resources;
   Resources resources_maximum;
@@ -72,7 +76,7 @@ bool h_pay_water(void *context, Wearisome *w, GameScene *gs) {
   gs->clicks++;
   h->resources.clicks--;
   w_deliver(w, MI_Water, wl_color());
-  return w_queue_move_to(w, gs, h->display.location, (QueueItem){h, h_get_water_done});
+  return w_queue_move_to(w, gs, h->display.location, QI(h, h_get_water_done));
 }
 
 bool h_get_food_done(void *context, Wearisome *w, GameScene *gs) {
@@ -89,7 +93,7 @@ bool h_pay_food(void *context, Wearisome *w, GameScene *gs) {
   gs->clicks++;
   h->resources.clicks--;
   w_deliver(w, MI_Food, fa_color());
-  return w_queue_move_to(w, gs, h->display.location, (QueueItem){h, h_get_food_done});
+  return w_queue_move_to(w, gs, h->display.location, QI(h, h_get_food_done));
 }
 
 void h_update(House *h, GameScene *gs, Game *g, float dt) {
@@ -154,14 +158,14 @@ bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
   bool food_is_more_urgent = need_water && need_food && h->resources.water > h->resources.food;
   if (!food_is_more_urgent && need_water && (gs->resource_pool.water - gs->resource_pool_claimed.water > 0)) {
     Recti waterProvider = find_resource_building_rect(gs, h->display.location, R_Water);
-    if (waterProvider.w > 0 && w_queue_move_to(w, gs, waterProvider, (QueueItem){h, h_pay_water})) {
+    if (waterProvider.w > 0 && w_queue_move_to(w, gs, waterProvider, QI(h, h_pay_water))) {
       tc_claim(l_content(gs->level, waterProvider.x, waterProvider.y), gs, w, R_Water);
       h->resources_maximum.clicks--;
       return true;
     }
   } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0)) {
     Recti foodProvider = find_resource_building_rect(gs, h->display.location, R_Food);
-    if (foodProvider.w > 0 && w_queue_move_to(w, gs, foodProvider, (QueueItem){h, h_pay_food})) {
+    if (foodProvider.w > 0 && w_queue_move_to(w, gs, foodProvider, QI(h, h_pay_food))) {
       tc_claim(l_content(gs->level, foodProvider.x, foodProvider.y), gs, w, R_Food);
       h->resources_maximum.clicks--;
       return true;
@@ -170,12 +174,29 @@ bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
   return false;
 }
 
-static SceneObjectTable House_table = (SceneObjectTable){
+void h_resources_to_json(CJHObject *o, void *ud) {
+  Resources *r = (Resources *)ud;
+  cjh_o_add_number_if(o, "food", r->food, 0.0);
+  cjh_o_add_number_if(o, "wateer", r->water, 0.0);
+  cjh_o_add_number_if(o, "clicks", r->clicks, 0.0);
+}
+void h_to_json(CJHObject *o, House *h) {
+  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &h->display);
+  cjh_o_add_number(o, "id", h->id);
+  cjh_o_add_object(o, "resources", h_resources_to_json, &h->resources);
+  cjh_o_add_object(o, "resources_maximum", h_resources_to_json, &h->resources_maximum);
+}
+
+static SceneObjectTable House_table = {
+    .type = "House",
     .dead = (SceneObjectDeadCB)h_dead,
     .render_order = (SceneObjectRenderOrderCB)h_render_order,
     .update = (SceneObjectUpdateCB)h_update,
     .draw = (SceneObjectDrawCB)h_draw,
+    .save = (SceneObjectSaveCB)h_to_json,
 };
+
+void h_to_json_ref(CJHObject *o, House *h) { cjh_o_add_number(o, House_table.type, h ? h->id : 0); }
 
 Recti h_location(const House *mp) { return mp->display.location; }
 
@@ -186,6 +207,7 @@ House *House_init(Game *g, GameScene *gs, Point p) {
   House *h = g_malloc(sizeof(House));
   *h = (House){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
+      .id = unique_id(h),
       .resources = {.food = 0.0f, .water = 0.0f, .clicks = 0},
       .resources_maximum = {.food = 2.0f, .water = 2.0f, .clicks = 0},
       .clicks_cache = -1,

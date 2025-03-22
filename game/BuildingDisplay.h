@@ -1,6 +1,7 @@
 #ifndef BUILDINGDISPLAY_H
 #define BUILDINGDISPLAY_H
 
+#include "extern/cjsonh/cjsonh.h"
 #include "game/Game.h"
 #include "game/Level.h"
 #include "math/Rect.h"
@@ -34,4 +35,8 @@ void bd_draw(BuildingDisplay *bd, Game *g, Color c, MenuIcon icon) {
 }
 
 void bd_flash(BuildingDisplay *bd) { bd->flash = 1.0f; }
+
+static inline void bd_to_json(CJHObject *o, BuildingDisplay *bd) {
+  cjh_o_add_array(o, "location", (CJHWriteArrayCB)ri_to_json, &bd->location);
+}
 #endif

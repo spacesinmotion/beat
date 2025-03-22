@@ -14,12 +14,11 @@
 
 typedef struct Manager {
   WorkProvider work_provider;
+  BuildingDisplay display;
 
   int last_day_delivered;
   int click_used;
   Resource used_manager_counter;
-
-  BuildingDisplay display;
 
   G_Object click_used_text;
   int click_used_cache;
@@ -70,11 +69,21 @@ void mg_draw(Manager *mg, GameScene *gs, Game *g) {
   g_text(g, mg->click_used_text, Oswald_Regular_12, v_add(p, (Vec2){12, -5}));
 }
 
+void mg_to_json(CJHObject *o, Manager *mg) {
+  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &mg->work_provider);
+  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &mg->display);
+  cjh_o_add_number(o, "last_day_delivered", mg->last_day_delivered);
+  cjh_o_add_number(o, "click_used", mg->click_used);
+  cjh_o_add_number(o, "used_manager_counter", mg->used_manager_counter - R_ManagerWork1 + 1);
+}
+
 static SceneObjectTable Manager_table = {
+    .type = "Manager",
     .dead = (SceneObjectDeadCB)mg_dead,
     .render_order = (SceneObjectRenderOrderCB)mg_render_order,
     .update = (SceneObjectUpdateCB)mg_update,
     .draw = (SceneObjectDrawCB)mg_draw,
+    .save = (SceneObjectSaveCB)mg_to_json,
 };
 
 Recti mg_location(const Manager *mg) { return mg->display.location; }
@@ -97,7 +106,7 @@ bool mg_click_building(void *context, Wearisome *w, GameScene *gs) {
     mg->click_used--;
   }
 
-  return w_leave_building(w, gs, (QueueItem){mg, mg_find_manager_work});
+  return w_leave_building(w, gs, QI(mg, mg_find_manager_work));
 }
 
 bool mg_find_manager_work(void *context, Wearisome *w, GameScene *gs) {
@@ -122,9 +131,9 @@ bool mg_find_manager_work(void *context, Wearisome *w, GameScene *gs) {
     r = find_resource_building_rect(gs, mg->display.location, mg->used_manager_counter);
   }
 
-  if (r.w > 0 && w_queue_move_to(w, gs, r, (QueueItem){mg, mg_click_building}))
+  if (r.w > 0 && w_queue_move_to(w, gs, r, QI(mg, mg_click_building)))
     return true;
-  return w_queue_wait_for(w, 0.25f, (QueueItem){mg, mg_find_manager_work});
+  return w_queue_wait_for(w, 0.25f, QI(mg, mg_find_manager_work));
 }
 
 bool mg_start_work(void *context, Wearisome *w, GameScene *gs) {
@@ -138,7 +147,7 @@ bool mg_start_work(void *context, Wearisome *w, GameScene *gs) {
 
 void mg_claim(Manager *mg, GameScene *gs, Wearisome *w, Resource r) {
   if (r == R_Work) {
-    if (w_queue_move_to(w, gs, mg->display.location, (QueueItem){mg, mg_start_work}))
+    if (w_queue_move_to(w, gs, mg->display.location, QI(mg, mg_start_work)))
       wp_claim(&mg->work_provider);
   }
 }

@@ -88,4 +88,14 @@ static inline bool wp_deliver_taken(WorkProvider *wp) {
   return true;
 }
 
+static inline void wp_to_json(CJHObject *o, WorkProvider *wp) {
+  cjh_o_add_number(o, "colums", wp->colums);
+  cjh_o_add_number(o, "rows", wp->rows);
+  cjh_o_add_number_if(o, "clicks", wp->clicks, 0);
+  cjh_o_add_number_if(o, "clicks_claimed", wp->clicks_claimed, 0);
+  cjh_o_add_number_if(o, "clicks_work", wp->clicks_work, 0);
+  cjh_o_add_number_if(o, "clicks_done", wp->clicks_done, 0);
+  cjh_o_add_number_if(o, "clicks_claimed_for_deliver", wp->clicks_claimed_for_deliver, 0);
+}
+
 #endif

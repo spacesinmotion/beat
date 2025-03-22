@@ -66,11 +66,21 @@ void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {
   wp_draw_click_fields(&mp->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
-static SceneObjectTable Marketplace_table = (SceneObjectTable){
+void mp_to_json(CJHObject *o, Marketplace *mp) {
+  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &mp->work_provider);
+  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &mp->display);
+  cjh_o_add_number(o, "last_day_delivered", mp->last_day_delivered);
+  cjh_o_add_number(o, "manager_click_counter", mp->manager_click_counter);
+  cjh_o_add_number(o, "missing_blings", mp->missing_blings);
+}
+
+static SceneObjectTable Marketplace_table = {
+    .type = "Marketplace",
     .dead = (SceneObjectDeadCB)mp_dead,
     .render_order = (SceneObjectRenderOrderCB)mp_render_order,
     .draw = (SceneObjectDrawCB)mp_draw,
     .update = (SceneObjectUpdateCB)mp_update,
+    .save = (SceneObjectSaveCB)mp_to_json,
 };
 
 Recti mp_location(const Marketplace *mp) { return mp->display.location; }
@@ -135,7 +145,7 @@ bool mp_deliver_resource_done(void *context, Wearisome *w, GameScene *gs) {
 bool mp_collect_resource_done(void *context, Wearisome *w, GameScene *gs) {
   Marketplace *mp = (Marketplace *)context;
   w->need_mode = W_Normal;
-  return w_queue_move_to(w, gs, mp->display.location, (QueueItem){mp, mp_deliver_resource_done});
+  return w_queue_move_to(w, gs, mp->display.location, QI(mp, mp_deliver_resource_done));
 }
 
 void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
@@ -153,7 +163,7 @@ void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
     if (tc) {
       tc_claim(tc, gs, w, R_Deliver);
       wp_claim(&mp->work_provider);
-      w->queue_follow_up = (QueueItem){mp, mp_collect_resource_done};
+      w->queue_follow_up = QI(mp, mp_collect_resource_done);
     }
   } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
     mp->manager_click_counter = r;

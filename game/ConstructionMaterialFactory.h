@@ -8,11 +8,10 @@
 
 typedef struct ConstructionMaterialFactory {
   WorkProvider work_provider;
+  BuildingDisplay display;
 
   int last_day_delivered;
   int manager_click_counter;
-
-  BuildingDisplay display;
 } ConstructionMaterialFactory;
 
 static inline Color cmf_color() { return rgb(85, 84, 80); }
@@ -49,11 +48,20 @@ void cmf_draw(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g) {
   wp_draw_click_fields(&cmf->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
+void cmf_to_json(CJHObject *o, ConstructionMaterialFactory *cmf) {
+  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &cmf->work_provider);
+  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &cmf->display);
+  cjh_o_add_number(o, "last_day_delivered", cmf->last_day_delivered);
+  cjh_o_add_number(o, "manager_click_counter", cmf->manager_click_counter);
+}
+
 static SceneObjectTable ConstructionMaterialFactory_table = {
+    .type = "ConstructionMaterialFactory",
     .dead = (SceneObjectDeadCB)cmf_dead,
     .render_order = (SceneObjectRenderOrderCB)cmf_render_order,
     .update = (SceneObjectUpdateCB)cmf_update,
     .draw = (SceneObjectDrawCB)cmf_draw,
+    .save = (SceneObjectSaveCB)cmf_to_json,
 };
 
 Recti cmf_location(const ConstructionMaterialFactory *cmf) { return cmf->display.location; }
@@ -78,7 +86,7 @@ bool cmf_start_work(void *context, Wearisome *w, GameScene *gs) {
 
   ConstructionMaterialFactory *cmf = (ConstructionMaterialFactory *)context;
   wp_start(&cmf->work_provider, w);
-  return w_queue_wait_for(w, 10.0f, (QueueItem){cmf, cmf_done_work});
+  return w_queue_wait_for(w, 10.0f, QI(cmf, cmf_done_work));
 }
 
 bool cmf_collect_storage(void *context, Wearisome *w, GameScene *gs) {
@@ -93,10 +101,10 @@ bool cmf_collect_storage(void *context, Wearisome *w, GameScene *gs) {
 
 void cmf_claim(ConstructionMaterialFactory *cmf, GameScene *gs, Wearisome *w, Resource r) {
   if (r == R_Work) {
-    if (w_queue_move_to(w, gs, cmf->display.location, (QueueItem){cmf, cmf_start_work}))
+    if (w_queue_move_to(w, gs, cmf->display.location, QI(cmf, cmf_start_work)))
       wp_claim(&cmf->work_provider);
   } else if (r == R_Deliver) {
-    if (w_queue_move_to(w, gs, cmf->display.location, (QueueItem){cmf, cmf_collect_storage}))
+    if (w_queue_move_to(w, gs, cmf->display.location, QI(cmf, cmf_collect_storage)))
       wp_claim_deliver(&cmf->work_provider, gs);
   } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
     cmf->manager_click_counter = r;

@@ -1,10 +1,12 @@
 #ifndef WEARISOME
 #define WEARISOME
 
+#include "extern/cjsonh/cjsonh.h"
 #include "game/Game.h"
 #include "game/House.h"
 #include "game/assets.h"
 #include "game/effects/Dust.h"
+#include "game/jobs/QueueItem.h"
 #include "game/search/RectSearch.h"
 #include "game/search/ResourceProviderSearch.h"
 #include "game/search/StreetSearch.h"
@@ -23,8 +25,6 @@ typedef enum WearisomeState {
   W_QueueWait,
 } WearisomeState;
 
-typedef enum WearisomeNeedMode { W_Normal, W_IsWorking, W_GetEntertainment } WearisomeNeedMode;
-
 const char *WearisomeState_name(WearisomeState s) {
   switch (s) {
   case W_None:
@@ -41,6 +41,21 @@ const char *WearisomeState_name(WearisomeState s) {
     return "queue job move";
   case W_QueueWait:
     return "queue job wait";
+  }
+  assert(false);
+  return "<error>";
+}
+
+typedef enum WearisomeNeedMode { W_Normal, W_IsWorking, W_GetEntertainment } WearisomeNeedMode;
+
+const char *WearisomeNeedMode_name(WearisomeNeedMode s) {
+  switch (s) {
+  case W_Normal:
+    return "Normal";
+  case W_IsWorking:
+    return "IsWorking";
+  case W_GetEntertainment:
+    return "GetEntertainment";
   }
   assert(false);
   return "<error>";
@@ -400,12 +415,49 @@ void w_draw(Wearisome *w, GameScene *gs, Game *g) {
 bool w_is_home(Wearisome *w) { return w->state == W_AtHome; }
 bool w_is_free(Wearisome *w) { return w->state == W_Wandering || w->state == W_Waiting; }
 
-SceneObjectTable w_table = (SceneObjectTable){
+void w_needs_to_json(CJHObject *o, void *np) {
+  Needs *n = (Needs *)np;
+  cjh_o_add_number(o, "food", n->food);
+  cjh_o_add_number(o, "water", n->water);
+  cjh_o_add_number(o, "sleep", n->sleep);
+}
+
+void w_to_json(CJHObject *o, Wearisome *w) {
+  cjh_o_add_object(o, "house", (CJHWriteObjectCB)h_to_json_ref, w->home);
+  cjh_o_add_array(o, "current_building", (CJHWriteArrayCB)ri_to_json, &w->current_building);
+  cjh_o_add_array(o, "position", (CJHWriteArrayCB)v_to_json, &w->position);
+  cjh_o_add_array(o, "destination", (CJHWriteArrayCB)v_to_json, &w->destination);
+
+  cjh_o_add_array(o, "path", (CJHWriteArrayCB)pp_to_json, w->path);
+  cjh_o_add_number(o, "wait_time", w->wait_time);
+  cjh_o_add_object(o, "needs", w_needs_to_json, &w->needs);
+  cjh_o_add_object(o, "need_consumption", w_needs_to_json, &w->need_consumption);
+
+  cjh_o_add_number(o, "health", w->health);
+  cjh_o_add_number(o, "speed", w->speed);
+
+  // ?
+  // QueueItem queue, queue_follow_up;
+  if (qi_is_set(&w->queue))
+    cjh_o_add_object(o, "queue", (CJHWriteObjectCB)qi_to_json, &w->queue);
+  if (qi_is_set(&w->queue_follow_up))
+    cjh_o_add_object(o, "queue_follow_up", (CJHWriteObjectCB)qi_to_json, &w->queue_follow_up);
+
+  cjh_o_add_string(o, "state", WearisomeState_name(w->state));
+  cjh_o_add_string(o, "need_mode", WearisomeNeedMode_name(w->need_mode));
+  cjh_o_add_number(o, "deliver_icon", w->deliver_icon);
+  cjh_o_add_array(o, "deliver_color", (CJHWriteArrayCB)c_to_json, &w->deliver_color);
+}
+
+SceneObjectTable w_table = {
+    .type = "Wearisome",
     .dead = (SceneObjectDeadCB)w_dead,
     .render_order = (SceneObjectRenderOrderCB)w_render_order,
     .update = (SceneObjectUpdateCB)w_update,
     .draw = (SceneObjectDrawCB)w_draw,
+    .save = (SceneObjectSaveCB)w_to_json,
 };
+
 Wearisome *Wearisome_init(GameScene *gs, House *home) {
   Vec2 pos = l_to_vec(home->display.location.x, home->display.location.y);
   Wearisome *w = g_malloc(sizeof(Wearisome));

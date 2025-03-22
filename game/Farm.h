@@ -8,11 +8,10 @@
 
 typedef struct Farm {
   WorkProvider work_provider;
+  BuildingDisplay display;
 
   int last_day_delivered;
   int manager_click_counter;
-
-  BuildingDisplay display;
 } Farm;
 
 Color fa_color() { return rgb(11, 133, 0); }
@@ -48,11 +47,20 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
   wp_draw_click_fields(&fa->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
+void fa_to_json(CJHObject *o, Farm *fa) {
+  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &fa->work_provider);
+  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &fa->display);
+  cjh_o_add_number(o, "last_day_delivered", fa->last_day_delivered);
+  cjh_o_add_number(o, "manager_click_counter", fa->manager_click_counter);
+}
+
 static SceneObjectTable Farm_table = {
+    .type = "Farm",
     .dead = (SceneObjectDeadCB)fa_dead,
     .render_order = (SceneObjectRenderOrderCB)fa_render_order,
     .update = (SceneObjectUpdateCB)fa_update,
     .draw = (SceneObjectDrawCB)fa_draw,
+    .save = (SceneObjectSaveCB)fa_to_json,
 };
 
 Recti fa_location(const Farm *fa) { return fa->display.location; }
@@ -77,7 +85,7 @@ bool fa_start_work(void *context, Wearisome *w, GameScene *gs) {
 
   Farm *fa = (Farm *)context;
   wp_start(&fa->work_provider, w);
-  return w_queue_wait_for(w, 6.0f, (QueueItem){fa, fa_done_work});
+  return w_queue_wait_for(w, 6.0f, QI(fa, fa_done_work));
 }
 
 bool fa_collect_storage(void *context, Wearisome *w, GameScene *gs) {
@@ -92,10 +100,10 @@ bool fa_collect_storage(void *context, Wearisome *w, GameScene *gs) {
 
 void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
   if (r == R_Work) {
-    if (w_queue_move_to(w, gs, fa->display.location, (QueueItem){fa, fa_start_work}))
+    if (w_queue_move_to(w, gs, fa->display.location, QI(fa, fa_start_work)))
       wp_claim(&fa->work_provider);
   } else if (r == R_Deliver) {
-    if (w_queue_move_to(w, gs, fa->display.location, (QueueItem){fa, fa_collect_storage}))
+    if (w_queue_move_to(w, gs, fa->display.location, QI(fa, fa_collect_storage)))
       wp_claim_deliver(&fa->work_provider, gs);
   } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
     fa->manager_click_counter = r;

@@ -1,11 +1,12 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
+#include "extern/cjsonh/Z85.h"
+#include "extern/cjsonh/cjsonh.h"
 #include "game/TileContent.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
 #include <stdbool.h>
-#include <stdint.h>
 #include <string.h>
 
 #define LEVEL_WIDTH 48
@@ -139,6 +140,41 @@ bool l_bright_first(Level *level, int start_x, int start_y, SearchHandle handle)
   }
 
   return false;
+}
+
+void l_movable_to_json(CJHObject *o, Level *l) {
+  unsigned short points[2 * LEVEL_WIDTH * LEVEL_HEIGHT];
+  unsigned nb_entries = 0;
+
+  const unsigned short sep = LEVEL_WIDTH;
+  points[nb_entries++] = sep;
+  for (int i = 0; i < LEVEL_WIDTH; ++i) {
+    bool need_line = true;
+    for (int j = 0; j < LEVEL_HEIGHT; ++j) {
+      if (l_movable(l, i, j)) {
+        if (need_line) {
+          points[nb_entries++] = (unsigned short)i;
+          need_line = false;
+        }
+        points[nb_entries++] = (unsigned short)j;
+      }
+    }
+    if (!need_line)
+      points[nb_entries++] = sep;
+  }
+  if ((nb_entries * sizeof(short)) % 4 != 0)
+    points[nb_entries++] = sep;
+
+  char *z85 = Z85_encode((unsigned char *)points, nb_entries * sizeof(short));
+  cjh_o_add_string(o, "movable", z85);
+  printf("shorts: %u, data: %llu, z85: %llu\n", nb_entries, nb_entries * sizeof(short), strlen(z85));
+  free(z85);
+}
+
+void l_to_json(CJHObject *o, Level *l) {
+  cjh_o_add_number_if(o, "width", LEVEL_WIDTH, 0);
+  cjh_o_add_number_if(o, "height", LEVEL_HEIGHT, 0);
+  l_movable_to_json(o, l);
 }
 
 #endif // LEVEL_H
