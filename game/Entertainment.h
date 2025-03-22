@@ -5,6 +5,7 @@
 #include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/House.h"
+#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "math/Rect.h"
@@ -13,6 +14,8 @@
 
 typedef struct Entertainment {
   BuildingDisplay display;
+
+  int id;
 
   int claimed, started;
   bool some_one_is_done;
@@ -98,7 +101,6 @@ bool em_provides(Entertainment *em, GameScene *gs, Resource r) {
 
 bool em_done_entainment(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
-  (void)w;
   Entertainment *em = (Entertainment *)context;
   em->started--;
   em->claimed--;
@@ -129,6 +131,7 @@ Entertainment *Entertainment_init(Game *g, GameScene *gs, Point p) {
   Entertainment *em = g_malloc(sizeof(Entertainment));
   *em = (Entertainment){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.w}),
+      .id = unique_id(em),
       .started = 0,
       .claimed = 0,
       .some_one_is_done = false,

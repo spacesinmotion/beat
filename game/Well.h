@@ -2,6 +2,7 @@
 #define WELL_H
 
 #include "game/BuildingDisplay.h"
+#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
@@ -11,6 +12,8 @@
 typedef struct Well {
   WorkProvider work_provider;
   BuildingDisplay display;
+
+  int id;
 
   int last_day_delivered;
   int manager_click_counter;
@@ -120,6 +123,7 @@ Well *Well_init(Game *g, GameScene *gs, Point p) {
   Well *wl = g_malloc(sizeof(Well));
   *wl = (Well){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
+      .id = unique_id(wl),
       .last_day_delivered = gs->day,
       .manager_click_counter = 0,
   };

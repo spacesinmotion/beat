@@ -2,6 +2,7 @@
 #define CLICKFACTORY_H
 
 #include "game/BuildingDisplay.h"
+#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
@@ -12,6 +13,8 @@
 typedef struct ClickFactory {
   WorkProvider work_provider;
   BuildingDisplay display;
+
+  int id;
 
   int last_day_delivered;
   int missing_blings;
@@ -115,6 +118,7 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   ClickFactory *cf = g_malloc(sizeof(ClickFactory));
   *cf = (ClickFactory){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
+      .id = unique_id(cf),
       .last_day_delivered = gs->day,
       .missing_blings = 15,
   };

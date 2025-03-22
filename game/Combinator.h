@@ -5,6 +5,7 @@
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
+#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
@@ -16,6 +17,8 @@
 typedef struct Combinator {
   WorkProvider work_provider;
   BuildingDisplay display;
+
+  int id;
 
   int last_day_delivered;
   int manager_click_counter;
@@ -164,6 +167,7 @@ Combinator *Combinator_init(Game *g, GameScene *gs, Point p) {
   Combinator *cb = g_malloc(sizeof(Combinator));
   *cb = (Combinator){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
+      .id = unique_id(cb),
       .last_day_delivered = gs->day,
       .manager_click_counter = 0,
       .sources = {NULL, NULL},

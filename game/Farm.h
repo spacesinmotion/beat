@@ -2,6 +2,7 @@
 #define FARM_H
 
 #include "game/BuildingDisplay.h"
+#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
@@ -9,6 +10,8 @@
 typedef struct Farm {
   WorkProvider work_provider;
   BuildingDisplay display;
+
+  int id;
 
   int last_day_delivered;
   int manager_click_counter;
@@ -75,7 +78,6 @@ bool fa_provides(Farm *fa, GameScene *gs, Resource r) {
 
 bool fa_done_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
-  (void)w;
   Farm *fa = (Farm *)context;
   wp_done(&fa->work_provider, w);
   return false;
@@ -121,6 +123,7 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   Farm *fa = g_malloc(sizeof(Farm));
   *fa = (Farm){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
+      .id = unique_id(fa),
       .last_day_delivered = gs->day,
       .manager_click_counter = 0,
   };

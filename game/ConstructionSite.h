@@ -2,6 +2,7 @@
 #define CONSTRUCTIONSITE_H
 
 #include "game/GameScene.h"
+#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
@@ -10,7 +11,7 @@
 typedef struct ConstructionSite {
   WorkProvider work_provider;
   Recti location;
-  int key;
+  int id, key;
 } ConstructionSite;
 
 Color cs_color() { return rgb(43, 187, 223); }
@@ -126,6 +127,7 @@ ConstructionSite *ConstructionSite_init(GameScene *gs, Recti r, int key) {
   ConstructionSite *cs = g_malloc(sizeof(ConstructionSite));
   *cs = (ConstructionSite){
       .location = r,
+      .id = unique_id(cs),
       .key = key,
   };
   assert((void *)cs == (void *)&cs->work_provider);

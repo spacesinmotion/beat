@@ -29,10 +29,10 @@
             2
           ]
         },
-        "id": 2,
+        "id": 3,
         "resources": {
           "wateer": 1,
-          "clicks": 2
+          "clicks": 1
         },
         "resources_maximum": {
           "food": 2,
@@ -51,7 +51,7 @@
             2
           ]
         },
-        "id": 1,
+        "id": 2,
         "resources": {
           "wateer": 1,
           "clicks": 2
@@ -59,7 +59,7 @@
         "resources_maximum": {
           "food": 2,
           "wateer": 2,
-          "clicks": 2
+          "clicks": 1
         }
       }
     },
@@ -73,7 +73,7 @@
             2
           ]
         },
-        "id": 3,
+        "id": 4,
         "resources": {
           "clicks": 1
         },
@@ -94,7 +94,7 @@
             2
           ]
         },
-        "id": 4,
+        "id": 5,
         "resources": {
           "clicks": 1
         },
@@ -108,34 +108,13 @@
       "House": {
         "display": {
           "location": [
-            17,
-            18,
-            2,
-            2
-          ]
-        },
-        "id": 5,
-        "resources": {
-          "clicks": 2
-        },
-        "resources_maximum": {
-          "food": 2,
-          "wateer": 2,
-          "clicks": 1
-        }
-      }
-    },
-    {
-      "House": {
-        "display": {
-          "location": [
             19,
             18,
             2,
             2
           ]
         },
-        "id": 6,
+        "id": 7,
         "resources": {
           "clicks": 3
         },
@@ -147,72 +126,50 @@
       }
     },
     {
-      "Wearisome": {
-        "house": {
-          "House": 2
+      "House": {
+        "display": {
+          "location": [
+            17,
+            18,
+            2,
+            2
+          ]
         },
-        "current_building": [
-          19,
-          12,
-          1,
-          1
-        ],
-        "position": [
-          304,
-          198.16047668457
-        ],
-        "destination": [
-          304,
-          192
-        ],
-        "path": [],
-        "wait_time": -0.0344204530119896,
-        "needs": {
-          "food": 0.987366020679474,
-          "water": 0.983675420284271,
-          "sleep": 0.971580505371094
+        "id": 6,
+        "resources": {
+          "clicks": 1
         },
-        "need_consumption": {
-          "food": 0.297987312078476,
-          "water": 0.385029137134552,
-          "sleep": 0.67919248342514
-        },
-        "health": 1,
-        "speed": 72.3425979614258,
-        "queue": {
-          "cb": "h_pay_food"
-        },
-        "state": "queue job move",
-        "need_mode": "Normal",
-        "deliver_icon": 15,
-        "deliver_color": [
-          0,
-          80,
-          133,
-          255
-        ]
+        "resources_maximum": {
+          "food": 2,
+          "wateer": 2,
+          "clicks": 1
+        }
       }
     },
     {
       "Wearisome": {
         "house": {
-          "House": 3
+          "House": 6
         },
         "current_building": [
           16,
-          13,
+          12,
           1,
           1
         ],
         "position": [
-          256,
-          203.512390136719
+          263.911224365234,
+          192
         ],
         "destination": [
           256,
-          208
+          192
         ],
         "path": [
+          [
+            256,
+            208
+          ],
           [
             256,
             224
@@ -226,24 +183,33 @@
             256
           ],
           [
+            256,
+            272
+          ],
+          [
+            256,
+            288
+          ],
+          [
             272,
-            256
+            288
           ]
         ],
         "wait_time": 0,
         "needs": {
-          "food": 0.988662421703339,
-          "water": 0.981518864631653,
-          "sleep": 0.973132967948914
+          "food": 0.982248902320862,
+          "water": 0.979922354221344,
+          "sleep": 0.973636865615845
         },
         "need_consumption": {
-          "food": 0.267410814762115,
-          "water": 0.435894340276718,
-          "sleep": 0.642100274562836
+          "food": 0.348852515220642,
+          "water": 0.394569218158722,
+          "sleep": 0.523816645145416
         },
         "health": 1,
-        "speed": 67.7030258178711,
+        "speed": 60.0700416564941,
         "queue": {
+          "id": 6,
           "cb": "h_get_water_done"
         },
         "state": "queue job move",
@@ -263,86 +229,25 @@
           "House": 5
         },
         "current_building": [
-          17,
-          13,
+          20,
+          12,
           1,
           1
         ],
         "position": [
-          266.214447021484,
-          208
+          320,
+          193.336135864258
         ],
         "destination": [
-          272,
-          208
+          320,
+          192
         ],
-        "path": [
-          [
-            272,
-            192
-          ]
-        ],
+        "path": [],
         "wait_time": 0,
         "needs": {
-          "food": 0.985209345817566,
-          "water": 0.983271181583405,
-          "sleep": 0.978082180023193
-        },
-        "need_consumption": {
-          "food": 0.348852515220642,
-          "water": 0.394569218158722,
-          "sleep": 0.523816645145416
-        },
-        "health": 1,
-        "speed": 60.0700416564941,
-        "queue": {
-          "cb": "h_pay_water"
-        },
-        "state": "queue job move",
-        "need_mode": "Normal",
-        "deliver_icon": 15,
-        "deliver_color": [
-          0,
-          0,
-          0,
-          0
-        ]
-      }
-    },
-    {
-      "Wearisome": {
-        "house": {
-          "House": 4
-        },
-        "current_building": [
-          21,
-          13,
-          1,
-          1
-        ],
-        "position": [
-          336,
-          209.186294555664
-        ],
-        "destination": [
-          336,
-          208
-        ],
-        "path": [
-          [
-            320,
-            208
-          ],
-          [
-            320,
-            192
-          ]
-        ],
-        "wait_time": 0,
-        "needs": {
-          "food": 0.989337086677551,
-          "water": 0.9847731590271,
-          "sleep": 0.976028680801392
+          "food": 0.987202525138855,
+          "water": 0.981725215911865,
+          "sleep": 0.971167147159576
         },
         "need_consumption": {
           "food": 0.251498460769653,
@@ -352,6 +257,7 @@
         "health": 1,
         "speed": 62.2096939086914,
         "queue": {
+          "id": 5,
           "cb": "h_pay_water"
         },
         "state": "queue job move",
@@ -368,37 +274,28 @@
     {
       "Wearisome": {
         "house": {
-          "House": 6
+          "House": 7
         },
         "current_building": [
-          21,
-          14,
+          20,
+          12,
           1,
           1
         ],
         "position": [
-          336,
-          224
+          320,
+          205.676788330078
         ],
         "destination": [
-          336,
-          208
+          320,
+          192
         ],
-        "path": [
-          [
-            320,
-            208
-          ],
-          [
-            320,
-            192
-          ]
-        ],
+        "path": [],
         "wait_time": 0,
         "needs": {
-          "food": 0.987798392772675,
-          "water": 0.982906579971313,
-          "sleep": 0.974298894405365
+          "food": 0.985355973243713,
+          "water": 0.979485154151917,
+          "sleep": 0.969086229801178
         },
         "need_consumption": {
           "food": 0.28778800368309,
@@ -408,6 +305,7 @@
         "health": 1,
         "speed": 69.0264587402344,
         "queue": {
+          "id": 7,
           "cb": "h_pay_water"
         },
         "state": "queue job move",
@@ -424,41 +322,37 @@
     {
       "Wearisome": {
         "house": {
-          "House": 1
+          "House": 2
         },
         "current_building": [
           16,
-          14,
+          13,
           1,
           1
         ],
         "position": [
-          262.978973388672,
-          224
+          256,
+          209.427001953125
         ],
         "destination": [
           256,
-          224
+          208
         ],
         "path": [
           [
-            256,
-            240
+            272,
+            208
           ],
           [
-            256,
-            256
-          ],
-          [
-            256,
-            272
+            272,
+            192
           ]
         ],
-        "wait_time": -0.0341635681688786,
+        "wait_time": -0.0338478498160839,
         "needs": {
-          "food": 0.989395201206207,
-          "water": 0.982771158218384,
-          "sleep": 0.977461159229279
+          "food": 0.9872727394104,
+          "water": 0.979322493076324,
+          "sleep": 0.97288990020752
         },
         "need_consumption": {
           "food": 0.250125139951706,
@@ -467,9 +361,118 @@
         },
         "health": 1,
         "speed": 72.131103515625,
-        "state": "wandering",
+        "queue": {
+          "id": 2,
+          "cb": "h_pay_food"
+        },
+        "state": "queue job move",
         "need_mode": "Normal",
         "deliver_icon": 15,
+        "deliver_color": [
+          0,
+          80,
+          133,
+          255
+        ]
+      }
+    },
+    {
+      "Wearisome": {
+        "house": {
+          "House": 3
+        },
+        "current_building": [
+          19,
+          14,
+          1,
+          1
+        ],
+        "position": [
+          304,
+          220.179351806641
+        ],
+        "destination": [
+          304,
+          224
+        ],
+        "path": [],
+        "wait_time": -0.0339797027409077,
+        "needs": {
+          "food": 0.984837174415588,
+          "water": 0.98040783405304,
+          "sleep": 0.965816974639893
+        },
+        "need_consumption": {
+          "food": 0.297987312078476,
+          "water": 0.385029137134552,
+          "sleep": 0.67919248342514
+        },
+        "health": 1,
+        "speed": 72.3425979614258,
+        "queue": {
+          "id": 3,
+          "cb": "h_get_food_done"
+        },
+        "state": "queue job move",
+        "need_mode": "Normal",
+        "deliver_icon": 4,
+        "deliver_color": [
+          11,
+          133,
+          0,
+          255
+        ]
+      }
+    },
+    {
+      "Wearisome": {
+        "house": {
+          "House": 4
+        },
+        "current_building": [
+          16,
+          15,
+          1,
+          1
+        ],
+        "position": [
+          256,
+          235.398239135742
+        ],
+        "destination": [
+          256,
+          240
+        ],
+        "path": [
+          [
+            256,
+            256
+          ],
+          [
+            272,
+            256
+          ]
+        ],
+        "wait_time": 0,
+        "needs": {
+          "food": 0.986392796039581,
+          "water": 0.977819681167603,
+          "sleep": 0.967683792114258
+        },
+        "need_consumption": {
+          "food": 0.267410814762115,
+          "water": 0.435894340276718,
+          "sleep": 0.642100274562836
+        },
+        "health": 1,
+        "speed": 67.7030258178711,
+        "queue": {
+          "id": 4,
+          "cb": "h_get_water_done"
+        },
+        "state": "queue job move",
+        "need_mode": "Normal",
+        "deliver_icon": 3,
         "deliver_color": [
           0,
           80,
@@ -481,19 +484,19 @@
   ],
   "game_speed": 2,
   "game_paused": false,
-  "daytime_step": 0.0005664600757882,
-  "daytime": 0.0423982217907906,
+  "daytime_step": 0.000560946587938815,
+  "daytime": 0.0508843958377838,
   "day": 1,
-  "clicks": 7,
-  "clicks_in_houses": 11,
+  "clicks": 9,
+  "clicks_in_houses": 9,
   "wearisome_count": 6,
   "resource_pool": {
-    "water": 22,
-    "food": 25,
+    "water": 21,
+    "food": 24,
     "construction_material": 30
   },
   "resource_pool_claimed": {
-    "water": 3,
+    "water": 2,
     "food": 1,
     "construction_material": 0
   },

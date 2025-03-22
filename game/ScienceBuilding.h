@@ -2,6 +2,7 @@
 #define SCIENCEBUILDING_H
 
 #include "game/BuildingDisplay.h"
+#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
@@ -11,6 +12,8 @@
 typedef struct ScienceBuilding {
   WorkProvider work_provider;
   BuildingDisplay display;
+
+  int id;
 
   int last_day_delivered;
 } ScienceBuilding;
@@ -117,6 +120,7 @@ ScienceBuilding *ScienceBuilding_init(Game *g, GameScene *gs, Point p) {
   ScienceBuilding *scb = g_malloc(sizeof(ScienceBuilding));
   *scb = (ScienceBuilding){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
+      .id = unique_id(scb),
       .last_day_delivered = gs->day,
   };
   assert((void *)scb == (void *)&scb->work_provider);

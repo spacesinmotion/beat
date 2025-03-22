@@ -4,6 +4,7 @@
 #include "game/BuildingDisplay.h"
 #include "game/House.h"
 #include "game/Level.h"
+#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
@@ -15,6 +16,8 @@
 typedef struct Manager {
   WorkProvider work_provider;
   BuildingDisplay display;
+
+  int id;
 
   int last_day_delivered;
   int click_used;
@@ -164,6 +167,7 @@ Manager *Manager_init(Game *g, GameScene *gs, Point p) {
   Manager *mg = g_malloc(sizeof(Manager));
   *mg = (Manager){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
+      .id = unique_id(mg),
       .last_day_delivered = gs->day,
       .click_used = 0,
       .used_manager_counter = R_None,

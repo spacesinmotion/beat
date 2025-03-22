@@ -2,6 +2,7 @@
 #define CONSTRUCTIONMATERIALFACTORY_H
 
 #include "game/BuildingDisplay.h"
+#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
@@ -9,6 +10,8 @@
 typedef struct ConstructionMaterialFactory {
   WorkProvider work_provider;
   BuildingDisplay display;
+
+  int id;
 
   int last_day_delivered;
   int manager_click_counter;
@@ -121,6 +124,7 @@ ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene
   ConstructionMaterialFactory *cmf = g_malloc(sizeof(ConstructionMaterialFactory));
   *cmf = (ConstructionMaterialFactory){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
+      .id = unique_id(cmf),
       .last_day_delivered = gs->day,
       .manager_click_counter = 0,
   };
