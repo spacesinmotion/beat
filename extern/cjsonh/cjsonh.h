@@ -240,7 +240,7 @@ static inline void cjh_o_skip(CJHObjectR *o) { o->start = cjh__skip(o->start); }
 static inline void cjh_a_skip(CJHArrayR *a) { a->start = cjh__skip(a->start); }
 
 static inline double cjh__read_bool(const char **cp) {
-  const char *c = *cp;
+  const char *c = skip_white_space(*cp);
   char *e = (char *)cjh__skip_word(c);
   assert(e > c);
   const char old = *e;
@@ -255,7 +255,8 @@ static inline double cjh_o_read_bool(CJHObjectR *o) { return cjh__read_bool(&o->
 static inline double cjh_a_read_bool(CJHArrayR *a) { return cjh__read_bool(&a->start); }
 
 static inline double cjh__read_number(const char **cp) {
-  const char *c = *cp;
+  const char *c = skip_white_space(*cp);
+
   char *e;
   double num = strtod(c, &e);
   assert(e > c);
@@ -264,5 +265,21 @@ static inline double cjh__read_number(const char **cp) {
 }
 static inline double cjh_o_read_number(CJHObjectR *o) { return cjh__read_number(&o->start); }
 static inline double cjh_a_read_number(CJHArrayR *a) { return cjh__read_number(&a->start); }
+
+typedef struct StrView {
+  const char *s;
+  const int len;
+} StrView;
+static inline StrView cjh__read_string(const char **cp) {
+  const char *c = skip_white_space(*cp);
+  assert(*c == '"');
+  c++;
+  const char *e = end_of_string(c);
+
+  *cp = e + 1;
+  return (StrView){c, (int)(e - c)};
+}
+static inline StrView cjh_o_read_string(CJHObjectR *o) { return cjh__read_string(&o->start); }
+static inline StrView cjh_a_read_string(CJHArrayR *a) { return cjh__read_string(&a->start); }
 
 #endif

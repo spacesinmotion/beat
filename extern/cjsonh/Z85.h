@@ -64,13 +64,13 @@ char *Z85_encode(byte *data, size_t size) {
 //  Decode an encoded string into a byte array; size of array will be
 //  strlen (string) * 4 / 5.
 
-byte *Z85_decode(char *string) {
+byte *Z85_decode(char *string, size_t *decoded_size) {
   //  Accepts only strings bounded to 5 bytes
   if (strlen(string) % 5)
     return NULL;
 
-  size_t decoded_size = strlen(string) * 4 / 5;
-  byte *decoded = malloc(decoded_size);
+  *decoded_size = strlen(string) * 4 / 5;
+  byte *decoded = malloc(*decoded_size);
 
   unsigned byte_nbr = 0;
   unsigned char_nbr = 0;
@@ -88,7 +88,7 @@ byte *Z85_decode(char *string) {
       value = 0;
     }
   }
-  assert(byte_nbr == decoded_size);
+  assert(byte_nbr == *decoded_size);
   return decoded;
 }
 

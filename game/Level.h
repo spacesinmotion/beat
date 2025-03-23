@@ -177,12 +177,42 @@ void l_to_json(CJHObject *o, Level *l) {
   l_movable_to_json(o, l);
 }
 
+void l_movable_from_json(CJHObjectR *o, Level *l) {
+  StrView str = cjh_o_read_string(o);
+  // printf("%.*smovable: %.*s\n", indent, space, str.len, str.s);
+
+  char *tmp = (char *)str.s;
+  tmp[str.len] = '\0';
+  size_t nb_entries = 0;
+  unsigned short *points = (unsigned short *)Z85_decode(tmp, &nb_entries);
+  nb_entries /= sizeof(unsigned short);
+  tmp[str.len] = '"';
+
+  assert(points);
+  const unsigned short sep = points[0];
+  for (size_t i = 1; i < nb_entries; ++i) {
+    if (points[i] == sep)
+      printf("\n");
+    else if (points[i - 1] == sep)
+      printf("%.*sline %d: ", indent, space, points[i]);
+    else
+      printf(" %d", points[i]);
+  }
+
+  free(points);
+}
+
 void l_from_json(CJHObjectR *o, const char *key, Level *l) {
   if (streq(key, "width"))
     printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
   else if (streq(key, "height"))
     printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else {
+  else if (streq(key, "movable")) {
+    indent += 2;
+    l_movable_from_json(o, l);
+    indent -= 2;
+  } else {
+    assert(false);
     printf("%.*s%s: SKIP\n", indent, space, key);
     cjh_o_skip(o);
   }
