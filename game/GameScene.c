@@ -378,8 +378,6 @@ typedef enum GameKeys {
   SPEED_8_KEY = 52,
 } GameKeys;
 
-void gs_save(GameScene *gs);
-void gs_load(GameScene *gs);
 void gs_key_up(GameScene *gs, Game *g, int key) {
   (void)g;
 
@@ -393,10 +391,6 @@ void gs_key_up(GameScene *gs, Game *g, int key) {
     gs_set_game_speed(gs, 4);
   else if (key == SPEED_8_KEY)
     gs_set_game_speed(gs, 8);
-  else if (key == 294)
-    gs_save(gs);
-  else if (key == 298)
-    gs_load(gs);
   else
     printf("KEY UP (%d)\n", key);
 }
@@ -429,6 +423,10 @@ void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
     Combinator_init(g, gs, (Point){r.x, r.y});
   }
 }
+
+void gs_to_json(CJHObject *o, void *ud);
+void gs_from_json(CJHObjectR *o, const char *key, void *ud);
+
 SceneTable GameScene_table = {
     .update = (SceneUpdateCB)gs_update,
     .draw = (SceneDrawCB)gs_draw,
@@ -436,6 +434,8 @@ SceneTable GameScene_table = {
     .mouse_move = (SceneMouseMoveCB)gs_mouse_move,
     .mouse_down = (SceneMouseCB)gs_mouse_down,
     .key_up = (SceneKeyCB)gs_key_up,
+    .save = gs_to_json,
+    .load = gs_from_json,
 };
 void GameScene_init(Game *g) {
   GameScene *gs = g_malloc(sizeof(GameScene));
@@ -708,6 +708,3 @@ void gs_from_json(CJHObjectR *o, const char *key, void *ud) {
     cjh_o_skip(o);
   }
 }
-
-void gs_save(GameScene *gs) { cjh_write("savegame.json", gs_to_json, gs); }
-void gs_load(GameScene *gs) { cjh_read("savegame.json", gs_from_json, gs); }

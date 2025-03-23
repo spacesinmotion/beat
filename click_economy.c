@@ -708,6 +708,25 @@ static void g_cleanup(Game *g) {
   sg_shutdown();
 }
 
+void g_to_json(CJHObject *o, void *ud) {
+  Game *g = (Game *)ud;
+  cjh_o_add_object(o, "scene", (CJHWriteObjectCB)g->scene.table->save, g->scene.context);
+}
+
+void g_from_json(CJHObjectR *o, const char *key, void *ud) {
+  Game *g = (Game *)ud;
+  if (streq(key, "scene")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)(CJHWriteObjectCB)g->scene.table->load, g->scene.context);
+    indent -= 2;
+
+  } else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
 bool mid_down = false;
 static void g_handel_events(const sapp_event *e, Game *g) {
   if (e->type == SAPP_EVENTTYPE_MOUSE_SCROLL) {
@@ -739,10 +758,14 @@ static void g_handel_events(const sapp_event *e, Game *g) {
     if (g->scene.table->key_down)
       g->scene.table->key_down(g->scene.context, g, e->key_code);
   } else if ((e->type == SAPP_EVENTTYPE_KEY_UP)) {
-    if (g->scene.table->key_up)
-      g->scene.table->key_up(g->scene.context, g, e->key_code);
     if (e->key_code == SAPP_KEYCODE_F11)
       sapp_toggle_fullscreen();
+    else if (e->key_code == SAPP_KEYCODE_F5)
+      cjh_write("savegame.json", g_to_json, g);
+    else if (e->key_code == SAPP_KEYCODE_F9)
+      cjh_read("savegame.json", g_from_json, g);
+    else if (g->scene.table->key_up)
+      g->scene.table->key_up(g->scene.context, g, e->key_code);
   }
 }
 
