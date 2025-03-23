@@ -73,6 +73,29 @@ void cb_to_json(CJHObject *o, Combinator *cb) {
   cjh_o_add_array(o, "source", (CJHWriteArrayCB)cb_sources_to_json, cb);
 }
 
+void cb_source_from_json_ref(CJHObjectR *o, const char *key, Connection *c) {
+  if (streq(key, Connection_table.type))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
+void cb_source_from_json(CJHArrayR *a, int index, Combinator *cb) {
+  if (index >= 0 && index < 2) {
+    printf("%.*s%d:\n", indent, space, index);
+    indent += 2;
+    cjh_a_read_object(a, (CJHReadObjectCB)cb_source_from_json_ref, cb->sources[index]);
+    indent -= 2;
+
+  } else {
+    printf("%.*s%d: SKIP\n", indent, space, index);
+    cjh_a_skip(a);
+  }
+}
+
 void cb_from_json(CJHObjectR *o, const char *key, Combinator *cb) {
 
   if (streq(key, "last_day_delivered"))
@@ -91,6 +114,11 @@ void cb_from_json(CJHObjectR *o, const char *key, Combinator *cb) {
     printf("%.*s%s:\n", indent, space, key);
     indent += 2;
     cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &cb->display);
+    indent -= 2;
+  } else if (streq(key, "source")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_array(o, (CJHReadArrayCB)cb_source_from_json, cb);
     indent -= 2;
   }
 

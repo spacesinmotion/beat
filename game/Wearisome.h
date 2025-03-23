@@ -463,6 +463,16 @@ void w_needs_from_json(CJHObjectR *o, const char *key, Needs *np) {
   }
 }
 
+void h_from_json_ref(CJHObjectR *o, const char *key, Wearisome *w) {
+  if (streq(key, House_table.type))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
 void w_from_json(CJHObjectR *o, const char *key, Wearisome *w) {
 
   if (streq(key, "health"))
@@ -507,6 +517,11 @@ void w_from_json(CJHObjectR *o, const char *key, Wearisome *w) {
     printf("%.*s%s:\n", indent, space, key);
     indent += 2;
     cjh_o_read_array(o, (CJHReadArrayCB)pp_from_json, &w->path);
+    indent -= 2;
+  } else if (streq(key, "house")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)h_from_json_ref, w);
     indent -= 2;
   } else if (streq(key, "needs")) {
     printf("%.*s%s:\n", indent, space, key);
