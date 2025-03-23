@@ -9,8 +9,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define LEVEL_WIDTH 48
-#define LEVEL_HEIGHT 32
+#define LEVEL_WIDTH 16
+#define LEVEL_HEIGHT 16
 
 typedef struct TileContent TileContent;
 typedef struct Tile {

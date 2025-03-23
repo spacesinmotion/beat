@@ -40,8 +40,12 @@ int street_tex_for(StreetMap *sm, int i, int j) {
 }
 
 void StreetMap_draw(StreetMap *sm, Game *g) {
-  g_color(g, Street_color());
-  g_buffer(g, sm->street_tile_map, Img_tilemap, (Vec2){0, 0});
+  // g_color(g, Street_color());
+  // g_buffer(g, sm->street_tile_map, Img_tilemap, (Vec2){0, 0});
+
+  for (int i = 0; i < LEVEL_WIDTH; ++i)
+    for (int j = 0; j < LEVEL_HEIGHT; ++j)
+      g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, l_to_vec(i, j));
 }
 
 StreetMap *StreetMap_init(GameScene *gs) {

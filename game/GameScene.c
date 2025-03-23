@@ -212,7 +212,13 @@ void gs_draw(GameScene *gs, Game *g) {
   c_printf(g, " %10s: %d\n", "lost $", gs->clicks_lost);
   c_printf(g, "----------------------\n\n");
 
-  StreetMap_draw(gs->street_map, g);
+  for (int i = 0; i < LEVEL_WIDTH; ++i)
+    for (int j = 0; j < LEVEL_HEIGHT; ++j) {
+      bool under_mouse = gs->r.x == i && gs->r.y == j;
+      g_color(g, under_mouse ? red() : (l_movable(gs->level, i, j) ? blue() : Street_color()));
+      g_object(g, g_animation_buffer(g), Img_marker, under_mouse ? g_frame(g) % 4 : 0, l_to_vec(i, j));
+    }
+  // StreetMap_draw(gs->street_map, g);
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
     so_draw(&gs->scene_objects.data[i], gs, g);
@@ -470,24 +476,6 @@ void GameScene_init(Game *g) {
   };
 
   l_init(gs->level);
-
-  Marketplace_init(g, gs, (Point){17, 10});
-  for (int i = 8; i < 30; ++i)
-    l_set_movable(gs->level, i, 9, true);
-  for (int i = 13; i < 27; ++i)
-    l_set_movable(gs->level, i, 20, true);
-  for (int i = 12; i < 31; ++i)
-    l_set_movable(gs->level, i, 13, true);
-  for (int i = 2; i < 23; ++i)
-    l_set_movable(gs->level, 16, i, true);
-  for (int i = 1; i < 26; ++i)
-    l_set_movable(gs->level, 21, i, true);
-  for (int i = 0; i < 3; ++i) {
-    // h_earn_click(Wearisome_House_init(g, gs, (Point){14, 10 + 4 + 2 * i}), rand() % 3 + 1);
-    h_earn_click(Wearisome_House_init(g, gs, (Point){17, 10 + 4 + 2 * i}), rand() % 3 + 1);
-    h_earn_click(Wearisome_House_init(g, gs, (Point){19, 10 + 4 + 2 * i}), rand() % 3 + 1);
-    // h_earn_click(Wearisome_House_init(g, gs, (Point){22, 10 + 4 + 2 * i}), rand() % 3 + 1);
-  }
 
   gs->street_map = StreetMap_init(gs);
 
