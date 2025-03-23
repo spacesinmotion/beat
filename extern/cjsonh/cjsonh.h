@@ -1,10 +1,18 @@
 #ifndef CJSONH
 #define CJSONH
 
+#include <assert.h>
+#include <ctype.h>
 #include <float.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+static const char *space = "                                ";
+static int indent = 0;
+
+static inline bool streq(const char *a, const char *b) { return strcmp(a, b) == 0; }
 
 typedef struct CJHObject {
   FILE *file;
@@ -103,5 +111,158 @@ static inline bool cjh_write(const char *file, CJHWriteObjectCB cb, void *userda
   fclose(o.file);
   return true;
 }
+
+typedef struct CJHObjectR {
+  const char *start;
+} CJHObjectR;
+
+typedef struct CJHArrayR {
+  const char *start;
+} CJHArrayR;
+
+typedef void (*CJHReadObjectCB)(CJHObjectR *o, const char *key, void *userdata);
+typedef void (*CJHReadArrayCB)(CJHArrayR *a, int index, void *userdata);
+
+static inline const char *skip_white_space(const char *content) {
+  while (*content && isspace(*content))
+    content++;
+  return content;
+}
+
+static inline const char *end_of_string(const char *c) {
+  while (*c && (*c != '"' || *(c - 1) == '\\')) // does not catch "...\\"
+    c++;
+  return c;
+}
+static inline void cjh_o_read_object(CJHObjectR *o, CJHReadObjectCB cb, void *userdata) {
+  const char *c = o->start;
+  c = skip_white_space(c);
+  assert(*c == '{');
+  c++;
+
+  while (*c) {
+    c = skip_white_space(c);
+    if (*c == '}') {
+      c++;
+      break;
+    }
+
+    assert(*c == '"');
+    c++;
+    const char *key = c;
+    c = end_of_string(c);
+    assert(*c);
+    char *key_end = (char *)c;
+    *key_end = '\0';
+
+    c++;
+    c = skip_white_space(c);
+    assert(*c == ':');
+    c++;
+    c = skip_white_space(c);
+
+    CJHObjectR sub = {c};
+    cb(&sub, key, userdata);
+
+    *key_end = '"';
+
+    c = sub.start;
+    assert(c);
+    c = skip_white_space(c);
+    if (*c == ',')
+      c++;
+    else
+      assert(*c == '}');
+  }
+
+  o->start = c;
+}
+
+static inline bool cjh_read(const char *file, CJHReadObjectCB cb, void *userdata) {
+  CJHObject o = {.file = fopen(file, "r"), false};
+  if (!o.file)
+    return false;
+
+  fseek(o.file, 0, SEEK_END);
+  const size_t fsize = ftell(o.file);
+  fseek(o.file, 0, SEEK_SET);
+
+  char *content = malloc(fsize + 1);
+  fread(content, fsize, 1, o.file);
+  fclose(o.file);
+
+  cjh_o_read_object(&(CJHObjectR){content}, cb, userdata);
+
+  free(content);
+  return true;
+}
+
+static inline const char *cjh__skip_block(const char *c, const char b, const char e) {
+  assert(*c == b);
+  int count = 1;
+  c++;
+  while (*c && count > 0) {
+    if (*c == b)
+      count++;
+    else if (*c == e)
+      count--;
+    c++;
+  }
+  return c;
+}
+static inline const char *cjh__skip_word(const char *c) {
+  while (*c && !isspace(*c) && *c != ',' && *c != '}' && *c != '{')
+    ++c;
+  return c;
+}
+static inline const char *cjh__skip(const char *c) {
+  c = skip_white_space(c);
+
+  if (*c == '"') {
+    c++;
+    c = end_of_string(c);
+    assert(*c == '"');
+    c++;
+
+  } else if (*c == '{') {
+    c = cjh__skip_block(c, '{', '}');
+
+  } else if (*c == '[') {
+    c = cjh__skip_block(c, '[', ']');
+
+  } else {
+    c = cjh__skip_word(c);
+  }
+
+  return c;
+}
+static inline void cjh_o_skip(CJHObjectR *o) { o->start = cjh__skip(o->start); }
+static inline void cjh_a_skip(CJHArrayR *a) { a->start = cjh__skip(a->start); }
+
+static inline double cjh__read_bool(const char **cp) {
+  const char *c = *cp;
+  char *e = (char *)cjh__skip_word(c);
+  assert(e > c);
+  const char old = *e;
+  *e = '\0';
+  assert(streq(c, "true") || streq(c, "false"));
+  bool b = streq(c, "true");
+  *e = old;
+  *cp = e;
+  return b;
+}
+static inline double cjh_o_read_bool(CJHObjectR *o) { return cjh__read_bool(&o->start); }
+static inline double cjh_a_read_bool(CJHArrayR *a) { return cjh__read_bool(&a->start); }
+
+static inline double cjh__read_number(const char **cp) {
+  const char *c = *cp;
+  char *e;
+  double num = strtod(c, &e);
+  assert(e > c);
+  *cp = e;
+  return num;
+}
+static inline double cjh_o_read_number(CJHObjectR *o) { return cjh__read_number(&o->start); }
+static inline double cjh_a_read_number(CJHArrayR *a) { return cjh__read_number(&a->start); }
 
 #endif

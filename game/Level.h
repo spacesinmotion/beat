@@ -167,7 +167,7 @@ void l_movable_to_json(CJHObject *o, Level *l) {
 
   char *z85 = Z85_encode((unsigned char *)points, nb_entries * sizeof(short));
   cjh_o_add_string(o, "movable", z85);
-  printf("shorts: %u, data: %llu, z85: %llu\n", nb_entries, nb_entries * sizeof(short), strlen(z85));
+  // printf("shorts: %u, data: %llu, z85: %llu\n", nb_entries, nb_entries * sizeof(short), strlen(z85));
   free(z85);
 }
 
@@ -175,6 +175,17 @@ void l_to_json(CJHObject *o, Level *l) {
   cjh_o_add_number_if(o, "width", LEVEL_WIDTH, 0);
   cjh_o_add_number_if(o, "height", LEVEL_HEIGHT, 0);
   l_movable_to_json(o, l);
+}
+
+void l_from_json(CJHObjectR *o, const char *key, Level *l) {
+  if (streq(key, "width"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "height"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
 }
 
 #endif // LEVEL_H

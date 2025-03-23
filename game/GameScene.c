@@ -378,6 +378,7 @@ typedef enum GameKeys {
 } GameKeys;
 
 void gs_save(GameScene *gs);
+void gs_load(GameScene *gs);
 void gs_key_up(GameScene *gs, Game *g, int key) {
   (void)g;
 
@@ -393,6 +394,8 @@ void gs_key_up(GameScene *gs, Game *g, int key) {
     gs_set_game_speed(gs, 8);
   else if (key == 294)
     gs_save(gs);
+  else if (key == 298)
+    gs_load(gs);
   else
     printf("KEY UP (%d)\n", key);
 }
@@ -527,4 +530,75 @@ void gs_to_json(CJHObject *o, void *ud) {
   // StreetMap *street_map;
 }
 
+void gs_stuff_from_json(CJHObjectR *o, const char *key, void *ud) {
+  if (streq(key, "water"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "food"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "construction_material"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
+void gs_from_json(CJHObjectR *o, const char *key, void *ud) {
+  GameScene *gs = (GameScene *)ud;
+
+  if (streq(key, "game_speed"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
+
+  else if (streq(key, "game_paused"))
+    printf("%s: %s\n", key, (cjh_o_read_bool(o) ? "true" : "false"));
+
+  else if (streq(key, "daytime_step"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
+
+  else if (streq(key, "daytime"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
+
+  else if (streq(key, "day"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
+
+  else if (streq(key, "clicks"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
+
+  else if (streq(key, "clicks_in_houses"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
+
+  else if (streq(key, "wearisome_count"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
+
+  else if (streq(key, "storage_size"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
+
+  else if (streq(key, "reasearch_needed"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
+
+  else if (streq(key, "resource_pool")) {
+    printf("%s:\n", key);
+    indent += 2;
+    cjh_o_read_object(o, gs_stuff_from_json, &gs->resource_pool);
+    indent -= 2;
+  } else if (streq(key, "resource_pool_claimed")) {
+    printf("%s:\n", key);
+    indent += 2;
+    cjh_o_read_object(o, gs_stuff_from_json, &gs->resource_pool_claimed);
+    indent -= 2;
+
+  } else if (streq(key, "level")) {
+    printf("%s:\n", key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)l_from_json, gs->level);
+    indent -= 2;
+  }
+
+  else {
+    printf("%s: SKIP\n", key);
+    cjh_o_skip(o);
+  }
+}
+
 void gs_save(GameScene *gs) { cjh_write("savegame.json", gs_to_json, gs); }
+void gs_load(GameScene *gs) { cjh_read("savegame.json", gs_from_json, gs); }
