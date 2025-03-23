@@ -187,6 +187,46 @@ void h_to_json(CJHObject *o, House *h) {
   cjh_o_add_object(o, "resources_maximum", h_resources_to_json, &h->resources_maximum);
 }
 
+void h_resource_from_json(CJHObjectR *o, const char *key, House *h) {
+  if (streq(key, "food"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "wateer"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "clicks"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+void h_from_json(CJHObjectR *o, const char *key, House *h) {
+
+  if (streq(key, "id"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else if (streq(key, "resources")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)h_resource_from_json, &h->resources);
+    indent -= 2;
+  } else if (streq(key, "resources_maximum")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)h_resource_from_json, &h->resources_maximum);
+    indent -= 2;
+  } else if (streq(key, "display")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &h->display);
+    indent -= 2;
+  }
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
 static SceneObjectTable House_table = {
     .type = "House",
     .dead = (SceneObjectDeadCB)h_dead,

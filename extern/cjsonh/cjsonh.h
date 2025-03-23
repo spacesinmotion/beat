@@ -134,8 +134,7 @@ static inline const char *end_of_string(const char *c) {
     c++;
   return c;
 }
-static inline void cjh_o_read_object(CJHObjectR *o, CJHReadObjectCB cb, void *userdata) {
-  const char *c = o->start;
+static inline const char *cjh__read_object(const char *c, CJHReadObjectCB cb, void *userdata) {
   c = skip_white_space(c);
   assert(*c == '{');
   c++;
@@ -175,7 +174,49 @@ static inline void cjh_o_read_object(CJHObjectR *o, CJHReadObjectCB cb, void *us
       assert(*c == '}');
   }
 
-  o->start = c;
+  return c;
+}
+
+static inline void cjh_o_read_object(CJHObjectR *o, CJHReadObjectCB cb, void *userdata) {
+  o->start = cjh__read_object(o->start, cb, userdata);
+}
+static inline void cjh_a_read_object(CJHArrayR *a, CJHReadObjectCB cb, void *userdata) {
+  a->start = cjh__read_object(a->start, cb, userdata);
+}
+
+static inline const char *cjh__read_array(const char *c, CJHReadArrayCB cb, void *userdata) {
+  c = skip_white_space(c);
+  assert(*c == '[');
+  c++;
+
+  int index = 0;
+  while (*c) {
+    c = skip_white_space(c);
+    if (*c == ']') {
+      c++;
+      break;
+    }
+
+    CJHArrayR sub = {c};
+    cb(&sub, index++, userdata);
+    c = sub.start;
+
+    assert(c);
+    c = skip_white_space(c);
+    if (*c == ',')
+      c++;
+    else
+      assert(*c == ']');
+  }
+
+  return c;
+}
+
+static inline void cjh_o_read_array(CJHObjectR *o, CJHReadArrayCB cb, void *userdata) {
+  o->start = cjh__read_array(o->start, cb, userdata);
+}
+static inline void cjh_a_read_array(CJHArrayR *a, CJHReadArrayCB cb, void *userdata) {
+  a->start = cjh__read_array(a->start, cb, userdata);
 }
 
 static inline bool cjh_read(const char *file, CJHReadObjectCB cb, void *userdata) {

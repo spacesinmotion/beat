@@ -98,4 +98,27 @@ static inline void wp_to_json(CJHObject *o, WorkProvider *wp) {
   cjh_o_add_number_if(o, "clicks_claimed_for_deliver", wp->clicks_claimed_for_deliver, 0);
 }
 
+static inline void wp_from_json(CJHObjectR *o, const char *key, WorkProvider *wp) {
+
+  if (streq(key, "colums"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "rows"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "clicks"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "clicks_claimed"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "clicks_work"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "clicks_done"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "clicks_claimed_for_deliver"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
 #endif

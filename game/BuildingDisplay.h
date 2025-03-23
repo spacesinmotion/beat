@@ -39,4 +39,17 @@ void bd_flash(BuildingDisplay *bd) { bd->flash = 1.0f; }
 static inline void bd_to_json(CJHObject *o, BuildingDisplay *bd) {
   cjh_o_add_array(o, "location", (CJHWriteArrayCB)ri_to_json, &bd->location);
 }
+
+static inline void bd_from_json(CJHObjectR *o, const char *key, BuildingDisplay *bd) {
+  if (streq(key, "location")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_array(o, (CJHReadArrayCB)ri_from_json, &bd->location);
+    indent -= 2;
+
+  } else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
 #endif

@@ -72,9 +72,39 @@ void mp_draw(Marketplace *mp, GameScene *gs, Game *g) {
 void mp_to_json(CJHObject *o, Marketplace *mp) {
   cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &mp->work_provider);
   cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &mp->display);
+  cjh_o_add_number(o, "id", mp->id);
   cjh_o_add_number(o, "last_day_delivered", mp->last_day_delivered);
   cjh_o_add_number(o, "manager_click_counter", mp->manager_click_counter);
   cjh_o_add_number(o, "missing_blings", mp->missing_blings);
+}
+
+void mp_from_json(CJHObjectR *o, const char *key, Marketplace *mp) {
+
+  if (streq(key, "last_day_delivered"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "id"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "manager_click_counter"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "missing_blings"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else if (streq(key, "work_provider")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)wp_from_json, &mp->work_provider);
+    indent -= 2;
+  } else if (streq(key, "display")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &mp->display);
+    indent -= 2;
+  }
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
 }
 
 static SceneObjectTable Marketplace_table = {

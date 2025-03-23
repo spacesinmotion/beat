@@ -48,4 +48,19 @@ static inline void ri_to_json(CJHArray *a, Recti *ri) {
   cjh_a_add_number(a, ri->h);
 }
 
+static inline void ri_from_json(CJHArrayR *a, int index, Recti *ri) {
+  if (index == 0)
+    // ri->x = cjh_a_read_number(a);
+    printf("%.*s%d: %g\n", indent, space, index, cjh_a_read_number(a));
+  else if (index == 1)
+    // ri->y = cjh_a_read_number(a);
+    printf("%.*s%d: %g\n", indent, space, index, cjh_a_read_number(a));
+  else if (index == 2)
+    // ri->w = cjh_a_read_number(a);
+    printf("%.*s%d: %g\n", indent, space, index, cjh_a_read_number(a));
+  else if (index == 3)
+    // ri->h = cjh_a_read_number(a);
+    printf("%.*s%d: %g\n", indent, space, index, cjh_a_read_number(a));
+}
+
 #endif

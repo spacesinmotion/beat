@@ -20,7 +20,6 @@
 #include "game/Well.h"
 #include "game/assets.h"
 #include "gc/gc.h"
-// #include "math.h"
 #include "math.h"
 #include "math/Color.h"
 #include "math/Rect.h"
@@ -28,6 +27,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #ifndef M_PI
 #define M_PI 3.1457
@@ -543,10 +543,47 @@ void gs_stuff_from_json(CJHObjectR *o, const char *key, void *ud) {
   }
 }
 
+void gs_SceneObject_from_json(CJHObjectR *o, const char *key, void *ud) {
+
+  if (streq(key, Marketplace_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    Marketplace mp;
+    cjh_o_read_object(o, (CJHReadObjectCB)mp_from_json, &mp);
+    indent -= 2;
+  } else if (streq(key, House_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    House h;
+    cjh_o_read_object(o, (CJHReadObjectCB)h_from_json, &h);
+    indent -= 2;
+  } else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
+void gs_sceneobjects_from_json(CJHArrayR *a, int index, void *ud) {
+  GameScene *gs = (GameScene *)ud;
+
+  SceneObject so = {NULL, NULL};
+  cjh_a_read_object(a, (CJHReadObjectCB)gs_SceneObject_from_json, &so);
+
+  if (so.context && so.table)
+    gs_add_object(gs, so);
+}
+
 void gs_from_json(CJHObjectR *o, const char *key, void *ud) {
   GameScene *gs = (GameScene *)ud;
 
-  if (streq(key, "game_speed"))
+  if (streq(key, "scene_objects")) {
+    printf("%s:\n", key);
+    indent += 2;
+    cjh_o_read_array(o, gs_sceneobjects_from_json, gs);
+    indent -= 2;
+  }
+
+  else if (streq(key, "game_speed"))
     printf("%s: %g\n", key, cjh_o_read_number(o));
 
   else if (streq(key, "game_paused"))
@@ -586,7 +623,6 @@ void gs_from_json(CJHObjectR *o, const char *key, void *ud) {
     indent += 2;
     cjh_o_read_object(o, gs_stuff_from_json, &gs->resource_pool_claimed);
     indent -= 2;
-
   } else if (streq(key, "level")) {
     printf("%s:\n", key);
     indent += 2;
