@@ -1,6 +1,7 @@
 // #include <time.h>
 // #define DR_WAV_IMPLEMENTATION
 // #include "dr/dr_wav.h"
+#include "extern/cjsonh/cjsonh.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -708,9 +709,36 @@ static void g_cleanup(Game *g) {
   sg_shutdown();
 }
 
+void g_camera_to_json(CJHObject *o, void *ud) {
+  Game *g = (Game *)ud;
+  cjh_o_add_array(o, "pan", (CJHWriteArrayCB)v_to_json, &g->render.camera_pan);
+  cjh_o_add_number(o, "scale", g->render.camera_scale);
+  cjh_o_add_number(o, "zoom", g->zoom);
+  cjh_o_add_number(o, "overlay_scale", g->render.overlay_scale);
+}
+
+void g_camera_from_json(CJHObjectR *o, const char *key, void *ud) {
+  Game *g = (Game *)ud;
+  if (streq(key, "scale")) {
+    g->render.camera_scale = cjh_o_read_number(o);
+  } else if (streq(key, "zoom")) {
+    g->zoom = cjh_o_read_number(o);
+  } else if (streq(key, "overlay_scale")) {
+    g->render.overlay_scale = cjh_o_read_number(o);
+  } else if (streq(key, "pan")) {
+    cjh_o_read_array(o, (CJHReadArrayCB)v_from_json, &g->render.camera_pan);
+
+  } else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
 void g_to_json(CJHObject *o, void *ud) {
   Game *g = (Game *)ud;
   cjh_o_add_object(o, "scene", (CJHWriteObjectCB)g->scene.table->save, g->scene.context);
+  cjh_o_add_object(o, "camera", g_camera_to_json, g);
+  cjh_o_add_number(o, "time", g->time);
 }
 
 void g_from_json(CJHObjectR *o, const char *key, void *ud) {
@@ -718,8 +746,17 @@ void g_from_json(CJHObjectR *o, const char *key, void *ud) {
   if (streq(key, "scene")) {
     printf("%.*s%s:\n", indent, space, key);
     indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)(CJHWriteObjectCB)g->scene.table->load, g->scene.context);
+    cjh_o_read_object(o, (CJHReadObjectCB)g->scene.table->load, g->scene.context);
     indent -= 2;
+
+  } else if (streq(key, "camera")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)g_camera_from_json, g);
+    indent -= 2;
+
+    // } else if (streq(key, "time")) {
+    //   g->time = cjh_o_read_number(o);
 
   } else {
     printf("%.*s%s: SKIP\n", indent, space, key);

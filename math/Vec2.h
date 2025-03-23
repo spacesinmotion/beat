@@ -2,6 +2,7 @@
 #define VEC2
 
 #include "extern/cjsonh/cjsonh.h"
+#include <X11/Xcursor/Xcursor.h>
 #include <math.h>
 #include <stdbool.h>
 
@@ -46,16 +47,13 @@ static inline void v_to_json(CJHArray *a, const Vec2 *v) {
 }
 
 static inline void v_from_json(CJHArrayR *a, int index, Vec2 *v) {
-  if (index == 0)
-    // ri->x = cjh_a_read_number(a);
-    printf("%.*sx: %g\n", indent, space, cjh_a_read_number(a));
-  else if (index == 1)
-    // ri->y = cjh_a_read_number(a);
-    printf("%.*sy: %g\n", indent, space, cjh_a_read_number(a));
-  else if (index == 2)
-    // ri->w = cjh_a_read_number(a);
-    printf("%.*sz: %g\n", indent, space, cjh_a_read_number(a));
-  else
+  if (index == 0) {
+    v->x = cjh_a_read_number(a);
+    printf("%.*sx: %g\n", indent, space, v->x);
+  } else if (index == 1) {
+    v->y = cjh_a_read_number(a);
+    printf("%.*sy: %g\n", indent, space, v->y);
+  } else
     assert(false);
 }
 

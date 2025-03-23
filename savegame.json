@@ -720,5 +720,15 @@
       "height": 32,
       "movable": "fAqvU2((TV2(>nifAqBW2((TV3JHFkfAqHY2(>zmfAqKZ2(>zm6Ax/!4GD!n4fd7xfAqQ-2(>zm6Ax/!5c8+i0@@D71PO-b2lk2f2(>qj3JHOn4fc>r4/^dv5DABz695ZD6-Y0HfAqW+2(>zm6Ax/!5=-jr4fd7xfAq:^2(>zm6Ax/!6AwBt4fd7xfAq*/0rrf30@@D71PO-b2lk2f2(>qj3JHOn4fc>r4/^dv5DABz695ZD6-Y0H7xtoL82#t<761Tv4fd7xfAq)?2(>zm6Ax/!7YT<x4fd7xfAq%<2(>zm6Ax/!8up6z4fd7xfAr3(2(>zmfAr6)2(>zmfAr9[2(>zmfArc]4fe6Z"
     }
-  }
+  },
+  "camera": {
+    "pan": [
+      30.5075531005859,
+      16.5235748291016
+    ],
+    "scale": 2.09999823570251,
+    "zoom": 0.5,
+    "overlay_scale": 2
+  },
+  "time": 1.93600598463073
 }
