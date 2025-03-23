@@ -1,6 +1,7 @@
 #ifndef CONSTRUCTIONSITE_H
 #define CONSTRUCTIONSITE_H
 
+#include "extern/cjsonh/cjsonh.h"
 #include "game/GameScene.h"
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
@@ -54,9 +55,37 @@ void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
 }
 
 void cs_to_json(CJHObject *o, ConstructionSite *cs) {
-  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &cs->work_provider);
-  cjh_o_add_array(o, "display", (CJHWriteArrayCB)ri_to_json, &cs->location);
+  cjh_o_add_number(o, "id", cs->id);
   cjh_o_add_number(o, "key", cs->key);
+  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &cs->work_provider);
+  cjh_o_add_array(o, "location", (CJHWriteArrayCB)ri_to_json, &cs->location);
+}
+
+void cs_from_json(CJHObjectR *o, const char *key, ConstructionSite *cs) {
+
+  if (streq(key, "last_day_delivered"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "id"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "manager_click_counter"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else if (streq(key, "work_provider")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)wp_from_json, &cs->work_provider);
+    indent -= 2;
+  } else if (streq(key, "location")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_array(o, (CJHReadArrayCB)ri_from_json, &cs->location);
+    indent -= 2;
+  }
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
 }
 
 static SceneObjectTable ConstructionSite_table = {

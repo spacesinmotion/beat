@@ -76,6 +76,33 @@ void cf_to_json(CJHObject *o, ClickFactory *cf) {
   cjh_o_add_number(o, "missing_blings", cf->missing_blings);
 }
 
+void cf_from_json(CJHObjectR *o, const char *key, ClickFactory *cf) {
+
+  if (streq(key, "last_day_delivered"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "id"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "missing_blings"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else if (streq(key, "work_provider")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)wp_from_json, &cf->work_provider);
+    indent -= 2;
+  } else if (streq(key, "display")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &cf->display);
+    indent -= 2;
+  }
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
 static SceneObjectTable ClickFactory_table = {
     .type = "ClickFactory",
     .dead = (SceneObjectDeadCB)cf_dead,

@@ -111,6 +111,33 @@ void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
     fa->manager_click_counter = r;
 }
 
+void fa_from_json(CJHObjectR *o, const char *key, Farm *fa) {
+
+  if (streq(key, "last_day_delivered"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "id"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "manager_click_counter"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else if (streq(key, "work_provider")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)wp_from_json, &fa->work_provider);
+    indent -= 2;
+  } else if (streq(key, "display")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &fa->display);
+    indent -= 2;
+  }
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
 static TileContentTable Farm_TileContent_Table = {
     .location = (LocationCb)fa_location,
     .provides = (ProvidesCB)fa_provides,

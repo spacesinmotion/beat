@@ -23,4 +23,11 @@ static inline void pp_to_json(CJHArray *a, const PathPoint *pp) {
   }
 }
 
+static inline void pp_from_json(CJHArrayR *a, int index, PathPoint *pp) {
+  printf("%.*s%d:\n", indent, space, index);
+  indent += 2;
+  Vec2 p;
+  cjh_a_read_array(a, (CJHReadArrayCB)v_from_json, &p);
+  indent -= 2;
+}
 #endif

@@ -51,6 +51,32 @@ void co_to_json(CJHObject *o, Connection *co) {
   cjh_o_add_string(o, "state", state_test);
 }
 
+void co_from_json(CJHObjectR *o, const char *key, Connection *co) {
+
+  if (streq(key, "id"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else if (streq(key, "start")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_array(o, (CJHReadArrayCB)v_from_json, &co->start);
+    indent -= 2;
+  } else if (streq(key, "stop")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_array(o, (CJHReadArrayCB)v_from_json, &co->stop);
+    indent -= 2;
+  } else if (streq(key, "state")) {
+    StrView s = cjh_o_read_string(o);
+    printf("%.*s%s: %.*s\n", indent, space, key, s.len, s.s);
+  }
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
 static SceneObjectTable Connection_table = {
     .type = "Connection",
     .dead = (SceneObjectDeadCB)co_dead,

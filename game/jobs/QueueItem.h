@@ -31,4 +31,18 @@ void qi_to_json(CJHObject *o, QueueItem *qi) {
   cjh_o_add_string(o, "cb", qi->cb_name);
 }
 
+void qi_from_json(CJHObjectR *o, const char *key, QueueItem *qi) {
+  if (streq(key, "id"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "cb")) {
+    StrView s = cjh_o_read_string(o);
+    printf("%.*s%s: %.*s\n", indent, space, key, s.len, s.s);
+  }
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
 #endif

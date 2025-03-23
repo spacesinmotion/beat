@@ -19,6 +19,7 @@
 #include "game/Wearisome.h"
 #include "game/Well.h"
 #include "game/assets.h"
+#include "game/effects/Connection.h"
 #include "gc/gc.h"
 #include "math.h"
 #include "math/Color.h"
@@ -557,6 +558,72 @@ void gs_SceneObject_from_json(CJHObjectR *o, const char *key, void *ud) {
     House h;
     cjh_o_read_object(o, (CJHReadObjectCB)h_from_json, &h);
     indent -= 2;
+  } else if (streq(key, Wearisome_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    Wearisome w;
+    cjh_o_read_object(o, (CJHReadObjectCB)w_from_json, &w);
+    indent -= 2;
+  } else if (streq(key, ClickFactory_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    ClickFactory cf;
+    cjh_o_read_object(o, (CJHReadObjectCB)cf_from_json, &cf);
+    indent -= 2;
+  } else if (streq(key, Combinator_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    Combinator cb;
+    cjh_o_read_object(o, (CJHReadObjectCB)cb_from_json, &cb);
+    indent -= 2;
+  } else if (streq(key, Manager_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    Manager mg;
+    cjh_o_read_object(o, (CJHReadObjectCB)mg_from_json, &mg);
+    indent -= 2;
+  } else if (streq(key, Well_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    Well wl;
+    cjh_o_read_object(o, (CJHReadObjectCB)wl_from_json, &wl);
+    indent -= 2;
+  } else if (streq(key, Farm_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    Farm fa;
+    cjh_o_read_object(o, (CJHReadObjectCB)fa_from_json, &fa);
+    indent -= 2;
+  } else if (streq(key, Connection_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    Connection co;
+    cjh_o_read_object(o, (CJHReadObjectCB)co_from_json, &co);
+    indent -= 2;
+  } else if (streq(key, Entertainment_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    Entertainment em;
+    cjh_o_read_object(o, (CJHReadObjectCB)em_from_json, &em);
+    indent -= 2;
+  } else if (streq(key, ConstructionMaterialFactory_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    ConstructionMaterialFactory cmf;
+    cjh_o_read_object(o, (CJHReadObjectCB)cmf_from_json, &cmf);
+    indent -= 2;
+  } else if (streq(key, ConstructionSite_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    ConstructionSite cs;
+    cjh_o_read_object(o, (CJHReadObjectCB)cs_from_json, &cs);
+    indent -= 2;
+  } else if (streq(key, ScienceBuilding_table.type)) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    ScienceBuilding scb;
+    cjh_o_read_object(o, (CJHReadObjectCB)scb_from_json, &scb);
+    indent -= 2;
   } else {
     printf("%.*s%s: SKIP\n", indent, space, key);
     cjh_o_skip(o);
@@ -600,6 +667,10 @@ void gs_from_json(CJHObjectR *o, const char *key, void *ud) {
 
   else if (streq(key, "clicks"))
     printf("%s: %g\n", key, cjh_o_read_number(o));
+  else if (streq(key, "clicks_produced"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
+  else if (streq(key, "clicks_lost"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
 
   else if (streq(key, "clicks_in_houses"))
     printf("%s: %g\n", key, cjh_o_read_number(o));
@@ -608,6 +679,8 @@ void gs_from_json(CJHObjectR *o, const char *key, void *ud) {
     printf("%s: %g\n", key, cjh_o_read_number(o));
 
   else if (streq(key, "storage_size"))
+    printf("%s: %g\n", key, cjh_o_read_number(o));
+  else if (streq(key, "storage_claimed"))
     printf("%s: %g\n", key, cjh_o_read_number(o));
 
   else if (streq(key, "reasearch_needed"))

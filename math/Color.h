@@ -52,4 +52,21 @@ static inline void c_to_json(CJHArray *a, const Color *c) {
   cjh_a_add_number(a, roundf(c->a * 255.0f));
 }
 
+static inline void c_from_json(CJHArrayR *a, int index, Color *c) {
+  if (index == 0)
+    // ri->x = cjh_a_read_number(a);
+    printf("%.*sr: %g\n", indent, space, cjh_a_read_number(a) / 255.0);
+  else if (index == 1)
+    // ri->y = cjh_a_read_number(a);
+    printf("%.*sg: %g\n", indent, space, cjh_a_read_number(a) / 255.0);
+  else if (index == 2)
+    // ri->w = cjh_a_read_number(a);
+    printf("%.*sb: %g\n", indent, space, cjh_a_read_number(a) / 255.0);
+  else if (index == 3)
+    // ri->w = cjh_a_read_number(a);
+    printf("%.*sa: %g\n", indent, space, cjh_a_read_number(a) / 255.0);
+  else
+    assert(false);
+}
+
 #endif

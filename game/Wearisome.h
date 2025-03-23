@@ -449,7 +449,93 @@ void w_to_json(CJHObject *o, Wearisome *w) {
   cjh_o_add_array(o, "deliver_color", (CJHWriteArrayCB)c_to_json, &w->deliver_color);
 }
 
-SceneObjectTable w_table = {
+void w_needs_from_json(CJHObjectR *o, const char *key, Needs *np) {
+  if (streq(key, "food"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "water"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "sleep"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
+void w_from_json(CJHObjectR *o, const char *key, Wearisome *w) {
+
+  if (streq(key, "health"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "speed"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "wait_time"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else if (streq(key, "deliver_icon"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "deliver_color")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_array(o, (CJHReadArrayCB)c_from_json, &w->needs);
+    indent -= 2;
+
+  } else if (streq(key, "state")) {
+    StrView s = cjh_o_read_string(o);
+    printf("%.*s%s: %.*s\n", indent, space, key, s.len, s.s);
+  } else if (streq(key, "need_mode")) {
+    StrView s = cjh_o_read_string(o);
+    printf("%.*s%s: %.*s\n", indent, space, key, s.len, s.s);
+  }
+
+  else if (streq(key, "current_building")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_array(o, (CJHReadArrayCB)ri_from_json, &w->current_building);
+    indent -= 2;
+  } else if (streq(key, "position")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_array(o, (CJHReadArrayCB)v_from_json, &w->position);
+    indent -= 2;
+  } else if (streq(key, "destination")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_array(o, (CJHReadArrayCB)v_from_json, &w->destination);
+    indent -= 2;
+  } else if (streq(key, "path")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_array(o, (CJHReadArrayCB)pp_from_json, &w->path);
+    indent -= 2;
+  } else if (streq(key, "needs")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)w_needs_from_json, &w->needs);
+    indent -= 2;
+  } else if (streq(key, "need_consumption")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)w_needs_from_json, &w->need_consumption);
+    indent -= 2;
+  } else if (streq(key, "queue")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)qi_from_json, &w->queue);
+    indent -= 2;
+  } else if (streq(key, "queue_follow_up")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)qi_from_json, &w->queue_follow_up);
+    indent -= 2;
+
+  } else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
+SceneObjectTable Wearisome_table = {
     .type = "Wearisome",
     .dead = (SceneObjectDeadCB)w_dead,
     .render_order = (SceneObjectRenderOrderCB)w_render_order,
@@ -478,7 +564,7 @@ Wearisome *Wearisome_init(GameScene *gs, House *home) {
       .deliver_icon = Nb_MI,
       .need_dust_frame = -1,
   };
-  gs_add_object(gs, (SceneObject){.context = w, &w_table});
+  gs_add_object(gs, (SceneObject){.context = w, &Wearisome_table});
   return w;
 }
 

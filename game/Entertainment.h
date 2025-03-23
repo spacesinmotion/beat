@@ -82,6 +82,29 @@ void em_to_json(CJHObject *o, Entertainment *em) {
   cjh_o_add_bool(o, "some_one_is_done", em->some_one_is_done);
 }
 
+void em_from_json(CJHObjectR *o, const char *key, Entertainment *fa) {
+  if (streq(key, "id"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "claimed"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "started"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "some_one_is_done"))
+    printf("%.*s%s: %s\n", indent, space, key, (cjh_o_read_bool(o) ? "true" : "false"));
+
+  else if (streq(key, "display")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &fa->display);
+    indent -= 2;
+  }
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
 static SceneObjectTable Entertainment_table = {
     .type = "Entertainment",
     .dead = (SceneObjectDeadCB)em_dead,

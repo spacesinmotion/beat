@@ -199,6 +199,7 @@ void h_resource_from_json(CJHObjectR *o, const char *key, House *h) {
     cjh_o_skip(o);
   }
 }
+
 void h_from_json(CJHObjectR *o, const char *key, House *h) {
 
   if (streq(key, "id"))

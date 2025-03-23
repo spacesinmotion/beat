@@ -73,6 +73,33 @@ void cb_to_json(CJHObject *o, Combinator *cb) {
   cjh_o_add_array(o, "source", (CJHWriteArrayCB)cb_sources_to_json, cb);
 }
 
+void cb_from_json(CJHObjectR *o, const char *key, Combinator *cb) {
+
+  if (streq(key, "last_day_delivered"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "id"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+  else if (streq(key, "manager_click_counter"))
+    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
+
+  else if (streq(key, "work_provider")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)wp_from_json, &cb->work_provider);
+    indent -= 2;
+  } else if (streq(key, "display")) {
+    printf("%.*s%s:\n", indent, space, key);
+    indent += 2;
+    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &cb->display);
+    indent -= 2;
+  }
+
+  else {
+    printf("%.*s%s: SKIP\n", indent, space, key);
+    cjh_o_skip(o);
+  }
+}
+
 static SceneObjectTable Combinator_table = {
     .type = "Combinator",
     .dead = (SceneObjectDeadCB)cb_dead,
