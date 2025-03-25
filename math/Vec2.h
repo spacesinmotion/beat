@@ -2,9 +2,7 @@
 #define VEC2
 
 #include "extern/cjsonh/cjsonh.h"
-#include <X11/Xcursor/Xcursor.h>
 #include <math.h>
-#include <stdbool.h>
 
 static inline int i_max(int a, int b) { return a < b ? b : a; }
 static inline int i_min(int a, int b) { return a < b ? a : b; }
