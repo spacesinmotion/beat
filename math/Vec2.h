@@ -2,7 +2,6 @@
 #define VEC2
 
 #include "extern/cjsonh/cjsonh.h"
-#include <X11/Xcursor/Xcursor.h>
 #include <math.h>
 #include <stdbool.h>
 
