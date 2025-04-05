@@ -187,32 +187,21 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 bool gs_construction_available(GameScene *gs) {
   if (!gs->game_paused || !l_freeR(gs->level, gs->r))
     return false;
-  return gs->resources.money > 0;
+  return gs->resources.money > 0 && l_contains_movable(gs->level, gs->r) && l_on_your_field(gs->level, gs->r);
 }
 
 void gs_draw(GameScene *gs, Game *g) {
   c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
   c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
-  // c_printf(g, "----------------------\n");
-  // c_printf(g, " %10s: %g\n", "game speed", gs->game_paused ? 0.0f : gs->game_speed);
-  // c_printf(g, "----------------------\n");
-  // c_printf(g, " %10s: %d\n", "day", gs->day);
-  // c_printf(g, " %10s: %f\n", "daytime", gs->daytime);
-  // c_printf(g, " %10s: %d\n", "bots", gs->wearisome_count);
-  // c_printf(g, "----------------------\n\n");
-  // c_printf(g, " %10s: %d\n", "all $", gs->clicks_in_houses + gs->clicks);
-  // c_printf(g, " %10s: %d\n", "spread $", gs->clicks_in_houses);
-  // c_printf(g, " %10s: %d\n", "produced $", gs->clicks_produced);
-  // c_printf(g, " %10s: %d\n", "lost $", gs->clicks_lost);
-  // c_printf(g, "----------------------\n\n");
 
   for (int i = 0; i < LEVEL_WIDTH; ++i)
     for (int j = 0; j < LEVEL_HEIGHT; ++j) {
+      if (!l_free(gs->level, i, j))
+        continue;
       bool under_mouse = gs->r.x == i && gs->r.y == j;
       g_color(g, under_mouse ? red() : (l_movable(gs->level, i, j) ? blue() : gray(100)));
       g_object(g, g_animation_buffer(g), Img_marker, under_mouse ? g_frame(g) % 4 : 0, l_to_vec(i, j));
     }
-  // StreetMap_draw(gs->street_map, g);
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
     so_draw(&gs->scene_objects.data[i], gs, g);
@@ -420,6 +409,7 @@ void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
   } else if (key == MI_Forge) {
     Forge_init(g, gs, (Point){r.x, r.y});
   }
+  l_update_movable(gs->level);
 }
 
 void gs_to_json(CJHObject *o, void *ud);

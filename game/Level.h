@@ -21,7 +21,11 @@ typedef struct Level {
   Tile tiles[LEVEL_WIDTH][LEVEL_HEIGHT];
 } Level;
 
-static inline void l_init(Level *level) { memset(level->tiles, 0, sizeof(level->tiles)); }
+void l_update_movable(Level *l);
+static inline void l_init(Level *level) {
+  memset(level->tiles, 0, sizeof(level->tiles));
+  l_update_movable(level);
+}
 
 static inline bool l_valid(const Level *level, int x, int y) {
   (void)level;
@@ -36,9 +40,7 @@ static inline bool l_validR(Level *level, Recti r) {
   return true;
 }
 
-bool l_free(Level *level, int x, int y) {
-  return l_valid(level, x, y) && !level->tiles[x][y].movable && level->tiles[x][y].content == NULL;
-}
+bool l_free(Level *level, int x, int y) { return l_valid(level, x, y) && level->tiles[x][y].content == NULL; }
 bool l_freeP(Level *level, Point p) { return l_free(level, p.x, p.y); }
 bool l_freeR(Level *level, Recti r) {
   for (int i = r.x; i < r.x + r.w; ++i)
@@ -53,6 +55,17 @@ static inline bool l_movableP(Level *level, Point p) { return l_movable(level, p
 static inline void l_set_movable(Level *level, int x, int y, bool movable) {
   if (l_valid(level, x, y))
     level->tiles[x][y].movable = movable;
+}
+static inline bool l_contains_movable(Level *level, Recti r) {
+  for (int i = r.x; i < r.x + r.w; ++i)
+    for (int j = r.y; j < r.y + r.h; ++j)
+      if (l_movable(level, i, j))
+        return true;
+  return false;
+}
+static inline bool l_on_your_field(Level *level, Recti r) {
+  (void)level;
+  return r.y + r.h <= LEVEL_HEIGHT / 2;
 }
 
 static inline void l_set_tile_content(Level *level, int x, int y, TileContent *c) {
@@ -216,6 +229,15 @@ void l_from_json(CJHObjectR *o, const char *key, Level *l) {
     printf("%.*s%s: SKIP\n", indent, space, key);
     cjh_o_skip(o);
   }
+}
+
+void l_update_movable(Level *l) {
+  for (int i = 0; i < LEVEL_WIDTH; ++i)
+    for (int j = 0; j < LEVEL_HEIGHT / 2; ++j) {
+      const bool free = l_free(l, i, j);
+      const bool nearby = !l_free(l, i - 1, j) || !l_free(l, i + 1, j) || !l_free(l, i, j - 1) || !l_free(l, i, j + 1);
+      l_set_movable(l, i, j, free && nearby);
+    }
 }
 
 #endif // LEVEL_H
