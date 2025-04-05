@@ -5,6 +5,7 @@
 #include "game/Level.h"
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
+#include "game/ai/RandomAI.h"
 #include "game/assets.h"
 #include "game/buildings/Altar.h"
 #include "game/buildings/Archers.h"
@@ -64,13 +65,18 @@ int so_render_order_compare(const void *va, const void *vb) {
   return a < b ? -1 : (a > b ? 1 : 0);
 }
 
-void gs_toggle_pause(GameScene *gs, int id) { (void)id, gs->game_paused = false; }
+void gs_toggle_pause(GameScene *gs, Game *g, int id) {
+  (void)id;
+  ai_turn(gs, g);
+  gs->game_paused = false;
+}
 void gs_set_game_speed(GameScene *gs, int speed) {
   gs->game_paused = false;
   gs->game_speed = (float)speed;
 }
 
-void gs_select_bottom_menu(GameScene *gs, int button) {
+void gs_select_bottom_menu(GameScene *gs, Game *g, int button) {
+  (void)g;
   gs->menu_selected = button;
   if (button == MI_Castle) {
     gs->preview = cs_color();
@@ -184,10 +190,10 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   }
 }
 
-bool gs_construction_available(GameScene *gs) {
-  if (!gs->game_paused || !l_freeR(gs->level, gs->r))
+bool gs_construction_available(GameScene *gs, Recti r) {
+  if (!gs->game_paused || !l_freeR(gs->level, r))
     return false;
-  return gs->resources.money > 0 && l_contains_placeable(gs->level, gs->r) && l_on_your_field(gs->level, gs->r);
+  return gs->resources.money > 0 && l_contains_placeable(gs->level, r) && l_on_your_field(gs->level, r);
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -211,7 +217,7 @@ void gs_draw(GameScene *gs, Game *g) {
       g_color(g, gs->preview);
       g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), Img_house_map, l_to_vec(gs->r.x, gs->r.y));
     }
-    g_color(g, gs_construction_available(gs) ? green() : red());
+    g_color(g, gs_construction_available(gs, gs->r) ? green() : red());
     for (int i = gs->r.x; i < gs->r.x + gs->r.w; ++i)
       for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
         g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, l_to_vec(i, j));
@@ -340,13 +346,13 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   if (button == 0) {
     const Point p = (Point){gs->r.x, gs->r.y};
     if (gs->pick_under_mouse >= 0)
-      gs->pick_rects[gs->pick_under_mouse].click(gs, gs->pick_rects[gs->pick_under_mouse].id);
+      gs->pick_rects[gs->pick_under_mouse].click(gs, g, gs->pick_rects[gs->pick_under_mouse].id);
 
     else if (gs->special_click_handler)
       gs->special_click_handler(gs->special_click_handler_data, p, gs);
 
     else if (gs->menu_selected >= 0) {
-      if (gs_construction_available(gs) && gs->r.w * gs->r.h > 0)
+      if (gs_construction_available(gs, gs->r) && gs->r.w * gs->r.h > 0)
         ConstructionSite_init(gs, gs->r, gs->menu_selected);
 
     } else {
@@ -374,7 +380,7 @@ void gs_key_up(GameScene *gs, Game *g, int key) {
   (void)g;
 
   if (key == PAUSE_KEY)
-    gs_toggle_pause(gs, 0);
+    gs_toggle_pause(gs, g, 0);
   else if (key == SPEED_1_KEY)
     gs_set_game_speed(gs, 1);
   else if (key == SPEED_2_KEY)

@@ -19,7 +19,7 @@ typedef struct Stuff {
   int money, food, wood, iron;
 } Stuff;
 
-typedef void (*OnClickCB)(GameScene *, int id);
+typedef void (*OnClickCB)(GameScene *, Game *, int);
 typedef struct PickRect {
   Recti rect;
   OnClickCB click;

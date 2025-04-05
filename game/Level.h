@@ -61,6 +61,10 @@ static inline bool l_on_your_field(Level *level, Recti r) {
   (void)level;
   return r.y + r.h <= LEVEL_HEIGHT / 2;
 }
+static inline bool l_on_enemy_field(Level *level, Recti r) {
+  (void)level;
+  return r.y > LEVEL_HEIGHT / 2;
+}
 
 static inline void l_set_tile_content(Level *level, int x, int y, TileContent *c) {
   if (l_valid(level, x, y))

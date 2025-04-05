@@ -16,7 +16,7 @@ typedef struct Castle {
   int manager_click_counter;
 } Castle;
 
-Color cs_color() { return rgb(0, 80, 133); }
+static inline Color cs_color() { return rgb(0, 80, 133); }
 static inline Sizei cs_size() { return (Sizei){3, 3}; }
 
 bool cs_dead(Castle *cs) {
