@@ -36,6 +36,16 @@ void mi_update(Mine *mi, GameScene *gs, Game *g, float dt) {
   }
 }
 
+void mi_tick(Mine *mi, GameScene *gs, Game *g, int tick) {
+  (void)g;
+
+  if (tick % 5 != 0)
+    return;
+
+  bd_flash(&mi->display);
+  gs->resources.iron++;
+}
+
 void mi_draw(Mine *mi, GameScene *gs, Game *g) {
   if (ri_contains(mi->display.location, gs->r.x, gs->r.y)) {
     c_printf(g, "----------------------\n");
@@ -80,6 +90,7 @@ static SceneObjectTable Mine_table = {
     .dead = (SceneObjectDeadCB)mi_dead,
     .render_order = (SceneObjectRenderOrderCB)mi_render_order,
     .update = (SceneObjectUpdateCB)mi_update,
+    .tick = (SceneObjectTickCB)mi_tick,
     .draw = (SceneObjectDrawCB)mi_draw,
     .save = (SceneObjectSaveCB)mi_to_json,
 };

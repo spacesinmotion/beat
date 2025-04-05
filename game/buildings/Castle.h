@@ -7,7 +7,6 @@
 #include "game/TileContent.h"
 #include "game/assets.h"
 
-
 typedef struct Castle {
   BuildingDisplay display;
 
@@ -35,6 +34,14 @@ void cs_update(Castle *cs, GameScene *gs, Game *g, float dt) {
     cs->last_day_delivered = gs->day;
     cs->manager_click_counter = 0;
   }
+}
+
+void cs_tick(Castle *cs, GameScene *gs, Game *g, int tick) {
+  (void)g;
+  (void)tick;
+
+  bd_flash(&cs->display);
+  gs->resources.money += 2;
 }
 
 void cs_draw(Castle *cs, GameScene *gs, Game *g) {
@@ -81,6 +88,7 @@ static SceneObjectTable Castle_table = {
     .dead = (SceneObjectDeadCB)cs_dead,
     .render_order = (SceneObjectRenderOrderCB)cs_render_order,
     .update = (SceneObjectUpdateCB)cs_update,
+    .tick = (SceneObjectTickCB)cs_tick,
     .draw = (SceneObjectDrawCB)cs_draw,
     .save = (SceneObjectSaveCB)cs_to_json,
 };

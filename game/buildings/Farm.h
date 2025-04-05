@@ -36,6 +36,15 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
   }
 }
 
+void fa_tick(Farm *fa, GameScene *gs, Game *g, int tick) {
+  (void)g;
+  if (tick % 2 != 0)
+    return;
+
+  bd_flash(&fa->display);
+  gs->resources.food++;
+}
+
 void fa_draw(Farm *fa, GameScene *gs, Game *g) {
   if (ri_contains(fa->display.location, gs->r.x, gs->r.y)) {
     c_printf(g, "----------------------\n");
@@ -80,6 +89,7 @@ static SceneObjectTable Farm_table = {
     .dead = (SceneObjectDeadCB)fa_dead,
     .render_order = (SceneObjectRenderOrderCB)fa_render_order,
     .update = (SceneObjectUpdateCB)fa_update,
+    .tick = (SceneObjectTickCB)fa_tick,
     .draw = (SceneObjectDrawCB)fa_draw,
     .save = (SceneObjectSaveCB)fa_to_json,
 };

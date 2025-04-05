@@ -36,6 +36,16 @@ void wc_update(WoodCutter *wc, GameScene *gs, Game *g, float dt) {
   }
 }
 
+void wc_tick(WoodCutter *wc, GameScene *gs, Game *g, int tick) {
+  (void)g;
+
+  if (tick % 3 != 0)
+    return;
+
+  bd_flash(&wc->display);
+  gs->resources.wood++;
+}
+
 void wc_draw(WoodCutter *wc, GameScene *gs, Game *g) {
   if (ri_contains(wc->display.location, gs->r.x, gs->r.y)) {
     c_printf(g, "----------------------\n");
@@ -79,6 +89,7 @@ static SceneObjectTable WoodCutter_table = {
     .type = "WoodCutter",
     .dead = (SceneObjectDeadCB)wc_dead,
     .render_order = (SceneObjectRenderOrderCB)wc_render_order,
+    .tick = (SceneObjectTickCB)wc_tick,
     .update = (SceneObjectUpdateCB)wc_update,
     .draw = (SceneObjectDrawCB)wc_draw,
     .save = (SceneObjectSaveCB)wc_to_json,

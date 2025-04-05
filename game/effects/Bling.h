@@ -55,4 +55,5 @@ Bling *Bling_init(GameScene *gs, Vec2 l, Color c) {
 
   return h;
 }
+
 #endif

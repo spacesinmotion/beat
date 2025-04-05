@@ -185,7 +185,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 }
 
 bool gs_construction_available(GameScene *gs) {
-  if (!l_freeR(gs->level, gs->r))
+  if (!gs->game_paused || !l_freeR(gs->level, gs->r))
     return false;
   return gs->resources.money > 0;
 }
