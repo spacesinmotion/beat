@@ -14,18 +14,13 @@
 
 typedef struct TileContent TileContent;
 typedef struct Tile {
-  bool movable;
   TileContent *content;
 } Tile;
 typedef struct Level {
   Tile tiles[LEVEL_WIDTH][LEVEL_HEIGHT];
 } Level;
 
-void l_update_movable(Level *l);
-static inline void l_init(Level *level) {
-  memset(level->tiles, 0, sizeof(level->tiles));
-  l_update_movable(level);
-}
+static inline void l_init(Level *level) { memset(level->tiles, 0, sizeof(level->tiles)); }
 
 static inline bool l_valid(const Level *level, int x, int y) {
   (void)level;
@@ -50,16 +45,15 @@ bool l_freeR(Level *level, Recti r) {
   return true;
 }
 
-static inline bool l_movable(Level *level, int x, int y) { return l_valid(level, x, y) && level->tiles[x][y].movable; }
-static inline bool l_movableP(Level *level, Point p) { return l_movable(level, p.x, p.y); }
-static inline void l_set_movable(Level *level, int x, int y, bool movable) {
-  if (l_valid(level, x, y))
-    level->tiles[x][y].movable = movable;
+static inline bool l_placeable(Level *l, int i, int j) {
+  const bool free = l_free(l, i, j);
+  const bool nearby = !l_free(l, i - 1, j) || !l_free(l, i + 1, j) || !l_free(l, i, j - 1) || !l_free(l, i, j + 1);
+  return free && nearby && j < LEVEL_HEIGHT / 2;
 }
-static inline bool l_contains_movable(Level *level, Recti r) {
+static inline bool l_contains_placeable(Level *l, Recti r) {
   for (int i = r.x; i < r.x + r.w; ++i)
     for (int j = r.y; j < r.y + r.h; ++j)
-      if (l_movable(level, i, j))
+      if (l_placeable(l, i, j))
         return true;
   return false;
 }
@@ -164,7 +158,7 @@ void l_movable_to_json(CJHObject *o, Level *l) {
   for (int i = 0; i < LEVEL_WIDTH; ++i) {
     bool need_line = true;
     for (int j = 0; j < LEVEL_HEIGHT; ++j) {
-      if (l_movable(l, i, j)) {
+      if (l_free(l, i, j)) {
         if (need_line) {
           points[nb_entries++] = (unsigned short)i;
           need_line = false;
@@ -191,6 +185,7 @@ void l_to_json(CJHObject *o, Level *l) {
 }
 
 void l_movable_from_json(CJHObjectR *o, Level *l) {
+  (void)l;
   StrView str = cjh_o_read_string(o);
   // printf("%.*smovable: %.*s\n", indent, space, str.len, str.s);
 
@@ -229,15 +224,6 @@ void l_from_json(CJHObjectR *o, const char *key, Level *l) {
     printf("%.*s%s: SKIP\n", indent, space, key);
     cjh_o_skip(o);
   }
-}
-
-void l_update_movable(Level *l) {
-  for (int i = 0; i < LEVEL_WIDTH; ++i)
-    for (int j = 0; j < LEVEL_HEIGHT / 2; ++j) {
-      const bool free = l_free(l, i, j);
-      const bool nearby = !l_free(l, i - 1, j) || !l_free(l, i + 1, j) || !l_free(l, i, j - 1) || !l_free(l, i, j + 1);
-      l_set_movable(l, i, j, free && nearby);
-    }
 }
 
 #endif // LEVEL_H

@@ -187,7 +187,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 bool gs_construction_available(GameScene *gs) {
   if (!gs->game_paused || !l_freeR(gs->level, gs->r))
     return false;
-  return gs->resources.money > 0 && l_contains_movable(gs->level, gs->r) && l_on_your_field(gs->level, gs->r);
+  return gs->resources.money > 0 && l_contains_placeable(gs->level, gs->r) && l_on_your_field(gs->level, gs->r);
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -199,7 +199,7 @@ void gs_draw(GameScene *gs, Game *g) {
       if (!l_free(gs->level, i, j))
         continue;
       bool under_mouse = gs->r.x == i && gs->r.y == j;
-      g_color(g, under_mouse ? red() : (l_movable(gs->level, i, j) ? blue() : gray(100)));
+      g_color(g, under_mouse ? red() : (l_placeable(gs->level, i, j) ? blue() : gray(100)));
       g_object(g, g_animation_buffer(g), Img_marker, under_mouse ? g_frame(g) % 4 : 0, l_to_vec(i, j));
     }
 
@@ -409,7 +409,6 @@ void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
   } else if (key == MI_Forge) {
     Forge_init(g, gs, (Point){r.x, r.y});
   }
-  l_update_movable(gs->level);
 }
 
 void gs_to_json(CJHObject *o, void *ud);
