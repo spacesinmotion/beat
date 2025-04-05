@@ -19,21 +19,15 @@ typedef enum Image {
 } Image;
 
 typedef enum MenuIcon {
-  MI_Street,
-  MI_Marketplace,
-  MI_House,
-  MI_Water,
-  MI_Food,
-  MI_Click,
-  MI_Entertainment,
-  MI_ConstructionMaterial,
-  MI_Science,
-  MI_Manager,
-  MI_Combinator,
-  MI___empty,
-  MI_Industry,
-  MI_Logistics,
-  MI_WareHouse,
+  MI_Castle,
+  MI_Farm,
+  MI_WoodCutter,
+  MI_Mine,
+  MI_MenAtArms,
+  MI_Archers,
+  MI_Tower,
+  MI_Altar,
+  MI_Forge,
   Nb_MI,
 } MenuIcon;
 

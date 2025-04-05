@@ -13,6 +13,7 @@ typedef struct CJHObject CJHObject;
 typedef bool (*SceneObjectDeadCB)(const SceneObject *);
 typedef float (*SceneObjectRenderOrderCB)(const SceneObject *);
 typedef void (*SceneObjectUpdateCB)(SceneObject *, GameScene *, Game *, float);
+typedef void (*SceneObjectTickCB)(SceneObject *, GameScene *, Game *, int);
 typedef void (*SceneObjectDrawCB)(const SceneObject *, GameScene *gs, Game *);
 typedef void (*SceneObjectSaveCB)(CJHObject *o, const SceneObject *);
 
@@ -21,6 +22,7 @@ typedef struct SceneObjectTable {
   SceneObjectDeadCB dead;
   SceneObjectRenderOrderCB render_order;
   SceneObjectUpdateCB update;
+  SceneObjectTickCB tick;
   SceneObjectDrawCB draw;
   SceneObjectSaveCB save;
 } SceneObjectTable;
@@ -45,6 +47,11 @@ static inline float so_render_order(const SceneObject *so) {
 static inline void so_update(SceneObject *so, GameScene *gs, Game *g, float dt) {
   if (so->context && so->table->update)
     so->table->update(so->context, gs, g, dt);
+}
+
+static inline void so_tick(SceneObject *so, GameScene *gs, Game *g, int t) {
+  if (so->context && so->table->tick)
+    so->table->tick(so->context, gs, g, t);
 }
 
 static inline void so_draw(const SceneObject *so, GameScene *gs, Game *g) {
