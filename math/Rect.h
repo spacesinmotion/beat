@@ -35,6 +35,9 @@ typedef struct Recti {
 static inline Point ri_bottom_right(Recti r) { return (Point){r.x, r.y}; }
 
 static inline bool ri_contains(Recti r, int x, int y) { return r.x <= x && r.y <= y && r.x + r.w > x && r.y + r.h > y; }
+static inline bool ri_containsR(Recti r1, Recti r2) {
+  return r1.x <= r2.x && r1.y <= r2.y && r1.x + r1.w >= r2.x + r2.w && r1.y + r1.h >= r2.y + r2.h;
+}
 
 static inline void ri_set_size(Recti *r, Sizei s) {
   r->w = s.w;

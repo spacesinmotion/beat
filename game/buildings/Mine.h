@@ -9,8 +9,9 @@
 
 typedef struct Mine {
   BuildingDisplay display;
-
   int id;
+
+  Player *player;
 
   int last_day_delivered;
   int manager_click_counter;
@@ -38,12 +39,12 @@ void mi_update(Mine *mi, GameScene *gs, Game *g, float dt) {
 
 void mi_tick(Mine *mi, GameScene *gs, Game *g, int tick) {
   (void)g;
-
+  (void)gs;
   if (tick % 5 != 0)
     return;
 
   bd_flash(&mi->display);
-  gs->resources.iron++;
+  mi->player->resources.iron++;
 }
 
 void mi_draw(Mine *mi, GameScene *gs, Game *g) {
@@ -101,12 +102,13 @@ static TileContentTable Mine_TileContent_Table = {
     .location = (LocationCb)mi_location,
 };
 
-Mine *Mine_init(Game *g, GameScene *gs, Point p) {
+Mine *Mine_init(Game *g, GameScene *gs, Player *player, Point p) {
   const Sizei s = mi_size();
   Mine *mi = g_malloc(sizeof(Mine));
   *mi = (Mine){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(mi),
+      .player = player,
       .last_day_delivered = gs->day,
       .manager_click_counter = 0,
   };

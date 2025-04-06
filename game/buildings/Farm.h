@@ -9,8 +9,9 @@
 
 typedef struct Farm {
   BuildingDisplay display;
-
   int id;
+
+  Player *player;
 
   int last_day_delivered;
   int manager_click_counter;
@@ -38,11 +39,12 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
 
 void fa_tick(Farm *fa, GameScene *gs, Game *g, int tick) {
   (void)g;
+  (void)gs;
   if (tick % 2 != 0)
     return;
 
   bd_flash(&fa->display);
-  gs->resources.food++;
+  fa->player->resources.food++;
 }
 
 void fa_draw(Farm *fa, GameScene *gs, Game *g) {
@@ -100,12 +102,13 @@ static TileContentTable Farm_TileContent_Table = {
     .location = (LocationCb)fa_location,
 };
 
-Farm *Farm_init(Game *g, GameScene *gs, Point p) {
+Farm *Farm_init(Game *g, GameScene *gs, Player *player, Point p) {
   const Sizei s = fa_size();
   Farm *fa = g_malloc(sizeof(Farm));
   *fa = (Farm){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(fa),
+      .player = player,
       .last_day_delivered = gs->day,
       .manager_click_counter = 0,
   };

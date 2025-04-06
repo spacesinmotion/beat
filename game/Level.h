@@ -48,7 +48,7 @@ bool l_freeR(Level *level, Recti r) {
 static inline bool l_placeable(Level *l, int i, int j) {
   const bool free = l_free(l, i, j);
   const bool nearby = !l_free(l, i - 1, j) || !l_free(l, i + 1, j) || !l_free(l, i, j - 1) || !l_free(l, i, j + 1);
-  return free && nearby && j < LEVEL_HEIGHT / 2;
+  return free && nearby;
 }
 static inline bool l_contains_placeable(Level *l, Recti r) {
   for (int i = r.x; i < r.x + r.w; ++i)
@@ -57,14 +57,14 @@ static inline bool l_contains_placeable(Level *l, Recti r) {
         return true;
   return false;
 }
-static inline bool l_on_your_field(Level *level, Recti r) {
-  (void)level;
-  return r.y + r.h <= LEVEL_HEIGHT / 2;
-}
-static inline bool l_on_enemy_field(Level *level, Recti r) {
-  (void)level;
-  return r.y > LEVEL_HEIGHT / 2;
-}
+// static inline bool l_on_your_field(Level *level, Recti r) {
+//   (void)level;
+//   return r.y + r.h <= LEVEL_HEIGHT / 2;
+// }
+// static inline bool l_on_enemy_field(Level *level, Recti r) {
+//   (void)level;
+//   return r.y > LEVEL_HEIGHT / 2;
+// }
 
 static inline void l_set_tile_content(Level *level, int x, int y, TileContent *c) {
   if (l_valid(level, x, y))

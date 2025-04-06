@@ -20,25 +20,28 @@ typedef struct BuildingOption {
   Sizei size;
 } BuildingOption;
 
-static inline bool ai_placeable(Level *l, int i, int j) {
-  const bool free = l_free(l, i, j);
-  const bool nearby = !l_free(l, i - 1, j) || !l_free(l, i + 1, j) || !l_free(l, i, j - 1) || !l_free(l, i, j + 1);
-  return free && nearby && j >= LEVEL_HEIGHT / 2;
-}
-static inline bool ai_contains_placeable(Level *l, Recti r) {
-  for (int i = r.x; i < r.x + r.w; ++i)
-    for (int j = r.y; j < r.y + r.h; ++j)
-      if (ai_placeable(l, i, j))
-        return true;
-  return false;
-}
-bool ai_construction_available(GameScene *gs, Recti r) {
-  if (!gs->game_paused || !l_freeR(gs->level, r))
-    return false;
-  return gs->resources.money > 0 && ai_contains_placeable(gs->level, r) && l_on_enemy_field(gs->level, r);
-}
+// static inline bool ai_placeable(Level *l, int i, int j) {
+//   const bool free = l_free(l, i, j);
+//   const bool nearby = !l_free(l, i - 1, j) || !l_free(l, i + 1, j) || !l_free(l, i, j - 1) || !l_free(l, i, j + 1);
+//   return free && nearby && j >= LEVEL_HEIGHT / 2;
+// }
+// static inline bool ai_contains_placeable(Level *l, Recti r) {
+//   for (int i = r.x; i < r.x + r.w; ++i)
+//     for (int j = r.y; j < r.y + r.h; ++j)
+//       if (ai_placeable(l, i, j))
+//         return true;
+//   return false;
+// }
+// bool ai_construction_available(GameScene *gs, Recti r) {
+//   if (!gs->game_paused || !l_freeR(gs->level, r))
+//     return false;
+//   return gs->enemy.resources.money > 0 && ai_contains_placeable(gs->level, r) && l_on_enemy_field(gs->level, r);
+// }
+
+bool gs_construction_available(GameScene *gs, Player *player, Recti r);
 
 void ai_turn(GameScene *gs, Game *g) {
+  (void)g;
 
   BuildingOption building_option[9] = {
       {MI_Castle, cs_color(), cs_size()},      {MI_Farm, fa_color(), fa_size()},
@@ -54,7 +57,7 @@ void ai_turn(GameScene *gs, Game *g) {
     BuildingOption *bo = &building_option[b];
     Recti r = {rand() % LEVEL_WIDTH, rand() % LEVEL_HEIGHT, bo->size.w, bo->size.h};
 
-    if (!ai_construction_available(gs, r))
+    if (!gs_construction_available(gs, &gs->enemy, r))
       continue;
 
     ConstructionSite_init(gs, r, bo->key);

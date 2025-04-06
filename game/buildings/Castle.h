@@ -9,9 +9,9 @@
 
 typedef struct Castle {
   BuildingDisplay display;
-
   int id;
 
+  Player *player;
   int last_day_delivered;
   int manager_click_counter;
 } Castle;
@@ -38,10 +38,11 @@ void cs_update(Castle *cs, GameScene *gs, Game *g, float dt) {
 
 void cs_tick(Castle *cs, GameScene *gs, Game *g, int tick) {
   (void)g;
+  (void)gs;
   (void)tick;
 
   bd_flash(&cs->display);
-  gs->resources.money += 2;
+  cs->player->resources.money += 2;
 }
 
 void cs_draw(Castle *cs, GameScene *gs, Game *g) {
@@ -99,12 +100,13 @@ static TileContentTable Castle_TileContent_Table = {
     .location = (LocationCb)cs_location,
 };
 
-Castle *Castle_init(Game *g, GameScene *gs, Point p) {
+Castle *Castle_init(Game *g, GameScene *gs, Player *player, Point p) {
   const Sizei s = cs_size();
   Castle *cs = g_malloc(sizeof(Castle));
   *cs = (Castle){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(cs),
+      .player = player,
       .last_day_delivered = gs->day,
       .manager_click_counter = 0,
   };

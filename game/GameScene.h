@@ -2,6 +2,7 @@
 #define GAME_SCENE
 
 #include "Game.h"
+#include "game/Player.h"
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "math/Rect.h"
@@ -14,10 +15,6 @@ typedef struct SceneObjectVec {
   SceneObject *data;
   int len, cap;
 } SceneObjectVec;
-
-typedef struct Stuff {
-  int money, food, wood, iron;
-} Stuff;
 
 typedef void (*OnClickCB)(GameScene *, Game *, int);
 typedef struct PickRect {
@@ -35,7 +32,8 @@ typedef struct GameScene {
   float daytime_step, daytime;
   int day, tick_of_day;
 
-  Stuff resources;
+  Player user;
+  Player enemy;
 
   Color preview;
   Recti r;

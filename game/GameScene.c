@@ -3,6 +3,7 @@
 #include "extern/cjsonh/cjsonh.h"
 #include "game/ConstructionSite.h"
 #include "game/Level.h"
+#include "game/Player.h"
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/ai/RandomAI.h"
@@ -164,21 +165,21 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 
   qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
 
-  if (gs->resources.money != gs->money_counter_text_cache) {
-    g_create_text(g, &gs->money_counter_text, Oswald_Regular_8, str("%.2d", gs->resources.money));
-    gs->money_counter_text_cache = gs->resources.money;
+  if (gs->user.resources.money != gs->money_counter_text_cache) {
+    g_create_text(g, &gs->money_counter_text, Oswald_Regular_8, str("%.2d", gs->user.resources.money));
+    gs->money_counter_text_cache = gs->user.resources.money;
   }
-  if (gs->resources.food != gs->food_counter_text_cache) {
-    g_create_text(g, &gs->food_counter_text, Oswald_Regular_8, str("%d", gs->resources.food));
-    gs->food_counter_text_cache = gs->resources.food;
+  if (gs->user.resources.food != gs->food_counter_text_cache) {
+    g_create_text(g, &gs->food_counter_text, Oswald_Regular_8, str("%d", gs->user.resources.food));
+    gs->food_counter_text_cache = gs->user.resources.food;
   }
-  if (gs->resources.wood != gs->wood_counter_text_cache) {
-    g_create_text(g, &gs->wood_counter_text, Oswald_Regular_8, str("%d", gs->resources.wood));
-    gs->wood_counter_text_cache = gs->resources.food;
+  if (gs->user.resources.wood != gs->wood_counter_text_cache) {
+    g_create_text(g, &gs->wood_counter_text, Oswald_Regular_8, str("%d", gs->user.resources.wood));
+    gs->wood_counter_text_cache = gs->user.resources.food;
   }
-  if (gs->resources.iron != gs->iron_counter_text_cache) {
-    g_create_text(g, &gs->iron_counter_text, Oswald_Regular_8, str("%d", gs->resources.iron));
-    gs->iron_counter_text_cache = gs->resources.iron;
+  if (gs->user.resources.iron != gs->iron_counter_text_cache) {
+    g_create_text(g, &gs->iron_counter_text, Oswald_Regular_8, str("%d", gs->user.resources.iron));
+    gs->iron_counter_text_cache = gs->user.resources.iron;
   }
   if (gs->day != gs->day_counter_text_cache) {
     g_create_text(g, &gs->day_counter_text, Oswald_Regular_12, str("day %d", gs->day));
@@ -190,10 +191,10 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   }
 }
 
-bool gs_construction_available(GameScene *gs, Recti r) {
+bool gs_construction_available(GameScene *gs, Player *player, Recti r) {
   if (!gs->game_paused || !l_freeR(gs->level, r))
     return false;
-  return gs->resources.money > 0 && l_contains_placeable(gs->level, r) && l_on_your_field(gs->level, r);
+  return gs->user.resources.money > 0 && l_contains_placeable(gs->level, r) && pl_on_field(player, r);
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -204,8 +205,9 @@ void gs_draw(GameScene *gs, Game *g) {
     for (int j = 0; j < LEVEL_HEIGHT; ++j) {
       if (!l_free(gs->level, i, j))
         continue;
-      bool under_mouse = gs->r.x == i && gs->r.y == j;
-      g_color(g, under_mouse ? red() : (l_placeable(gs->level, i, j) ? blue() : gray(100)));
+      const bool under_mouse = gs->r.x == i && gs->r.y == j;
+      const bool on_playfield = ri_contains(gs->user.play_field, i, j) && l_placeable(gs->level, i, j);
+      g_color(g, under_mouse ? red() : (on_playfield ? blue() : rgb(213, 206, 182)));
       g_object(g, g_animation_buffer(g), Img_marker, under_mouse ? g_frame(g) % 4 : 0, l_to_vec(i, j));
     }
 
@@ -217,7 +219,7 @@ void gs_draw(GameScene *gs, Game *g) {
       g_color(g, gs->preview);
       g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), Img_house_map, l_to_vec(gs->r.x, gs->r.y));
     }
-    g_color(g, gs_construction_available(gs, gs->r) ? green() : red());
+    g_color(g, gs_construction_available(gs, &gs->user, gs->r) ? green() : red());
     for (int i = gs->r.x; i < gs->r.x + gs->r.w; ++i)
       for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
         g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, l_to_vec(i, j));
@@ -352,7 +354,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
       gs->special_click_handler(gs->special_click_handler_data, p, gs);
 
     else if (gs->menu_selected >= 0) {
-      if (gs_construction_available(gs, gs->r) && gs->r.w * gs->r.h > 0)
+      if (gs_construction_available(gs, &gs->user, gs->r) && gs->r.w * gs->r.h > 0)
         ConstructionSite_init(gs, gs->r, gs->menu_selected);
 
     } else {
@@ -397,13 +399,13 @@ void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objec
 
 void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
   if (key == MI_Castle) {
-    Castle_init(g, gs, (Point){r.x, r.y});
+    Castle_init(g, gs, &gs->user, (Point){r.x, r.y});
   } else if (key == MI_Farm) {
-    Farm_init(g, gs, (Point){r.x, r.y});
+    Farm_init(g, gs, &gs->user, (Point){r.x, r.y});
   } else if (key == MI_WoodCutter) {
-    WoodCutter_init(g, gs, (Point){r.x, r.y});
+    WoodCutter_init(g, gs, &gs->user, (Point){r.x, r.y});
   } else if (key == MI_Mine) {
-    Mine_init(g, gs, (Point){r.x, r.y});
+    Mine_init(g, gs, &gs->user, (Point){r.x, r.y});
   } else if (key == MI_MenAtArms) {
     MenAtArms_init(g, gs, (Point){r.x, r.y});
   } else if (key == MI_Archers) {
@@ -440,7 +442,10 @@ void GameScene_init(Game *g) {
       .day = 1,
       .tick_of_day = 0,
       .daytime = 0.0f,
-      .resources = {.money = 100, .food = 0, .wood = 0, .iron = 0},
+      .user = {.resources = {.money = 100, .food = 0, .wood = 0, .iron = 0},
+               .play_field = {0, 0, LEVEL_WIDTH, LEVEL_HEIGHT / 2}},
+      .enemy = {.resources = {.money = 100, .food = 0, .wood = 0, .iron = 0},
+                .play_field = {0, LEVEL_HEIGHT / 2 + 1, LEVEL_WIDTH, LEVEL_HEIGHT}},
       .level = g_malloc(sizeof(Level)),
       .r = (Recti){-1, -1, 0, 0},
       .money_counter_text_cache = -1,
@@ -482,7 +487,7 @@ void gs_to_json(CJHObject *o, void *ud) {
   cjh_o_add_number(o, "daytime_step", gs->daytime_step);
   cjh_o_add_number(o, "daytime", gs->daytime);
   cjh_o_add_number(o, "day", gs->day);
-  cjh_o_add_object(o, "resources", gs_stuff_to_json, &gs->resources);
+  cjh_o_add_object(o, "user", gs_stuff_to_json, &gs->user.resources);
   cjh_o_add_object(o, "level", (CJHWriteObjectCB)l_to_json, gs->level);
   // StreetMap *street_map;
 }
@@ -624,10 +629,10 @@ void gs_from_json(CJHObjectR *o, const char *key, void *ud) {
   else if (streq(key, "reasearch_needed"))
     printf("%s: %g\n", key, cjh_o_read_number(o));
 
-  else if (streq(key, "resources")) {
+  else if (streq(key, "user")) {
     printf("%s:\n", key);
     indent += 2;
-    cjh_o_read_object(o, gs_stuff_from_json, &gs->resources);
+    cjh_o_read_object(o, gs_stuff_from_json, &gs->user.resources);
     indent -= 2;
   } else if (streq(key, "level")) {
     printf("%s:\n", key);

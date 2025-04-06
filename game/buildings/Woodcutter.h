@@ -3,14 +3,16 @@
 
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
+#include "game/Player.h"
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/assets.h"
 
 typedef struct WoodCutter {
   BuildingDisplay display;
-
   int id;
+
+  Player *player;
 
   int last_day_delivered;
   int manager_click_counter;
@@ -38,12 +40,12 @@ void wc_update(WoodCutter *wc, GameScene *gs, Game *g, float dt) {
 
 void wc_tick(WoodCutter *wc, GameScene *gs, Game *g, int tick) {
   (void)g;
-
+  (void)gs;
   if (tick % 3 != 0)
     return;
 
   bd_flash(&wc->display);
-  gs->resources.wood++;
+  wc->player->resources.wood++;
 }
 
 void wc_draw(WoodCutter *wc, GameScene *gs, Game *g) {
@@ -101,12 +103,13 @@ static TileContentTable WoodCutter_TileContent_Table = {
     .location = (LocationCb)wc_location,
 };
 
-WoodCutter *WoodCutter_init(Game *g, GameScene *gs, Point p) {
+WoodCutter *WoodCutter_init(Game *g, GameScene *gs, Player *player, Point p) {
   const Sizei s = wc_size();
   WoodCutter *wc = g_malloc(sizeof(WoodCutter));
   *wc = (WoodCutter){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(wc),
+      .player = player,
       .last_day_delivered = gs->day,
       .manager_click_counter = 0,
   };
