@@ -2,6 +2,7 @@
 #include "game/GameScene.h"
 #include "Scene.h"
 #include "extern/cjsonh/cjsonh.h"
+#include "game/DataBase.h"
 #include "game/Game.h"
 #include "game/Player.h"
 #include "game/SceneObject.h"
@@ -14,6 +15,7 @@
 #include "math/Rect.h"
 #include "math/Vec2.h"
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -225,7 +227,9 @@ void GameScene_init(Game *g) {
       .pick_under_mouse = -1,
   };
 
-  Word_init(gs, g, "Jadeperle", (Vec2){100, 100});
+  size_t w = rand() % (sizeof(words) / sizeof(words[0]));
+  printf("%d %s\n", (int)w, words[w]);
+  Word_init(gs, g, words[w], (Vec2){100, 100});
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }

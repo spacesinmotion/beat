@@ -1,6 +1,7 @@
 #ifndef WORD_H
 #define WORD_H
 
+#include "game/DataBase.h"
 #include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/SceneObject.h"
@@ -9,6 +10,7 @@
 
 typedef struct Word {
   Vec2 pos;
+  float vel;
   char text[32];
 
   G_Object word_start;
@@ -18,13 +20,25 @@ typedef struct Word {
 
 } Word;
 
-bool w_dead(const Word *w) { return false; }
+bool w_dead(const Word *w) { return w->pos.y < 0.0; }
 float w_render_order(const Word *w) { return w->pos.y; }
 
+Word *Word_init(GameScene *gs, Game *g, const char *text, Vec2 pos);
 void w_update(Word *w, GameScene *gs, Game *g, float dt) {
 
   const size_t l = sizeof(gs->entered_until_now);
   assert(l == 32);
+  if (w->char_reached == (int)strlen(w->text)) {
+    float ov = w->vel;
+    w->vel += dt;
+    w->pos.y -= w->vel;
+    if (ov < 1.0 && w->vel >= 1.0) {
+      size_t w = rand() % (sizeof(words) / sizeof(words[0]));
+      printf("%d %s\n", (int)w, words[w]);
+      Word_init(gs, g, words[w], (Vec2){100, 100});
+    }
+    return;
+  }
 
   size_t x = 0;
   for (size_t i = 1; i < l; ++i)
@@ -34,10 +48,6 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
     }
 
   if (x == strlen(w->text)) {
-    for (size_t i = 1; i < l; ++i)
-      gs->entered_until_now[i] = ' ';
-    x = 0;
-
     Bling_init(gs, (Vec2){w->pos.x + rand() % 50, w->pos.y + 10}, red());
   }
 
@@ -54,8 +64,10 @@ void w_draw(Word *w, GameScene *gs, Game *g) {
     g_color(g, rgb(77, 69, 45));
     g_text(g, w->word_start, Oswald_Regular_12, w->pos);
   }
-  g_color(g, rgb(184, 177, 154));
-  g_text(g, w->word_end, Oswald_Regular_12, (Vec2){w->pos.x + w->word_end_offset, w->pos.y});
+  if (G_Object_valid(&w->word_end)) {
+    g_color(g, rgb(184, 177, 154));
+    g_text(g, w->word_end, Oswald_Regular_12, (Vec2){w->pos.x + w->word_end_offset, w->pos.y});
+  }
 }
 
 SceneObjectTable Word_SceneObject_Table = {
@@ -67,7 +79,7 @@ SceneObjectTable Word_SceneObject_Table = {
 
 Word *Word_init(GameScene *gs, Game *g, const char *text, Vec2 pos) {
   Word *w = (Word *)g_malloc(sizeof(Word));
-  *w = (Word){.pos = pos};
+  *w = (Word){.pos = pos, .vel = 0.0f};
 
   memset(w->text, 0, sizeof(w->text));
   strncpy(w->text, text, 32);
