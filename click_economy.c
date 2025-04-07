@@ -148,10 +148,11 @@ sg_image img_load(const char *path) {
   return (sg_image){};
 }
 
-#define FONT_SCALE 8
+#define FONT_TEX_SIZE 1024
+#define FONT_SCALE 16
 FontImage load_font(const char *path, int size) {
   uint8_t *ttf_buffer = (uint8_t *)malloc(1048576);
-  FontImage f = {.size = FONT_SCALE * size, .tw = 512, .th = 512};
+  FontImage f = {.size = FONT_SCALE * size, .tw = FONT_TEX_SIZE, .th = FONT_TEX_SIZE};
   uint8_t *temp_bitmap = (uint8_t *)calloc(f.tw * f.th, 4);
 
   fread(ttf_buffer, 1ul, 1048576ul, fopen(path, "rb"));
@@ -159,7 +160,7 @@ FontImage load_font(const char *path, int size) {
   stbtt_fontinfo font;
   stbtt_InitFont(&font, ttf_buffer, 0);
   const int r = stbtt_BakeFontBitmap(ttf_buffer, 0, FONT_SCALE * size, temp_bitmap, f.tw, f.tw, 32, 96, f.cdata);
-  assert(r < 512);
+  assert(r < FONT_TEX_SIZE);
 
   f.texture = sg_alloc_image();
   sg_init_image(f.texture, &(sg_image_desc){.width = f.tw,
