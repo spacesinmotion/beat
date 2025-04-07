@@ -20,7 +20,7 @@ typedef struct G_Object {
 
 typedef bool (*IsSetCB)(void *data, int i, int j);
 G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data);
-void g_create_text(Game *g, G_Object *o, G_Font ff, const char *text);
+Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text);
 bool G_Object_valid(const G_Object *);
 void G_Object_free(G_Object *);
 

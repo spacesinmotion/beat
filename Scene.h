@@ -12,6 +12,7 @@ typedef void (*SceneDrawCB)(void *, Game *);
 typedef void (*SceneMouseMoveCB)(void *, Game *, Vec2, Vec2);
 typedef void (*SceneMouseCB)(void *, Game *, Vec2, Vec2, int);
 typedef void (*SceneKeyCB)(void *, Game *, int);
+typedef void (*SceneCharCB)(void *, Game *, uint32_t);
 
 typedef void (*SceneSaveCB)(CJHObject *, void *);
 typedef void (*SceneLoadCB)(CJHObjectR *, const char *, void *);
@@ -25,6 +26,7 @@ typedef struct SceneTable {
   SceneMouseCB mouse_up;
   SceneKeyCB key_down;
   SceneKeyCB key_up;
+  SceneCharCB char_enter;
 
   SceneSaveCB save;
   SceneLoadCB load;

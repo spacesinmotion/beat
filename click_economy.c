@@ -185,7 +185,7 @@ const FontImage *g_font(Game *g, G_Font font) {
   return &g->fonts[font];
 }
 
-void g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
+Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
   G_Object_free(o);
   const FontImage *f = g_font(g, ff);
   vertex_t vertices[1024];
@@ -249,6 +249,8 @@ void g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
         .num_elements = ilen,
     };
   }
+
+  return (Vec2){x / 8.0f, y / 8.0f};
 }
 
 void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {
@@ -803,6 +805,9 @@ static void g_handel_events(const sapp_event *e, Game *g) {
       cjh_read("savegame.json", g_from_json, g);
     else if (g->scene.table->key_up)
       g->scene.table->key_up(g->scene.context, g, e->key_code);
+  } else if ((e->type == SAPP_EVENTTYPE_CHAR)) {
+    if (g->scene.table->char_enter)
+      g->scene.table->char_enter(g->scene.context, g, e->char_code);
   }
 }
 

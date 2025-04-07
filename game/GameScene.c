@@ -1,6 +1,8 @@
 
 #include "game/GameScene.h"
+#include "Scene.h"
 #include "extern/cjsonh/cjsonh.h"
+#include "game/Game.h"
 #include "game/Player.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
@@ -13,6 +15,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #ifndef M_PI
@@ -80,7 +83,6 @@ bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
 }
 
 void gs_update(GameScene *gs, Game *g, float dt) {
-  (void)g;
 
   g_set_background_color(g, rgb(226, 219, 197));
 
@@ -89,6 +91,35 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   so_vec_filter_dead(&gs->scene_objects);
 
   qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
+
+  const size_t l = sizeof(gs->entered_until_now);
+  assert(l == 32);
+
+  const char *text = "Jadeperle";
+  size_t x = 0;
+  for (size_t i = 1; i < l; ++i)
+    if (strncmp(&gs->entered_until_now[l - i], text, i) == 0) {
+      x = i;
+      break;
+    }
+
+  if (x == strlen(text)) {
+    for (size_t i = 1; i < l; ++i)
+      gs->entered_until_now[i] = ' ';
+    x = 0;
+
+    Bling_init(gs, (Vec2){100 + rand() % 50, 120}, red());
+  }
+
+  if (strncmp(gs->entered_until_now, gs->entered_until_now_back, l) != 0) {
+    g_create_text(g, &gs->entered, Oswald_Regular_12, str("%.*s", (int)(l), gs->entered_until_now));
+    memcpy(gs->entered_until_now_back, gs->entered_until_now, l);
+  }
+  if (!G_Object_valid(&gs->word_end) || (int)x != gs->char_reached) {
+    gs->char_reached = (int)x;
+    gs->word_end_offset = g_create_text(g, &gs->word_start, Oswald_Regular_12, str("%.*s", x, text)).x;
+    g_create_text(g, &gs->word_end, Oswald_Regular_12, &text[x]);
+  }
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -97,6 +128,18 @@ void gs_draw(GameScene *gs, Game *g) {
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
     so_draw(&gs->scene_objects.data[i], gs, g);
+
+  if (G_Object_valid(&gs->word_start)) {
+    g_color(g, rgb(77, 69, 45));
+    g_text(g, gs->word_start, Oswald_Regular_12, (Vec2){100, 100});
+  }
+  g_color(g, rgb(184, 177, 154));
+  g_text(g, gs->word_end, Oswald_Regular_12, (Vec2){100 + gs->word_end_offset, 100});
+
+  if (G_Object_valid(&gs->entered)) {
+    g_color(g, rgb(76, 123, 168));
+    g_text(g, gs->entered, Oswald_Regular_12, (Vec2){100, 80});
+  }
 }
 
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
@@ -181,6 +224,15 @@ void gs_key_up(GameScene *gs, Game *g, int key) {
     printf("KEY UP (%d)\n", key);
 }
 
+void gs_char_enter(GameScene *gs, Game *g, uint32_t c) {
+  const size_t l = sizeof(gs->entered_until_now);
+  assert(l == 32);
+
+  for (size_t i = 1; i < l; ++i)
+    gs->entered_until_now[i - 1] = gs->entered_until_now[i];
+  gs->entered_until_now[l - 1] = (char)(c % 255);
+}
+
 void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
 
 void gs_to_json(CJHObject *o, void *ud);
@@ -193,6 +245,7 @@ SceneTable GameScene_table = {
     .mouse_move = (SceneMouseMoveCB)gs_mouse_move,
     .mouse_down = (SceneMouseCB)gs_mouse_down,
     .key_up = (SceneKeyCB)gs_key_up,
+    .char_enter = (SceneCharCB)gs_char_enter,
     .save = gs_to_json,
     .load = gs_from_json,
 };
@@ -205,6 +258,8 @@ void GameScene_init(Game *g) {
       .menu_selected = -1,
       .user = {.resources = {}},
       .r = (Recti){-1, -1, 0, 0},
+      .entered_until_now = {'_'},
+      .entered_until_now_back = {'x'},
       .pick_rects = {},
       .pick_rect_count = 0,
       .pick_under_mouse = -1,
