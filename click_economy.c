@@ -148,16 +148,17 @@ sg_image img_load(const char *path) {
   return (sg_image){};
 }
 
+#define FONT_SCALE 8
 FontImage load_font(const char *path, int size) {
   uint8_t *ttf_buffer = (uint8_t *)malloc(1048576);
-  FontImage f = {.size = 8 * size, .tw = 512, .th = 512};
+  FontImage f = {.size = FONT_SCALE * size, .tw = 512, .th = 512};
   uint8_t *temp_bitmap = (uint8_t *)calloc(f.tw * f.th, 4);
 
   fread(ttf_buffer, 1ul, 1048576ul, fopen(path, "rb"));
 
   stbtt_fontinfo font;
   stbtt_InitFont(&font, ttf_buffer, 0);
-  const int r = stbtt_BakeFontBitmap(ttf_buffer, 0, 8 * size, temp_bitmap, f.tw, f.tw, 32, 96, f.cdata);
+  const int r = stbtt_BakeFontBitmap(ttf_buffer, 0, FONT_SCALE * size, temp_bitmap, f.tw, f.tw, 32, 96, f.cdata);
   assert(r < 512);
 
   f.texture = sg_alloc_image();
@@ -209,14 +210,14 @@ Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
         stbtt_GetBakedQuad(f->cdata, f->tw, f->th, (int)*t - 32, &x, &y, &q, 1);
         vertex_t *vx = &vertices[vlen];
         uint16_t *ix = &indices[ilen];
-        vx[0] =
-            (vertex_t){(Vec2){q.x0 / 8.0f, -q.y0 / 8.0f}, (uint16_t)((q.s0) * 65535.0), (uint16_t)((q.t0) * 65535.0)};
-        vx[1] =
-            (vertex_t){(Vec2){q.x1 / 8.0f, -q.y0 / 8.0f}, (uint16_t)((q.s1) * 65535.0), (uint16_t)((q.t0) * 65535.0)};
-        vx[2] =
-            (vertex_t){(Vec2){q.x1 / 8.0f, -q.y1 / 8.0f}, (uint16_t)((q.s1) * 65535.0), (uint16_t)((q.t1) * 65535.0)};
-        vx[3] =
-            (vertex_t){(Vec2){q.x0 / 8.0f, -q.y1 / 8.0f}, (uint16_t)((q.s0) * 65535.0), (uint16_t)((q.t1) * 65535.0)};
+        vx[0] = (vertex_t){(Vec2){q.x0 / FONT_SCALE, -q.y0 / FONT_SCALE}, (uint16_t)((q.s0) * 65535.0),
+                           (uint16_t)((q.t0) * 65535.0)};
+        vx[1] = (vertex_t){(Vec2){q.x1 / FONT_SCALE, -q.y0 / FONT_SCALE}, (uint16_t)((q.s1) * 65535.0),
+                           (uint16_t)((q.t0) * 65535.0)};
+        vx[2] = (vertex_t){(Vec2){q.x1 / FONT_SCALE, -q.y1 / FONT_SCALE}, (uint16_t)((q.s1) * 65535.0),
+                           (uint16_t)((q.t1) * 65535.0)};
+        vx[3] = (vertex_t){(Vec2){q.x0 / FONT_SCALE, -q.y1 / FONT_SCALE}, (uint16_t)((q.s0) * 65535.0),
+                           (uint16_t)((q.t1) * 65535.0)};
 
         ix[0] = (vlen + 0ul);
         ix[1] = (vlen + 1ul);
@@ -250,7 +251,7 @@ Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
     };
   }
 
-  return (Vec2){x / 8.0f, y / 8.0f};
+  return (Vec2){x / FONT_SCALE, y / FONT_SCALE};
 }
 
 void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {

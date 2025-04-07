@@ -33,14 +33,8 @@ typedef struct GameScene {
 
   Vec2 mouse_overlay_position;
 
-  G_Object word_start;
-  G_Object word_end;
-  int char_reached;
-  float word_end_offset;
-
   char entered_until_now[32];
   char entered_until_now_back[32];
-  G_Object entered;
 
   PickRect pick_rects[32];
   int pick_rect_count;
