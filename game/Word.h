@@ -44,7 +44,6 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
   for (size_t i = 1; i < l; ++i)
     if (strncmp(&gs->entered_until_now[l - i], w->text, i) == 0) {
       x = i;
-      break;
     }
 
   if (x == strlen(w->text)) {
