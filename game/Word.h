@@ -42,11 +42,11 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
 
   size_t x = 0;
   for (size_t i = 1; i < l; ++i)
-    if (strncmp(&gs->entered_until_now[l - i], w->text, i) == 0) {
+    if (strncmp(&gs->entered_until_now[l - i], w->text, i) == 0)
       x = i;
-    }
 
   if (x == strlen(w->text)) {
+    memset(gs->entered_until_now, 0, l);
     Bling_init(gs, (Vec2){w->pos.x + rand() % 50, w->pos.y + 10}, red());
   }
 
