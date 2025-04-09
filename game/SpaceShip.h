@@ -7,26 +7,62 @@
 #include "game/assets.h"
 #include "math/Color.h"
 #include "math/Vec2.h"
+#include "math/random.h"
+
+typedef struct DriveStar {
+  Vec2 pos;
+  float scale, rot;
+} DriveStar;
 
 typedef struct SpaceShip {
-  Vec2 pos;
+  Vec2 center, pos, vel;
+
+  DriveStar drive_star[32];
 } SpaceShip;
 
 bool sh_dead(const SpaceShip *sh) { return sh->pos.y < 0.0; }
 float sh_render_order(const SpaceShip *sh) { return sh->pos.y; }
 
 void sh_update(SpaceShip *sh, GameScene *gs, Game *g, float dt) {
-  (void)sh;
   (void)gs;
   (void)g;
   (void)dt;
+
+  if (rand() % 250 < 4)
+    sh->vel = v_add(sh->vel, (Vec2){r_float_r(-1.0, 1.0f), r_float_r(-1.0, 1.0f)});
+  else {
+    Vec2 cor = v_sub(sh->pos, sh->center);
+    sh->vel = v_add(sh->vel, v_mulf(cor, -dt));
+  }
+  sh->pos = v_add(sh->pos, v_mulf(sh->vel, dt));
+
+  bool found_one = false;
+  for (int i = 0; i < 32; ++i) {
+    DriveStar *st = &sh->drive_star[i];
+    st->scale *= r_float_r(0.85f, 0.96f);
+    if (!found_one && st->scale < 0.1f) {
+      found_one = true;
+      st->pos.x = sh->pos.x - r_float_r(8.0f, 12.0f);
+      st->pos.y = sh->pos.y - 0.75f + r_float_r(-0.75f, 0.75f);
+      st->rot = r_float_r(0.0f, 3.14f);
+      st->scale = r_float_r(0.6f, 1.1f);
+    } else {
+      st->pos.x -= r_float_r(39.0f, 41.0f) * dt;
+    }
+  }
 }
 
 void sh_draw(SpaceShip *sh, GameScene *gs, Game *g) {
   (void)gs;
 
+  for (int i = 0; i < 16; ++i) {
+    const DriveStar *st = &sh->drive_star[i];
+    g_color(g, alphaf(c_mix(red(), white(), st->scale * st->scale), st->scale * (0.5f + 0.1f * sin(st->scale))));
+    g_objectRS(g, g_animation_buffer(g), Img_starship, 1, st->pos, st->rot, st->scale);
+  }
   g_color(g, white());
   g_objectS(g, g_animation_buffer(g), Img_starship, 0, sh->pos, 2.0f);
+  // g_objectRS(g, g_animation_buffer(g), Img_starship, 1, sh->center, 0, 1.5);
 }
 
 SceneObjectTable SpaceShip_SceneObject_Table = {
@@ -38,7 +74,7 @@ SceneObjectTable SpaceShip_SceneObject_Table = {
 
 SpaceShip *SpaceShip_init(GameScene *gs, Vec2 pos) {
   SpaceShip *sh = (SpaceShip *)g_malloc(sizeof(SpaceShip));
-  *sh = (SpaceShip){.pos = pos};
+  *sh = (SpaceShip){.center = pos, .pos = pos, .vel = (Vec2){0.0f, 0.0f}};
 
   gs_add_object(gs, (SceneObject){sh, &SpaceShip_SceneObject_Table});
 
