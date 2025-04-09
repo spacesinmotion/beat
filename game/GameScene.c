@@ -184,7 +184,15 @@ void gs_key_up(GameScene *gs, Game *g, int key) {
     gs_set_game_speed(gs, 4);
   else if (key == SPEED_8_KEY)
     gs_set_game_speed(gs, 8);
-  else
+  else if (key == 259) { // backspace
+    const size_t l = sizeof(gs->entered_until_now);
+    assert(l == 32);
+
+    for (size_t i = 1; i < l; ++i)
+      gs->entered_until_now[l - i] = gs->entered_until_now[l - i - 1];
+    gs->entered_until_now[0] = ' ';
+    // printf("back'%.*s'\n", 32, gs->entered_until_now);
+  } else
     printf("KEY UP (%d)\n", key);
 }
 
@@ -192,9 +200,12 @@ void gs_char_enter(GameScene *gs, Game *g, uint32_t c) {
   const size_t l = sizeof(gs->entered_until_now);
   assert(l == 32);
 
-  for (size_t i = 1; i < l; ++i)
-    gs->entered_until_now[i - 1] = gs->entered_until_now[i];
-  gs->entered_until_now[l - 1] = (char)(c % 255);
+  if (isalnum(c)) {
+    for (size_t i = 1; i < l; ++i)
+      gs->entered_until_now[i - 1] = gs->entered_until_now[i];
+    gs->entered_until_now[l - 1] = (char)(c % 255);
+    // printf("set '%.*s'\n", 32, gs->entered_until_now);
+  }
 }
 
 void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
