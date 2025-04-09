@@ -6,6 +6,8 @@
 #include "game/Game.h"
 #include "game/Player.h"
 #include "game/SceneObject.h"
+#include "game/SpaceShip.h"
+#include "game/Star.h"
 #include "game/Word.h"
 #include "game/assets.h"
 #include "game/effects/Bling.h"
@@ -121,7 +123,7 @@ int center_num(int num) { return (num / 10 > 0) ? -10 : -8; }
 
 void gs_draw_overlay(GameScene *gs, Game *g) {
   gs->pick_rect_count = 0;
-  gs_draw_menu_overlay(gs, g);
+  // gs_draw_menu_overlay(gs, g);
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
@@ -230,6 +232,10 @@ void GameScene_init(Game *g) {
   size_t w = rand() % (sizeof(words) / sizeof(words[0]));
   printf("%d %s\n", (int)w, words[w]);
   Word_init(gs, g, words[w], (Vec2){100, 100});
+
+  SpaceShip_init(gs, (Vec2){200, 200});
+  for (int i = 0; i < 40; ++i)
+    Star_init(gs);
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }
