@@ -28,11 +28,11 @@ void sh_update(SpaceShip *sh, GameScene *gs, Game *g, float dt) {
   (void)g;
   (void)dt;
 
-  if (rand() % 250 < 4)
-    sh->vel = v_add(sh->vel, (Vec2){r_float_r(-1.0, 1.0f), r_float_r(-1.0, 1.0f)});
+  if (rand() % 250 < 4 && v_distance(sh->pos, sh->center) < 5)
+    sh->vel = v_add(sh->vel, (Vec2){r_float_r(-1.5, 1.5f), r_float_r(-1.5, 1.5f)});
   else {
     Vec2 cor = v_sub(sh->pos, sh->center);
-    sh->vel = v_add(sh->vel, v_mulf(cor, -dt));
+    sh->vel = v_add(sh->vel, v_mulf(cor, -dt * 0.5f));
   }
   sh->pos = v_add(sh->pos, v_mulf(sh->vel, dt));
 

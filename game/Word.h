@@ -32,6 +32,11 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
     float ov = w->vel;
     w->vel += dt;
     w->pos.y -= w->vel;
+    if (w_dead(w)) {
+      G_Object_free(&w->word_end);
+      G_Object_free(&w->word_start);
+      return;
+    }
     if (ov < 1.0 && w->vel >= 1.0) {
       size_t w = rand() % (sizeof(words) / sizeof(words[0]));
       printf("%d %s\n", (int)w, words[w]);
