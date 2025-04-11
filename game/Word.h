@@ -57,6 +57,8 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
       x = i;
 
   if (x == strlen(w->text)) {
+    gs->points += x;
+    gs->points_flush = 1.0f;
     memset(gs->entered_until_now, 0, l);
   }
 
@@ -72,7 +74,7 @@ void w_draw(Word *w, GameScene *gs, Game *g) {
 
   const float a = 1.0f - (w->vel * w->vel) / 2.0f;
   if (G_Object_valid(&w->word_start)) {
-    g_color(g, alphaf(rgb(76, 92, 53), a));
+    g_color(g, alphaf(rgb(88, 136, 22), a));
     g_text(g, w->word_start, Oswald_Regular_12, w->pos);
   }
   if (G_Object_valid(&w->word_end)) {

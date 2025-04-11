@@ -42,6 +42,10 @@ typedef struct GameScene {
   int pick_under_mouse;
 
   SpaceShip *spaceship;
+
+  int points, points_cache;
+  G_Object points_text;
+  float points_flush;
 } GameScene;
 
 typedef struct GameScene GameScene;

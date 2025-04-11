@@ -97,6 +97,12 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   so_vec_filter_dead(&gs->scene_objects);
 
   qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
+
+  gs->points_flush *= 0.99f;
+  if (gs->points != gs->points_cache) {
+    gs->points_cache = gs->points;
+    g_create_text(g, &gs->points_text, Oswald_Regular_12, str("%d", gs->points));
+  }
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -126,6 +132,9 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   (void)g;
   gs->pick_rect_count = 0;
   // gs_draw_menu_overlay(gs, g);
+
+  g_color(g, c_mix(rgb(168, 159, 128), rgb(88, 136, 22), gs->points_flush * gs->points_flush));
+  g_text(g, gs->points_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 15});
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
@@ -242,6 +251,9 @@ void GameScene_init(Game *g) {
       .pick_rects = {},
       .pick_rect_count = 0,
       .pick_under_mouse = -1,
+      .points = 0,
+      .points_cache = -1,
+      .points_flush = 0.0f,
   };
 
   gs->spaceship = SpaceShip_init(gs, (Vec2){200, 200});
