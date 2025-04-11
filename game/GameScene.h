@@ -46,6 +46,10 @@ typedef struct GameScene {
   int points, points_cache;
   G_Object points_text;
   float points_flush;
+
+  float health, health_cache;
+  G_Object health_text;
+  float health_flush;
 } GameScene;
 
 typedef struct GameScene GameScene;

@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "extern/cjsonh/cjsonh.h"
 #include "game/Game.h"
+#include "game/Meteorite.h"
 #include "game/Player.h"
 #include "game/SceneObject.h"
 #include "game/SpaceShip.h"
@@ -103,6 +104,14 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     gs->points_cache = gs->points;
     g_create_text(g, &gs->points_text, Oswald_Regular_12, str("%d", gs->points));
   }
+  gs->health_flush *= 0.99f;
+  if (gs->health != gs->health_cache) {
+    gs->health_cache = gs->health;
+    g_create_text(g, &gs->health_text, Oswald_Regular_12, str("%.2f", gs->health));
+  }
+
+  if (rand() % 1000 < 2)
+    Meteorite_init(gs);
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -135,6 +144,8 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
 
   g_color(g, c_mix(rgb(168, 159, 128), rgb(88, 136, 22), gs->points_flush * gs->points_flush));
   g_text(g, gs->points_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 15});
+  g_color(g, c_mix(rgb(237, 77, 45), rgb(182, 0, 0), gs->health_flush * gs->health_flush));
+  g_text(g, gs->health_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 25});
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
@@ -254,6 +265,9 @@ void GameScene_init(Game *g) {
       .points = 0,
       .points_cache = -1,
       .points_flush = 0.0f,
+      .health = 100,
+      .health_cache = -1.0,
+      .health_flush = 0.0f,
   };
 
   gs->spaceship = SpaceShip_init(gs, (Vec2){200, 200});
