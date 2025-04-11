@@ -27,8 +27,8 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="px"
      inkscape:zoom="8.9972797"
-     inkscape:cx="29.28663"
-     inkscape:cy="22.340086"
+     inkscape:cx="16.560561"
+     inkscape:cy="53.127169"
      inkscape:window-width="1366"
      inkscape:window-height="768"
      inkscape:window-x="0"
@@ -163,4 +163,11 @@
        style="fill:#808080;fill-opacity:1;stroke:none;stroke-width:0.2;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;opacity:0.8;filter:url(#filter20)"
        d="m 49,15 -1,-5 -1,5 -5,1 5,1 1,5 1,-5 5,-1 z"
        id="path20"
-       sodipodi:nodetypes="ccccccccc" /></g></svg>
+       sodipodi:nodetypes="ccccccccc" /><rect
+       style="opacity:1;fill:#ffffff;fill-opacity:1;stroke-width:0.5;stroke-linejoin:bevel"
+       id="rect1"
+       width="28"
+       height="6"
+       x="1.9999998"
+       y="45"
+       ry="1" /></g></svg>
