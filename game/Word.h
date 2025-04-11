@@ -6,6 +6,7 @@
 #include "game/GameScene.h"
 #include "game/SceneObject.h"
 #include "game/effects/Bling.h"
+#include "math/Color.h"
 #include "math/Vec2.h"
 
 typedef struct Word {
@@ -20,7 +21,14 @@ typedef struct Word {
 
 } Word;
 
-bool w_dead(const Word *w) { return w->pos.y < 0.0; }
+bool w_dead(Word *w) {
+  if (w->vel >= 2.0f) {
+    G_Object_free(&w->word_end);
+    G_Object_free(&w->word_start);
+    return true;
+  }
+  return false;
+}
 float w_render_order(const Word *w) { return w->pos.y; }
 
 Word *Word_init(GameScene *gs, Game *g, const char *text, Vec2 pos);
@@ -32,18 +40,14 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
     float ov = w->vel;
     w->vel += dt;
     w->pos.y -= w->vel;
-    if (w_dead(w)) {
-      G_Object_free(&w->word_end);
-      G_Object_free(&w->word_start);
-      return;
-    }
-    if (ov < 1.0 && w->vel >= 1.0) {
+    if (ov < 0.65 && w->vel >= 0.65) {
       size_t w = rand() % (sizeof(words) / sizeof(words[0]));
       printf("%d %s\n", (int)w, words[w]);
       Word_init(gs, g, words[w], (Vec2){100, 100});
     }
     return;
-  }
+  } else if (w->vel > 0.001)
+    w->vel *= 0.95f;
 
   size_t x = 0;
   for (size_t i = 1; i < l; ++i)
@@ -63,13 +67,15 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
 }
 
 void w_draw(Word *w, GameScene *gs, Game *g) {
+  (void)gs;
 
+  const float a = 1.0f - (w->vel * w->vel) / 2.0f;
   if (G_Object_valid(&w->word_start)) {
-    g_color(g, rgb(77, 69, 45));
+    g_color(g, alphaf(rgb(76, 92, 53), a));
     g_text(g, w->word_start, Oswald_Regular_12, w->pos);
   }
   if (G_Object_valid(&w->word_end)) {
-    g_color(g, rgb(184, 177, 154));
+    g_color(g, alphaf(rgb(168, 159, 128), a));
     g_text(g, w->word_end, Oswald_Regular_12, (Vec2){w->pos.x + w->word_end_offset, w->pos.y});
   }
 }
@@ -82,8 +88,10 @@ SceneObjectTable Word_SceneObject_Table = {
 };
 
 Word *Word_init(GameScene *gs, Game *g, const char *text, Vec2 pos) {
+  (void)g;
+
   Word *w = (Word *)g_malloc(sizeof(Word));
-  *w = (Word){.pos = pos, .vel = 0.0f};
+  *w = (Word){.pos = pos, .vel = 1.9f};
 
   memset(w->text, 0, sizeof(w->text));
   strncpy(w->text, text, 32);

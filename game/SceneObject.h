@@ -10,7 +10,7 @@ typedef struct GameScene GameScene;
 typedef struct Game Game;
 typedef struct CJHObject CJHObject;
 
-typedef bool (*SceneObjectDeadCB)(const SceneObject *);
+typedef bool (*SceneObjectDeadCB)(SceneObject *);
 typedef float (*SceneObjectRenderOrderCB)(const SceneObject *);
 typedef void (*SceneObjectUpdateCB)(SceneObject *, GameScene *, Game *, float);
 typedef void (*SceneObjectTickCB)(SceneObject *, GameScene *, Game *, int);
