@@ -2,13 +2,12 @@
 #include "game/GameScene.h"
 #include "Scene.h"
 #include "extern/cjsonh/cjsonh.h"
-#include "game/DataBase.h"
 #include "game/Game.h"
 #include "game/Player.h"
 #include "game/SceneObject.h"
 #include "game/SpaceShip.h"
 #include "game/Star.h"
-#include "game/Word.h"
+#include "game/WordBubble.h"
 #include "game/assets.h"
 #include "game/effects/Bling.h"
 #include "gc/gc.h"
@@ -63,6 +62,8 @@ int so_render_order_compare(const void *va, const void *vb) {
 
 void gs_toggle_pause(GameScene *gs, Game *g, int id) {
   (void)id;
+  (void)g;
+
   gs->game_paused = false;
 }
 void gs_set_game_speed(GameScene *gs, int speed) {
@@ -122,6 +123,7 @@ void gs_draw_menu_overlay(GameScene *gs, Game *g) {
 int center_num(int num) { return (num / 10 > 0) ? -10 : -8; }
 
 void gs_draw_overlay(GameScene *gs, Game *g) {
+  (void)g;
   gs->pick_rect_count = 0;
   // gs_draw_menu_overlay(gs, g);
 }
@@ -147,7 +149,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   (void)op;
 
   if (button == 0) {
-    const Point p = (Point){gs->r.x, gs->r.y};
+    // const Point p = (Point){gs->r.x, gs->r.y};
     if (gs->pick_under_mouse >= 0)
       gs->pick_rects[gs->pick_under_mouse].click(gs, g, gs->pick_rects[gs->pick_under_mouse].id);
 
@@ -197,6 +199,8 @@ void gs_key_up(GameScene *gs, Game *g, int key) {
 }
 
 void gs_char_enter(GameScene *gs, Game *g, uint32_t c) {
+  (void)g;
+
   const size_t l = sizeof(gs->entered_until_now);
   assert(l == 32);
 
@@ -240,13 +244,11 @@ void GameScene_init(Game *g) {
       .pick_under_mouse = -1,
   };
 
-  size_t w = rand() % (sizeof(words) / sizeof(words[0]));
-  printf("%d %s\n", (int)w, words[w]);
-  Word_init(gs, g, words[w], (Vec2){100, 100});
-
-  SpaceShip_init(gs, (Vec2){200, 200});
+  gs->spaceship = SpaceShip_init(gs, (Vec2){200, 200});
   for (int i = 0; i < 40; ++i)
     Star_init(gs);
+
+  WordBubble_init(gs, g);
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }

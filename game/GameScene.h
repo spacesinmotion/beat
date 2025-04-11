@@ -18,6 +18,7 @@ typedef struct PickRect {
   int id;
 } PickRect;
 
+typedef struct SpaceShip SpaceShip;
 typedef struct GameScene {
   SceneObjectVec scene_objects;
 
@@ -39,6 +40,8 @@ typedef struct GameScene {
   PickRect pick_rects[32];
   int pick_rect_count;
   int pick_under_mouse;
+
+  SpaceShip *spaceship;
 } GameScene;
 
 typedef struct GameScene GameScene;

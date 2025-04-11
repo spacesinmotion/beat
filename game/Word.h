@@ -8,6 +8,7 @@
 #include "game/effects/Bling.h"
 #include "math/Color.h"
 #include "math/Vec2.h"
+#include "math/random.h"
 
 typedef struct Word {
   Vec2 pos;
@@ -22,28 +23,29 @@ typedef struct Word {
 } Word;
 
 bool w_dead(Word *w) {
-  if (w->vel >= 2.0f) {
-    G_Object_free(&w->word_end);
-    G_Object_free(&w->word_start);
-    return true;
-  }
+  (void)w;
   return false;
 }
-float w_render_order(const Word *w) { return w->pos.y; }
+float w_render_order(const Word *w) { return w->pos.y + 200; }
 
-Word *Word_init(GameScene *gs, Game *g, const char *text, Vec2 pos);
+void w_new_word(Word *w) {
+  memset(w->text, 0, sizeof(w->text));
+  const size_t x = rand() % (sizeof(words) / sizeof(words[0]));
+  strncpy(w->text, words[x], 32);
+  w->char_reached = 0;
+}
+
 void w_update(Word *w, GameScene *gs, Game *g, float dt) {
 
   const size_t l = sizeof(gs->entered_until_now);
   assert(l == 32);
   if (w->char_reached == (int)strlen(w->text)) {
-    float ov = w->vel;
-    w->vel += dt;
-    w->pos.y -= w->vel;
-    if (ov < 0.65 && w->vel >= 0.65) {
-      size_t w = rand() % (sizeof(words) / sizeof(words[0]));
-      printf("%d %s\n", (int)w, words[w]);
-      Word_init(gs, g, words[w], (Vec2){100, 100});
+    w->vel += 3.0f * dt;
+    if (w->vel >= 1.95)
+      w_new_word(w);
+    if (w->vel < 1.0) {
+      float x = w->word_end_offset * w->vel + r_float() * w->vel;
+      Bling_init(gs, (Vec2){w->pos.x + x, w->pos.y + 1 + r_float() * 3.0f}, c_mix(red(), green(), w->vel));
     }
     return;
   } else if (w->vel > 0.001)
@@ -56,7 +58,6 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
 
   if (x == strlen(w->text)) {
     memset(gs->entered_until_now, 0, l);
-    Bling_init(gs, (Vec2){w->pos.x + rand() % 50, w->pos.y + 10}, red());
   }
 
   if (!G_Object_valid(&w->word_end) || (int)x != w->char_reached) {
@@ -87,14 +88,12 @@ SceneObjectTable Word_SceneObject_Table = {
     .draw = (SceneObjectDrawCB)w_draw,
 };
 
-Word *Word_init(GameScene *gs, Game *g, const char *text, Vec2 pos) {
+Word *Word_init(GameScene *gs, Game *g) {
   (void)g;
 
   Word *w = (Word *)g_malloc(sizeof(Word));
-  *w = (Word){.pos = pos, .vel = 1.9f};
-
-  memset(w->text, 0, sizeof(w->text));
-  strncpy(w->text, text, 32);
+  *w = (Word){.vel = 1.9f};
+  w_new_word(w);
 
   gs_add_object(gs, (SceneObject){w, &Word_SceneObject_Table});
 
