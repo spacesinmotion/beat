@@ -50,6 +50,8 @@ typedef struct GameScene {
   float health, health_cache;
   G_Object health_text;
   float health_flush;
+
+  float range, speed, energy;
 } GameScene;
 
 typedef struct GameScene GameScene;

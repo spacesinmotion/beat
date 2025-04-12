@@ -28,7 +28,8 @@ void mt_update(Meteorite *mt, GameScene *gs, Game *g, float dt) {
   const Vec2 aim = v_sub(gs->spaceship->pos, mt->pos);
   mt->vel.y += aim.y * 0.1f * dt;
   mt->vel.y *= 0.99f;
-  mt->pos = v_add(mt->pos, v_mulf(mt->vel, dt));
+  Vec2 v = (Vec2){mt->vel.x * 0.25f + mt->vel.x * 0.75f * gs->speed, mt->vel.y};
+  mt->pos = v_add(mt->pos, v_mulf(v, dt));
   mt->rot += mt->rot_vel * dt;
   mt->alpha_t += dt * mt->alpha_vel;
 
@@ -36,7 +37,7 @@ void mt_update(Meteorite *mt, GameScene *gs, Game *g, float dt) {
   if (mt->hit_ship) {
     Bling_init(gs, mt->pos, c_mix(yellow(), red(), r_float()));
     gs->health -= mt->scale;
-    const Vec2 v = (Vec2){mt->vel.x, mt->vel.y * r_float_r(1.0f, 1.5f)};
+    const Vec2 v = (Vec2){v.x, v.y * r_float_r(1.0f, 1.5f)};
     gs->spaceship->vel = v_add(gs->spaceship->vel, v_mulf(v, 0.5f));
   }
   if (!mt->hit_ship && mt->pos.x < -100)
@@ -47,9 +48,9 @@ void mt_draw(Meteorite *mt, GameScene *gs, Game *g) {
   (void)gs;
 
   g_color(g, alphaf(red(), 0.4f + 0.3f * sin(mt->alpha_t)));
-  g_objectRS(g, g_animation_buffer(g), Img_starship, 1, mt->pos, mt->rot, 1.25f * mt->scale);
+  g_objectRS(g, g_animation_buffer(g), Img_starship, 1, mt->pos, mt->rot, vec2f(1.25f * mt->scale));
   g_color(g, alphaf(white(), 0.7f + 0.1f * sin(mt->alpha_t)));
-  g_objectRS(g, g_animation_buffer(g), Img_starship, 2, mt->pos, mt->rot, mt->scale);
+  g_objectRS(g, g_animation_buffer(g), Img_starship, 2, mt->pos, mt->rot, vec2f(mt->scale));
 }
 
 SceneObjectTable Meteorite_SceneObject_Table = {

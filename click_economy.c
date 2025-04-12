@@ -63,9 +63,8 @@ typedef struct vertex_t {
 } vertex_t;
 
 typedef struct vs_param_t {
-  Vec2 to_screen_scale, pan;
+  Vec2 to_screen_scale, pan, scale;
   float rot;
-  float scale;
 } vs_param_t;
 
 typedef struct fs_param_t {
@@ -108,6 +107,7 @@ typedef struct Game {
 
   TileRectBuffer tilerect_buffer[16];
   G_Object animation_buffer_4x4;
+  G_Object rect_buffer;
 
   sg_image images[NB_Img];
   FontImage fonts[Nb_Font];
@@ -258,8 +258,8 @@ Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
 void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {
   g->render.fs_param.color_mode = 0;
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
+  g->render.vs_param.scale = (Vec2){1.0f, 1.0};
   g->render.vs_param.rot = 0.0f;
-  g->render.vs_param.scale = 1.0f;
 
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
@@ -275,7 +275,7 @@ void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
   g->render.fs_param.color_mode = 1;
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = 0.0f;
-  g->render.vs_param.scale = 1.0f;
+  g->render.vs_param.scale = (Vec2){1.0f, 1.0};
 
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
@@ -287,7 +287,7 @@ void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
   sg_draw(0, buffer.num_elements, 1);
 }
 
-void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, float scale) {
+void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, Vec2 scale) {
   g->render.fs_param.color_mode = 0;
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = rot;
@@ -305,13 +305,13 @@ void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float 
 }
 
 void g_objectR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot) {
-  g_objectRS(g, buffer, tex, frame, pan, rot, 1.0f);
+  g_objectRS(g, buffer, tex, frame, pan, rot, (Vec2){1.0f, 1.0f});
 }
-void g_objectS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float scale) {
+void g_objectS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, Vec2 scale) {
   g_objectRS(g, buffer, tex, frame, pan, 0.0, scale);
 }
 void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan) {
-  g_objectRS(g, buffer, tex, frame, pan, 0.0f, 1.0f);
+  g_objectRS(g, buffer, tex, frame, pan, 0.0f, (Vec2){1.0f, 1.0f});
 }
 
 static Vec2 to_scene(Game *g, float x, float y) {
@@ -479,6 +479,7 @@ G_Object g_tilerect_buffer(Game *g, int w, int h) {
 }
 
 G_Object g_animation_buffer(Game *g) { return g->animation_buffer_4x4; }
+G_Object g_rect_buffer(Game *g) { return g->rect_buffer; }
 
 static void g_init(Game *g) {
   srand(1);
@@ -488,8 +489,8 @@ static void g_init(Game *g) {
   g->render.vs_param = (vs_param_t){
       {2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale},
       {1.0f, 1.0f},
+      (Vec2){1.0f, 1.0f},
       0.0f,
-      1.0f,
   };
   g->zoom = 0.5f;
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0};
@@ -515,8 +516,8 @@ static void g_init(Game *g) {
                    "\n"
                    "uniform vec2 to_screen_scale;\n"
                    "uniform vec2 pan;\n"
+                   "uniform vec2 scale;\n"
                    "uniform float rot;\n"
-                   "uniform float scale;\n"
                    "\n"
                    "layout(location=0) in vec4 position;\n"
                    "layout(location=1) in vec2 texcoord;\n"
@@ -570,8 +571,8 @@ static void g_init(Game *g) {
                      {
                          {"to_screen_scale", SG_UNIFORMTYPE_FLOAT2, 1},
                          {"pan", SG_UNIFORMTYPE_FLOAT2, 1},
+                         {"scale", SG_UNIFORMTYPE_FLOAT2, 1},
                          {"rot", SG_UNIFORMTYPE_FLOAT, 1},
-                         {"scale", SG_UNIFORMTYPE_FLOAT, 1},
                      },
              }}},
       .fs =
@@ -626,6 +627,7 @@ static void g_init(Game *g) {
 
   memset(g->tilerect_buffer, 0, sizeof(g->tilerect_buffer));
   g->animation_buffer_4x4 = quad_animation_buffer(-8, -8, 16, 16, 4, 4);
+  g->rect_buffer = quad_animation_buffer(0, 0, 1, 1, 4, 4);
 
   g->render.texture_sampler = sg_make_sampler(&(sg_sampler_desc){
       .min_filter = SG_FILTER_LINEAR,

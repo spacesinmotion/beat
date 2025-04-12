@@ -15,6 +15,8 @@ typedef struct Vec2 {
   float x, y;
 } Vec2;
 
+static inline Vec2 vec2f(float f) { return (Vec2){f, f}; }
+
 static inline bool v_eq(Vec2 a, Vec2 b) { return a.x == b.x && a.y == b.y; }
 
 static inline Vec2 v_add(Vec2 a, Vec2 b) { return (Vec2){a.x + b.x, a.y + b.y}; }

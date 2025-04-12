@@ -58,10 +58,10 @@ void sh_draw(SpaceShip *sh, GameScene *gs, Game *g) {
   for (int i = 0; i < 16; ++i) {
     const DriveStar *st = &sh->drive_star[i];
     g_color(g, alphaf(c_mix(red(), white(), st->scale * st->scale), st->scale * (0.5f + 0.1f * sin(st->scale))));
-    g_objectRS(g, g_animation_buffer(g), Img_starship, 1, st->pos, st->rot, st->scale);
+    g_objectRS(g, g_animation_buffer(g), Img_starship, 1, st->pos, st->rot, vec2f(st->scale));
   }
   g_color(g, white());
-  g_objectS(g, g_animation_buffer(g), Img_starship, 0, sh->pos, 2.0f);
+  g_objectS(g, g_animation_buffer(g), Img_starship, 0, sh->pos, vec2f(2.0f));
   // g_objectRS(g, g_animation_buffer(g), Img_starship, 1, sh->center, 0, 1.5);
 }
 

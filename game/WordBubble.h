@@ -46,7 +46,7 @@ void wb_draw(WordBubble *wb, GameScene *gs, Game *g) {
     t *= t;
     p.x = a.x + t * (b.x - a.x);
     // p = v_lerp(a, b, t);
-    g_objectS(g, g_animation_buffer(g), Img_starship, 4, p, 0.25f + t * 7.0);
+    g_objectS(g, g_animation_buffer(g), Img_starship, 4, p, vec2f(0.25f + t * 7.0));
   }
 }
 

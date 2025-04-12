@@ -22,7 +22,7 @@ void st_update(Star *st, GameScene *gs, Game *g, float dt) {
   (void)g;
   (void)dt;
 
-  st->pos = v_add(st->pos, v_mulf(st->vel, dt));
+  st->pos = v_add(st->pos, v_mulf(st->vel, gs->speed * dt));
   st->rot += st->rot_vel * dt;
   st->alpha_t += dt * st->alpha_vel;
 
@@ -35,7 +35,7 @@ void st_draw(Star *st, GameScene *gs, Game *g) {
   (void)gs;
 
   g_color(g, alphaf(white(), 0.7f + 0.1f * sin(st->alpha_t)));
-  g_objectRS(g, g_animation_buffer(g), Img_starship, 1, st->pos, st->rot, st->scale);
+  g_objectRS(g, g_animation_buffer(g), Img_starship, 1, st->pos, st->rot, vec2f(st->scale));
 }
 
 SceneObjectTable Star_SceneObject_Table = {

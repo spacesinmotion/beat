@@ -59,6 +59,7 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
   if (x == strlen(w->text)) {
     gs->points += x;
     gs->points_flush = 1.0f;
+    gs->energy = f_min(32.0, gs->energy + x);
     memset(gs->entered_until_now, 0, l);
   }
 

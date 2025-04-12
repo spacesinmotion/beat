@@ -112,6 +112,13 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 
   if (rand() % 1000 < 2)
     Meteorite_init(gs);
+
+  gs->energy = f_max(0.0f, gs->energy - 0.75f * dt);
+  if (gs->energy <= 0.0)
+    gs->speed = f_max(0.0f, gs->speed - dt);
+  else
+    gs->speed = f_min(1.0f, gs->speed + 1.25f * dt);
+  gs->range += gs->speed * dt;
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -146,6 +153,24 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   g_text(g, gs->points_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 15});
   g_color(g, c_mix(rgb(237, 77, 45), rgb(182, 0, 0), gs->health_flush * gs->health_flush));
   g_text(g, gs->health_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 25});
+
+  const Sizei vp = g_viewport(g);
+  g_color(g, gray(150));
+  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 9}, (Vec2){vp.w - 38, 6});
+  g_color(g, yellow());
+  const float r = gs->range / 100.0f;
+  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 10}, (Vec2){r * (vp.w - 40), 4});
+
+  g_color(g, gray(150));
+  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 19}, (Vec2){102, 6});
+  g_color(g, blue());
+  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 20}, (Vec2){gs->speed * 100.0f, 4});
+
+  g_color(g, gray(150));
+  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 29}, (Vec2){102, 6});
+  g_color(g, green());
+  const float e = gs->energy / 32.0f;
+  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 30}, (Vec2){e * 100.0f, 4});
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
@@ -268,6 +293,9 @@ void GameScene_init(Game *g) {
       .health = 100,
       .health_cache = -1.0,
       .health_flush = 0.0f,
+      .range = 0.0f,
+      .speed = 1.0f,
+      .energy = 5.0f,
   };
 
   gs->spaceship = SpaceShip_init(gs, (Vec2){200, 200});
