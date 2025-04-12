@@ -492,7 +492,7 @@ static void g_init(Game *g) {
       (Vec2){1.0f, 1.0f},
       0.0f,
   };
-  g->zoom = 0.5f;
+  g->zoom = 0.55f;
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0};
 
   sg_setup(&(sg_desc){

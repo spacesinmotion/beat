@@ -37,8 +37,9 @@ void mt_update(Meteorite *mt, GameScene *gs, Game *g, float dt) {
   if (mt->hit_ship) {
     Bling_init(gs, mt->pos, c_mix(yellow(), red(), r_float()));
     gs->health -= mt->scale;
-    const Vec2 v = (Vec2){v.x, v.y * r_float_r(1.0f, 1.5f)};
+    v = (Vec2){v.x, v.y * r_float_r(1.0f, 1.5f)};
     gs->spaceship->vel = v_add(gs->spaceship->vel, v_mulf(v, 0.5f));
+    gs->speed *= 0.5f;
   }
   if (!mt->hit_ship && mt->pos.x < -100)
     mt->pos = (Vec2){600 + rand() % 200, 50 + rand() % 300};

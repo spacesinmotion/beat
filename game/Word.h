@@ -9,6 +9,7 @@
 #include "math/Color.h"
 #include "math/Vec2.h"
 #include "math/random.h"
+#include <stdio.h>
 
 typedef struct Word {
   Vec2 pos;
@@ -28,9 +29,12 @@ bool w_dead(Word *w) {
 }
 float w_render_order(const Word *w) { return w->pos.y + 200; }
 
-void w_new_word(Word *w) {
+void w_new_word(Word *w, int level) {
   memset(w->text, 0, sizeof(w->text));
-  const size_t x = rand() % (sizeof(words) / sizeof(words[0]));
+  const size_t max = i_min(sizeof(words) / sizeof(words[0]), level_map[level + 1].offset);
+  // printf("DDD %d %d\n", (int)(sizeof(words) / sizeof(words[0])), (int)max);
+  const size_t x = rand() % max;
+
   strncpy(w->text, words[x], 32);
   w->char_reached = 0;
 }
@@ -42,7 +46,7 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
   if (w->char_reached == (int)strlen(w->text)) {
     w->vel += 3.0f * dt;
     if (w->vel >= 1.95)
-      w_new_word(w);
+      w_new_word(w, gs->level);
     if (w->vel < 1.0) {
       float x = w->word_end_offset * w->vel + r_float() * w->vel;
       Bling_init(gs, (Vec2){w->pos.x + x, w->pos.y + 1 + r_float() * 3.0f}, c_mix(red(), green(), w->vel));
@@ -96,7 +100,7 @@ Word *Word_init(GameScene *gs, Game *g) {
 
   Word *w = (Word *)g_malloc(sizeof(Word));
   *w = (Word){.vel = 1.9f};
-  w_new_word(w);
+  w_new_word(w, 1);
 
   gs_add_object(gs, (SceneObject){w, &Word_SceneObject_Table});
 

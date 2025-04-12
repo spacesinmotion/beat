@@ -52,6 +52,7 @@ typedef struct GameScene {
   float health_flush;
 
   float range, speed, energy;
+  int level;
 } GameScene;
 
 typedef struct GameScene GameScene;

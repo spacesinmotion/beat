@@ -34,6 +34,8 @@ void sh_update(SpaceShip *sh, GameScene *gs, Game *g, float dt) {
     Vec2 cor = v_sub(sh->pos, sh->center);
     sh->vel = v_add(sh->vel, v_mulf(cor, -dt * 0.5f));
   }
+
+  sh->vel = v_mulf(sh->vel, 0.9f + 0.1f * gs->speed);
   sh->pos = v_add(sh->pos, v_mulf(sh->vel, dt));
 
   bool found_one = false;
@@ -63,6 +65,15 @@ void sh_draw(SpaceShip *sh, GameScene *gs, Game *g) {
   g_color(g, white());
   g_objectS(g, g_animation_buffer(g), Img_starship, 0, sh->pos, vec2f(2.0f));
   // g_objectRS(g, g_animation_buffer(g), Img_starship, 1, sh->center, 0, 1.5);
+
+  if (gs->health < 100.0) {
+    Vec2 p = v_add(sh->pos, (Vec2){-6, 10});
+    g_color(g, gray(150));
+    g_objectS(g, g_rect_buffer(g), Img_starship, 15, p, (Vec2){20, 2});
+    g_color(g, red());
+    const float e = gs->health / 100.0f;
+    g_objectS(g, g_rect_buffer(g), Img_starship, 15, p, (Vec2){e * 20, 2});
+  }
 }
 
 SceneObjectTable SpaceShip_SceneObject_Table = {

@@ -89,6 +89,8 @@ bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
   return ri_contains(r, gs->mouse_overlay_position.x, gs->mouse_overlay_position.y);
 }
 
+#define LEVEL_RANGE_FACTOR 50.0f
+
 void gs_update(GameScene *gs, Game *g, float dt) {
 
   g_set_background_color(g, rgb(226, 219, 197));
@@ -119,6 +121,11 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   else
     gs->speed = f_min(1.0f, gs->speed + 1.25f * dt);
   gs->range += gs->speed * dt;
+
+  if (gs->range >= gs->level * LEVEL_RANGE_FACTOR) {
+    gs->range = 0;
+    gs->level++;
+  }
 }
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -158,7 +165,7 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   g_color(g, gray(150));
   g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 9}, (Vec2){vp.w - 38, 6});
   g_color(g, yellow());
-  const float r = gs->range / 100.0f;
+  const float r = gs->range / (LEVEL_RANGE_FACTOR * gs->level);
   g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 10}, (Vec2){r * (vp.w - 40), 4});
 
   g_color(g, gray(150));
@@ -296,9 +303,10 @@ void GameScene_init(Game *g) {
       .range = 0.0f,
       .speed = 1.0f,
       .energy = 5.0f,
+      .level = 1,
   };
 
-  gs->spaceship = SpaceShip_init(gs, (Vec2){200, 200});
+  gs->spaceship = SpaceShip_init(gs, (Vec2){150, 170});
   for (int i = 0; i < 40; ++i)
     Star_init(gs);
 
