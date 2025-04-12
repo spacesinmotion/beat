@@ -36,7 +36,7 @@ void mt_update(Meteorite *mt, GameScene *gs, Game *g, float dt) {
   mt->hit_ship = v_distance(mt->pos, gs->spaceship->pos) < 10;
   if (mt->hit_ship) {
     Bling_init(gs, mt->pos, c_mix(yellow(), red(), r_float()));
-    gs->health -= mt->scale;
+    gs->health -= mt->scale * gs->level;
     v = (Vec2){v.x, v.y * r_float_r(1.0f, 1.5f)};
     gs->spaceship->vel = v_add(gs->spaceship->vel, v_mulf(v, 0.5f));
     gs->speed *= 0.5f;
@@ -66,7 +66,7 @@ Meteorite *Meteorite_init(GameScene *gs) {
   *mt = (Meteorite){
       .pos = (Vec2){500 + rand() % 200, 50 + rand() % 300},
       .vel = (Vec2){-(20 + rand() % 40), 0},
-      .scale = r_float_r(1.3f, 2.5f),
+      .scale = r_float_r(1.5f, 2.75f),
       .rot = r_float_r(0.0f, 3.14),
       .rot_vel = r_float_r(0.75f, 1.5f) * (rand() % 2 == 0 ? 1 : -1),
       .alpha_t = r_float_r(0.0f, 2 * 3.14f),

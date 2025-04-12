@@ -112,10 +112,10 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     g_create_text(g, &gs->health_text, Oswald_Regular_12, str("%.2f", gs->health));
   }
 
-  if (rand() % 1000 < 2)
+  if (rand() % 1000 < (2 * gs->level))
     Meteorite_init(gs);
 
-  gs->energy = f_max(0.0f, gs->energy - 0.75f * dt);
+  gs->energy = f_max(0.0f, gs->energy - dt);
   if (gs->energy <= 0.0)
     gs->speed = f_max(0.0f, gs->speed - dt);
   else
