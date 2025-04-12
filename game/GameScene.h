@@ -60,4 +60,9 @@ void GameScene_init(Game *g);
 
 void gs_add_object(GameScene *gs, SceneObject so);
 
+static inline void gs_add_points(GameScene *gs, int p) {
+  gs->points += p;
+  gs->points_flush = 1.0f;
+}
+
 #endif

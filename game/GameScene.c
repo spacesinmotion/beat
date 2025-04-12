@@ -120,7 +120,11 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     gs->speed = f_max(0.0f, gs->speed - dt);
   else
     gs->speed = f_min(1.0f, gs->speed + 1.25f * dt);
+
+  const int or = (int)gs->range;
   gs->range += gs->speed * dt;
+  if (or < (int)gs->range)
+    gs_add_points(gs, 1);
 
   if (gs->range >= gs->level * LEVEL_RANGE_FACTOR) {
     gs->range = 0;
