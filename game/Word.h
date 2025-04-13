@@ -13,7 +13,7 @@
 
 typedef struct Word {
   Vec2 pos;
-  float vel;
+  float alpha;
   char text[32];
 
   G_Object word_start;
@@ -21,22 +21,29 @@ typedef struct Word {
   int char_reached;
   float word_end_offset;
 
+  bool dead;
+
 } Word;
 
-bool w_dead(Word *w) {
-  (void)w;
-  return false;
-}
+bool w_dead(Word *w) { return w->dead; }
 float w_render_order(const Word *w) { return w->pos.y + 200; }
 
+static inline void w_destroy(Word *w) {
+  G_Object_free(&w->word_start);
+  G_Object_free(&w->word_end);
+  w->dead = true;
+}
+
+void w_set_word(Word *w, const char *text) {
+  strncpy(w->text, text, 32);
+  w->char_reached = 0;
+}
 void w_new_word(Word *w, int level) {
   memset(w->text, 0, sizeof(w->text));
   const size_t max = i_min(sizeof(words) / sizeof(words[0]), level_map[level + 1].offset);
   // printf("DDD %d %d\n", (int)(sizeof(words) / sizeof(words[0])), (int)max);
   const size_t x = rand() % max;
-
-  strncpy(w->text, words[x], 32);
-  w->char_reached = 0;
+  w_set_word(w, words[x]);
 }
 
 void w_update(Word *w, GameScene *gs, Game *g, float dt) {
@@ -44,16 +51,16 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
   const size_t l = sizeof(gs->entered_until_now);
   assert(l == 32);
   if (w->char_reached == (int)strlen(w->text)) {
-    w->vel += 3.0f * dt;
-    if (w->vel >= 1.95)
+    w->alpha += 3.0f * dt;
+    if (w->alpha >= 1.95)
       w_new_word(w, gs->level);
-    if (w->vel < 1.0) {
-      float x = w->word_end_offset * w->vel + r_float() * w->vel;
-      Bling_init(gs, (Vec2){w->pos.x + x, w->pos.y + 1 + r_float() * 3.0f}, c_mix(red(), green(), w->vel));
+    if (w->alpha < 1.0) {
+      float x = w->word_end_offset * w->alpha + r_float() * w->alpha;
+      Bling_init(gs, (Vec2){w->pos.x + x, w->pos.y + 1 + r_float() * 3.0f}, c_mix(red(), green(), w->alpha));
     }
     return;
-  } else if (w->vel > 0.001)
-    w->vel *= 0.95f;
+  } else if (w->alpha > 0.001)
+    w->alpha *= 0.95f;
 
   size_t x = 0;
   for (size_t i = 1; i < l; ++i)
@@ -76,7 +83,7 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
 void w_draw(Word *w, GameScene *gs, Game *g) {
   (void)gs;
 
-  const float a = 1.0f - (w->vel * w->vel) / 2.0f;
+  const float a = 1.0f - (w->alpha * w->alpha) / 2.0f;
   if (G_Object_valid(&w->word_start)) {
     g_color(g, alphaf(rgb(88, 136, 22), a));
     g_text(g, w->word_start, Oswald_Regular_12, w->pos);
@@ -94,12 +101,15 @@ SceneObjectTable Word_SceneObject_Table = {
     .draw = (SceneObjectDrawCB)w_draw,
 };
 
-Word *Word_init(GameScene *gs, Game *g) {
+Word *Word_init(GameScene *gs, Game *g, const char *text) {
   (void)g;
 
   Word *w = (Word *)g_malloc(sizeof(Word));
-  *w = (Word){.vel = 1.9f};
-  w_new_word(w, 1);
+  *w = (Word){.alpha = 1.9f, .dead = false};
+  if (!text)
+    w_new_word(w, 1);
+  else
+    w_set_word(w, text);
 
   gs_add_object(gs, (SceneObject){w, &Word_SceneObject_Table});
 

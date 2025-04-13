@@ -3,12 +3,12 @@
 #include "Scene.h"
 #include "extern/cjsonh/cjsonh.h"
 #include "game/Game.h"
+#include "game/GameGo.h"
 #include "game/Meteorite.h"
 #include "game/Player.h"
 #include "game/SceneObject.h"
 #include "game/SpaceShip.h"
 #include "game/Star.h"
-#include "game/WordBubble.h"
 #include "game/assets.h"
 #include "game/effects/Bling.h"
 #include "gc/gc.h"
@@ -106,13 +106,16 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     gs->points_cache = gs->points;
     g_create_text(g, &gs->points_text, Oswald_Regular_12, str("%d", gs->points));
   }
-  gs->health_flush *= 0.99f;
-  if (gs->health != gs->health_cache) {
-    gs->health_cache = gs->health;
-    g_create_text(g, &gs->health_text, Oswald_Regular_12, str("%.2f", gs->health));
-  }
 
-  if (rand() % 1000 < (2 * gs->level))
+  if (gs->initialized <= 0.0f)
+    return;
+  if (gs->initialized < 1.0f) {
+    gs->initialized += 0.5f * dt;
+    return;
+  }
+  gs->initialized = 1.0f;
+
+  if (rand() % 1000 < (1.5 * gs->level))
     Meteorite_init(gs);
 
   gs->energy = f_max(0.0f, gs->energy - dt);
@@ -160,26 +163,28 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   gs->pick_rect_count = 0;
   // gs_draw_menu_overlay(gs, g);
 
-  g_color(g, c_mix(rgb(168, 159, 128), rgb(88, 136, 22), gs->points_flush * gs->points_flush));
-  g_text(g, gs->points_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 15});
-  g_color(g, c_mix(rgb(237, 77, 45), rgb(182, 0, 0), gs->health_flush * gs->health_flush));
-  g_text(g, gs->health_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 25});
+  if (gs->initialized >= 1.0f) {
+    g_color(g, c_mix(rgb(168, 159, 128), rgb(88, 136, 22), gs->points_flush * gs->points_flush));
+    g_text(g, gs->points_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 15});
+  }
+  if (gs->initialized <= 0.0f)
+    return;
 
   const Sizei vp = g_viewport(g);
-  g_color(g, gray(150));
+  g_color(g, alphaf(gray(150), gs->initialized));
   g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 9}, (Vec2){vp.w - 38, 6});
-  g_color(g, yellow());
+  g_color(g, alphaf(yellow(), gs->initialized));
   const float r = gs->range / (LEVEL_RANGE_FACTOR * gs->level);
   g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 10}, (Vec2){r * (vp.w - 40), 4});
 
-  g_color(g, gray(150));
+  g_color(g, alphaf(gray(150), gs->initialized));
   g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 19}, (Vec2){102, 6});
-  g_color(g, blue());
+  g_color(g, alphaf(blue(), gs->initialized));
   g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 20}, (Vec2){gs->speed * 100.0f, 4});
 
-  g_color(g, gray(150));
+  g_color(g, alphaf(gray(150), gs->initialized));
   g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 29}, (Vec2){102, 6});
-  g_color(g, green());
+  g_color(g, alphaf(green(), gs->initialized));
   const float e = gs->energy / 32.0f;
   g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 30}, (Vec2){e * 100.0f, 4});
 }
@@ -301,9 +306,8 @@ void GameScene_init(Game *g) {
       .points = 0,
       .points_cache = -1,
       .points_flush = 0.0f,
+      .initialized = 0.0f,
       .health = 100,
-      .health_cache = -1.0,
-      .health_flush = 0.0f,
       .range = 0.0f,
       .speed = 1.0f,
       .energy = 5.0f,
@@ -314,7 +318,7 @@ void GameScene_init(Game *g) {
   for (int i = 0; i < 40; ++i)
     Star_init(gs);
 
-  WordBubble_init(gs, g);
+  GameGo_init(gs, g);
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }

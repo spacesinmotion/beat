@@ -12,7 +12,7 @@
 
 typedef struct WordBubble {
   Vec2 pos, connect, offset;
-  Word *words;
+  Word *word;
 } WordBubble;
 
 bool wb_dead(const WordBubble *wb) {
@@ -28,13 +28,13 @@ void wb_update(WordBubble *wb, GameScene *gs, Game *g, float dt) {
 
   Vec2 b = v_add(gs->spaceship->pos, wb->offset);
   wb->pos = v_lerp(wb->pos, b, 0.25f * dt);
-  wb->words->pos = v_add(wb->pos, (Vec2){-45, -3});
+  wb->word->pos = v_add(wb->pos, (Vec2){-45, -3});
 }
 
 void wb_draw(WordBubble *wb, GameScene *gs, Game *g) {
   (void)gs;
 
-  g_color(g, white());
+  g_color(g, alphaf(white(), gs->initialized));
 
   Vec2 a = v_add(gs->spaceship->pos, wb->connect);
   Vec2 b = wb->pos;
@@ -67,7 +67,7 @@ WordBubble *WordBubble_init(GameScene *gs, Game *g) {
 
   gs_add_object(gs, (SceneObject){wb, &WordBubble_SceneObject_Table});
 
-  wb->words = Word_init(gs, g);
+  wb->word = Word_init(gs, g, NULL);
 
   return wb;
 }

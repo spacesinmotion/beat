@@ -86,7 +86,6 @@ SceneObjectTable SpaceShip_SceneObject_Table = {
 SpaceShip *SpaceShip_init(GameScene *gs, Vec2 pos) {
   SpaceShip *sh = (SpaceShip *)g_malloc(sizeof(SpaceShip));
   *sh = (SpaceShip){.center = pos, .pos = pos, .vel = (Vec2){0.0f, 0.0f}};
-
   gs_add_object(gs, (SceneObject){sh, &SpaceShip_SceneObject_Table});
 
   return sh;
