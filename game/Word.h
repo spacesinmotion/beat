@@ -11,6 +11,9 @@
 #include "math/random.h"
 #include <stdio.h>
 
+typedef struct Word Word;
+typedef void (*OnEnteredDone)(Word *, GameScene *gs, Game *g, void *);
+
 typedef struct Word {
   Vec2 pos;
   float alpha;
@@ -22,6 +25,9 @@ typedef struct Word {
   float word_end_offset;
 
   bool dead;
+
+  OnEnteredDone word_entered;
+  void *word_entered_user_data;
 
 } Word;
 
@@ -41,19 +47,24 @@ void w_set_word(Word *w, const char *text) {
 void w_new_word(Word *w, int level) {
   memset(w->text, 0, sizeof(w->text));
   const size_t max = i_min(sizeof(words) / sizeof(words[0]), level_map[level + 1].offset);
-  // printf("DDD %d %d\n", (int)(sizeof(words) / sizeof(words[0])), (int)max);
   const size_t x = rand() % max;
   w_set_word(w, words[x]);
 }
 
 void w_update(Word *w, GameScene *gs, Game *g, float dt) {
+  if (w->dead)
+    return;
 
   const size_t l = sizeof(gs->entered_until_now);
   assert(l == 32);
   if (w->char_reached == (int)strlen(w->text)) {
     w->alpha += 3.0f * dt;
-    if (w->alpha >= 1.95)
-      w_new_word(w, gs->level);
+    if (w->alpha >= 1.95) {
+      if (w->word_entered)
+        w->word_entered(w, gs, g, w->word_entered_user_data);
+      else
+        w_new_word(w, gs->level);
+    }
     if (w->alpha < 1.0) {
       float x = w->word_end_offset * w->alpha + r_float() * w->alpha;
       Bling_init(gs, (Vec2){w->pos.x + x, w->pos.y + 1 + r_float() * 3.0f}, c_mix(red(), green(), w->alpha));
@@ -82,6 +93,8 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
 
 void w_draw(Word *w, GameScene *gs, Game *g) {
   (void)gs;
+  if (w->dead)
+    return;
 
   const float a = 1.0f - (w->alpha * w->alpha) / 2.0f;
   if (G_Object_valid(&w->word_start)) {

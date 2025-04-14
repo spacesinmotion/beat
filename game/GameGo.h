@@ -17,23 +17,29 @@ typedef struct GameGo {
 bool go_dead(const GameGo *go) { return go->go == NULL; }
 float go_render_order(const GameGo *go) { return go->go->pos.y - 100; }
 
+void go_word_entered(Word *w, GameScene *gs, Game *g, void *ud) {
+  GameGo *go = (GameGo *)(ud);
+
+  w_destroy(w);
+  go->go = NULL;
+  WordBubble_init(gs, g);
+  gs->health = 100;
+  gs->points = 0;
+  gs->range = 0.0f;
+  gs->speed = 1.0f;
+  gs->energy = 5.0f;
+  gs->level = 1;
+  gs->initialized = 0.001f;
+}
+
 void go_update(GameGo *go, GameScene *gs, Game *g, float dt) {
-  (void)gs;
   (void)g;
   (void)dt;
 
-  if (!go->go)
-    return;
-  if (go->go->char_reached == 2 && go->go->alpha > 1.0f) {
-    w_destroy(go->go);
-    go->go = NULL;
-    WordBubble_init(gs, g);
-    gs->initialized = 0.001f;
-    return;
+  if (go->go) {
+    go->go->pos.y = gs->spaceship->pos.y - 2;
+    go->go->pos = v_lerp(go->go->pos, v_add(gs->spaceship->pos, (Vec2){22.0f, 0.0f}), 0.01f);
   }
-
-  go->go->pos.y = gs->spaceship->pos.y - 2;
-  go->go->pos = v_lerp(go->go->pos, v_add(gs->spaceship->pos, (Vec2){22.0f, 0.0f}), 0.01f);
 }
 
 void go_draw(GameGo *go, GameScene *gs, Game *g) {
@@ -54,6 +60,8 @@ GameGo *GameGo_init(GameScene *gs, Game *g) {
   *go = (GameGo){.go = Word_init(gs, g, "go")};
 
   go->go->pos = v_add(gs->spaceship->pos, (Vec2){500, 0});
+  go->go->word_entered = go_word_entered;
+  go->go->word_entered_user_data = go;
 
   gs_add_object(gs, (SceneObject){go, &GameGo_SceneObject_Table});
 

@@ -15,14 +15,19 @@ typedef struct WordBubble {
   Word *word;
 } WordBubble;
 
-bool wb_dead(const WordBubble *wb) {
-  (void)wb;
-  return false;
-}
+bool wb_dead(const WordBubble *wb) { return wb->word == NULL; }
 float wb_render_order(const WordBubble *wb) { return wb->pos.y + 100; }
 
 void wb_update(WordBubble *wb, GameScene *gs, Game *g, float dt) {
   (void)g;
+
+  if (!wb->word)
+    return;
+  if (gs->health <= 0.0) {
+    w_destroy(wb->word);
+    wb->word = NULL;
+    return;
+  }
 
   Vec2 b = v_add(gs->spaceship->pos, wb->offset);
   wb->pos = v_lerp(wb->pos, b, 0.25f * dt);
@@ -30,7 +35,6 @@ void wb_update(WordBubble *wb, GameScene *gs, Game *g, float dt) {
 }
 
 void wb_draw(WordBubble *wb, GameScene *gs, Game *g) {
-
   if (gs->health <= 0.0)
     return;
 
