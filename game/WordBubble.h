@@ -22,17 +22,17 @@ bool wb_dead(const WordBubble *wb) {
 float wb_render_order(const WordBubble *wb) { return wb->pos.y + 100; }
 
 void wb_update(WordBubble *wb, GameScene *gs, Game *g, float dt) {
-  (void)gs;
   (void)g;
-  (void)dt;
 
   Vec2 b = v_add(gs->spaceship->pos, wb->offset);
   wb->pos = v_lerp(wb->pos, b, 0.25f * dt);
-  wb->word->pos = v_add(wb->pos, (Vec2){-45, -3});
+  wb->word->pos = gs->health <= 0 ? (Vec2){-1000, -1000} : v_add(wb->pos, (Vec2){-45, -3});
 }
 
 void wb_draw(WordBubble *wb, GameScene *gs, Game *g) {
-  (void)gs;
+
+  if (gs->health <= 0.0)
+    return;
 
   g_color(g, alphaf(white(), gs->initialized));
 

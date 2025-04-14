@@ -16,6 +16,7 @@
 #include "math/Color.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
+#include "math/random.h"
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -101,12 +102,6 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 
   qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
 
-  gs->points_flush *= 0.99f;
-  if (gs->points != gs->points_cache) {
-    gs->points_cache = gs->points;
-    g_create_text(g, &gs->points_text, Oswald_Regular_12, str("%d", gs->points));
-  }
-
   if (gs->initialized <= 0.0f)
     return;
   if (gs->initialized < 1.0f) {
@@ -114,6 +109,20 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     return;
   }
   gs->initialized = 1.0f;
+
+  gs->points_flush *= 0.99f;
+  if (gs->points != gs->points_cache) {
+    gs->points_cache = gs->points;
+    g_create_text(g, &gs->points_text, Oswald_Regular_12, str("%d", gs->points));
+  }
+
+  if (gs->health <= 0) {
+    if (rand() % 1000 < 122)
+      Bling_init(gs, v_add(gs->spaceship->pos, (Vec2){r_float_r(-10, 10), r_float_r(-10, 10)}),
+                 c_mix(yellow(), red(), r_float()));
+
+    return;
+  }
 
   if (rand() % 1000 < (1.5 * gs->level))
     Meteorite_init(gs);
@@ -163,12 +172,13 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   gs->pick_rect_count = 0;
   // gs_draw_menu_overlay(gs, g);
 
-  if (gs->initialized >= 1.0f) {
+  if (gs->initialized <= 0.0f)
+    return;
+
+  if (G_Object_valid(&gs->points_text) && gs->initialized >= 1.0f) {
     g_color(g, c_mix(rgb(168, 159, 128), rgb(88, 136, 22), gs->points_flush * gs->points_flush));
     g_text(g, gs->points_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 15});
   }
-  if (gs->initialized <= 0.0f)
-    return;
 
   const Sizei vp = g_viewport(g);
   g_color(g, alphaf(gray(150), gs->initialized));

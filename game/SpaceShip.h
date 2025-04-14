@@ -20,13 +20,14 @@ typedef struct SpaceShip {
   DriveStar drive_star[32];
 } SpaceShip;
 
-bool sh_dead(const SpaceShip *sh) { return sh->pos.y < 0.0; }
+bool sh_dead(const SpaceShip *sh) {
+  (void)sh;
+  return false;
+}
 float sh_render_order(const SpaceShip *sh) { return sh->pos.y; }
 
 void sh_update(SpaceShip *sh, GameScene *gs, Game *g, float dt) {
-  (void)gs;
   (void)g;
-  (void)dt;
 
   if (rand() % 250 < 4 && v_distance(sh->pos, sh->center) < 5)
     sh->vel = v_add(sh->vel, (Vec2){r_float_r(-1.5, 1.5f), r_float_r(-1.5, 1.5f)});
@@ -38,7 +39,7 @@ void sh_update(SpaceShip *sh, GameScene *gs, Game *g, float dt) {
   sh->vel = v_mulf(sh->vel, 0.9f + 0.1f * gs->speed);
   sh->pos = v_add(sh->pos, v_mulf(sh->vel, dt));
 
-  bool found_one = false;
+  bool found_one = gs->health <= 0.0f;
   for (int i = 0; i < 32; ++i) {
     DriveStar *st = &sh->drive_star[i];
     st->scale *= r_float_r(0.85f, 0.96f);
@@ -66,7 +67,7 @@ void sh_draw(SpaceShip *sh, GameScene *gs, Game *g) {
   g_objectS(g, g_animation_buffer(g), Img_starship, 0, sh->pos, vec2f(2.0f));
   // g_objectRS(g, g_animation_buffer(g), Img_starship, 1, sh->center, 0, 1.5);
 
-  if (gs->health < 100.0) {
+  if (gs->health > 0.0 && gs->health < 100.0) {
     Vec2 p = v_add(sh->pos, (Vec2){-6, 10});
     g_color(g, gray(150));
     g_objectS(g, g_rect_buffer(g), Img_starship, 15, p, (Vec2){20, 2});
