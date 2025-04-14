@@ -44,8 +44,8 @@ void sh_update(SpaceShip *sh, GameScene *gs, Game *g, float dt) {
     st->scale *= r_float_r(0.85f, 0.96f);
     if (!found_one && st->scale < 0.1f) {
       found_one = true;
-      st->pos.x = sh->pos.x - r_float_r(8.0f, 12.0f);
-      st->pos.y = sh->pos.y - 0.75f + r_float_r(-0.75f, 0.75f);
+      st->pos.x = sh->pos.x - r_float_r(9.0f, 13.0f);
+      st->pos.y = sh->pos.y - r_float_r(0.65f, 0.85f);
       st->rot = r_float_r(0.0f, 3.14f);
       st->scale = r_float_r(0.6f, 1.1f);
     } else {
