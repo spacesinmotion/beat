@@ -122,11 +122,11 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     if (rand() % 1000 < 122) {
       Bling_init(gs, v_add(gs->spaceship->pos, (Vec2){r_float_r(-10, 10), r_float_r(-10, 10)}),
                  c_mix(yellow(), red(), r_float()));
-      printf(":%f\n", gs->health);
+      // printf(":%f\n", gs->health);
     }
     if (ho >= -3.0f && gs->health < -3.0f) {
       GameGo_init(gs, g);
-      printf("new go\n");
+      // printf("new go\n");
     }
 
     return;
