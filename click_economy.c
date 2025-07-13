@@ -1,9 +1,10 @@
 // #include <time.h>
-// #define DR_WAV_IMPLEMENTATION
-// #include "dr/dr_wav.h"
-#include "extern/cjsonh/cjsonh.h"
 #include <stdlib.h>
 #include <string.h>
+
+#define DR_WAV_IMPLEMENTATION
+#include "extern/cjsonh/cjsonh.h"
+#include "extern/dr/dr_wav.h"
 
 #ifdef __TINYC__
 #include <math.h>
@@ -29,10 +30,10 @@
 
 #define STBI_NO_SIMD
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
+#include "extern/stb/stb_image.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "stb/stb_truetype.h"
+#include "extern/stb/stb_truetype.h"
 
 #define SOKOL_NO_ENTRY
 #define SOKOL_GLCORE
