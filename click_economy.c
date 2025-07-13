@@ -38,15 +38,15 @@
 #define SOKOL_GLCORE
 #define SOKOL_DEBUGTEXT_IMPL
 
-#include "sokol_gfx.h"
+#include "extern/sokol/sokol_gfx.h"
 
-#include "sokol_app.h"
-#include "sokol_audio.h"
+#include "extern/sokol/sokol_app.h"
+#include "extern/sokol/sokol_audio.h"
 
-#include "sokol_glue.h"
-#include "sokol_log.h"
+#include "extern/sokol/sokol_glue.h"
+#include "extern/sokol/sokol_log.h"
 
-#include "util/sokol_debugtext.h"
+#include "extern/sokol/util/sokol_debugtext.h"
 
 #include "gc/gc.h"
 #include "math/Rect.h"
