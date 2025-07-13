@@ -68,6 +68,7 @@ void gs_toggle_pause(GameScene *gs, Game *g, int id) {
 
   gs->game_paused = false;
 }
+
 void gs_set_game_speed(GameScene *gs, int speed) {
   gs->game_paused = false;
   gs->game_speed = (float)speed;

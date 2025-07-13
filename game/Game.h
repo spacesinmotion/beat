@@ -40,8 +40,6 @@ G_Object g_rect_buffer(Game *g);
 
 void g_color(Game *game, Color c);
 
-void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan);
-
 void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, Vec2 scale);
 void g_objectR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot);
 void g_objectS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, Vec2 scale);

@@ -250,20 +250,14 @@ Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
   return (Vec2){x / FONT_SCALE, y / FONT_SCALE};
 }
 
-void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {
-  g->render.fs_param.color_mode = 0;
-  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
-  g->render.vs_param.scale = (Vec2){1.0f, 1.0};
-  g->render.vs_param.rot = 0.0f;
-
+void g_apply_uniforms_and_binding(Game *g, G_Object buffer, sg_image tex) {
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
   sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {g_image(g, tex)}, .samplers = {g->render.texture_sampler}},
+      .fs = {.images = {tex}, .samplers = {g->render.texture_sampler}},
       .vertex_buffers = {{buffer.vertices}},
       .index_buffer = {buffer.indices},
   });
-  sg_draw(0, buffer.num_elements, 1);
 }
 
 void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
@@ -271,14 +265,7 @@ void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = 0.0f;
   g->render.vs_param.scale = (Vec2){1.0f, 1.0};
-
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
-  sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {g_font(g, f)->texture}, .samplers = {g->render.texture_sampler}},
-      .vertex_buffers = {{buffer.vertices}},
-      .index_buffer = {buffer.indices},
-  });
+  g_apply_uniforms_and_binding(g, buffer, g_font(g, f)->texture);
   sg_draw(0, buffer.num_elements, 1);
 }
 
@@ -288,14 +275,7 @@ void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float 
   g->render.vs_param.rot = rot;
   g->render.vs_param.scale = scale;
 
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
-  sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {g_image(g, tex)}, .samplers = {g->render.texture_sampler}},
-      .vertex_buffers = {{buffer.vertices}},
-      .index_buffer = {buffer.indices},
-  });
-
+  g_apply_uniforms_and_binding(g, buffer, g_image(g, tex));
   sg_draw(6 * frame, 6, 1);
 }
 
