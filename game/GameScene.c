@@ -168,9 +168,9 @@ void gs_draw_menu_overlay(GameScene *gs, Game *g) {
     const Vec2 p = (Vec2){8 + 4 + i * 16, 8 + 4};
     const bool hover = gs_pick(gs, gs_select_bottom_menu, i, p, 1.0f);
     g_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
-    g_object(g, g_animation_buffer(g), Img_menubar, i % 16, p);
+    g_animation(g, g_animation_buffer(g), Img_menubar, i % 16, p);
     g_color(g, hover ? red() : (gs->menu_selected == i ? green() : blue()));
-    g_object(g, g_animation_buffer(g), Img_marker, hover ? g_frame(g) % 4 : i % 4, p);
+    g_animation(g, g_animation_buffer(g), Img_marker, hover ? g_frame(g) % 4 : i % 4, p);
   }
 }
 
@@ -191,21 +191,21 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
 
   const Sizei vp = g_viewport(g);
   g_color(g, alphaf(gray(150), gs->initialized));
-  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 9}, (Vec2){vp.w - 38, 6});
+  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 9}, (Vec2){vp.w - 38, 6});
   g_color(g, alphaf(yellow(), gs->initialized));
   const float r = gs->range / (LEVEL_RANGE_FACTOR * gs->level);
-  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 10}, (Vec2){r * (vp.w - 40), 4});
+  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 10}, (Vec2){r * (vp.w - 40), 4});
 
   g_color(g, alphaf(gray(150), gs->initialized));
-  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 19}, (Vec2){102, 6});
+  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 19}, (Vec2){102, 6});
   g_color(g, alphaf(blue(), gs->initialized));
-  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 20}, (Vec2){gs->speed * 100.0f, 4});
+  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 20}, (Vec2){gs->speed * 100.0f, 4});
 
   g_color(g, alphaf(gray(150), gs->initialized));
-  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 29}, (Vec2){102, 6});
+  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 29}, (Vec2){102, 6});
   g_color(g, alphaf(green(), gs->initialized));
   const float e = gs->energy / 32.0f;
-  g_objectS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 30}, (Vec2){e * 100.0f, 4});
+  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 30}, (Vec2){e * 100.0f, 4});
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {

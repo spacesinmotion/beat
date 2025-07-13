@@ -35,7 +35,7 @@ void st_draw(Star *st, GameScene *gs, Game *g) {
   (void)gs;
 
   g_color(g, alphaf(white(), 0.7f + 0.1f * sin(st->alpha_t)));
-  g_objectRS(g, g_animation_buffer(g), Img_starship, 1, st->pos, st->rot, vec2f(st->scale));
+  g_animationRS(g, g_animation_buffer(g), Img_starship, 1, st->pos, st->rot, vec2f(st->scale));
 }
 
 SceneObjectTable Star_SceneObject_Table = {

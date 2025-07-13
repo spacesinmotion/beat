@@ -269,7 +269,7 @@ void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
   sg_draw(0, buffer.num_elements, 1);
 }
 
-void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, Vec2 scale) {
+void g_animationRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, Vec2 scale) {
   g->render.fs_param.color_mode = 0;
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = rot;
@@ -279,14 +279,14 @@ void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float 
   sg_draw(6 * frame, 6, 1);
 }
 
-void g_objectR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot) {
-  g_objectRS(g, buffer, tex, frame, pan, rot, (Vec2){1.0f, 1.0f});
+void g_animationR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot) {
+  g_animationRS(g, buffer, tex, frame, pan, rot, (Vec2){1.0f, 1.0f});
 }
-void g_objectS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, Vec2 scale) {
-  g_objectRS(g, buffer, tex, frame, pan, 0.0, scale);
+void g_animationS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, Vec2 scale) {
+  g_animationRS(g, buffer, tex, frame, pan, 0.0, scale);
 }
-void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan) {
-  g_objectRS(g, buffer, tex, frame, pan, 0.0f, (Vec2){1.0f, 1.0f});
+void g_animation(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan) {
+  g_animationRS(g, buffer, tex, frame, pan, 0.0f, (Vec2){1.0f, 1.0f});
 }
 
 static Vec2 to_scene(Game *g, float x, float y) {
