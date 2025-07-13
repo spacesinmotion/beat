@@ -78,11 +78,6 @@ typedef struct Assets {
   sg_image wearisome;
 } Assets;
 
-typedef struct TileRectBuffer {
-  G_Object buffer;
-  int w, h;
-} TileRectBuffer;
-
 typedef struct FontImage {
   stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
   sg_image texture;
@@ -106,7 +101,6 @@ typedef struct Game {
   int mouse_y;
   float zoom;
 
-  TileRectBuffer tilerect_buffer[16];
   G_Object animation_buffer_4x4;
   G_Object rect_buffer;
 
@@ -460,25 +454,6 @@ bool rect_is_set(Recti *r, int i, int j) {
   return true;
 }
 
-G_Object g_tilerect_buffer(Game *g, int w, int h) {
-  TileRectBuffer *tb = NULL;
-  for (int i = 0; i < 16; ++i) {
-    if (g->tilerect_buffer[i].w == w && g->tilerect_buffer[i].h == h)
-      return g->tilerect_buffer[i].buffer;
-    if (g->tilerect_buffer[i].w == 0 && g->tilerect_buffer[i].h == 0) {
-      tb = &g->tilerect_buffer[i];
-      break;
-    }
-  }
-  if (tb) {
-    tb->buffer = create_tile_rect_buffer(w, h, (IsSetCB)rect_is_set, &(Recti){0, 0, w, h});
-    tb->w = w;
-    tb->h = h;
-  }
-
-  return tb ? tb->buffer : (G_Object){0, 0, 0};
-}
-
 G_Object g_animation_buffer(Game *g) { return g->animation_buffer_4x4; }
 G_Object g_rect_buffer(Game *g) { return g->rect_buffer; }
 
@@ -626,7 +601,6 @@ static void g_init(Game *g) {
           },
   });
 
-  memset(g->tilerect_buffer, 0, sizeof(g->tilerect_buffer));
   g->animation_buffer_4x4 = quad_animation_buffer(-8, -8, 16, 16, 4, 4);
   g->rect_buffer = quad_animation_buffer(0, 0, 1, 1, 4, 4);
 
