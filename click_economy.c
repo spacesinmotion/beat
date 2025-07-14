@@ -185,7 +185,8 @@ const FontImage *g_font(Game *g, G_Font font) {
   return &g->fonts[font];
 }
 
-Vec2 g_create_text(Game *g, RenderObject *o, G_Font ff, const char *text) {
+void g_create_text(Game *g, TextObject *to, G_Font ff, const char *text) {
+  RenderObject *o = &to->render_object;
   RenderObject_free(o);
   const FontImage *f = g_font(g, ff);
   vertex_t vertices[1024];
@@ -252,7 +253,8 @@ Vec2 g_create_text(Game *g, RenderObject *o, G_Font ff, const char *text) {
     };
   }
 
-  return (Vec2){x / FONT_SCALE, y / FONT_SCALE};
+  to->font = ff;
+  to->size = (Vec2){x / FONT_SCALE, y / FONT_SCALE};
 }
 
 void d_object(Game *g, RenderObject buffer, const sg_image texture, const Transformation *t) {
@@ -271,9 +273,9 @@ void d_object(Game *g, RenderObject buffer, const sg_image texture, const Transf
   sg_draw(buffer.off_elements, buffer.num_elements, 1);
 }
 
-void d_text(Game *g, RenderObject buffer, G_Font f, Vec2 pan) {
+void d_text(Game *g, const TextObject *to, Vec2 pan) {
   g->render.fs_param.color_mode = 1;
-  d_object(g, buffer, g_font(g, f)->texture, t_P(pan));
+  d_object(g, to->render_object, g_font(g, to->font)->texture, t_P(pan));
 }
 
 static inline RenderObject g_rect_buffer(Game *g) {
@@ -395,6 +397,9 @@ void RenderObject_free(RenderObject *b) {
   sg_destroy_buffer((sg_buffer){b->indices});
   *b = (RenderObject){0};
 }
+
+bool TextObject_valid(const TextObject *to) { return RenderObject_valid(&to->render_object); }
+void TextObject_free(TextObject *to) { RenderObject_free(&to->render_object); }
 
 bool rect_is_set(Recti *r, int i, int j) { return !(i < 0 || j < 0 || i >= r->w || j >= r->h); }
 

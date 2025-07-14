@@ -23,9 +23,17 @@ typedef struct RenderObject {
   uint32_t pipeline, vertices, indices, off_elements, num_elements;
 } RenderObject;
 
-Vec2 g_create_text(Game *g, RenderObject *o, G_Font ff, const char *text);
 bool RenderObject_valid(const RenderObject *);
 void RenderObject_free(RenderObject *);
+
+typedef struct TextObject {
+  RenderObject render_object;
+  G_Font font;
+  Vec2 size;
+} TextObject;
+void g_create_text(Game *g, TextObject *o, G_Font ff, const char *text);
+bool TextObject_valid(const TextObject *to);
+void TextObject_free(TextObject *);
 
 void g_set_scene(Game *g, Scene scene);
 void g_set_background_color(Game *g, Color c);
@@ -39,7 +47,7 @@ Sizei g_viewport(Game *g);
 void d_color(Game *game, Color c);
 
 void d_object(Game *g, RenderObject buffer, const sg_image texture, const Transformation *t);
-void d_text(Game *g, RenderObject buffer, G_Font f, Vec2 pan);
+void d_text(Game *g, const TextObject *to, Vec2 pan);
 void d_rect(Game *g, Color c, const Transformation *t);
 void d_image(Game *g, Image tex, const Transformation *t);
 void d_animation(Game *g, Image tex, int frame, const Transformation *t);

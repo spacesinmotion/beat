@@ -18,11 +18,8 @@ typedef struct Word {
   float alpha;
   char text[32];
 
-  RenderObject word_start;
-  RenderObject word_end;
+  TextObject word_start, word_end;
   int char_reached;
-  float word_end_offset;
-
   bool dead;
 
   OnEnteredDone word_entered;
@@ -34,8 +31,8 @@ bool w_dead(Word *w) { return w->dead; }
 float w_render_order(const Word *w) { return w->pos.y + 200; }
 
 static inline void w_destroy(Word *w) {
-  RenderObject_free(&w->word_start);
-  RenderObject_free(&w->word_end);
+  TextObject_free(&w->word_start);
+  TextObject_free(&w->word_end);
   w->dead = true;
 }
 
@@ -65,7 +62,7 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
         w_new_word(w, gs->level);
     }
     if (w->alpha < 1.0) {
-      float x = w->word_end_offset * w->alpha + r_float() * w->alpha;
+      float x = w->word_start.size.x * w->alpha + r_float() * w->alpha;
       Bling_init(gs, (Vec2){w->pos.x + x, w->pos.y + 1 + r_float() * 3.0f}, c_mix(red(), green(), w->alpha));
     }
     return;
@@ -83,9 +80,9 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
     memset(gs->entered_until_now, 0, l);
   }
 
-  if (!RenderObject_valid(&w->word_end) || (int)x != w->char_reached) {
+  if (!TextObject_valid(&w->word_end) || (int)x != w->char_reached) {
     w->char_reached = (int)x;
-    w->word_end_offset = g_create_text(g, &w->word_start, Oswald_Regular_12, str("%.*s", x, w->text)).x;
+    g_create_text(g, &w->word_start, Oswald_Regular_12, str("%.*s", x, w->text));
     g_create_text(g, &w->word_end, Oswald_Regular_12, &w->text[x]);
   }
 }
@@ -96,13 +93,13 @@ void w_draw(Word *w, GameScene *gs, Game *g) {
     return;
 
   const float a = 1.0f - (w->alpha * w->alpha) / 2.0f;
-  if (RenderObject_valid(&w->word_start)) {
+  if (TextObject_valid(&w->word_start)) {
     d_color(g, alphaf(rgb(88, 136, 22), a));
-    d_text(g, w->word_start, Oswald_Regular_12, w->pos);
+    d_text(g, &w->word_start, w->pos);
   }
-  if (RenderObject_valid(&w->word_end)) {
+  if (TextObject_valid(&w->word_end)) {
     d_color(g, alphaf(rgb(168, 159, 128), a));
-    d_text(g, w->word_end, Oswald_Regular_12, (Vec2){w->pos.x + w->word_end_offset, w->pos.y});
+    d_text(g, &w->word_end, (Vec2){w->pos.x + w->word_start.size.x, w->pos.y});
   }
 }
 
