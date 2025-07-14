@@ -19,9 +19,7 @@ bool st_dead(const Star *st) { return st->pos.y < 0.0; }
 float st_render_order(const Star *st) { return st->pos.y - 100; }
 
 void st_update(Star *st, GameScene *gs, Game *g, float dt) {
-  (void)gs;
-  (void)g;
-  (void)dt;
+  (void)g, (void)dt;
 
   st->pos = v_add(st->pos, v_mulf(st->vel, gs->speed * dt));
   st->rot += st->rot_vel * dt;

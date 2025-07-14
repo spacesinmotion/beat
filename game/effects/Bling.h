@@ -10,29 +10,27 @@
 #include "math/random.h"
 
 typedef struct Bling {
+  Transformation transformation;
   Color color;
-  Vec2 location;
-  float rotation;
   float time;
 } Bling;
 
 bool bl_dead(Bling *bl) { return bl->time * 16.0f > 10.0f; }
 
 void bl_update(Bling *bl, GameScene *gs, Game *g, float dt) {
-  (void)gs;
-  (void)dt;
+  (void)gs, (void)dt;
 
   bl->time += g_animation_delta(g);
 }
 
-float bl_render_order(Bling *bl) { return bl->location.y + 1000.0; }
+float bl_render_order(Bling *bl) { return bl->transformation.position.y + 1000.0; }
 
 void bl_draw(Bling *bl, GameScene *gs, Game *g) {
   (void)gs;
 
   const int frame = (int)(bl->time * 16.0f);
   d_color(g, bl->color);
-  d_animation(g, Img_bling, frame % 10, t_PR(bl->location, bl->rotation));
+  d_animation(g, Img_bling, frame % 10, &bl->transformation);
 }
 
 static SceneObjectTable Bling_table = {
@@ -46,9 +44,8 @@ static SceneObjectTable Bling_table = {
 Bling *Bling_init(GameScene *gs, Vec2 l, Color c) {
   Bling *h = g_malloc(sizeof(Bling));
   *h = (Bling){
+      .transformation = *t_PR(l, r_float_r(0, M_PI * 2.0f)),
       .color = c,
-      .location = l,
-      .rotation = r_float_r(0, M_PI * 2.0f),
       .time = 0.0f,
   };
 

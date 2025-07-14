@@ -21,9 +21,7 @@ bool mt_dead(const Meteorite *mt) { return mt->hit_ship; }
 float mt_render_order(const Meteorite *mt) { return mt->pos.y - 100; }
 
 void mt_update(Meteorite *mt, GameScene *gs, Game *g, float dt) {
-  (void)gs;
-  (void)g;
-  (void)dt;
+  (void)gs, (void)g, (void)dt;
 
   const Vec2 aim = v_sub(gs->spaceship->pos, mt->pos);
   mt->vel.y += aim.y * 0.1f * dt;

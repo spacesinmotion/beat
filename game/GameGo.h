@@ -33,8 +33,7 @@ void go_word_entered(Word *w, GameScene *gs, Game *g, void *ud) {
 }
 
 void go_update(GameGo *go, GameScene *gs, Game *g, float dt) {
-  (void)g;
-  (void)dt;
+  (void)g, (void)dt;
 
   if (go->go) {
     go->go->pos.y = gs->spaceship->pos.y - 2;
@@ -42,11 +41,7 @@ void go_update(GameGo *go, GameScene *gs, Game *g, float dt) {
   }
 }
 
-void go_draw(GameGo *go, GameScene *gs, Game *g) {
-  (void)gs;
-  (void)g;
-  (void)go;
-}
+void go_draw(GameGo *go, GameScene *gs, Game *g) { (void)gs, (void)g, (void)go; }
 
 SceneObjectTable GameGo_SceneObject_Table = {
     .dead = (SceneObjectDeadCB)go_dead,
