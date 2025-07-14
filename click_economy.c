@@ -235,6 +235,7 @@ Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
     *o = (G_Object){0};
   else {
     *o = (G_Object){
+        g->pipeline.id,
         .vertices = sg_make_buffer(&(sg_buffer_desc){
                                        .type = SG_BUFFERTYPE_VERTEXBUFFER,
                                        .data = (sg_range){vertices, sizeof(vertex_t) * vlen},
@@ -255,46 +256,42 @@ Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
   return (Vec2){x / FONT_SCALE, y / FONT_SCALE};
 }
 
-void g_apply_uniforms_and_binding(Game *g, const G_Object *buffer, sg_image tex) {
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
-  sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {tex}, .samplers = {g->render.texture_sampler}},
-      .vertex_buffers = {{buffer->vertices}},
-      .index_buffer = {buffer->indices},
-  });
-}
-
-void d_object(Game *g, const G_Object *buffer, const sg_image texture, const Transformation *t) {
+void d_object(Game *g, G_Object buffer, const sg_image texture, const Transformation *t) {
   g->render.vs_param.pan = v_add(g->render.camera_pan, t->position);
   g->render.vs_param.rot = t->rotation;
   g->render.vs_param.scale = t->scale;
-  g_apply_uniforms_and_binding(g, buffer, texture);
-  sg_draw(buffer->off_elements, buffer->num_elements, 1);
+
+  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
+  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
+  sg_apply_bindings(&(sg_bindings){
+      .fs = {.images = {texture}, .samplers = {g->render.texture_sampler}},
+      .vertex_buffers = {{buffer.vertices}},
+      .index_buffer = {buffer.indices},
+  });
+
+  sg_draw(buffer.off_elements, buffer.num_elements, 1);
 }
 
 void d_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
   g->render.fs_param.color_mode = 1;
-  d_object(g, &buffer, g_font(g, f)->texture, t_P(pan));
+  d_object(g, buffer, g_font(g, f)->texture, t_P(pan));
 }
 
 void d_rect(Game *g, Color c, const Transformation *t) {
   d_color(g, c);
   g->render.fs_param.color_mode = 0;
-  const G_Object buffer = g_rect_buffer(g);
-  d_object(g, &buffer, g_image(g, Img_starship), t);
+  d_object(g, g_rect_buffer(g), g_image(g, Img_starship), t);
 }
 
 void d_image(Game *g, Image tex, const Transformation *t) {
   g->render.fs_param.color_mode = 0;
-  const G_Object buffer = g_rect_buffer(g);
-  d_object(g, &buffer, g_image(g, tex), t);
+  d_object(g, g_rect_buffer(g), g_image(g, tex), t);
 }
 
 void d_animation(Game *g, Image tex, int frame, const Transformation *t) {
   g->render.fs_param.color_mode = 0;
   const G_Object buffer = g_animation_buffer(g, frame);
-  d_object(g, &buffer, g_image(g, tex), t);
+  d_object(g, buffer, g_image(g, tex), t);
 }
 
 static Vec2 to_scene(Game *g, float x, float y) {
@@ -342,7 +339,7 @@ void add_quad(vertex_t *vertices, Rect r, SubImage img) {
   vertices[3] = (vertex_t){(Vec2){r.pos.x + 0, r.pos.y + r.size.y}, (i + 0) * oi, (j + 0) * oj};
 }
 
-G_Object quad_animation_buffer(float x, float y, float w, float h, int ni, int nj) {
+G_Object quad_animation_buffer(const Game *g, float x, float y, float w, float h, int ni, int nj) {
   vertex_t vertices[4 * ni * nj];
   uint16_t indices[6 * ni * nj];
   int ov = 0;
@@ -362,6 +359,7 @@ G_Object quad_animation_buffer(float x, float y, float w, float h, int ni, int n
   }
 
   return (G_Object){
+      .pipeline = g->pipeline.id,
       .vertices = sg_make_buffer(&(sg_buffer_desc){
                                      .type = SG_BUFFERTYPE_VERTEXBUFFER,
                                      .data = (sg_range){vertices, sizeof(vertex_t) * 4 * ni * nj},
@@ -378,60 +376,10 @@ G_Object quad_animation_buffer(float x, float y, float w, float h, int ni, int n
       .num_elements = 6 * 2,
   };
 }
-uint8_t tile_code(int i, int j, IsSetCB is_set, void *data) {
-  uint8_t code = 0;
-  code += is_set(data, i + 0, j + 0) * 1;
-  code += is_set(data, i + 1, j + 0) * 2;
-  code += is_set(data, i + 1, j + 1) * 4;
-  code += is_set(data, i + 0, j + 1) * 8;
-  return code;
-}
-G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
-  static int lu[16][2] = {
-      {0, 3}, {0, 0}, {1, 3}, {3, 0}, {0, 2}, {2, 3}, {1, 0}, {1, 1},
-      {3, 3}, {3, 2}, {0, 1}, {2, 0}, {1, 2}, {3, 1}, {2, 2}, {2, 1},
-  };
-
-  vertex_t vertices[4 * (ni + 1) * (nj + 1)];
-  uint16_t indices[6 * (ni + 1) * (nj + 1)];
-  int ov = 0, oi = 0;
-  for (int i = -1; i < ni; ++i) {
-    for (int j = -1; j < nj; ++j) {
-      uint8_t tc = tile_code(i, j, is_set, data);
-      if (tc == 0)
-        continue;
-      float x = i * 16.0f;
-      float y = j * 16.0f;
-      add_quad(&vertices[ov], (Rect){{x, y}, {16, 16}}, (SubImage){lu[tc][0], lu[tc][1], 4, 4});
-      indices[oi++] = ov + 0;
-      indices[oi++] = ov + 2;
-      indices[oi++] = ov + 1;
-      indices[oi++] = ov + 0;
-      indices[oi++] = ov + 3;
-      indices[oi++] = ov + 2;
-      ov += 4;
-    }
-  }
-  return (G_Object){
-      .vertices = sg_make_buffer(&(sg_buffer_desc){
-                                     .type = SG_BUFFERTYPE_VERTEXBUFFER,
-                                     .data = (sg_range){vertices, sizeof(vertex_t) * 4 * (ni + 1) * (nj + 1)},
-                                     .label = "vertex-buffer",
-                                 })
-                      .id,
-      .indices = sg_make_buffer(&(sg_buffer_desc){
-                                    .type = SG_BUFFERTYPE_INDEXBUFFER,
-                                    .data = (sg_range){indices, sizeof(uint16_t) * 6 * (ni + 1) * (nj + 1)},
-                                    .label = "index-buffer",
-                                })
-                     .id,
-      .off_elements = 0,
-      .num_elements = oi,
-  };
-}
 
 bool G_Object_valid(const G_Object *b) {
-  return b->vertices > 0 && b->indices > 0 && b->off_elements < b->num_elements, b->num_elements > 0;
+  return b && b->pipeline > 0 && b->vertices > 0 && b->indices > 0 && b->off_elements < b->num_elements,
+         b->num_elements > 0;
 }
 
 void G_Object_free(G_Object *b) {
@@ -443,12 +391,13 @@ void G_Object_free(G_Object *b) {
 bool rect_is_set(Recti *r, int i, int j) { return !(i < 0 || j < 0 || i >= r->w || j >= r->h); }
 
 G_Object g_animation_buffer(Game *g, int frame) {
-  return (G_Object){g->animation_buffer_4x4.vertices, g->animation_buffer_4x4.indices,
+  return (G_Object){g->animation_buffer_4x4.pipeline, g->animation_buffer_4x4.vertices, g->animation_buffer_4x4.indices,
                     g->animation_buffer_4x4.off_elements + 6 * frame, 6};
 }
 
 G_Object g_rect_buffer(Game *g) {
-  return (G_Object){g->rect_buffer.vertices, g->rect_buffer.indices, g->rect_buffer.off_elements + 6 * 15, 6};
+  return (G_Object){g->rect_buffer.pipeline, g->rect_buffer.vertices, g->rect_buffer.indices,
+                    g->rect_buffer.off_elements + 6 * 15, 6};
 }
 
 static void g_init(Game *g) {
@@ -595,8 +544,8 @@ static void g_init(Game *g) {
           },
   });
 
-  g->animation_buffer_4x4 = quad_animation_buffer(-8, -8, 16, 16, 4, 4);
-  g->rect_buffer = quad_animation_buffer(0, 0, 1, 1, 4, 4);
+  g->animation_buffer_4x4 = quad_animation_buffer(g, -8, -8, 16, 16, 4, 4);
+  g->rect_buffer = quad_animation_buffer(g, 0, 0, 1, 1, 4, 4);
 
   g->render.texture_sampler = sg_make_sampler(&(sg_sampler_desc){
       .min_filter = SG_FILTER_LINEAR,
