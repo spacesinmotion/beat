@@ -105,8 +105,8 @@ typedef struct Game {
   int mouse_y;
   float zoom;
 
-  G_Object animation_buffer_4x4;
-  G_Object rect_buffer;
+  RenderObject animation_buffer_4x4;
+  RenderObject rect_buffer;
 
   sg_image images[NB_Img];
   FontImage fonts[Nb_Font];
@@ -121,7 +121,6 @@ void g_set_background_color(Game *g, Color c) { g->render.background_color = c; 
 
 float g_animation_delta(Game *g) { return g->animation_delta; }
 float g_time(Game *g) { return g->time; }
-int g_frame(Game *g) { return (int)(g->time * 12.0f); }
 
 Sizei g_viewport(Game *g) {
   return (Sizei){sapp_width() / g->render.overlay_scale, sapp_height() / g->render.overlay_scale};
@@ -186,8 +185,8 @@ const FontImage *g_font(Game *g, G_Font font) {
   return &g->fonts[font];
 }
 
-Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
-  G_Object_free(o);
+Vec2 g_create_text(Game *g, RenderObject *o, G_Font ff, const char *text) {
+  RenderObject_free(o);
   const FontImage *f = g_font(g, ff);
   vertex_t vertices[1024];
   uint16_t indices[1024];
@@ -232,9 +231,9 @@ Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
     }
   }
   if (vlen == 0ul)
-    *o = (G_Object){0};
+    *o = (RenderObject){0};
   else {
-    *o = (G_Object){
+    *o = (RenderObject){
         g->pipeline.id,
         .vertices = sg_make_buffer(&(sg_buffer_desc){
                                        .type = SG_BUFFERTYPE_VERTEXBUFFER,
@@ -256,7 +255,7 @@ Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
   return (Vec2){x / FONT_SCALE, y / FONT_SCALE};
 }
 
-void d_object(Game *g, G_Object buffer, const sg_image texture, const Transformation *t) {
+void d_object(Game *g, RenderObject buffer, const sg_image texture, const Transformation *t) {
   g->render.vs_param.pan = v_add(g->render.camera_pan, t->position);
   g->render.vs_param.rot = t->rotation;
   g->render.vs_param.scale = t->scale;
@@ -272,9 +271,14 @@ void d_object(Game *g, G_Object buffer, const sg_image texture, const Transforma
   sg_draw(buffer.off_elements, buffer.num_elements, 1);
 }
 
-void d_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
+void d_text(Game *g, RenderObject buffer, G_Font f, Vec2 pan) {
   g->render.fs_param.color_mode = 1;
   d_object(g, buffer, g_font(g, f)->texture, t_P(pan));
+}
+
+static inline RenderObject g_rect_buffer(Game *g) {
+  return (RenderObject){g->rect_buffer.pipeline, g->rect_buffer.vertices, g->rect_buffer.indices,
+                        g->rect_buffer.off_elements + 6 * 15, 6};
 }
 
 void d_rect(Game *g, Color c, const Transformation *t) {
@@ -288,10 +292,14 @@ void d_image(Game *g, Image tex, const Transformation *t) {
   d_object(g, g_rect_buffer(g), g_image(g, tex), t);
 }
 
+static inline RenderObject g_animation_buffer(Game *g, int frame) {
+  return (RenderObject){g->animation_buffer_4x4.pipeline, g->animation_buffer_4x4.vertices,
+                        g->animation_buffer_4x4.indices, g->animation_buffer_4x4.off_elements + 6 * frame, 6};
+}
+
 void d_animation(Game *g, Image tex, int frame, const Transformation *t) {
   g->render.fs_param.color_mode = 0;
-  const G_Object buffer = g_animation_buffer(g, frame);
-  d_object(g, buffer, g_image(g, tex), t);
+  d_object(g, g_animation_buffer(g, frame), g_image(g, tex), t);
 }
 
 static Vec2 to_scene(Game *g, float x, float y) {
@@ -339,7 +347,7 @@ void add_quad(vertex_t *vertices, Rect r, SubImage img) {
   vertices[3] = (vertex_t){(Vec2){r.pos.x + 0, r.pos.y + r.size.y}, (i + 0) * oi, (j + 0) * oj};
 }
 
-G_Object quad_animation_buffer(const Game *g, float x, float y, float w, float h, int ni, int nj) {
+RenderObject quad_animation_buffer(const Game *g, float x, float y, float w, float h, int ni, int nj) {
   vertex_t vertices[4 * ni * nj];
   uint16_t indices[6 * ni * nj];
   int ov = 0;
@@ -358,7 +366,7 @@ G_Object quad_animation_buffer(const Game *g, float x, float y, float w, float h
     }
   }
 
-  return (G_Object){
+  return (RenderObject){
       .pipeline = g->pipeline.id,
       .vertices = sg_make_buffer(&(sg_buffer_desc){
                                      .type = SG_BUFFERTYPE_VERTEXBUFFER,
@@ -377,28 +385,18 @@ G_Object quad_animation_buffer(const Game *g, float x, float y, float w, float h
   };
 }
 
-bool G_Object_valid(const G_Object *b) {
+bool RenderObject_valid(const RenderObject *b) {
   return b && b->pipeline > 0 && b->vertices > 0 && b->indices > 0 && b->off_elements < b->num_elements,
          b->num_elements > 0;
 }
 
-void G_Object_free(G_Object *b) {
+void RenderObject_free(RenderObject *b) {
   sg_destroy_buffer((sg_buffer){b->vertices});
   sg_destroy_buffer((sg_buffer){b->indices});
-  *b = (G_Object){0};
+  *b = (RenderObject){0};
 }
 
 bool rect_is_set(Recti *r, int i, int j) { return !(i < 0 || j < 0 || i >= r->w || j >= r->h); }
-
-G_Object g_animation_buffer(Game *g, int frame) {
-  return (G_Object){g->animation_buffer_4x4.pipeline, g->animation_buffer_4x4.vertices, g->animation_buffer_4x4.indices,
-                    g->animation_buffer_4x4.off_elements + 6 * frame, 6};
-}
-
-G_Object g_rect_buffer(Game *g) {
-  return (G_Object){g->rect_buffer.pipeline, g->rect_buffer.vertices, g->rect_buffer.indices,
-                    g->rect_buffer.off_elements + 6 * 15, 6};
-}
 
 static void g_init(Game *g) {
   srand(1);

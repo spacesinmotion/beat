@@ -18,8 +18,8 @@ typedef struct Word {
   float alpha;
   char text[32];
 
-  G_Object word_start;
-  G_Object word_end;
+  RenderObject word_start;
+  RenderObject word_end;
   int char_reached;
   float word_end_offset;
 
@@ -34,8 +34,8 @@ bool w_dead(Word *w) { return w->dead; }
 float w_render_order(const Word *w) { return w->pos.y + 200; }
 
 static inline void w_destroy(Word *w) {
-  G_Object_free(&w->word_start);
-  G_Object_free(&w->word_end);
+  RenderObject_free(&w->word_start);
+  RenderObject_free(&w->word_end);
   w->dead = true;
 }
 
@@ -83,7 +83,7 @@ void w_update(Word *w, GameScene *gs, Game *g, float dt) {
     memset(gs->entered_until_now, 0, l);
   }
 
-  if (!G_Object_valid(&w->word_end) || (int)x != w->char_reached) {
+  if (!RenderObject_valid(&w->word_end) || (int)x != w->char_reached) {
     w->char_reached = (int)x;
     w->word_end_offset = g_create_text(g, &w->word_start, Oswald_Regular_12, str("%.*s", x, w->text)).x;
     g_create_text(g, &w->word_end, Oswald_Regular_12, &w->text[x]);
@@ -96,11 +96,11 @@ void w_draw(Word *w, GameScene *gs, Game *g) {
     return;
 
   const float a = 1.0f - (w->alpha * w->alpha) / 2.0f;
-  if (G_Object_valid(&w->word_start)) {
+  if (RenderObject_valid(&w->word_start)) {
     d_color(g, alphaf(rgb(88, 136, 22), a));
     d_text(g, w->word_start, Oswald_Regular_12, w->pos);
   }
-  if (G_Object_valid(&w->word_end)) {
+  if (RenderObject_valid(&w->word_end)) {
     d_color(g, alphaf(rgb(168, 159, 128), a));
     d_text(g, w->word_end, Oswald_Regular_12, (Vec2){w->pos.x + w->word_end_offset, w->pos.y});
   }

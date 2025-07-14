@@ -17,33 +17,29 @@ const char *str(const char *fmt, ...);
 typedef struct Transformation Transformation;
 typedef struct sg_image sg_image;
 
-typedef struct G_Object {
-  uint32_t pipeline, vertices, indices, off_elements, num_elements;
-} G_Object;
-
-typedef bool (*IsSetCB)(void *data, int i, int j);
-Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text);
-bool G_Object_valid(const G_Object *);
-void G_Object_free(G_Object *);
-
 typedef struct Game Game;
+
+typedef struct RenderObject {
+  uint32_t pipeline, vertices, indices, off_elements, num_elements;
+} RenderObject;
+
+Vec2 g_create_text(Game *g, RenderObject *o, G_Font ff, const char *text);
+bool RenderObject_valid(const RenderObject *);
+void RenderObject_free(RenderObject *);
 
 void g_set_scene(Game *g, Scene scene);
 void g_set_background_color(Game *g, Color c);
 
 float g_animation_delta(Game *g);
 float g_time(Game *g);
-int g_frame(Game *g);
+static inline int g_frame(Game *g) { return (int)(g_time(g) * 16.0f); }
 
 Sizei g_viewport(Game *g);
 
-G_Object g_animation_buffer(Game *g, int frame);
-G_Object g_rect_buffer(Game *g);
-
 void d_color(Game *game, Color c);
 
-void d_object(Game *g, G_Object buffer, const sg_image texture, const Transformation *t);
-void d_text(Game *g, G_Object buffer, G_Font f, Vec2 pan);
+void d_object(Game *g, RenderObject buffer, const sg_image texture, const Transformation *t);
+void d_text(Game *g, RenderObject buffer, G_Font f, Vec2 pan);
 void d_rect(Game *g, Color c, const Transformation *t);
 void d_image(Game *g, Image tex, const Transformation *t);
 void d_animation(Game *g, Image tex, int frame, const Transformation *t);

@@ -185,7 +185,7 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   if (gs->initialized <= 0.0f)
     return;
 
-  if (G_Object_valid(&gs->points_text) && gs->initialized >= 1.0f) {
+  if (RenderObject_valid(&gs->points_text) && gs->initialized >= 1.0f) {
     d_color(g, c_mix(rgb(168, 159, 128), rgb(88, 136, 22), gs->points_flush * gs->points_flush));
     d_text(g, gs->points_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 15});
   }

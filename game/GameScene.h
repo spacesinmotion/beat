@@ -44,7 +44,7 @@ typedef struct GameScene {
   SpaceShip *spaceship;
 
   int points, points_cache;
-  G_Object points_text;
+  RenderObject points_text;
   float points_flush;
 
   float initialized, health, range, speed, energy;
