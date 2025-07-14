@@ -9,7 +9,6 @@
 #include "math/Color.h"
 #include "math/Vec2.h"
 #include "math/random.h"
-#include <stdio.h>
 
 typedef struct Word Word;
 typedef void (*OnEnteredDone)(Word *, GameScene *gs, Game *g, void *);
