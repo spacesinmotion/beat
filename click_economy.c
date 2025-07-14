@@ -1,4 +1,14 @@
+
+#ifdef _WIN32
+#ifndef CLANGD_ANALYSIS
+#include <windows.h>
+#endif
+#else
+#include <dirent.h>
+#endif
+
 // #include <time.h>
+#include "game/Game.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -10,14 +20,6 @@
 #include <math.h>
 #define fmodf fmod
 #define sinf sin
-#endif
-
-#ifdef _WIN32
-#ifndef CLANGD_ANALYSIS
-#include <windows.h>
-#endif
-#else
-#include <dirent.h>
 #endif
 
 #include "game/assets.h"
@@ -52,6 +54,8 @@
 #include "gc/gc.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
+
+#include "engine/Transformation.h"
 
 #include "game/GameScene.h"
 
@@ -123,7 +127,7 @@ Sizei g_viewport(Game *g) {
   return (Sizei){sapp_width() / g->render.overlay_scale, sapp_height() / g->render.overlay_scale};
 }
 
-void g_color(Game *game, Color c) { game->render.fs_param.color = c; }
+void d_color(Game *game, Color c) { game->render.fs_param.color = c; }
 
 sg_image img_load(const char *path) {
   int ww = 0, hh = 0, channel = 0;
@@ -243,6 +247,7 @@ Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
                                       .label = "index-buffer",
                                   })
                        .id,
+        .off_elements = 0,
         .num_elements = ilen,
     };
   }
@@ -250,43 +255,46 @@ Vec2 g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
   return (Vec2){x / FONT_SCALE, y / FONT_SCALE};
 }
 
-void g_apply_uniforms_and_binding(Game *g, G_Object buffer, sg_image tex) {
+void g_apply_uniforms_and_binding(Game *g, const G_Object *buffer, sg_image tex) {
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
   sg_apply_bindings(&(sg_bindings){
       .fs = {.images = {tex}, .samplers = {g->render.texture_sampler}},
-      .vertex_buffers = {{buffer.vertices}},
-      .index_buffer = {buffer.indices},
+      .vertex_buffers = {{buffer->vertices}},
+      .index_buffer = {buffer->indices},
   });
 }
 
-void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
+void d_object(Game *g, const G_Object *buffer, const sg_image texture, const Transformation *t) {
+  g->render.vs_param.pan = v_add(g->render.camera_pan, t->position);
+  g->render.vs_param.rot = t->rotation;
+  g->render.vs_param.scale = t->scale;
+  g_apply_uniforms_and_binding(g, buffer, texture);
+  sg_draw(buffer->off_elements, buffer->num_elements, 1);
+}
+
+void d_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
   g->render.fs_param.color_mode = 1;
-  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
-  g->render.vs_param.rot = 0.0f;
-  g->render.vs_param.scale = (Vec2){1.0f, 1.0};
-  g_apply_uniforms_and_binding(g, buffer, g_font(g, f)->texture);
-  sg_draw(0, buffer.num_elements, 1);
+  d_object(g, &buffer, g_font(g, f)->texture, t_P(pan));
 }
 
-void g_animationRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, Vec2 scale) {
+void d_rect(Game *g, Color c, const Transformation *t) {
+  d_color(g, c);
   g->render.fs_param.color_mode = 0;
-  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
-  g->render.vs_param.rot = rot;
-  g->render.vs_param.scale = scale;
-
-  g_apply_uniforms_and_binding(g, buffer, g_image(g, tex));
-  sg_draw(6 * frame, 6, 1);
+  const G_Object buffer = g_rect_buffer(g);
+  d_object(g, &buffer, g_image(g, Img_starship), t);
 }
 
-void g_animationR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot) {
-  g_animationRS(g, buffer, tex, frame, pan, rot, (Vec2){1.0f, 1.0f});
+void d_image(Game *g, Image tex, const Transformation *t) {
+  g->render.fs_param.color_mode = 0;
+  const G_Object buffer = g_rect_buffer(g);
+  d_object(g, &buffer, g_image(g, tex), t);
 }
-void g_animationS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, Vec2 scale) {
-  g_animationRS(g, buffer, tex, frame, pan, 0.0, scale);
-}
-void g_animation(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan) {
-  g_animationRS(g, buffer, tex, frame, pan, 0.0f, (Vec2){1.0f, 1.0f});
+
+void d_animation(Game *g, Image tex, int frame, const Transformation *t) {
+  g->render.fs_param.color_mode = 0;
+  const G_Object buffer = g_animation_buffer(g, frame);
+  d_object(g, &buffer, g_image(g, tex), t);
 }
 
 static Vec2 to_scene(Game *g, float x, float y) {
@@ -366,6 +374,7 @@ G_Object quad_animation_buffer(float x, float y, float w, float h, int ni, int n
                                     .label = "index-buffer",
                                 })
                      .id,
+      .off_elements = 0,
       .num_elements = 6 * 2,
   };
 }
@@ -416,26 +425,31 @@ G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
                                     .label = "index-buffer",
                                 })
                      .id,
+      .off_elements = 0,
       .num_elements = oi,
   };
 }
 
-bool G_Object_valid(const G_Object *b) { return b->vertices > 0 && b->indices > 0 && b->num_elements > 0; }
+bool G_Object_valid(const G_Object *b) {
+  return b->vertices > 0 && b->indices > 0 && b->off_elements < b->num_elements, b->num_elements > 0;
+}
 
 void G_Object_free(G_Object *b) {
   sg_destroy_buffer((sg_buffer){b->vertices});
   sg_destroy_buffer((sg_buffer){b->indices});
-  b->vertices = b->indices = b->num_elements = 0;
+  *b = (G_Object){0};
 }
 
-bool rect_is_set(Recti *r, int i, int j) {
-  if (i < 0 || j < 0 || i >= r->w || j >= r->h)
-    return false;
-  return true;
+bool rect_is_set(Recti *r, int i, int j) { return !(i < 0 || j < 0 || i >= r->w || j >= r->h); }
+
+G_Object g_animation_buffer(Game *g, int frame) {
+  return (G_Object){g->animation_buffer_4x4.vertices, g->animation_buffer_4x4.indices,
+                    g->animation_buffer_4x4.off_elements + 6 * frame, 6};
 }
 
-G_Object g_animation_buffer(Game *g) { return g->animation_buffer_4x4; }
-G_Object g_rect_buffer(Game *g) { return g->rect_buffer; }
+G_Object g_rect_buffer(Game *g) {
+  return (G_Object){g->rect_buffer.vertices, g->rect_buffer.indices, g->rect_buffer.off_elements + 6 * 15, 6};
+}
 
 static void g_init(Game *g) {
   srand(1);
@@ -642,7 +656,7 @@ void g_draw_scene(Game *g) {
   }
 }
 
-static void g_draw(Game *g) {
+static void g_draw_callback(Game *g) {
   g_update_state(g, sapp_frame_duration());
 
   g_update_console(g);
@@ -854,7 +868,7 @@ int main(int argc, char *argv[]) {
   Game g = (Game){0};
   sapp_run(&(sapp_desc){
       .init_userdata_cb = (void (*)(void *))g_init,
-      .frame_userdata_cb = (void (*)(void *))g_draw,
+      .frame_userdata_cb = (void (*)(void *))g_draw_callback,
       .cleanup_userdata_cb = (void (*)(void *))g_cleanup,
       .event_userdata_cb = (void (*)(const sapp_event *, void *))g_handel_events,
       .user_data = &g,

@@ -1,6 +1,7 @@
 #ifndef BLING_H
 #define BLING_H
 
+#include "engine/Transformation.h"
 #include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/assets.h"
@@ -30,8 +31,8 @@ void bl_draw(Bling *bl, GameScene *gs, Game *g) {
   (void)gs;
 
   const int frame = (int)(bl->time * 16.0f);
-  g_color(g, bl->color);
-  g_animationR(g, g_animation_buffer(g), Img_bling, frame % 10, bl->location, bl->rotation);
+  d_color(g, bl->color);
+  d_animation(g, Img_bling, frame % 10, t_PR(bl->location, bl->rotation));
 }
 
 static SceneObjectTable Bling_table = {

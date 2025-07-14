@@ -98,12 +98,12 @@ void w_draw(Word *w, GameScene *gs, Game *g) {
 
   const float a = 1.0f - (w->alpha * w->alpha) / 2.0f;
   if (G_Object_valid(&w->word_start)) {
-    g_color(g, alphaf(rgb(88, 136, 22), a));
-    g_text(g, w->word_start, Oswald_Regular_12, w->pos);
+    d_color(g, alphaf(rgb(88, 136, 22), a));
+    d_text(g, w->word_start, Oswald_Regular_12, w->pos);
   }
   if (G_Object_valid(&w->word_end)) {
-    g_color(g, alphaf(rgb(168, 159, 128), a));
-    g_text(g, w->word_end, Oswald_Regular_12, (Vec2){w->pos.x + w->word_end_offset, w->pos.y});
+    d_color(g, alphaf(rgb(168, 159, 128), a));
+    d_text(g, w->word_end, Oswald_Regular_12, (Vec2){w->pos.x + w->word_end_offset, w->pos.y});
   }
 }
 

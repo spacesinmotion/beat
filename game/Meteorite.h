@@ -48,10 +48,10 @@ void mt_update(Meteorite *mt, GameScene *gs, Game *g, float dt) {
 void mt_draw(Meteorite *mt, GameScene *gs, Game *g) {
   (void)gs;
 
-  g_color(g, alphaf(red(), 0.4f + 0.3f * sin(mt->alpha_t)));
-  g_animationRS(g, g_animation_buffer(g), Img_starship, 1, mt->pos, mt->rot, vec2f(1.25f * mt->scale));
-  g_color(g, alphaf(white(), 0.7f + 0.1f * sin(mt->alpha_t)));
-  g_animationRS(g, g_animation_buffer(g), Img_starship, 2, mt->pos, mt->rot, vec2f(mt->scale));
+  d_color(g, alphaf(red(), 0.4f + 0.3f * sin(mt->alpha_t)));
+  d_animation(g, Img_starship, 1, &(Transformation){mt->pos, mt->rot, vec2f(1.25f * mt->scale)});
+  d_color(g, alphaf(white(), 0.7f + 0.1f * sin(mt->alpha_t)));
+  d_animation(g, Img_starship, 2, &(Transformation){mt->pos, mt->rot, vec2f(mt->scale)});
 }
 
 SceneObjectTable Meteorite_SceneObject_Table = {

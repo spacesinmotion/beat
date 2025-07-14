@@ -14,8 +14,11 @@
 
 const char *str(const char *fmt, ...);
 
+typedef struct Transformation Transformation;
+typedef struct sg_image sg_image;
+
 typedef struct G_Object {
-  uint32_t vertices, indices, num_elements;
+  uint32_t vertices, indices, off_elements, num_elements;
 } G_Object;
 
 typedef bool (*IsSetCB)(void *data, int i, int j);
@@ -35,17 +38,16 @@ int g_frame(Game *g);
 
 Sizei g_viewport(Game *g);
 
-G_Object g_animation_buffer(Game *g);
+G_Object g_animation_buffer(Game *g, int frame);
 G_Object g_rect_buffer(Game *g);
 
-void g_color(Game *game, Color c);
+void d_color(Game *game, Color c);
 
-void g_animationRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, Vec2 scale);
-void g_animationR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot);
-void g_animationS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, Vec2 scale);
-void g_animation(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan);
-
-void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan);
+void d_object(Game *g, const G_Object *buffer, const sg_image texture, const Transformation *t);
+void d_text(Game *g, G_Object buffer, G_Font f, Vec2 pan);
+void d_rect(Game *g, Color c, const Transformation *t);
+void d_image(Game *g, Image tex, const Transformation *t);
+void d_animation(Game *g, Image tex, int frame, const Transformation *t);
 
 void *g_malloc(size_t size);
 void *g_realloc(void *ptr, size_t size);

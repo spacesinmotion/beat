@@ -1,6 +1,7 @@
 
 #include "game/GameScene.h"
 #include "Scene.h"
+#include "engine/Transformation.h"
 #include "extern/cjsonh/cjsonh.h"
 #include "game/Game.h"
 #include "game/GameGo.h"
@@ -167,10 +168,10 @@ void gs_draw_menu_overlay(GameScene *gs, Game *g) {
   for (int i = 0; i < Nb_MI; ++i) {
     const Vec2 p = (Vec2){8 + 4 + i * 16, 8 + 4};
     const bool hover = gs_pick(gs, gs_select_bottom_menu, i, p, 1.0f);
-    g_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
-    g_animation(g, g_animation_buffer(g), Img_menubar, i % 16, p);
-    g_color(g, hover ? red() : (gs->menu_selected == i ? green() : blue()));
-    g_animation(g, g_animation_buffer(g), Img_marker, hover ? g_frame(g) % 4 : i % 4, p);
+    d_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
+    d_animation(g, Img_menubar, i % 16, t_P(p));
+    d_color(g, hover ? red() : (gs->menu_selected == i ? green() : blue()));
+    d_animation(g, Img_marker, hover ? g_frame(g) % 4 : i % 4, t_P(p));
   }
 }
 
@@ -185,27 +186,21 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
     return;
 
   if (G_Object_valid(&gs->points_text) && gs->initialized >= 1.0f) {
-    g_color(g, c_mix(rgb(168, 159, 128), rgb(88, 136, 22), gs->points_flush * gs->points_flush));
-    g_text(g, gs->points_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 15});
+    d_color(g, c_mix(rgb(168, 159, 128), rgb(88, 136, 22), gs->points_flush * gs->points_flush));
+    d_text(g, gs->points_text, Oswald_Regular_12, (Vec2){10, g_viewport(g).h - 15});
   }
 
   const Sizei vp = g_viewport(g);
-  g_color(g, alphaf(gray(150), gs->initialized));
-  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 9}, (Vec2){vp.w - 38, 6});
-  g_color(g, alphaf(yellow(), gs->initialized));
   const float r = gs->range / (LEVEL_RANGE_FACTOR * gs->level);
-  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 10}, (Vec2){r * (vp.w - 40), 4});
+  d_rect(g, alphaf(gray(150), gs->initialized), t_PS((Vec2){19, 9}, (Vec2){vp.w - 38, 6}));
+  d_rect(g, alphaf(yellow(), gs->initialized), t_PS((Vec2){20, 10}, (Vec2){r * (vp.w - 40), 4}));
 
-  g_color(g, alphaf(gray(150), gs->initialized));
-  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 19}, (Vec2){102, 6});
-  g_color(g, alphaf(blue(), gs->initialized));
-  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 20}, (Vec2){gs->speed * 100.0f, 4});
+  d_rect(g, alphaf(gray(150), gs->initialized), t_PS((Vec2){19, 19}, (Vec2){102, 6}));
+  d_rect(g, alphaf(blue(), gs->initialized), t_PS((Vec2){20, 20}, (Vec2){gs->speed * 100.0f, 4}));
 
-  g_color(g, alphaf(gray(150), gs->initialized));
-  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){19, 29}, (Vec2){102, 6});
-  g_color(g, alphaf(green(), gs->initialized));
   const float e = gs->energy / 32.0f;
-  g_animationS(g, g_rect_buffer(g), Img_starship, 15, (Vec2){20, 30}, (Vec2){e * 100.0f, 4});
+  d_rect(g, alphaf(gray(150), gs->initialized), t_PS((Vec2){19, 29}, (Vec2){102, 6}));
+  d_rect(g, alphaf(green(), gs->initialized), t_PS((Vec2){20, 30}, (Vec2){e * 100.0f, 4}));
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {

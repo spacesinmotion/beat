@@ -1,6 +1,7 @@
 #ifndef WORDBUBBLE_H
 #define WORDBUBBLE_H
 
+#include "engine/Transformation.h"
 #include "game/Game.h"
 #include "game/GameScene.h"
 #include "game/SceneObject.h"
@@ -38,7 +39,7 @@ void wb_draw(WordBubble *wb, GameScene *gs, Game *g) {
   if (gs->health <= 0.0)
     return;
 
-  g_color(g, alphaf(white(), gs->initialized));
+  d_color(g, alphaf(white(), gs->initialized));
 
   Vec2 a = v_add(gs->spaceship->pos, wb->connect);
   Vec2 b = wb->pos;
@@ -50,7 +51,7 @@ void wb_draw(WordBubble *wb, GameScene *gs, Game *g) {
     t *= t;
     p.x = a.x + t * (b.x - a.x);
     // p = v_lerp(a, b, t);
-    g_animationS(g, g_animation_buffer(g), Img_starship, 4, p, vec2f(0.25f + t * 7.0));
+    d_animation(g, Img_starship, 4, t_PS(p, vec2f(0.25f + t * 7.0)));
   }
 }
 
