@@ -386,7 +386,7 @@ RenderObject quad_animation_buffer(const Game *g, float x, float y, float w, flo
 }
 
 bool RenderObject_valid(const RenderObject *b) {
-  return b && b->pipeline > 0 && b->vertices > 0 && b->indices > 0 && b->off_elements < b->num_elements,
+  return b && b->pipeline > 0 && b->vertices > 0 && b->indices > 0 && b->off_elements < b->num_elements &&
          b->num_elements > 0;
 }
 
