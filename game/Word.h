@@ -1,6 +1,7 @@
 #ifndef WORD_H
 #define WORD_H
 
+#include "game/Colors.h"
 #include "game/DataBase.h"
 #include "game/Game.h"
 #include "game/GameScene.h"
@@ -42,7 +43,7 @@ void w_set_word(Word *w, const char *text) {
 }
 void w_new_word(Word *w, int level) {
   memset(w->text, 0, sizeof(w->text));
-  const size_t max = i_min(sizeof(words) / sizeof(words[0]), level_map[level + 1].offset);
+  const size_t max = i_min(sizeof(words) / sizeof(words[0]), level_map[level + 2].offset);
   const size_t x = rand() % max;
   w_set_word(w, words[x]);
 }
@@ -94,11 +95,11 @@ void w_draw(Word *w, GameScene *gs, Game *g) {
 
   const float a = 1.0f - (w->alpha * w->alpha) / 2.0f;
   if (TextObject_valid(&w->word_start)) {
-    d_color(g, alphaf(rgb(88, 136, 22), a));
+    d_color(g, alphaf(ok_color(), a));
     d_text(g, &w->word_start, w->pos);
   }
   if (TextObject_valid(&w->word_end)) {
-    d_color(g, alphaf(rgb(168, 159, 128), a));
+    d_color(g, alphaf(base_color(), a));
     d_text(g, &w->word_end, (Vec2){w->pos.x + w->word_start.size.x, w->pos.y});
   }
 }

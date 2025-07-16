@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "engine/Transformation.h"
 #include "extern/cjsonh/cjsonh.h"
+#include "game/Colors.h"
 #include "game/Game.h"
 #include "game/GameGo.h"
 #include "game/Meteorite.h"
@@ -96,7 +97,7 @@ bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
 
 void gs_update(GameScene *gs, Game *g, float dt) {
 
-  g_set_background_color(g, rgb(226, 219, 197));
+  g_set_background_color(g, bg_color());
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
     so_update(&gs->scene_objects.data[i], gs, g, dt);
@@ -186,7 +187,7 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
     return;
 
   if (TextObject_valid(&gs->points_text) && gs->initialized >= 1.0f) {
-    d_color(g, c_mix(rgb(168, 159, 128), rgb(88, 136, 22), gs->points_flush * gs->points_flush));
+    d_color(g, c_mix(base_color(), ok_color(), gs->points_flush * gs->points_flush));
     d_text(g, &gs->points_text, (Vec2){10, g_viewport(g).h - 15});
   }
 
