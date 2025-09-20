@@ -26,6 +26,16 @@ typedef struct PickRect {
   int id;
 } PickRect;
 
+typedef enum ObjectType {
+  So_Empty = 0,
+  So_House,
+  So_Trees,
+  So_Animals,
+  So_Flowers,
+  So_Water,
+  So_None,
+} ObjectType;
+
 typedef struct GameScene {
   SceneObjectVec scene_objects;
 
@@ -44,7 +54,7 @@ typedef struct GameScene {
   Color preview;
   Recti r;
 
-  int menu_selected;
+  ObjectType menu_selected;
 
   Level *level;
   StreetMap *street_map;
@@ -74,6 +84,9 @@ typedef struct GameScene {
   void *special_click_handler_data;
 
   float research_level, reasearch_needed;
+
+  ObjectType grid[7][7];
+
 } GameScene;
 
 typedef struct GameScene GameScene;

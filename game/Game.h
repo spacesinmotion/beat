@@ -35,6 +35,9 @@ int g_frame(Game *g);
 
 Sizei g_viewport(Game *g);
 
+Vec2 g_mouse_in_scene(Game *g);
+Vec2 g_mouse_on_overlay(Game *g);
+
 G_Object g_tilerect_buffer(Game *g, int w, int h);
 G_Object g_animation_buffer(Game *g);
 

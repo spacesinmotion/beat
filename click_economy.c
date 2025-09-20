@@ -48,7 +48,10 @@
 
 #include "util/sokol_debugtext.h"
 
+#include "game/Game.h"
+
 #include "gc/gc.h"
+#include "math/Color.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
 
@@ -317,6 +320,9 @@ static Vec2 to_overlay(Game *g, float x, float y) {
   return v_diff((Vec2){x, sapp_height() - y}, g->render.overlay_scale);
 }
 
+Vec2 g_mouse_in_scene(Game *g) { return to_scene(g, (float)g->mouse_x, (float)g->mouse_y); }
+Vec2 g_mouse_on_overlay(Game *g) { return to_overlay(g, (float)g->mouse_x, (float)g->mouse_y); }
+
 void g_update_state(Game *g, double dt) {
   g->animation_delta = dt;
   g->time += dt;
@@ -478,8 +484,8 @@ G_Object g_animation_buffer(Game *g) { return g->animation_buffer_4x4; }
 
 static void g_init(Game *g) {
   srand(1);
-  g->render.camera_pan = (Vec2){32.0f, 32.0f};
-  g->render.camera_scale = 2.0f;
+  g->render.camera_pan = (Vec2){60.0f, 20.0f};
+  g->render.camera_scale = 5.2f;
   g->render.overlay_scale = 2.0f;
   g->render.vs_param = (vs_param_t){
       {2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale},
@@ -487,7 +493,7 @@ static void g_init(Game *g) {
       0.0f,
       1.0f,
   };
-  g->zoom = 0.5f;
+  g->zoom = 0.8f;
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0};
 
   sg_setup(&(sg_desc){
@@ -694,6 +700,10 @@ static void g_draw(Game *g) {
 
   sg_apply_pipeline(g->pipeline);
   g_draw_scene(g);
+
+  c_printf(g, " %10s: %f %f\n", "pan", g->render.camera_pan.x, g->render.camera_pan.y);
+  c_printf(g, " %10s: %f\n", "scale", g->render.camera_scale);
+  c_printf(g, " %10s: %f\n", "zoom", g->zoom);
 
   sdtx_draw();
 

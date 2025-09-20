@@ -75,7 +75,7 @@ void gs_set_game_speed(GameScene *gs, int speed) {
 }
 
 void gs_select_bottom_menu(GameScene *gs, int button) {
-  gs->menu_selected = button;
+  gs->menu_selected = (ObjectType)button;
   if (button == MI_Street) {
     gs->preview = Street_color();
     gs->r.w = gs->r.h = 1;
@@ -196,43 +196,88 @@ bool gs_construction_available(GameScene *gs) {
   return gs->clicks > 0;
 }
 
+Vec2 gs_grid_to_scene(Sizei s) {
+  const float ox = 3.0f / 2.0f * 8.0f;
+  const float oy = sqrt(3.0) * 8.0f;
+  return (Vec2){s.w * ox, (s.w & 1 ? oy / 2.0f : 0.0f) + s.h * oy};
+}
+
+Sizei gs_scene_to_grid(Vec2 p) {
+  const float ox = 3.0f / 2.0f * 8.0f;
+  const float oy = sqrt(3.0) * 8.0f;
+  const int i = (int)roundf(p.x / ox);
+  return (Sizei){i, (int)roundf((p.y - (i & 1 ? oy / 2.0f : 0.0f)) / oy)};
+}
+
+bool gs_valid_gird(GameScene *gs, Sizei gp) {
+  return gp.w >= 0 && gp.w < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])) && gp.h >= 0 &&
+         gp.h < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])) && gs->grid[gp.w][gp.h] != So_None;
+}
+
+bool gs_empty_gird(GameScene *gs, Sizei gp) { return gs_valid_gird(gs, gp) && gs->grid[gp.w][gp.h] == So_Empty; }
+
 void gs_draw(GameScene *gs, Game *g) {
-  c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
-  c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
-  c_printf(g, "----------------------\n");
-  c_printf(g, " %10s: %g\n", "game speed", gs->game_paused ? 0.0f : gs->game_speed);
-  c_printf(g, "----------------------\n");
-  c_printf(g, " %10s: %d\n", "day", gs->day);
-  c_printf(g, " %10s: %f\n", "daytime", gs->daytime);
-  c_printf(g, " %10s: %d\n", "bots", gs->wearisome_count);
-  c_printf(g, "----------------------\n\n");
-  c_printf(g, " %10s: %d\n", "all $", gs->clicks_in_houses + gs->clicks);
-  c_printf(g, " %10s: %d\n", "spread $", gs->clicks_in_houses);
-  c_printf(g, " %10s: %d\n", "produced $", gs->clicks_produced);
-  c_printf(g, " %10s: %d\n", "lost $", gs->clicks_lost);
-  c_printf(g, "----------------------\n\n");
+  // float m = 15.0f * sin(g_time(g));
+  // float r = (i + j + 1) * m * M_PI / 180.0f
 
-  StreetMap_draw(gs->street_map, g);
+  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
+    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j) {
+      if (gs->grid[i][j] == So_None)
+        continue;
+      g_color(g, white());
+      g_objectRS(g, g_animation_buffer(g), Img_menubar, 0, gs_grid_to_scene((Sizei){i, j}), 0.0, 1.0f);
 
-  for (int i = 0; i < gs->scene_objects.len; ++i)
-    so_draw(&gs->scene_objects.data[i], gs, g);
-
-  if (gs->pick_under_mouse < 0 && l_validR(gs->level, gs->r)) {
-    if (gs->r.h > 0 && gs->r.w > 0) {
-      g_color(g, gs->preview);
-      g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), Img_house_map, l_to_vec(gs->r.x, gs->r.y));
+      g_color(g, gray(50));
+      if (gs->grid[i][j] != So_Empty)
+        g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->grid[i][j], gs_grid_to_scene((Sizei){i, j}), 0.0, 1.0f);
     }
-    g_color(g, gs_construction_available(gs) ? green() : red());
-    for (int i = gs->r.x; i < gs->r.x + gs->r.w; ++i)
-      for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
-        g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, l_to_vec(i, j));
+
+  g_color(g, red());
+
+  if (gs->menu_selected > 0) {
+    Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
+    if (gs_valid_gird(gs, gp)) {
+      Vec2 p = gs_grid_to_scene(gp);
+      g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->menu_selected, p, 0.0f, 1.0f);
+    }
   }
+
+  // c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
+  // c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
+  // c_printf(g, "----------------------\n");
+  // c_printf(g, " %10s: %g\n", "game speed", gs->game_paused ? 0.0f : gs->game_speed);
+  // c_printf(g, "----------------------\n");
+  // c_printf(g, " %10s: %d\n", "day", gs->day);
+  // c_printf(g, " %10s: %f\n", "daytime", gs->daytime);
+  // c_printf(g, " %10s: %d\n", "bots", gs->wearisome_count);
+  // c_printf(g, "----------------------\n\n");
+  // c_printf(g, " %10s: %d\n", "all $", gs->clicks_in_houses + gs->clicks);
+  // c_printf(g, " %10s: %d\n", "spread $", gs->clicks_in_houses);
+  // c_printf(g, " %10s: %d\n", "produced $", gs->clicks_produced);
+  // c_printf(g, " %10s: %d\n", "lost $", gs->clicks_lost);
+  // c_printf(g, "----------------------\n\n");
+
+  // StreetMap_draw(gs->street_map, g);
+
+  // for (int i = 0; i < gs->scene_objects.len; ++i)
+  //   so_draw(&gs->scene_objects.data[i], gs, g);
+
+  // if (gs->pick_under_mouse < 0 && l_validR(gs->level, gs->r)) {
+  //   if (gs->r.h > 0 && gs->r.w > 0) {
+  //     g_color(g, gs->preview);
+  //     g_buffer(g, g_tilerect_buffer(g, gs->r.w, gs->r.h), Img_house_map, l_to_vec(gs->r.x, gs->r.y));
+  //   }
+  //   g_color(g, gs_construction_available(gs) ? green() : red());
+  //   for (int i = gs->r.x; i < gs->r.x + gs->r.w; ++i)
+  //     for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
+  //       g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, l_to_vec(i, j));
+  // }
 }
 
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
   const Color cn = gs->daytime < 0.75f ? gray(25) : gray(225);
   const Color ch = gs->daytime < 0.75f ? gray(75) : gray(175);
-  for (int i = 0; i <= MI_Combinator; ++i) {
+  for (int i = 1; i < So_None; ++i) {
     const Vec2 p = (Vec2){8 + 4 + i * 16, 8 + 4};
     const bool hover = gs_pick(gs, gs_select_bottom_menu, i, p, 1.0f);
     g_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
@@ -314,15 +359,15 @@ void gs_draw_storage_overlay(GameScene *gs, Game *g) {
 void gs_draw_overlay(GameScene *gs, Game *g) {
   gs->pick_rect_count = 0;
   gs_draw_menu_overlay(gs, g);
-  gs_draw_clock_overlay(gs, g);
-  gs_draw_storage_overlay(gs, g);
+  // gs_draw_clock_overlay(gs, g);
+  // gs_draw_storage_overlay(gs, g);
 
-  if (tc_can_click(l_content(gs->level, gs->r.x, gs->r.y))) {
-    g_color(g, gray(45));
-    g_object(g, g_animation_buffer(g), Img_wearisome, 12, v_add(gs->mouse_overlay_position, (Vec2){13, -9}));
-    g_color(g, gray(200));
-    g_text(g, gs->click_counter_text, Oswald_Regular_12, v_add(gs->mouse_overlay_position, (Vec2){10, -12}));
-  }
+  // if (tc_can_click(l_content(gs->level, gs->r.x, gs->r.y))) {
+  //   g_color(g, gray(45));
+  //   g_object(g, g_animation_buffer(g), Img_wearisome, 12, v_add(gs->mouse_overlay_position, (Vec2){13, -9}));
+  //   g_color(g, gray(200));
+  //   g_text(g, gs->click_counter_text, Oswald_Regular_12, v_add(gs->mouse_overlay_position, (Vec2){10, -12}));
+  // }
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
@@ -353,13 +398,10 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
     else if (gs->special_click_handler)
       gs->special_click_handler(gs->special_click_handler_data, p, gs);
 
-    else if (gs->menu_selected >= 0) {
-      if (gs_construction_available(gs) && gs->r.w * gs->r.h > 0)
-        ConstructionSite_init(gs, gs->r, gs->menu_selected);
-
-    } else {
-      tc_click(l_contentP(gs->level, p), p, gs);
-      Bling_init(gs, mp, gray(45));
+    else if (gs->menu_selected > 0) {
+      Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
+      if (gs_empty_gird(gs, gp))
+        gs->grid[gp.w][gp.h] = gs->menu_selected;
     }
 
   } else if (button == 1) {
@@ -490,6 +532,14 @@ void GameScene_init(Game *g) {
   }
 
   gs->street_map = StreetMap_init(gs);
+
+  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
+    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
+      gs->grid[i][j] = So_Empty;
+  gs->grid[0][0] = gs->grid[2][0] = gs->grid[4][0] = gs->grid[6][0] = So_None;
+  gs->grid[3][3] = So_Water;
+  gs->grid[0][1] = gs->grid[6][6] = So_House;
+  gs->grid[0][6] = gs->grid[6][1] = So_Trees;
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }
