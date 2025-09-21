@@ -54,7 +54,7 @@ typedef struct GameScene {
   Color preview;
   Recti r;
 
-  ObjectType menu_selected;
+  int menu_selected;
 
   Level *level;
   StreetMap *street_map;

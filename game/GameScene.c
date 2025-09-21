@@ -75,7 +75,7 @@ void gs_set_game_speed(GameScene *gs, int speed) {
 }
 
 void gs_select_bottom_menu(GameScene *gs, int button) {
-  gs->menu_selected = (ObjectType)button;
+  gs->menu_selected = button;
   if (button == MI_Street) {
     gs->preview = Street_color();
     gs->r.w = gs->r.h = 1;
@@ -400,8 +400,9 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
 
     else if (gs->menu_selected > 0) {
       Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
+      printf("GRID: %d,%d %d\n", gp.w, gp.h, gs->menu_selected);
       if (gs_empty_gird(gs, gp))
-        gs->grid[gp.w][gp.h] = gs->menu_selected;
+        gs->grid[gp.w][gp.h] = (ObjectType)gs->menu_selected;
     }
 
   } else if (button == 1) {
