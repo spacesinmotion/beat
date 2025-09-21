@@ -252,6 +252,32 @@ int gs_count_group_at(GameScene *gs, Sizei gp, ObjectType t) {
   return count;
 }
 
+void gs_count_side_hits(GameScene *gs, Sizei gp, ObjectType t, bool *sides_hit) {
+  if (gp.w < 0)
+    sides_hit[0] = true;
+  if (gp.w > 6)
+    sides_hit[1] = true;
+  if (gp.h > 6)
+    sides_hit[3] = true;
+  if ((gp.w & 1) == 0 && gp.h < 1)
+    sides_hit[2] = true;
+  if ((gp.w & 1) == 1 && gp.h < 0)
+    sides_hit[2] = true;
+
+  if (!gs_valid_gird(gs, gp) || gs->visited[gp.w][gp.h] || t != gs->grid[gp.w][gp.h])
+    return;
+
+  const Sizei n[6] = {{gp.w + 1, gp.h},
+                      {gp.w - 1, gp.h},
+                      {gp.w, gp.h + 1},
+                      {gp.w, gp.h - 1},
+                      {gp.w + 1, gp.h + (gp.w & 1 ? 1 : -1)},
+                      {gp.w - 1, gp.h + (gp.w & 1 ? 1 : -1)}};
+  gs->visited[gp.w][gp.h] = true;
+  for (int i = 0; i < 6; ++i)
+    gs_count_side_hits(gs, n[i], t, sides_hit);
+}
+
 void gs_group_counter_add_group(GroupCounter *gc, int c) {
   if (c >= 6) {
     gc->g2 += 1;
@@ -261,11 +287,14 @@ void gs_group_counter_add_group(GroupCounter *gc, int c) {
     gc->points += 10;
   }
 }
-void gs_count_points(GameScene *gs) {
+void gs_clear_visited(GameScene *gs) {
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
     for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
       gs->visited[i][j] = false;
+}
 
+void gs_count_points(GameScene *gs) {
+  gs_clear_visited(gs);
   gs->house.g1 = gs->house.g2 = gs->house.points = 0;
   gs->trees.g1 = gs->trees.g2 = gs->trees.points = 0;
   gs->animals.g1 = gs->animals.g2 = gs->animals.points = 0;
@@ -294,6 +323,17 @@ void gs_count_points(GameScene *gs) {
       }
     }
   }
+
+  gs_clear_visited(gs);
+
+  bool sides_hit[4] = {false, false, false, false};
+  gs_count_side_hits(gs, (Sizei){3, 3}, So_Water, sides_hit);
+
+  gs->water_points = 0;
+  for (int i = 0; i < 4; ++i)
+    if (sides_hit[i])
+      gs->water_points += 15;
+
   gs->points = gs->house.points + gs->trees.points + gs->animals.points + gs->flowers.points;
 }
 
