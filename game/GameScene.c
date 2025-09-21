@@ -214,6 +214,67 @@ void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   }
 }
 
+int gs_count_group_at(GameScene *gs, Sizei gp, ObjectType t) {
+  if (!gs_valid_gird(gs, gp) || gs->visited[gp.w][gp.h] || t != gs->grid[gp.w][gp.h])
+    return 0;
+
+  const Sizei n[6] = {{gp.w + 1, gp.h},
+                      {gp.w - 1, gp.h},
+                      {gp.w, gp.h + 1},
+                      {gp.w, gp.h - 1},
+                      {gp.w + 1, gp.h + (gp.w & 1 ? 1 : -1)},
+                      {gp.w - 1, gp.h + (gp.w & 1 ? 1 : -1)}};
+  int count = 1;
+  gs->visited[gp.w][gp.h] = true;
+  for (int i = 0; i < 6; ++i)
+    count += gs_count_group_at(gs, n[i], t);
+  return count;
+}
+
+void gs_group_counter_add_group(GroupCounter *gc, int c) {
+  if (c >= 6) {
+    gc->g2 += 1;
+    gc->points += 25;
+  } else if (c >= 3) {
+    gc->g1 += 1;
+    gc->points += 10;
+  }
+}
+void gs_count_points(GameScene *gs) {
+  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
+    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
+      gs->visited[i][j] = false;
+
+  gs->house.g1 = gs->house.g2 = gs->house.points = 0;
+  gs->trees.g1 = gs->trees.g2 = gs->trees.points = 0;
+  gs->animals.g1 = gs->animals.g2 = gs->animals.points = 0;
+  gs->flowers.g1 = gs->flowers.g2 = gs->flowers.points = 0;
+
+  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i) {
+    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j) {
+      if (gs->visited[i][j])
+        continue;
+
+      const ObjectType t = gs->grid[i][j];
+      if (t == So_Empty || t == So_None || t == So_Water) {
+        gs->visited[i][j] = true;
+        continue;
+      }
+
+      const int c = gs_count_group_at(gs, (Sizei){i, j}, t);
+      if (t == So_House) {
+        gs_group_counter_add_group(&gs->house, c);
+      } else if (t == So_Trees) {
+        gs_group_counter_add_group(&gs->trees, c);
+      } else if (t == So_Animals) {
+        gs_group_counter_add_group(&gs->animals, c);
+      } else if (t == So_Flowers) {
+        gs_group_counter_add_group(&gs->flowers, c);
+      }
+    }
+  }
+}
+
 void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   (void)g, (void)op, (void)mp;
 
@@ -224,8 +285,10 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
     else if (gs->menu_selected > 0) {
       Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
       printf("GRID: %d,%d %d\n", gp.w, gp.h, gs->menu_selected);
-      if (gs_empty_gird(gs, gp))
+      if (gs_empty_gird(gs, gp)) {
         gs->grid[gp.w][gp.h] = (ObjectType)gs->menu_selected;
+        gs_count_points(gs);
+      }
     }
 
   } else if (button == 1) {

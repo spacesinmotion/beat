@@ -48,6 +48,7 @@ typedef struct GameScene {
   int pick_under_mouse;
 
   ObjectType grid[7][7];
+  bool visited[7][7];
 
   GroupCounter house;
   GroupCounter trees;
