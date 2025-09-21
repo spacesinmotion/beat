@@ -39,9 +39,6 @@ typedef struct GroupCounter {
 typedef struct GameScene {
   SceneObjectVec scene_objects;
 
-  float game_speed;
-  bool game_paused;
-
   int menu_selected;
 
   Vec2 mouse_overlay_position;

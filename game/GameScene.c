@@ -52,12 +52,6 @@ int so_render_order_compare(const void *va, const void *vb) {
   return a < b ? -1 : (a > b ? 1 : 0);
 }
 
-void gs_toggle_pause(GameScene *gs, int id) { (void)id, gs->game_paused = !gs->game_paused; }
-void gs_set_game_speed(GameScene *gs, int speed) {
-  gs->game_paused = false;
-  gs->game_speed = (float)speed;
-}
-
 void gs_select_bottom_menu(GameScene *gs, int button) { gs->menu_selected = button; }
 
 bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
@@ -109,7 +103,6 @@ void gs_draw_group_counter(GroupCounter *gc, Game *g, Vec2 p, int icon) {
 void gs_update(GameScene *gs, Game *g, float dt) {
   (void)g;
 
-  dt = gs->game_paused ? 0.0f : dt * gs->game_speed;
   g_set_background_color(g, rgb(66, 64, 78));
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
@@ -249,20 +242,9 @@ typedef enum GameKeys {
 } GameKeys;
 
 void gs_key_up(GameScene *gs, Game *g, int key) {
-  (void)g;
+  (void)g, (void)gs;
 
-  if (key == PAUSE_KEY)
-    gs_toggle_pause(gs, 0);
-  else if (key == SPEED_1_KEY)
-    gs_set_game_speed(gs, 1);
-  else if (key == SPEED_2_KEY)
-    gs_set_game_speed(gs, 2);
-  else if (key == SPEED_4_KEY)
-    gs_set_game_speed(gs, 4);
-  else if (key == SPEED_8_KEY)
-    gs_set_game_speed(gs, 8);
-  else
-    printf("KEY UP (%d)\n", key);
+  printf("KEY UP (%d)\n", key);
 }
 
 void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
@@ -284,8 +266,6 @@ void GameScene_init(Game *g) {
   GameScene *gs = g_malloc(sizeof(GameScene));
   *gs = (GameScene){
       .scene_objects = (SceneObjectVec){NULL, 0, 0},
-      .game_speed = 2.0f,
-      .game_paused = false,
       .menu_selected = -1,
       .pick_rects = {},
       .pick_rect_count = 0,
@@ -328,8 +308,6 @@ void gs_sceneobjects_to_json(CJHArray *a, void *ud) {
 void gs_to_json(CJHObject *o, void *ud) {
   GameScene *gs = (GameScene *)ud;
   cjh_o_add_array(o, "scene_objects", gs_sceneobjects_to_json, &gs->scene_objects);
-  cjh_o_add_number(o, "game_speed", gs->game_speed);
-  cjh_o_add_bool(o, "game_paused", gs->game_paused);
 }
 
 void gs_SceneObject_from_json(CJHObjectR *o, const char *key, void *ud) {
@@ -363,42 +341,6 @@ void gs_from_json(CJHObjectR *o, const char *key, void *ud) {
     cjh_o_read_array(o, gs_sceneobjects_from_json, gs);
     indent -= 2;
   }
-
-  else if (streq(key, "game_speed"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "game_paused"))
-    printf("%s: %s\n", key, (cjh_o_read_bool(o) ? "true" : "false"));
-
-  else if (streq(key, "daytime_step"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "daytime"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "day"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "clicks"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-  else if (streq(key, "clicks_produced"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-  else if (streq(key, "clicks_lost"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "clicks_in_houses"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "wearisome_count"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "storage_size"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-  else if (streq(key, "storage_claimed"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "reasearch_needed"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
 
   else {
     printf("%s: SKIP\n", key);
