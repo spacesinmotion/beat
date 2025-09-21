@@ -906,9 +906,10 @@ int main(int argc, char *argv[]) {
       .user_data = &g,
       .width = 1024,
       .height = 690,
-      .window_title = "click economy",
+      .window_title = "Biotope",
       .icon.sokol_default = true,
       .logger.func = slog_func,
+      .sample_count = 8,
   });
 
   gc_stop(&gc);

@@ -216,15 +216,28 @@ bool gs_valid_gird(GameScene *gs, Sizei gp) {
 
 bool gs_empty_gird(GameScene *gs, Sizei gp) { return gs_valid_gird(gs, gp) && gs->grid[gp.w][gp.h] == So_Empty; }
 
+bool is_neighbor(Sizei gp, Sizei p) {
+  const Sizei n[6] = {{gp.w + 1, gp.h},
+                      {gp.w - 1, gp.h},
+                      {gp.w, gp.h + 1},
+                      {gp.w, gp.h - 1},
+                      {gp.w + 1, gp.h + (gp.w & 1 ? 1 : -1)},
+                      {gp.w - 1, gp.h + (gp.w & 1 ? 1 : -1)}};
+  for (int i = 0; i < 6; ++i)
+    if (p.w == n[i].w && p.h == n[i].h)
+      return true;
+  return false;
+}
+
 void gs_draw(GameScene *gs, Game *g) {
-  // float m = 15.0f * sin(g_time(g));
-  // float r = (i + j + 1) * m * M_PI / 180.0f
+  Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
 
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
     for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j) {
       if (gs->grid[i][j] == So_None)
         continue;
-      g_color(g, white());
+
+      g_color(g, is_neighbor(gp, (Sizei){i, j}) ? gray(200) : (gp.w == i && gp.h == j ? gray(150) : white()));
       g_objectRS(g, g_animation_buffer(g), Img_menubar, 0, gs_grid_to_scene((Sizei){i, j}), 0.0, 1.0f);
 
       g_color(g, gray(50));
@@ -235,7 +248,6 @@ void gs_draw(GameScene *gs, Game *g) {
   g_color(g, red());
 
   if (gs->menu_selected > 0) {
-    Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
     if (gs_valid_gird(gs, gp)) {
       Vec2 p = gs_grid_to_scene(gp);
       g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->menu_selected, p, 0.0f, 1.0f);
