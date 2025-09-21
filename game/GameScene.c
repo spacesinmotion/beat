@@ -56,10 +56,10 @@ void gs_select_bottom_menu(GameScene *gs, int button) { gs->menu_selected = butt
 
 bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
   assert(gs->pick_rect_count < (int)(sizeof(gs->pick_rects) / sizeof(PickRect)));
-  Recti r = (Recti){p.x - 8 * s, p.y - 8 * s, 16 * s, 16 * s};
+  Rect r = (Rect){{p.x - 8 * s, p.y - 8 * s}, {16 * s, 16 * s}};
   gs->pick_rects[gs->pick_rect_count] = (PickRect){.rect = r, .click = onclick, .id = id};
   ++gs->pick_rect_count;
-  return ri_contains(r, gs->mouse_overlay_position.x, gs->mouse_overlay_position.y);
+  return r_contains(r, gs->mouse_pos);
 }
 
 void gs_init_group_counter(GroupCounter *gc, Game *g) {
@@ -161,8 +161,31 @@ bool is_neighbor(Sizei gp, Sizei p) {
   return false;
 }
 
+void gs_draw_button(Game *g, Vec2 p, int icon, Color c) {
+  g_color(g, c);
+  const float s = 2.0f + 0.01f * sin(8.0f * g_time(g));
+  g_objectRS(g, g_animation_buffer(g), Img_menubar, 7, p, 0.0, s);
+  if (icon == So_Empty)
+    return;
+  g_color(g, gray(50));
+  g_objectRS(g, g_animation_buffer(g), Img_menubar, icon, p, 0.0, s);
+}
+
+void gs_roll_dice(GameScene *gs, int id) {
+  (void)id;
+  gs->dice[0] = (ObjectType)(rand() % 6);
+  gs->dice[1] = (ObjectType)(rand() % 6);
+}
+void gs_select_dice(GameScene *gs, int id) {
+  gs->menu_selected = gs->dice[id];
+  gs->dice[id] = So_None;
+}
+typedef void (*OnClickCB)(GameScene *, int id);
+
 void gs_draw(GameScene *gs, Game *g) {
-  Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
+  gs->pick_rect_count = 0;
+
+  const Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
 
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
     for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j) {
@@ -188,14 +211,15 @@ void gs_draw(GameScene *gs, Game *g) {
   }
 
   int row = 0;
+  const int l = 90;
   const int t = 100;
   const int o = 18;
-  gs_draw_group_counter(&gs->house, g, (Vec2){100, t - (o * row++)}, So_House);
-  gs_draw_group_counter(&gs->trees, g, (Vec2){100, t - (o * row++)}, So_Trees);
-  gs_draw_group_counter(&gs->animals, g, (Vec2){100, t - (o * row++)}, So_Animals);
-  gs_draw_group_counter(&gs->flowers, g, (Vec2){100, t - (o * row++)}, So_Flowers);
+  gs_draw_group_counter(&gs->house, g, (Vec2){l, t - (o * row++)}, So_House);
+  gs_draw_group_counter(&gs->trees, g, (Vec2){l, t - (o * row++)}, So_Trees);
+  gs_draw_group_counter(&gs->animals, g, (Vec2){l, t - (o * row++)}, So_Animals);
+  gs_draw_group_counter(&gs->flowers, g, (Vec2){l, t - (o * row++)}, So_Flowers);
 
-  Vec2 p = {100, t - (o * row++)};
+  Vec2 p = {l, t - (o * row++)};
   g_color(g, gray(170));
   g_objectRS(g, g_animation_buffer(g), Img_menubar, So_Water, v_add(p, (Vec2){0, 0}), 0.0, 0.7f);
   g_objectRS(g, g_animation_buffer(g), Img_menubar, So_None, v_add(p, (Vec2){10, 0}), 0.0, 0.7f);
@@ -205,6 +229,20 @@ void gs_draw(GameScene *gs, Game *g) {
 
   g_color(g, white());
   g_text(g, gs->text_points, Oswald_Regular_12, (Vec2){135, t - 10 - (o * row++)});
+
+  if (gs->dice[0] == So_None && gs->dice[1] == So_None && gs->menu_selected < 0) {
+    bool h = gs_pick(gs, gs_roll_dice, 0, (Vec2){-30, 45}, 2);
+    gs_draw_button(g, (Vec2){-30, 45}, 8, h ? rgb(0xff, 0xda, 0x89) : gray(220));
+  } else {
+    if (gs->dice[0] != So_None) {
+      bool h = gs_pick(gs, gs_select_dice, 0, (Vec2){-30, 65}, 2);
+      gs_draw_button(g, (Vec2){-30, 65}, gs->dice[0], h ? rgb(0xff, 0xda, 0x89) : gray(220));
+    }
+    if (gs->dice[1] != So_None) {
+      bool h = gs_pick(gs, gs_select_dice, 1, (Vec2){-30, 25}, 2);
+      gs_draw_button(g, (Vec2){-30, 25}, gs->dice[1], h ? rgb(0xff, 0xda, 0x89) : gray(220));
+    }
+  }
 }
 
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
@@ -221,17 +259,18 @@ void gs_draw_menu_overlay(GameScene *gs, Game *g) {
 }
 
 void gs_draw_overlay(GameScene *gs, Game *g) {
-  gs->pick_rect_count = 0;
-  gs_draw_menu_overlay(gs, g);
+  (void)g, (void)gs;
+  // gs->pick_rect_count = 0;
+  // gs_draw_menu_overlay(gs, g);
 }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
-  (void)g, (void)mp;
-  gs->mouse_overlay_position = op;
+  (void)g, (void)mp, (void)op;
+  gs->mouse_pos = g_mouse_in_scene(g);
 
   gs->pick_under_mouse = -1;
   for (int i = 0; i < gs->pick_rect_count; ++i) {
-    if (ri_contains(gs->pick_rects[i].rect, op.x, op.y)) {
+    if (r_contains(gs->pick_rects[i].rect, gs->mouse_pos)) {
       gs->pick_under_mouse = i;
       break;
     }
@@ -351,6 +390,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
       Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
       if (gs_empty_gird(gs, gp)) {
         gs->grid[gp.w][gp.h] = (ObjectType)gs->menu_selected;
+        gs->menu_selected = -1;
         gs_count_points(gs);
       }
     }
@@ -407,6 +447,7 @@ void GameScene_init(Game *g) {
       .text_points = {0},
       .points = 0,
       .points_cache = -1,
+      .dice = {So_None, So_None},
   };
   gs_init_group_counter(&gs->house, g);
   gs_init_group_counter(&gs->trees, g);

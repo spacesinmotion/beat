@@ -16,7 +16,7 @@ typedef struct Stuff {
 
 typedef void (*OnClickCB)(GameScene *, int id);
 typedef struct PickRect {
-  Recti rect;
+  Rect rect;
   OnClickCB click;
   int id;
 } PickRect;
@@ -41,7 +41,7 @@ typedef struct GameScene {
 
   int menu_selected;
 
-  Vec2 mouse_overlay_position;
+  Vec2 mouse_pos;
 
   PickRect pick_rects[32];
   int pick_rect_count;
@@ -61,6 +61,8 @@ typedef struct GameScene {
 
   G_Object text_points;
   int points, points_cache;
+
+  ObjectType dice[2];
 } GameScene;
 
 typedef struct GameScene GameScene;
