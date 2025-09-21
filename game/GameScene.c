@@ -117,6 +117,10 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   gs_update_group_counter(gs, g, &gs->animals);
   gs_update_group_counter(gs, g, &gs->flowers);
 
+  if (gs->water_points != gs->water_points_cache) {
+    g_create_text(g, &gs->text_water_points, Oswald_Regular_12, str("%d", gs->water_points));
+    gs->water_points_cache = gs->water_points;
+  }
   if (gs->points != gs->points_cache) {
     g_create_text(g, &gs->text_points, Oswald_Regular_12, str("%d", gs->points));
     gs->points_cache = gs->points;
@@ -183,11 +187,21 @@ void gs_draw(GameScene *gs, Game *g) {
   }
 
   int row = 0;
-  gs_draw_group_counter(&gs->house, g, (Vec2){100, 90 - (16 * row++)}, So_House);
-  gs_draw_group_counter(&gs->trees, g, (Vec2){100, 90 - (16 * row++)}, So_Trees);
-  gs_draw_group_counter(&gs->animals, g, (Vec2){100, 90 - (16 * row++)}, So_Animals);
-  gs_draw_group_counter(&gs->flowers, g, (Vec2){100, 90 - (16 * row++)}, So_Flowers);
-  g_text(g, gs->text_points, Oswald_Regular_12, (Vec2){135, 80 - (16 * row++)});
+  const int t = 100;
+  const int o = 18;
+  gs_draw_group_counter(&gs->house, g, (Vec2){100, t - (o * row++)}, So_House);
+  gs_draw_group_counter(&gs->trees, g, (Vec2){100, t - (o * row++)}, So_Trees);
+  gs_draw_group_counter(&gs->animals, g, (Vec2){100, t - (o * row++)}, So_Animals);
+  gs_draw_group_counter(&gs->flowers, g, (Vec2){100, t - (o * row++)}, So_Flowers);
+
+  Vec2 p = {100, t - (o * row++)};
+  g_color(g, gray(170));
+  g_objectRS(g, g_animation_buffer(g), Img_menubar, So_Water, v_add(p, (Vec2){0, 0}), 0.0, 0.7f);
+  g_color(g, gray(220));
+  g_text(g, gs->text_water_points, Oswald_Regular_12, v_add(p, (Vec2){35, -6}));
+
+  g_color(g, white());
+  g_text(g, gs->text_points, Oswald_Regular_12, (Vec2){135, t - 10 - (o * row++)});
 }
 
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
@@ -345,6 +359,9 @@ void GameScene_init(Game *g) {
       .trees = (GroupCounter){0},
       .animals = (GroupCounter){0},
       .flowers = (GroupCounter){0},
+      .text_water_points = {0},
+      .water_points = 0,
+      .water_points_cache = -1,
       .text_points = {0},
       .points = 0,
       .points_cache = -1,
