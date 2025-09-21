@@ -32,7 +32,7 @@ typedef enum ObjectType {
 } ObjectType;
 
 typedef struct GroupCounter {
-  G_Object text_3to5, text_6, text_10x, text_25x, text_g1, text_g2, text_points;
+  G_Object text_3to5, text_6, text_g1, text_g2, text_points;
   int g1, g1_cache, g2, g2_cache, points, points_cache;
 } GroupCounter;
 
@@ -52,6 +52,10 @@ typedef struct GameScene {
 
   ObjectType grid[7][7];
 
+  GroupCounter house;
+  GroupCounter trees;
+  GroupCounter animals;
+  GroupCounter flowers;
 } GameScene;
 
 typedef struct GameScene GameScene;

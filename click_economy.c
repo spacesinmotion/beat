@@ -484,7 +484,7 @@ G_Object g_animation_buffer(Game *g) { return g->animation_buffer_4x4; }
 
 static void g_init(Game *g) {
   srand(1);
-  g->render.camera_pan = (Vec2){60.0f, 20.0f};
+  g->render.camera_pan = (Vec2){30.0f, 20.0f};
   g->render.camera_scale = 5.2f;
   g->render.overlay_scale = 2.0f;
   g->render.vs_param = (vs_param_t){

@@ -68,6 +68,44 @@ bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
   return ri_contains(r, gs->mouse_overlay_position.x, gs->mouse_overlay_position.y);
 }
 
+void gs_init_group_counter(GroupCounter *gc, Game *g) {
+  g_create_text(g, &gc->text_3to5, Oswald_Regular_8, "3-5");
+  g_create_text(g, &gc->text_6, Oswald_Regular_8, "6+");
+  gc->g1_cache = gc->g2_cache = gc->points_cache = -1;
+}
+
+void gs_update_group_counter(GameScene *gs, Game *g, GroupCounter *gc) {
+  (void)gs;
+  (void)g;
+
+  if (gc->g1 != gc->g1_cache) {
+    g_create_text(g, &gc->text_g1, Oswald_Regular_8, str("10x%d", gc->g1));
+    gc->g1_cache = gc->g1;
+  }
+  if (gc->g2 != gc->g2_cache) {
+    g_create_text(g, &gc->text_g2, Oswald_Regular_8, str("25x%d", gc->g2));
+    gc->g2_cache = gc->g2;
+  }
+  if (gc->points != gc->points_cache) {
+    g_create_text(g, &gc->text_points, Oswald_Regular_12, str("%d", gc->points));
+    gc->points_cache = gc->points;
+  }
+}
+
+void gs_draw_group_counter(GroupCounter *gc, Game *g, Vec2 p, int icon) {
+  g_color(g, gray(170));
+  g_objectRS(g, g_animation_buffer(g), Img_menubar, icon, p, 0.0, 0.7f);
+  g_text(g, gc->text_3to5, Oswald_Regular_8, v_add(p, (Vec2){5, -3}));
+  g_objectRS(g, g_animation_buffer(g), Img_menubar, icon, v_add(p, (Vec2){20, 0}), 0.0, 0.7f);
+  g_text(g, gc->text_6, Oswald_Regular_8, v_add(p, (Vec2){25, -3}));
+
+  g_text(g, gc->text_g1, Oswald_Regular_8, v_add(p, (Vec2){-4, -10}));
+  g_text(g, gc->text_g2, Oswald_Regular_8, v_add(p, (Vec2){16, -10}));
+
+  g_color(g, gray(220));
+  g_text(g, gc->text_points, Oswald_Regular_12, v_add(p, (Vec2){35, -6}));
+}
+
 void gs_update(GameScene *gs, Game *g, float dt) {
   (void)g;
 
@@ -81,37 +119,10 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 
   qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
 
-  // if (gs->clicks != gs->click_counter_text_cache) {
-  //   g_create_text(g, &gs->click_counter_text, Oswald_Regular_12, str("%.2d", gs->clicks));
-  //   gs->click_counter_text_cache = gs->clicks;
-  // }
-  // if (gs->resource_pool.water != gs->water_counter_text_cache) {
-  //   g_create_text(g, &gs->water_counter_text, Oswald_Regular_8, str("%d", gs->resource_pool.water));
-  //   gs->water_counter_text_cache = gs->resource_pool.water;
-  // }
-  // if (gs->resource_pool.food != gs->food_counter_text_cache) {
-  //   g_create_text(g, &gs->food_counter_text, Oswald_Regular_8, str("%d", gs->resource_pool.food));
-  //   gs->food_counter_text_cache = gs->resource_pool.food;
-  // }
-  // if (gs->resource_pool.construction_material != gs->construction_material_counter_text_cache) {
-  //   g_create_text(g, &gs->construction_material_counter_text, Oswald_Regular_8,
-  //                 str("%d", gs->resource_pool.construction_material));
-  //   gs->construction_material_counter_text_cache = gs->resource_pool.construction_material;
-  // }
-  // const int free_storage = gs_free_storage(gs);
-  // if (gs->free_storage_text_cache != free_storage) {
-  //   g_create_text(g, &gs->free_storage_text, Oswald_Regular_8,
-  //                 str("%d/%d", gs->storage_size - free_storage, gs->storage_size));
-  //   gs->free_storage_text_cache = free_storage;
-  // }
-  // if (gs->day != gs->day_counter_text_cache) {
-  //   g_create_text(g, &gs->day_counter_text, Oswald_Regular_12, str("day %d", gs->day));
-  //   gs->day_counter_text_cache = gs->day;
-  // }
-  // if (gs->wearisome_count != gs->bot_counter_text_cache) {
-  //   g_create_text(g, &gs->bot_counter_text, Oswald_Regular_12, str("%d", gs->wearisome_count));
-  //   gs->bot_counter_text_cache = gs->wearisome_count;
-  // }
+  gs_update_group_counter(gs, g, &gs->house);
+  gs_update_group_counter(gs, g, &gs->trees);
+  gs_update_group_counter(gs, g, &gs->animals);
+  gs_update_group_counter(gs, g, &gs->flowers);
 }
 
 Vec2 gs_grid_to_scene(Sizei s) {
@@ -171,6 +182,12 @@ void gs_draw(GameScene *gs, Game *g) {
       g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->menu_selected, p, 0.0f, 1.0f);
     }
   }
+
+  int row = 0;
+  gs_draw_group_counter(&gs->house, g, (Vec2){100, 90 - (16 * row++)}, So_House);
+  gs_draw_group_counter(&gs->trees, g, (Vec2){100, 90 - (16 * row++)}, So_Trees);
+  gs_draw_group_counter(&gs->animals, g, (Vec2){100, 90 - (16 * row++)}, So_Animals);
+  gs_draw_group_counter(&gs->flowers, g, (Vec2){100, 90 - (16 * row++)}, So_Flowers);
 }
 
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
@@ -273,7 +290,15 @@ void GameScene_init(Game *g) {
       .pick_rects = {},
       .pick_rect_count = 0,
       .pick_under_mouse = -1,
+      .house = (GroupCounter){0},
+      .trees = (GroupCounter){0},
+      .animals = (GroupCounter){0},
+      .flowers = (GroupCounter){0},
   };
+  gs_init_group_counter(&gs->house, g);
+  gs_init_group_counter(&gs->trees, g);
+  gs_init_group_counter(&gs->animals, g);
+  gs_init_group_counter(&gs->flowers, g);
 
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
     for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
