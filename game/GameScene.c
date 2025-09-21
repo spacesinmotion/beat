@@ -164,7 +164,8 @@ void gs_draw(GameScene *gs, Game *g) {
       if (gs->grid[i][j] == So_None)
         continue;
 
-      g_color(g, is_neighbor(gp, (Sizei){i, j}) ? gray(200) : (gp.w == i && gp.h == j ? gray(150) : white()));
+      g_color(g, (gp.w == i && gp.h == j && gs->grid[i][j] == So_Empty) ? rgb(0xff, 0xda, 0x89)
+                                                                        : (3 == i && 3 == j ? gray(150) : white()));
       g_objectRS(g, g_animation_buffer(g), Img_menubar, 0, gs_grid_to_scene((Sizei){i, j}), 0.0, 1.0f);
 
       g_color(g, gray(50));
@@ -175,7 +176,7 @@ void gs_draw(GameScene *gs, Game *g) {
   g_color(g, red());
 
   if (gs->menu_selected > 0) {
-    if (gs_valid_gird(gs, gp)) {
+    if (gs_valid_gird(gs, gp) && gs->grid[gp.w][gp.h] == So_Empty) {
       Vec2 p = gs_grid_to_scene(gp);
       g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->menu_selected, p, 0.0f, 1.0f);
     }
