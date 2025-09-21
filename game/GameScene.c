@@ -116,6 +116,11 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   gs_update_group_counter(gs, g, &gs->trees);
   gs_update_group_counter(gs, g, &gs->animals);
   gs_update_group_counter(gs, g, &gs->flowers);
+
+  if (gs->points != gs->points_cache) {
+    g_create_text(g, &gs->text_points, Oswald_Regular_12, str("%d", gs->points));
+    gs->points_cache = gs->points;
+  }
 }
 
 Vec2 gs_grid_to_scene(Sizei s) {
@@ -181,6 +186,7 @@ void gs_draw(GameScene *gs, Game *g) {
   gs_draw_group_counter(&gs->trees, g, (Vec2){100, 90 - (16 * row++)}, So_Trees);
   gs_draw_group_counter(&gs->animals, g, (Vec2){100, 90 - (16 * row++)}, So_Animals);
   gs_draw_group_counter(&gs->flowers, g, (Vec2){100, 90 - (16 * row++)}, So_Flowers);
+  g_text(g, gs->text_points, Oswald_Regular_12, (Vec2){135, 80 - (16 * row++)});
 }
 
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
@@ -273,6 +279,7 @@ void gs_count_points(GameScene *gs) {
       }
     }
   }
+  gs->points = gs->house.points + gs->trees.points + gs->animals.points + gs->flowers.points;
 }
 
 void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
@@ -337,6 +344,9 @@ void GameScene_init(Game *g) {
       .trees = (GroupCounter){0},
       .animals = (GroupCounter){0},
       .flowers = (GroupCounter){0},
+      .text_points = {0},
+      .points = 0,
+      .points_cache = -1,
   };
   gs_init_group_counter(&gs->house, g);
   gs_init_group_counter(&gs->trees, g);

@@ -54,6 +54,9 @@ typedef struct GameScene {
   GroupCounter trees;
   GroupCounter animals;
   GroupCounter flowers;
+
+  G_Object text_points;
+  int points, points_cache;
 } GameScene;
 
 typedef struct GameScene GameScene;
