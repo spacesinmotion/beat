@@ -56,7 +56,8 @@ typedef struct GameScene {
   GroupCounter flowers;
 
   G_Object text_water_points;
-  int water_points, water_points_cache;
+  G_Object text_water_count;
+  int water_count, water_count_cache;
 
   G_Object text_points;
   int points, points_cache;

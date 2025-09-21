@@ -117,9 +117,10 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   gs_update_group_counter(gs, g, &gs->animals);
   gs_update_group_counter(gs, g, &gs->flowers);
 
-  if (gs->water_points != gs->water_points_cache) {
-    g_create_text(g, &gs->text_water_points, Oswald_Regular_12, str("%d", gs->water_points));
-    gs->water_points_cache = gs->water_points;
+  if (gs->water_count != gs->water_count_cache) {
+    g_create_text(g, &gs->text_water_count, Oswald_Regular_8, str("15x%d", gs->water_count));
+    g_create_text(g, &gs->text_water_points, Oswald_Regular_12, str("%d", 15 * gs->water_count));
+    gs->water_count_cache = gs->water_count;
   }
   if (gs->points != gs->points_cache) {
     g_create_text(g, &gs->text_points, Oswald_Regular_12, str("%d", gs->points));
@@ -197,6 +198,8 @@ void gs_draw(GameScene *gs, Game *g) {
   Vec2 p = {100, t - (o * row++)};
   g_color(g, gray(170));
   g_objectRS(g, g_animation_buffer(g), Img_menubar, So_Water, v_add(p, (Vec2){0, 0}), 0.0, 0.7f);
+  g_objectRS(g, g_animation_buffer(g), Img_menubar, So_None, v_add(p, (Vec2){10, 0}), 0.0, 0.7f);
+  g_text(g, gs->text_water_count, Oswald_Regular_8, v_add(p, (Vec2){-4, -10}));
   g_color(g, gray(220));
   g_text(g, gs->text_water_points, Oswald_Regular_12, v_add(p, (Vec2){35, -6}));
 
@@ -329,12 +332,12 @@ void gs_count_points(GameScene *gs) {
   bool sides_hit[4] = {false, false, false, false};
   gs_count_side_hits(gs, (Sizei){3, 3}, So_Water, sides_hit);
 
-  gs->water_points = 0;
+  gs->water_count = 0;
   for (int i = 0; i < 4; ++i)
     if (sides_hit[i])
-      gs->water_points += 15;
+      gs->water_count++;
 
-  gs->points = gs->house.points + gs->trees.points + gs->animals.points + gs->flowers.points;
+  gs->points = gs->house.points + gs->trees.points + gs->animals.points + gs->flowers.points + gs->water_count * 15;
 }
 
 void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
@@ -346,7 +349,6 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
 
     else if (gs->menu_selected > 0) {
       Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
-      printf("GRID: %d,%d %d\n", gp.w, gp.h, gs->menu_selected);
       if (gs_empty_gird(gs, gp)) {
         gs->grid[gp.w][gp.h] = (ObjectType)gs->menu_selected;
         gs_count_points(gs);
@@ -400,8 +402,8 @@ void GameScene_init(Game *g) {
       .animals = (GroupCounter){0},
       .flowers = (GroupCounter){0},
       .text_water_points = {0},
-      .water_points = 0,
-      .water_points_cache = -1,
+      .water_count = 0,
+      .water_count_cache = -1,
       .text_points = {0},
       .points = 0,
       .points_cache = -1,
