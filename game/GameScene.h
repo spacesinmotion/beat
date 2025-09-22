@@ -39,8 +39,6 @@ typedef struct GroupCounter {
 typedef struct GameScene {
   SceneObjectVec scene_objects;
 
-  int menu_selected;
-
   Vec2 mouse_pos;
 
   PickRect pick_rects[32];
@@ -63,6 +61,7 @@ typedef struct GameScene {
   int points, points_cache;
 
   ObjectType dice[2];
+  int selected_dice;
 } GameScene;
 
 typedef struct GameScene GameScene;

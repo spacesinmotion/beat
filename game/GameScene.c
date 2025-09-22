@@ -52,7 +52,7 @@ int so_render_order_compare(const void *va, const void *vb) {
   return a < b ? -1 : (a > b ? 1 : 0);
 }
 
-void gs_select_bottom_menu(GameScene *gs, int button) { gs->menu_selected = button; }
+// void gs_select_bottom_menu(GameScene *gs, int button) { gs->menu_selected = button; }
 
 bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
   assert(gs->pick_rect_count < (int)(sizeof(gs->pick_rects) / sizeof(PickRect)));
@@ -176,10 +176,8 @@ void gs_roll_dice(GameScene *gs, int id) {
   gs->dice[0] = (ObjectType)(rand() % 6);
   gs->dice[1] = (ObjectType)(rand() % 6);
 }
-void gs_select_dice(GameScene *gs, int id) {
-  gs->menu_selected = gs->dice[id];
-  gs->dice[id] = So_None;
-}
+void gs_select_dice(GameScene *gs, int id) { gs->selected_dice = id; }
+
 typedef void (*OnClickCB)(GameScene *, int id);
 
 void gs_draw(GameScene *gs, Game *g) {
@@ -203,10 +201,10 @@ void gs_draw(GameScene *gs, Game *g) {
 
   g_color(g, red());
 
-  if (gs->menu_selected > 0) {
+  if (gs->selected_dice >= 0) {
     if (gs_valid_gird(gs, gp) && gs->grid[gp.w][gp.h] == So_Empty) {
       Vec2 p = gs_grid_to_scene(gp);
-      g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->menu_selected, p, 0.0f, 1.0f);
+      g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->dice[gs->selected_dice], p, 0.0f, 1.0f);
     }
   }
 
@@ -228,34 +226,35 @@ void gs_draw(GameScene *gs, Game *g) {
   g_text(g, gs->text_water_points, Oswald_Regular_12, v_add(p, (Vec2){35, -6}));
 
   g_color(g, white());
-  g_text(g, gs->text_points, Oswald_Regular_12, (Vec2){135, t - 10 - (o * row++)});
+  g_text(g, gs->text_points, Oswald_Regular_12, (Vec2){l + 35, t - 10 - (o * row++)});
 
-  if (gs->dice[0] == So_None && gs->dice[1] == So_None && gs->menu_selected < 0) {
+  if (gs->dice[0] == So_None && gs->dice[1] == So_None) {
     bool h = gs_pick(gs, gs_roll_dice, 0, (Vec2){-30, 45}, 2);
     gs_draw_button(g, (Vec2){-30, 45}, 8, h ? rgb(0xff, 0xda, 0x89) : gray(220));
   } else {
     if (gs->dice[0] != So_None) {
       bool h = gs_pick(gs, gs_select_dice, 0, (Vec2){-30, 65}, 2);
-      gs_draw_button(g, (Vec2){-30, 65}, gs->dice[0], h ? rgb(0xff, 0xda, 0x89) : gray(220));
+      gs_draw_button(g, (Vec2){-30, 65}, gs->dice[0], h || gs->selected_dice == 0 ? rgb(0xff, 0xda, 0x89) : gray(220));
     }
     if (gs->dice[1] != So_None) {
       bool h = gs_pick(gs, gs_select_dice, 1, (Vec2){-30, 25}, 2);
-      gs_draw_button(g, (Vec2){-30, 25}, gs->dice[1], h ? rgb(0xff, 0xda, 0x89) : gray(220));
+      gs_draw_button(g, (Vec2){-30, 25}, gs->dice[1], h || gs->selected_dice == 1 ? rgb(0xff, 0xda, 0x89) : gray(220));
     }
   }
 }
 
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
-  const Color cn = false ? gray(25) : gray(225);
-  const Color ch = false ? gray(75) : gray(175);
-  for (int i = 1; i < So_None; ++i) {
-    const Vec2 p = (Vec2){8 + 4 + i * 16, 8 + 4};
-    const bool hover = gs_pick(gs, gs_select_bottom_menu, i, p, 1.0f);
-    g_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
-    g_object(g, g_animation_buffer(g), Img_menubar, i % 16, p);
-    g_color(g, hover ? red() : (gs->menu_selected == i ? green() : blue()));
-    g_object(g, g_animation_buffer(g), Img_marker, hover ? g_frame(g) % 4 : i % 4, p);
-  }
+  (void)g, (void)gs;
+  // const Color cn = false ? gray(25) : gray(225);
+  // const Color ch = false ? gray(75) : gray(175);
+  // for (int i = 1; i < So_None; ++i) {
+  //   const Vec2 p = (Vec2){8 + 4 + i * 16, 8 + 4};
+  //   const bool hover = gs_pick(gs, gs_select_bottom_menu, i, p, 1.0f);
+  //   g_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
+  //   g_object(g, g_animation_buffer(g), Img_menubar, i % 16, p);
+  //   g_color(g, hover ? red() : (gs->menu_selected == i ? green() : blue()));
+  //   g_object(g, g_animation_buffer(g), Img_marker, hover ? g_frame(g) % 4 : i % 4, p);
+  // }
 }
 
 void gs_draw_overlay(GameScene *gs, Game *g) {
@@ -386,17 +385,18 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
     if (gs->pick_under_mouse >= 0)
       gs->pick_rects[gs->pick_under_mouse].click(gs, gs->pick_rects[gs->pick_under_mouse].id);
 
-    else if (gs->menu_selected > 0) {
+    else if (gs->selected_dice >= 0) {
       Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
       if (gs_empty_gird(gs, gp)) {
-        gs->grid[gp.w][gp.h] = (ObjectType)gs->menu_selected;
-        gs->menu_selected = -1;
+        gs->grid[gp.w][gp.h] = gs->dice[gs->selected_dice];
+        gs->dice[gs->selected_dice] = So_None;
+        gs->selected_dice = -1;
         gs_count_points(gs);
       }
     }
 
   } else if (button == 1) {
-    gs->menu_selected = -1;
+    gs->selected_dice = -1;
   }
 }
 
@@ -433,7 +433,6 @@ void GameScene_init(Game *g) {
   GameScene *gs = g_malloc(sizeof(GameScene));
   *gs = (GameScene){
       .scene_objects = (SceneObjectVec){NULL, 0, 0},
-      .menu_selected = -1,
       .pick_rects = {},
       .pick_rect_count = 0,
       .pick_under_mouse = -1,
@@ -448,6 +447,7 @@ void GameScene_init(Game *g) {
       .points = 0,
       .points_cache = -1,
       .dice = {So_None, So_None},
+      .selected_dice = -1,
   };
   gs_init_group_counter(&gs->house, g);
   gs_init_group_counter(&gs->trees, g);
