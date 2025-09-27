@@ -4,6 +4,7 @@
 #include "game/Game.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
+#include "game/effects/Bling.h"
 #include "gc/gc.h"
 #include "math.h"
 #include "math/Color.h"
@@ -248,6 +249,10 @@ void gs_draw(GameScene *gs, Game *g) {
                      gs->dice[0].s);
     }
   }
+
+  // Draw all scene objects (effects, etc.) on top
+  for (int i = 0; i < gs->scene_objects.len; ++i)
+    so_draw(&gs->scene_objects.data[i], gs, g);
 }
 
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
@@ -398,6 +403,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
         gs->grid[gp.w][gp.h] = gs->dice[gs->selected_dice].o;
         gs->dice[gs->selected_dice].o = So_None;
         gs->selected_dice = -1;
+        Bling_init(gs, gs_grid_to_scene(gp), rgb(0xFF, 0x00, 0x00));
         gs_count_points(gs);
       }
     }
