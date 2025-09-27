@@ -52,6 +52,8 @@ typedef struct GameScene {
   Sizei last_placed_dice_location;
 
   bool can_select_dice, no_move_left;
+
+  float wobble_time;
 } GameScene;
 
 typedef struct GameScene GameScene;

@@ -54,6 +54,8 @@ bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
 void gs_update(GameScene *gs, Game *g, float dt) {
   (void)g;
 
+  gs->wobble_time = f_max(0.0f, gs->wobble_time - dt);
+
   g_set_background_color(g, rgb(66, 64, 78));
 
   for (int i = 0; i < gs->scene_objects.len; ++i)
@@ -360,7 +362,8 @@ void gs_draw(GameScene *gs, Game *g) {
       } else
         g_color(g, gray(200));
 
-      float s = gs->no_move_left ? 1.0f + 0.02f * sin(10.0f * g_time(g) + i + j) : 1.0f;
+      float x = gs->no_move_left ? 1.0f : gs->wobble_time * gs->wobble_time;
+      float s = 1.0f + x * 0.04f * sin(10.0f * g_time(g) + i + j);
       g_objectRS(g, g_animation_buffer(g), Img_menubar, 0, gs_grid_to_scene((Sizei){i, j}), 0.0, s);
 
       const bool last = (gs->last_placed_dice_location.w == i && gs->last_placed_dice_location.h == j);
@@ -454,6 +457,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
       if (gs_pickable_gird(gs, gp)) {
         gs->grid[gp.w][gp.h] = gs->dice[gs->selected_dice].o;
         Bling_init(gs, gs_grid_to_scene(gp), rgb(0xFF, 0x00, 0x00));
+        gs->wobble_time = 1.0f;
 
         if (gs->placed_dice == 0 && gs->dice[1].o != So_Empty) {
           gs_switch_to_second_dice(gs, 1);
@@ -522,6 +526,7 @@ void GameScene_init(Game *g) {
       .placed_dice = 0,
       .last_placed_dice_location = {-1, -1},
       .can_select_dice = false,
+      .wobble_time = 1.0f,
   };
   gs->points = PointOverview_init(g);
 
