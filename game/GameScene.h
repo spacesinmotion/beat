@@ -43,11 +43,15 @@ typedef struct GameScene {
 
   ObjectType grid[7][7];
   bool visited[7][7];
+  bool allowed_to_pick[7][7];
 
   PointOverview *points;
 
   DiceRoll dice[2];
-  int selected_dice;
+  int selected_dice, placed_dice;
+  Sizei last_placed_dice_location;
+
+  bool can_select_dice, no_move_left;
 } GameScene;
 
 typedef struct GameScene GameScene;

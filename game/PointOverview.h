@@ -75,7 +75,7 @@ void po_update(PointOverview *po, Game *g) {
   }
 }
 
-void po_draw(PointOverview *po, Game *g) {
+void po_draw(PointOverview *po, Game *g, bool no_move_left) {
   int row = 0;
   const int l = 90;
   const int t = 100;
@@ -94,7 +94,7 @@ void po_draw(PointOverview *po, Game *g) {
   g_color(g, gray(220));
   g_text(g, po->text_water_points, Oswald_Regular_12, v_add(p, (Vec2){35, -6}));
 
-  g_color(g, white());
+  g_color(g, no_move_left ? red() : white());
   g_text(g, po->text_points, Oswald_Regular_12, (Vec2){l + 35, t - 10 - (o * row++)});
 }
 

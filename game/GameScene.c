@@ -5,10 +5,12 @@
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
 #include "extern/cjsonh/cjsonh.h"
+#include "game/ObjectType.h"
 #include "game/PointOverview.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
 #include "game/effects/Bling.h"
+#include "stdbool.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -88,6 +90,7 @@ bool gs_valid_gird(GameScene *gs, Sizei gp) {
 }
 
 bool gs_empty_gird(GameScene *gs, Sizei gp) { return gs_valid_gird(gs, gp) && gs->grid[gp.w][gp.h] == So_Empty; }
+bool gs_pickable_gird(GameScene *gs, Sizei gp) { return gs_valid_gird(gs, gp) && gs->allowed_to_pick[gp.w][gp.h]; }
 
 bool is_neighbor(Sizei gp, Sizei p) {
   const Sizei n[6] = {{gp.w + 1, gp.h},
@@ -114,112 +117,27 @@ void gs_draw_button(Game *g, Vec2 p, int icon, Color c, float s) {
 
 void gs_roll_dice(GameScene *gs, int id) {
   (void)id;
+  gs->placed_dice = 0;
   gs->dice[0] = (DiceRoll){(ObjectType)(rand() % 6), (Vec2){-30, 45}, 2.0f, false};
   gs->dice[1] = (DiceRoll){(ObjectType)(rand() % 6), (Vec2){-30, 45}, 2.0f, false};
-}
-void gs_select_dice(GameScene *gs, int id) { gs->selected_dice = id; }
-
-typedef void (*OnClickCB)(GameScene *, int id);
-
-void gs_draw(GameScene *gs, Game *g) {
-  gs->pick_rect_count = 0;
-
-  const Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
-
-  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
-    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j) {
-      if (gs->grid[i][j] == So_None)
-        continue;
-
-      g_color(g, (gp.w == i && gp.h == j && gs->grid[i][j] == So_Empty) ? rgb(0xff, 0xda, 0x89)
-                                                                        : (3 == i && 3 == j ? gray(150) : white()));
-      g_objectRS(g, g_animation_buffer(g), Img_menubar, 0, gs_grid_to_scene((Sizei){i, j}), 0.0, 1.0f);
-
-      g_color(g, gray(50));
-      if (gs->grid[i][j] != So_Empty)
-        g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->grid[i][j], gs_grid_to_scene((Sizei){i, j}), 0.0, 1.0f);
-    }
-
-  g_color(g, red());
-
-  if (gs->selected_dice >= 0) {
-    if (gs_valid_gird(gs, gp) && gs->grid[gp.w][gp.h] == So_Empty) {
-      Vec2 p = gs_grid_to_scene(gp);
-      g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->dice[gs->selected_dice].o, p, 0.0f, 1.0f);
-    }
+  if (gs->dice[0].o == So_Empty && gs->dice[0].o == So_Empty) {
+    gs->can_select_dice = true;
+  } else if (gs->dice[0].o == So_Empty) {
+    ObjectType ot = gs->dice[0].o;
+    gs->dice[1].o = gs->dice[0].o;
+    gs->dice[0].o = ot;
   }
-
-  po_draw(gs->points, g);
-
-  if (gs->dice[0].o == So_None && gs->dice[1].o == So_None) {
-    bool h = gs_pick(gs, gs_roll_dice, 0, (Vec2){-30, 45}, 2);
-    gs_draw_button(g, (Vec2){-30, 45}, 8, h ? rgb(0xff, 0xda, 0x89) : gray(220), 2.0f);
-  } else {
-    if (gs->dice[1].o != So_None) {
-      bool h = gs_pick(gs, gs_select_dice, 1, (Vec2){-30, 25}, 2);
-      gs_draw_button(g, gs->dice[1].p, gs->dice[1].o, h || gs->selected_dice == 1 ? rgb(0xff, 0xda, 0x89) : gray(170),
-                     gs->dice[1].s);
-    }
-    if (gs->dice[0].o != So_None) {
-      bool h = gs_pick(gs, gs_select_dice, 0, (Vec2){-30, 65}, 2);
-      gs_draw_button(g, gs->dice[0].p, gs->dice[0].o, h || gs->selected_dice == 0 ? rgb(0xff, 0xda, 0x89) : gray(220),
-                     gs->dice[0].s);
-    }
-  }
-
-  // Draw all scene objects (effects, etc.) on top
-  for (int i = 0; i < gs->scene_objects.len; ++i)
-    so_draw(&gs->scene_objects.data[i], gs, g);
+  gs->selected_dice = 0;
+  gs->last_placed_dice_location = (Sizei){-1, -1};
 }
 
-void gs_draw_menu_overlay(GameScene *gs, Game *g) {
-  (void)g, (void)gs;
-  // const Color cn = false ? gray(25) : gray(225);
-  // const Color ch = false ? gray(75) : gray(175);
-  // for (int i = 1; i < So_None; ++i) {
-  //   const Vec2 p = (Vec2){8 + 4 + i * 16, 8 + 4};
-  //   const bool hover = gs_pick(gs, gs_select_bottom_menu, i, p, 1.0f);
-  //   g_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
-  //   g_object(g, g_animation_buffer(g), Img_menubar, i % 16, p);
-  //   g_color(g, hover ? red() : (gs->menu_selected == i ? green() : blue()));
-  //   g_object(g, g_animation_buffer(g), Img_marker, hover ? g_frame(g) % 4 : i % 4, p);
-  // }
-}
-
-void gs_draw_overlay(GameScene *gs, Game *g) {
-  (void)g, (void)gs;
-  // gs->pick_rect_count = 0;
-  // gs_draw_menu_overlay(gs, g);
-}
-
-void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
-  (void)g, (void)mp, (void)op;
-  gs->mouse_pos = g_mouse_in_scene(g);
-
-  gs->pick_under_mouse = -1;
-  for (int i = 0; i < gs->pick_rect_count; ++i) {
-    if (r_contains(gs->pick_rects[i].rect, gs->mouse_pos)) {
-      gs->pick_under_mouse = i;
-      break;
-    }
-  }
-}
-
-int gs_count_group_at(GameScene *gs, Sizei gp, ObjectType t) {
-  if (!gs_valid_gird(gs, gp) || gs->visited[gp.w][gp.h] || t != gs->grid[gp.w][gp.h])
-    return 0;
-
-  const Sizei n[6] = {{gp.w + 1, gp.h},
-                      {gp.w - 1, gp.h},
-                      {gp.w, gp.h + 1},
-                      {gp.w, gp.h - 1},
-                      {gp.w + 1, gp.h + (gp.w & 1 ? 1 : -1)},
-                      {gp.w - 1, gp.h + (gp.w & 1 ? 1 : -1)}};
-  int count = 1;
-  gs->visited[gp.w][gp.h] = true;
-  for (int i = 0; i < 6; ++i)
-    count += gs_count_group_at(gs, n[i], t);
-  return count;
+void gs_switch_to_second_dice(GameScene *gs, int id) {
+  (void)id;
+  if (gs->placed_dice != 0 || gs->dice[1].o == So_Empty)
+    return;
+  DiceRoll d = gs->dice[0];
+  gs->dice[0] = gs->dice[1];
+  gs->dice[1] = d;
 }
 
 void gs_count_side_hits(GameScene *gs, Sizei gp, ObjectType t, bool *sides_hit) {
@@ -252,6 +170,23 @@ void gs_clear_visited(GameScene *gs) {
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
     for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
       gs->visited[i][j] = false;
+}
+
+int gs_count_group_at(GameScene *gs, Sizei gp, ObjectType t) {
+  if (!gs_valid_gird(gs, gp) || gs->visited[gp.w][gp.h] || t != gs->grid[gp.w][gp.h])
+    return 0;
+
+  const Sizei n[6] = {{gp.w + 1, gp.h},
+                      {gp.w - 1, gp.h},
+                      {gp.w, gp.h + 1},
+                      {gp.w, gp.h - 1},
+                      {gp.w + 1, gp.h + (gp.w & 1 ? 1 : -1)},
+                      {gp.w - 1, gp.h + (gp.w & 1 ? 1 : -1)}};
+  int count = 1;
+  gs->visited[gp.w][gp.h] = true;
+  for (int i = 0; i < 6; ++i)
+    count += gs_count_group_at(gs, n[i], t);
+  return count;
 }
 
 void gs_count_points(GameScene *gs) {
@@ -299,6 +234,183 @@ void gs_count_points(GameScene *gs) {
                        gs->points->flowers.points + gs->points->water_count * 15;
 }
 
+void gs_mark_empty_neighbors_pickable(GameScene *gs, Sizei gp) {
+  const Sizei n[6] = {{gp.w + 1, gp.h},
+                      {gp.w - 1, gp.h},
+                      {gp.w, gp.h + 1},
+                      {gp.w, gp.h - 1},
+                      {gp.w + 1, gp.h + (gp.w & 1 ? 1 : -1)},
+                      {gp.w - 1, gp.h + (gp.w & 1 ? 1 : -1)}};
+  for (int i = 0; i < 6; ++i)
+    if (gs_valid_gird(gs, n[i]))
+      gs->allowed_to_pick[n[i].w][n[i].h] = gs_empty_gird(gs, n[i]);
+}
+
+bool gs_has_pickable_neighbors(GameScene *gs, Sizei gp) {
+  const Sizei n[6] = {{gp.w + 1, gp.h},
+                      {gp.w - 1, gp.h},
+                      {gp.w, gp.h + 1},
+                      {gp.w, gp.h - 1},
+                      {gp.w + 1, gp.h + (gp.w & 1 ? 1 : -1)},
+                      {gp.w - 1, gp.h + (gp.w & 1 ? 1 : -1)}};
+  for (int i = 0; i < 6; ++i)
+    if (gs_valid_gird(gs, n[i]) && gs->allowed_to_pick[n[i].w][n[i].h])
+      return true;
+  return false;
+}
+
+void gs_update_allow_to_pick(GameScene *gs) {
+  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
+    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
+      gs->allowed_to_pick[i][j] = false;
+
+  if (gs->placed_dice == 1) {
+    gs_mark_empty_neighbors_pickable(gs, gs->last_placed_dice_location);
+    return;
+  }
+
+  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
+    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j) {
+      const Sizei p = {i, j};
+      if (gs_valid_gird(gs, p) && !gs_empty_gird(gs, p))
+        gs_mark_empty_neighbors_pickable(gs, p);
+    }
+
+  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
+    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
+      if (gs->allowed_to_pick[i][j] && !gs_has_pickable_neighbors(gs, (Sizei){i, j}))
+        gs->allowed_to_pick[i][j] = false;
+
+  gs->no_move_left = true;
+  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
+    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
+      if (gs->allowed_to_pick[i][j])
+        gs->no_move_left = false;
+}
+
+void gs_revert_first_placed_dice(GameScene *gs, int id) {
+  (void)id;
+  if (gs->placed_dice != 1)
+    return;
+  const Sizei p = gs->last_placed_dice_location;
+  gs->grid[p.w][p.h] = So_Empty;
+  gs->placed_dice = 0;
+  gs->last_placed_dice_location = (Sizei){-1, -1};
+
+  gs_count_points(gs);
+  gs_update_allow_to_pick(gs);
+
+  DiceRoll d = gs->dice[0];
+  gs->dice[0] = gs->dice[1];
+  gs->dice[1] = d;
+}
+
+void gs_custom_dice_select(GameScene *gs, int id) {
+  gs->placed_dice = 0;
+  gs->dice[0] = (DiceRoll){(ObjectType)id, (Vec2){-30, 45}, 2.0f, false};
+  gs->dice[1] = (DiceRoll){So_Empty, (Vec2){-30, 45}, 2.0f, false};
+  gs->selected_dice = 0;
+  gs->last_placed_dice_location = (Sizei){-1, -1};
+  gs->can_select_dice = false;
+}
+
+typedef void (*OnClickCB)(GameScene *, int id);
+
+void gs_draw(GameScene *gs, Game *g) {
+  gs->pick_rect_count = 0;
+
+  const Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
+
+  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
+    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j) {
+      if (gs->grid[i][j] == So_None)
+        continue;
+
+      Sizei p = {i, j};
+      if (gs_pickable_gird(gs, p)) {
+        g_color(g, (gp.w == i && gp.h == j) ? rgb(0xff, 0xda, 0x89) : white());
+      } else
+        g_color(g, gray(200));
+
+      float s = gs->no_move_left ? 1.0f + 0.02f * sin(10.0f * g_time(g) + i + j) : 1.0f;
+      g_objectRS(g, g_animation_buffer(g), Img_menubar, 0, gs_grid_to_scene((Sizei){i, j}), 0.0, s);
+
+      const bool last = (gs->last_placed_dice_location.w == i && gs->last_placed_dice_location.h == j);
+      g_color(g, last ? red() : gray(50));
+      if (gs->grid[i][j] != So_Empty)
+        g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->grid[i][j], gs_grid_to_scene((Sizei){i, j}), 0.0, 1.0f);
+    }
+
+  g_color(g, red());
+
+  if (gs->selected_dice >= 0 && gs_pickable_gird(gs, gp)) {
+    Vec2 p = gs_grid_to_scene(gp);
+    g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->dice[gs->selected_dice].o, p, 0.0f, 1.0f);
+  }
+
+  po_draw(gs->points, g, gs->no_move_left);
+
+  if (gs->no_move_left)
+    return;
+
+  if (gs->can_select_dice) {
+    for (int i = 1; i <= 5; ++i) {
+      Vec2 p = (Vec2){-30, 45 + (i - 3) * 18};
+      bool h = gs_pick(gs, gs_custom_dice_select, i, p, 1.0f);
+      gs_draw_button(g, p, (ObjectType)i, h ? rgb(0xff, 0xda, 0x89) : gray(170), 1.0f);
+    }
+  } else if (gs->dice[0].o == So_None && gs->dice[1].o == So_None) {
+    bool h = gs_pick(gs, gs_roll_dice, 0, (Vec2){-30, 45}, 2);
+    gs_draw_button(g, (Vec2){-30, 45}, 8, h ? rgb(0xff, 0xda, 0x89) : gray(220), 2.0f);
+  } else {
+    if (gs->dice[1].o != So_None) {
+      bool h = gs_pick(gs, gs->placed_dice == 0 ? gs_switch_to_second_dice : gs_revert_first_placed_dice, 1,
+                       (Vec2){-30, 25}, 2);
+      gs_draw_button(g, gs->dice[1].p, gs->dice[1].o, h || gs->selected_dice == 1 ? rgb(0xff, 0xda, 0x89) : gray(170),
+                     gs->dice[1].s);
+    }
+    if (gs->dice[0].o != So_None)
+      gs_draw_button(g, gs->dice[0].p, gs->dice[0].o, rgb(0xff, 0xda, 0x89), gs->dice[0].s);
+  }
+
+  // Draw all scene objects (effects, etc.) on top
+  for (int i = 0; i < gs->scene_objects.len; ++i)
+    so_draw(&gs->scene_objects.data[i], gs, g);
+}
+
+void gs_draw_menu_overlay(GameScene *gs, Game *g) {
+  (void)g, (void)gs;
+  // const Color cn = false ? gray(25) : gray(225);
+  // const Color ch = false ? gray(75) : gray(175);
+  // for (int i = 1; i < So_None; ++i) {
+  //   const Vec2 p = (Vec2){8 + 4 + i * 16, 8 + 4};
+  //   const bool hover = gs_pick(gs, gs_select_bottom_menu, i, p, 1.0f);
+  //   g_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
+  //   g_object(g, g_animation_buffer(g), Img_menubar, i % 16, p);
+  //   g_color(g, hover ? red() : (gs->menu_selected == i ? green() : blue()));
+  //   g_object(g, g_animation_buffer(g), Img_marker, hover ? g_frame(g) % 4 : i % 4, p);
+  // }
+}
+
+void gs_draw_overlay(GameScene *gs, Game *g) {
+  (void)g, (void)gs;
+  // gs->pick_rect_count = 0;
+  // gs_draw_menu_overlay(gs, g);
+}
+
+void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
+  (void)g, (void)mp, (void)op;
+  gs->mouse_pos = g_mouse_in_scene(g);
+
+  gs->pick_under_mouse = -1;
+  for (int i = 0; i < gs->pick_rect_count; ++i) {
+    if (r_contains(gs->pick_rects[i].rect, gs->mouse_pos)) {
+      gs->pick_under_mouse = i;
+      break;
+    }
+  }
+}
+
 void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   (void)g, (void)op, (void)mp;
 
@@ -308,17 +420,28 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
 
     else if (gs->selected_dice >= 0) {
       Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
-      if (gs_empty_gird(gs, gp)) {
+      if (gs_pickable_gird(gs, gp)) {
         gs->grid[gp.w][gp.h] = gs->dice[gs->selected_dice].o;
-        gs->dice[gs->selected_dice].o = So_None;
-        gs->selected_dice = -1;
         Bling_init(gs, gs_grid_to_scene(gp), rgb(0xFF, 0x00, 0x00));
+
+        if (gs->placed_dice == 0 && gs->dice[1].o != So_Empty) {
+          gs_switch_to_second_dice(gs, 1);
+          gs->last_placed_dice_location = gp;
+          gs->placed_dice = 1;
+        } else {
+          gs->last_placed_dice_location = (Sizei){-1, -1};
+          gs->dice[0].o = gs->dice[1].o = So_None;
+          gs->selected_dice = -1;
+          gs->placed_dice = 2;
+        }
+
         gs_count_points(gs);
+        gs_update_allow_to_pick(gs);
       }
     }
-
   } else if (button == 1) {
-    gs->selected_dice = -1;
+    if (gs->placed_dice == 1)
+      gs_revert_first_placed_dice(gs, 1);
   }
 }
 
@@ -365,6 +488,9 @@ void GameScene_init(Game *g) {
               {So_None, {0, 0}, 1.0f, false},
           },
       .selected_dice = -1,
+      .placed_dice = 0,
+      .last_placed_dice_location = {-1, -1},
+      .can_select_dice = false,
   };
   gs->points = PointOverview_init(g);
 
@@ -375,6 +501,8 @@ void GameScene_init(Game *g) {
   gs->grid[3][3] = So_Water;
   gs->grid[0][1] = gs->grid[6][6] = So_House;
   gs->grid[0][6] = gs->grid[6][1] = So_Trees;
+
+  gs_update_allow_to_pick(gs);
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }
