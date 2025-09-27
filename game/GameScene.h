@@ -4,7 +4,7 @@
 #include "engine/Game.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
-#include "game/GameTypes.h"
+#include "game/ObjectType.h"
 #include "game/SceneObject.h"
 
 typedef struct PointOverview PointOverview;

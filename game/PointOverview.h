@@ -2,7 +2,7 @@
 #define POINTOVERVIEW_H
 
 #include "engine/Game.h"
-#include "game/GameTypes.h"
+#include "game/ObjectType.h"
 
 typedef struct GroupCounter {
   G_Object text_3to5, text_6, text_g1, text_g2, text_points;

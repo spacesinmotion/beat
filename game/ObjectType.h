@@ -1,5 +1,5 @@
-#ifndef GAMETYPES_H
-#define GAMETYPES_H
+#ifndef OBJECTTYPES_H
+#define OBJECTTYPES_H
 
 typedef enum ObjectType {
   So_Empty = 0,
