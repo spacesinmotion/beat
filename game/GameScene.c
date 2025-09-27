@@ -115,6 +115,8 @@ void gs_draw_button(Game *g, Vec2 p, int icon, Color c, float s) {
   g_objectRS(g, g_animation_buffer(g), Img_menubar, icon, p, 0.0, s);
 }
 
+void gs_update_allow_to_pick(GameScene *gs);
+
 void gs_roll_dice(GameScene *gs, int id) {
   (void)id;
   gs->placed_dice = 0;
@@ -129,6 +131,7 @@ void gs_roll_dice(GameScene *gs, int id) {
   }
   gs->selected_dice = 0;
   gs->last_placed_dice_location = (Sizei){-1, -1};
+  gs_update_allow_to_pick(gs);
 }
 
 void gs_switch_to_second_dice(GameScene *gs, int id) {
@@ -264,6 +267,9 @@ void gs_update_allow_to_pick(GameScene *gs) {
     for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
       gs->allowed_to_pick[i][j] = false;
 
+  if (gs->dice[0].o == So_None && gs->dice[1].o == So_None)
+    return;
+
   if (gs->placed_dice == 1) {
     gs_mark_empty_neighbors_pickable(gs, gs->last_placed_dice_location);
     return;
@@ -276,10 +282,14 @@ void gs_update_allow_to_pick(GameScene *gs) {
         gs_mark_empty_neighbors_pickable(gs, p);
     }
 
-  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
-    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
-      if (gs->allowed_to_pick[i][j] && !gs_has_pickable_neighbors(gs, (Sizei){i, j}))
-        gs->allowed_to_pick[i][j] = false;
+  printf("ok %d %d\n", gs->dice[0].o, gs->dice[1].o);
+  if (gs->dice[1].o != So_Empty && gs->dice[1].o != So_None) {
+    printf("here\n");
+    for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
+      for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
+        if (gs->allowed_to_pick[i][j] && !gs_has_pickable_neighbors(gs, (Sizei){i, j}))
+          gs->allowed_to_pick[i][j] = false;
+  }
 
   gs->no_move_left = true;
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
@@ -316,6 +326,24 @@ void gs_custom_dice_select(GameScene *gs, int id) {
 
 typedef void (*OnClickCB)(GameScene *, int id);
 
+void gs_reset_level(GameScene *gs, int x) {
+  (void)x;
+  gs->dice[0] = gs->dice[1] = (DiceRoll){So_None, {0, 0}, 1.0f, false};
+  gs->selected_dice = -1;
+  gs->placed_dice = 0;
+  gs->last_placed_dice_location = (Sizei){-1, -1};
+
+  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
+    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
+      gs->grid[i][j] = So_Empty;
+  gs->grid[0][0] = gs->grid[2][0] = gs->grid[4][0] = gs->grid[6][0] = So_None;
+  gs->grid[3][3] = So_Water;
+  gs->grid[0][1] = gs->grid[6][6] = So_House;
+  gs->grid[0][6] = gs->grid[6][1] = So_Trees;
+  gs_count_points(gs);
+  gs_update_allow_to_pick(gs);
+}
+
 void gs_draw(GameScene *gs, Game *g) {
   gs->pick_rect_count = 0;
 
@@ -350,8 +378,11 @@ void gs_draw(GameScene *gs, Game *g) {
 
   po_draw(gs->points, g, gs->no_move_left);
 
-  if (gs->no_move_left)
+  if (gs->no_move_left) {
+    bool h = gs_pick(gs, gs_reset_level, 0, (Vec2){0, -50}, 2);
+    gs_draw_button(g, (Vec2){0, -50}, 7, h ? rgb(0xff, 0xda, 0x89) : gray(220), 2.0f);
     return;
+  }
 
   if (gs->can_select_dice) {
     for (int i = 1; i <= 5; ++i) {
@@ -494,15 +525,7 @@ void GameScene_init(Game *g) {
   };
   gs->points = PointOverview_init(g);
 
-  for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
-    for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
-      gs->grid[i][j] = So_Empty;
-  gs->grid[0][0] = gs->grid[2][0] = gs->grid[4][0] = gs->grid[6][0] = So_None;
-  gs->grid[3][3] = So_Water;
-  gs->grid[0][1] = gs->grid[6][6] = So_House;
-  gs->grid[0][6] = gs->grid[6][1] = So_Trees;
-
-  gs_update_allow_to_pick(gs);
+  gs_reset_level(gs, 0);
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }

@@ -4,6 +4,7 @@
 #include "extern/cjsonh/cjsonh.h"
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef __TINYC__
 #include <math.h>
@@ -493,7 +494,7 @@ G_Object g_tilerect_buffer(Game *g, int w, int h) {
 G_Object g_animation_buffer(Game *g) { return g->animation_buffer_4x4; }
 
 static void g_init(Game *g) {
-  srand(42);
+  srand(time(0));
   g->render.camera_pan = (Vec2){54.0f, 20.0f};
   g->render.camera_scale = 5.2f;
   g->render.overlay_scale = 2.0f;
