@@ -29,10 +29,10 @@
 
 #define STBI_NO_SIMD
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
+#include "extern/stb/stb_image.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "stb/stb_truetype.h"
+#include "extern/stb/stb_truetype.h"
 
 #define SOKOL_NO_ENTRY
 #define SOKOL_GLCORE
