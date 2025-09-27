@@ -126,6 +126,11 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     g_create_text(g, &gs->text_points, Oswald_Regular_12, str("%d", gs->points));
     gs->points_cache = gs->points;
   }
+
+  gs->dice[0].p = v_lerp_about(gs->dice[0].p, (Vec2){-30, 55}, 80.0f * dt);
+  gs->dice[0].s = 0.1 * 2.0f + 0.9 * gs->dice[0].s;
+  gs->dice[1].p = v_lerp_about(gs->dice[1].p, (Vec2){-30, 30}, 80.0f * dt);
+  gs->dice[1].s = 0.1 * 1.5f + 0.9 * gs->dice[1].s;
 }
 
 Vec2 gs_grid_to_scene(Sizei s) {
@@ -161,9 +166,9 @@ bool is_neighbor(Sizei gp, Sizei p) {
   return false;
 }
 
-void gs_draw_button(Game *g, Vec2 p, int icon, Color c) {
+void gs_draw_button(Game *g, Vec2 p, int icon, Color c, float s) {
   g_color(g, c);
-  const float s = 2.0f + 0.01f * sin(8.0f * g_time(g));
+  s = s + 0.01f * sin(8.0f * g_time(g));
   g_objectRS(g, g_animation_buffer(g), Img_menubar, 7, p, 0.0, s);
   if (icon == So_Empty)
     return;
@@ -173,8 +178,8 @@ void gs_draw_button(Game *g, Vec2 p, int icon, Color c) {
 
 void gs_roll_dice(GameScene *gs, int id) {
   (void)id;
-  gs->dice[0] = (ObjectType)(rand() % 6);
-  gs->dice[1] = (ObjectType)(rand() % 6);
+  gs->dice[0] = (DiceRoll){(ObjectType)(rand() % 6), (Vec2){-30, 45}, 2.0f, false};
+  gs->dice[1] = (DiceRoll){(ObjectType)(rand() % 6), (Vec2){-30, 45}, 2.0f, false};
 }
 void gs_select_dice(GameScene *gs, int id) { gs->selected_dice = id; }
 
@@ -204,7 +209,7 @@ void gs_draw(GameScene *gs, Game *g) {
   if (gs->selected_dice >= 0) {
     if (gs_valid_gird(gs, gp) && gs->grid[gp.w][gp.h] == So_Empty) {
       Vec2 p = gs_grid_to_scene(gp);
-      g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->dice[gs->selected_dice], p, 0.0f, 1.0f);
+      g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->dice[gs->selected_dice].o, p, 0.0f, 1.0f);
     }
   }
 
@@ -228,17 +233,19 @@ void gs_draw(GameScene *gs, Game *g) {
   g_color(g, white());
   g_text(g, gs->text_points, Oswald_Regular_12, (Vec2){l + 35, t - 10 - (o * row++)});
 
-  if (gs->dice[0] == So_None && gs->dice[1] == So_None) {
+  if (gs->dice[0].o == So_None && gs->dice[1].o == So_None) {
     bool h = gs_pick(gs, gs_roll_dice, 0, (Vec2){-30, 45}, 2);
-    gs_draw_button(g, (Vec2){-30, 45}, 8, h ? rgb(0xff, 0xda, 0x89) : gray(220));
+    gs_draw_button(g, (Vec2){-30, 45}, 8, h ? rgb(0xff, 0xda, 0x89) : gray(220), 2.0f);
   } else {
-    if (gs->dice[0] != So_None) {
-      bool h = gs_pick(gs, gs_select_dice, 0, (Vec2){-30, 65}, 2);
-      gs_draw_button(g, (Vec2){-30, 65}, gs->dice[0], h || gs->selected_dice == 0 ? rgb(0xff, 0xda, 0x89) : gray(220));
-    }
-    if (gs->dice[1] != So_None) {
+    if (gs->dice[1].o != So_None) {
       bool h = gs_pick(gs, gs_select_dice, 1, (Vec2){-30, 25}, 2);
-      gs_draw_button(g, (Vec2){-30, 25}, gs->dice[1], h || gs->selected_dice == 1 ? rgb(0xff, 0xda, 0x89) : gray(220));
+      gs_draw_button(g, gs->dice[1].p, gs->dice[1].o, h || gs->selected_dice == 1 ? rgb(0xff, 0xda, 0x89) : gray(170),
+                     gs->dice[1].s);
+    }
+    if (gs->dice[0].o != So_None) {
+      bool h = gs_pick(gs, gs_select_dice, 0, (Vec2){-30, 65}, 2);
+      gs_draw_button(g, gs->dice[0].p, gs->dice[0].o, h || gs->selected_dice == 0 ? rgb(0xff, 0xda, 0x89) : gray(220),
+                     gs->dice[0].s);
     }
   }
 }
@@ -388,8 +395,8 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
     else if (gs->selected_dice >= 0) {
       Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
       if (gs_empty_gird(gs, gp)) {
-        gs->grid[gp.w][gp.h] = gs->dice[gs->selected_dice];
-        gs->dice[gs->selected_dice] = So_None;
+        gs->grid[gp.w][gp.h] = gs->dice[gs->selected_dice].o;
+        gs->dice[gs->selected_dice].o = So_None;
         gs->selected_dice = -1;
         gs_count_points(gs);
       }
@@ -446,7 +453,11 @@ void GameScene_init(Game *g) {
       .text_points = {0},
       .points = 0,
       .points_cache = -1,
-      .dice = {So_None, So_None},
+      .dice =
+          {
+              {So_None, {0, 0}, 1.0f, false},
+              {So_None, {0, 0}, 1.0f, false},
+          },
       .selected_dice = -1,
   };
   gs_init_group_counter(&gs->house, g);

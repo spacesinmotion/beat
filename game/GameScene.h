@@ -4,6 +4,7 @@
 #include "Game.h"
 #include "game/SceneObject.h"
 #include "math/Rect.h"
+#include "math/Vec2.h"
 
 typedef struct SceneObjectVec {
   SceneObject *data;
@@ -36,6 +37,13 @@ typedef struct GroupCounter {
   int g1, g1_cache, g2, g2_cache, points, points_cache;
 } GroupCounter;
 
+typedef struct DiceRoll {
+  ObjectType o;
+  Vec2 p;
+  float s;
+  bool entered;
+} DiceRoll;
+
 typedef struct GameScene {
   SceneObjectVec scene_objects;
 
@@ -60,7 +68,7 @@ typedef struct GameScene {
   G_Object text_points;
   int points, points_cache;
 
-  ObjectType dice[2];
+  DiceRoll dice[2];
   int selected_dice;
 } GameScene;
 
