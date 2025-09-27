@@ -1,7 +1,7 @@
 #ifndef POINTOVERVIEW_H
 #define POINTOVERVIEW_H
 
-#include "Game.h"
+#include "engine/Game.h"
 #include "game/GameTypes.h"
 
 typedef struct GroupCounter {

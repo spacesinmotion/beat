@@ -5,10 +5,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "engine/math/Color.h"
+#include "engine/math/Rect.h"
+#include "engine/math/Vec2.h"
 #include "game/assets.h"
-#include "math/Color.h"
-#include "math/Rect.h"
-#include "math/Vec2.h"
 
 #include "Scene.h"
 

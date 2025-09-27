@@ -1,7 +1,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "math/Vec2.h"
+#include "engine/math/Vec2.h"
 
 typedef struct Game Game;
 typedef struct CJHObject CJHObject;

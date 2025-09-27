@@ -48,12 +48,12 @@
 
 #include "util/sokol_debugtext.h"
 
-#include "game/Game.h"
+#include "engine/Game.h"
 
+#include "engine/math/Color.h"
+#include "engine/math/Rect.h"
+#include "engine/math/Vec2.h"
 #include "gc/gc.h"
-#include "math/Color.h"
-#include "math/Rect.h"
-#include "math/Vec2.h"
 
 #include "game/GameScene.h"
 

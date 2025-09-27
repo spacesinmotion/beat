@@ -1,11 +1,11 @@
 #ifndef GAME_SCENE
 #define GAME_SCENE
 
-#include "Game.h"
+#include "engine/Game.h"
+#include "engine/math/Rect.h"
+#include "engine/math/Vec2.h"
 #include "game/GameTypes.h"
 #include "game/SceneObject.h"
-#include "math/Rect.h"
-#include "math/Vec2.h"
 
 typedef struct PointOverview PointOverview;
 typedef struct SceneObjectVec {

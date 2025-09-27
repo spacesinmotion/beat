@@ -1,15 +1,14 @@
 
 #include "game/GameScene.h"
+#include "engine/Game.h"
+#include "engine/math/Color.h"
+#include "engine/math/Rect.h"
+#include "engine/math/Vec2.h"
 #include "extern/cjsonh/cjsonh.h"
-#include "game/Game.h"
 #include "game/PointOverview.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
 #include "game/effects/Bling.h"
-#include "math.h"
-#include "math/Color.h"
-#include "math/Rect.h"
-#include "math/Vec2.h"
 #include <stdlib.h>
 #include <time.h>
 

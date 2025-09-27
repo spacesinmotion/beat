@@ -1,12 +1,11 @@
 #ifndef BLING_H
 #define BLING_H
 
-#include "game/Game.h"
+#include "engine/Game.h"
+#include "engine/math/Vec2.h"
+#include "engine/math/random.h"
 #include "game/GameScene.h"
 #include "game/assets.h"
-#include "math.h"
-#include "math/Vec2.h"
-#include "math/random.h"
 
 typedef struct Bling {
   Color color;
