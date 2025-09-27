@@ -2,16 +2,14 @@
 #include "game/GameScene.h"
 #include "extern/cjsonh/cjsonh.h"
 #include "game/Game.h"
+#include "game/PointOverview.h"
 #include "game/SceneObject.h"
 #include "game/assets.h"
 #include "game/effects/Bling.h"
-#include "gc/gc.h"
 #include "math.h"
 #include "math/Color.h"
 #include "math/Rect.h"
 #include "math/Vec2.h"
-#include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -19,19 +17,10 @@
 #define M_PI 3.1457
 #endif
 
-const char *str(const char *format, ...) {
-  static char b[256] = {0};
-  va_list args;
-  va_start(args, format);
-  vsnprintf(b, sizeof(b), format, args);
-  va_end(args);
-  return b;
-}
-
 void so_vec_push(SceneObjectVec *vec, SceneObject so) {
   if (vec->len + 1 > vec->cap) {
     vec->cap += 16;
-    vec->data = (SceneObject *)gc_realloc(&gc, vec->data, vec->cap * sizeof(SceneObject));
+    vec->data = (SceneObject *)g_realloc(vec->data, vec->cap * sizeof(SceneObject));
   }
   vec->data[vec->len] = so;
   vec->len++;
@@ -53,52 +42,12 @@ int so_render_order_compare(const void *va, const void *vb) {
   return a < b ? -1 : (a > b ? 1 : 0);
 }
 
-// void gs_select_bottom_menu(GameScene *gs, int button) { gs->menu_selected = button; }
-
 bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
   assert(gs->pick_rect_count < (int)(sizeof(gs->pick_rects) / sizeof(PickRect)));
   Rect r = (Rect){{p.x - 8 * s, p.y - 8 * s}, {16 * s, 16 * s}};
   gs->pick_rects[gs->pick_rect_count] = (PickRect){.rect = r, .click = onclick, .id = id};
   ++gs->pick_rect_count;
   return r_contains(r, gs->mouse_pos);
-}
-
-void gs_init_group_counter(GroupCounter *gc, Game *g) {
-  g_create_text(g, &gc->text_3to5, Oswald_Regular_8, "3-5");
-  g_create_text(g, &gc->text_6, Oswald_Regular_8, "6+");
-  gc->g1_cache = gc->g2_cache = gc->points_cache = -1;
-}
-
-void gs_update_group_counter(GameScene *gs, Game *g, GroupCounter *gc) {
-  (void)gs;
-  (void)g;
-
-  if (gc->g1 != gc->g1_cache) {
-    g_create_text(g, &gc->text_g1, Oswald_Regular_8, str("10x%d", gc->g1));
-    gc->g1_cache = gc->g1;
-  }
-  if (gc->g2 != gc->g2_cache) {
-    g_create_text(g, &gc->text_g2, Oswald_Regular_8, str("25x%d", gc->g2));
-    gc->g2_cache = gc->g2;
-  }
-  if (gc->points != gc->points_cache) {
-    g_create_text(g, &gc->text_points, Oswald_Regular_12, str("%d", gc->points));
-    gc->points_cache = gc->points;
-  }
-}
-
-void gs_draw_group_counter(GroupCounter *gc, Game *g, Vec2 p, int icon) {
-  g_color(g, gray(170));
-  g_objectRS(g, g_animation_buffer(g), Img_menubar, icon, p, 0.0, 0.7f);
-  g_text(g, gc->text_3to5, Oswald_Regular_8, v_add(p, (Vec2){5, -3}));
-  g_objectRS(g, g_animation_buffer(g), Img_menubar, icon, v_add(p, (Vec2){20, 0}), 0.0, 0.7f);
-  g_text(g, gc->text_6, Oswald_Regular_8, v_add(p, (Vec2){25, -3}));
-
-  g_text(g, gc->text_g1, Oswald_Regular_8, v_add(p, (Vec2){-4, -10}));
-  g_text(g, gc->text_g2, Oswald_Regular_8, v_add(p, (Vec2){16, -10}));
-
-  g_color(g, gray(220));
-  g_text(g, gc->text_points, Oswald_Regular_12, v_add(p, (Vec2){35, -6}));
 }
 
 void gs_update(GameScene *gs, Game *g, float dt) {
@@ -113,20 +62,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 
   qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
 
-  gs_update_group_counter(gs, g, &gs->house);
-  gs_update_group_counter(gs, g, &gs->trees);
-  gs_update_group_counter(gs, g, &gs->animals);
-  gs_update_group_counter(gs, g, &gs->flowers);
-
-  if (gs->water_count != gs->water_count_cache) {
-    g_create_text(g, &gs->text_water_count, Oswald_Regular_8, str("15x%d", gs->water_count));
-    g_create_text(g, &gs->text_water_points, Oswald_Regular_12, str("%d", 15 * gs->water_count));
-    gs->water_count_cache = gs->water_count;
-  }
-  if (gs->points != gs->points_cache) {
-    g_create_text(g, &gs->text_points, Oswald_Regular_12, str("%d", gs->points));
-    gs->points_cache = gs->points;
-  }
+  po_update(gs->points, g);
 
   gs->dice[0].p = v_lerp_about(gs->dice[0].p, (Vec2){-30, 55}, 80.0f * dt);
   gs->dice[0].s = 0.1 * 2.0f + 0.9 * gs->dice[0].s;
@@ -214,25 +150,7 @@ void gs_draw(GameScene *gs, Game *g) {
     }
   }
 
-  int row = 0;
-  const int l = 90;
-  const int t = 100;
-  const int o = 18;
-  gs_draw_group_counter(&gs->house, g, (Vec2){l, t - (o * row++)}, So_House);
-  gs_draw_group_counter(&gs->trees, g, (Vec2){l, t - (o * row++)}, So_Trees);
-  gs_draw_group_counter(&gs->animals, g, (Vec2){l, t - (o * row++)}, So_Animals);
-  gs_draw_group_counter(&gs->flowers, g, (Vec2){l, t - (o * row++)}, So_Flowers);
-
-  Vec2 p = {l, t - (o * row++)};
-  g_color(g, gray(170));
-  g_objectRS(g, g_animation_buffer(g), Img_menubar, So_Water, v_add(p, (Vec2){0, 0}), 0.0, 0.7f);
-  g_objectRS(g, g_animation_buffer(g), Img_menubar, So_None, v_add(p, (Vec2){10, 0}), 0.0, 0.7f);
-  g_text(g, gs->text_water_count, Oswald_Regular_8, v_add(p, (Vec2){-4, -10}));
-  g_color(g, gray(220));
-  g_text(g, gs->text_water_points, Oswald_Regular_12, v_add(p, (Vec2){35, -6}));
-
-  g_color(g, white());
-  g_text(g, gs->text_points, Oswald_Regular_12, (Vec2){l + 35, t - 10 - (o * row++)});
+  po_draw(gs->points, g);
 
   if (gs->dice[0].o == So_None && gs->dice[1].o == So_None) {
     bool h = gs_pick(gs, gs_roll_dice, 0, (Vec2){-30, 45}, 2);
@@ -331,15 +249,6 @@ void gs_count_side_hits(GameScene *gs, Sizei gp, ObjectType t, bool *sides_hit) 
     gs_count_side_hits(gs, n[i], t, sides_hit);
 }
 
-void gs_group_counter_add_group(GroupCounter *gc, int c) {
-  if (c >= 6) {
-    gc->g2 += 1;
-    gc->points += 25;
-  } else if (c >= 3) {
-    gc->g1 += 1;
-    gc->points += 10;
-  }
-}
 void gs_clear_visited(GameScene *gs) {
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
     for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
@@ -348,10 +257,10 @@ void gs_clear_visited(GameScene *gs) {
 
 void gs_count_points(GameScene *gs) {
   gs_clear_visited(gs);
-  gs->house.g1 = gs->house.g2 = gs->house.points = 0;
-  gs->trees.g1 = gs->trees.g2 = gs->trees.points = 0;
-  gs->animals.g1 = gs->animals.g2 = gs->animals.points = 0;
-  gs->flowers.g1 = gs->flowers.g2 = gs->flowers.points = 0;
+  gs->points->house.g1 = gs->points->house.g2 = gs->points->house.points = 0;
+  gs->points->trees.g1 = gs->points->trees.g2 = gs->points->trees.points = 0;
+  gs->points->animals.g1 = gs->points->animals.g2 = gs->points->animals.points = 0;
+  gs->points->flowers.g1 = gs->points->flowers.g2 = gs->points->flowers.points = 0;
 
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i) {
     for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j) {
@@ -366,13 +275,13 @@ void gs_count_points(GameScene *gs) {
 
       const int c = gs_count_group_at(gs, (Sizei){i, j}, t);
       if (t == So_House) {
-        gs_group_counter_add_group(&gs->house, c);
+        po_group_counter_add_group(&gs->points->house, c);
       } else if (t == So_Trees) {
-        gs_group_counter_add_group(&gs->trees, c);
+        po_group_counter_add_group(&gs->points->trees, c);
       } else if (t == So_Animals) {
-        gs_group_counter_add_group(&gs->animals, c);
+        po_group_counter_add_group(&gs->points->animals, c);
       } else if (t == So_Flowers) {
-        gs_group_counter_add_group(&gs->flowers, c);
+        po_group_counter_add_group(&gs->points->flowers, c);
       }
     }
   }
@@ -382,12 +291,13 @@ void gs_count_points(GameScene *gs) {
   bool sides_hit[4] = {false, false, false, false};
   gs_count_side_hits(gs, (Sizei){3, 3}, So_Water, sides_hit);
 
-  gs->water_count = 0;
+  gs->points->water_count = 0;
   for (int i = 0; i < 4; ++i)
     if (sides_hit[i])
-      gs->water_count++;
+      gs->points->water_count++;
 
-  gs->points = gs->house.points + gs->trees.points + gs->animals.points + gs->flowers.points + gs->water_count * 15;
+  gs->points->points = gs->points->house.points + gs->points->trees.points + gs->points->animals.points +
+                       gs->points->flowers.points + gs->points->water_count * 15;
 }
 
 void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
@@ -449,16 +359,7 @@ void GameScene_init(Game *g) {
       .pick_rects = {},
       .pick_rect_count = 0,
       .pick_under_mouse = -1,
-      .house = (GroupCounter){0},
-      .trees = (GroupCounter){0},
-      .animals = (GroupCounter){0},
-      .flowers = (GroupCounter){0},
-      .text_water_points = {0},
-      .water_count = 0,
-      .water_count_cache = -1,
-      .text_points = {0},
-      .points = 0,
-      .points_cache = -1,
+      .points = NULL,
       .dice =
           {
               {So_None, {0, 0}, 1.0f, false},
@@ -466,10 +367,7 @@ void GameScene_init(Game *g) {
           },
       .selected_dice = -1,
   };
-  gs_init_group_counter(&gs->house, g);
-  gs_init_group_counter(&gs->trees, g);
-  gs_init_group_counter(&gs->animals, g);
-  gs_init_group_counter(&gs->flowers, g);
+  gs->points = PointOverview_init(g);
 
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
     for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)

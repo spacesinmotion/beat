@@ -60,6 +60,15 @@
 void *g_malloc(size_t size) { return gc_malloc(&gc, size); }
 void *g_realloc(void *ptr, size_t size) { return gc_realloc(&gc, ptr, size); }
 
+const char *str(const char *format, ...) {
+  static char b[256] = {0};
+  va_list args;
+  va_start(args, format);
+  vsnprintf(b, sizeof(b), format, args);
+  va_end(args);
+  return b;
+}
+
 typedef struct vertex_t {
   Vec2 p;
   uint16_t u, v;
