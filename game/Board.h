@@ -3,6 +3,7 @@
 
 #include "engine/math/Rect.h"
 #include "game/ObjectType.h"
+#include "game/PointOverview.h"
 #include <stdbool.h>
 
 typedef struct Board {
@@ -11,42 +12,44 @@ typedef struct Board {
   bool allowed_to_pick[7][7];
 } Board;
 
-static inline void board_init(Board *board) {
+static inline void bd_reset(Board *bd) {
   for (int i = 0; i < 7; ++i)
     for (int j = 0; j < 7; ++j) {
-      board->grid[i][j] = So_Empty;
-      board->visited[i][j] = false;
-      board->allowed_to_pick[i][j] = false;
+      bd->grid[i][j] = So_Empty;
+      bd->visited[i][j] = false;
+      bd->allowed_to_pick[i][j] = false;
     }
+  bd->grid[0][0] = bd->grid[2][0] = bd->grid[4][0] = bd->grid[6][0] = So_None;
+  bd->grid[3][3] = So_Water;
+  bd->grid[0][1] = bd->grid[6][6] = So_House;
+  bd->grid[0][6] = bd->grid[6][1] = So_Trees;
 }
 
-static inline ObjectType board_get_grid(const Board *board, Sizei gp) {
+static inline ObjectType bd_get_grid(const Board *bd, Sizei gp) {
   if (gp.w >= 0 && gp.w < 7 && gp.h >= 0 && gp.h < 7)
-    return board->grid[gp.w][gp.h];
+    return bd->grid[gp.w][gp.h];
   return So_None;
 }
 
-static inline void board_set_grid(Board *board, Sizei gp, ObjectType value) {
+static inline void bd_set_grid(Board *bd, Sizei gp, ObjectType value) {
   if (gp.w >= 0 && gp.w < 7 && gp.h >= 0 && gp.h < 7)
-    board->grid[gp.w][gp.h] = value;
+    bd->grid[gp.w][gp.h] = value;
 }
 
-static inline bool board_valid_grid(const Board *board, Sizei gp) {
-  return gp.w >= 0 && gp.w < 7 && gp.h >= 0 && gp.h < 7 && board_get_grid(board, gp) != So_None;
+static inline bool bd_grid_valid(const Board *bd, Sizei gp) {
+  return gp.w >= 0 && gp.w < 7 && gp.h >= 0 && gp.h < 7 && bd_get_grid(bd, gp) != So_None;
 }
 
-static inline bool board_empty_grid(const Board *board, Sizei gp) {
-  return board_valid_grid(board, gp) && board_get_grid(board, gp) == So_Empty;
-}
+static inline bool bd_grid_empty(const Board *bd, Sizei gp) { return bd_get_grid(bd, gp) == So_Empty; }
 
-static inline void board_clear_visited(Board *board) {
+static inline void bd_clear_visited(Board *bd) {
   for (int i = 0; i < 7; ++i)
     for (int j = 0; j < 7; ++j)
-      board->visited[i][j] = false;
+      bd->visited[i][j] = false;
 }
 
-static inline int board_count_group_at(Board *board, Sizei gp, ObjectType t) {
-  if (!board_valid_grid(board, gp) || board->visited[gp.w][gp.h] || t != board_get_grid(board, gp))
+static inline int bd_count_group_at(Board *bd, Sizei gp, ObjectType t) {
+  if (!bd_grid_valid(bd, gp) || bd->visited[gp.w][gp.h] || t != bd_get_grid(bd, gp))
     return 0;
 
   const Sizei n[6] = {{gp.w + 1, gp.h},
@@ -56,13 +59,13 @@ static inline int board_count_group_at(Board *board, Sizei gp, ObjectType t) {
                       {gp.w + 1, gp.h + (gp.w & 1 ? 1 : -1)},
                       {gp.w - 1, gp.h + (gp.w & 1 ? 1 : -1)}};
   int count = 1;
-  board->visited[gp.w][gp.h] = true;
+  bd->visited[gp.w][gp.h] = true;
   for (int i = 0; i < 6; ++i)
-    count += board_count_group_at(board, n[i], t);
+    count += bd_count_group_at(bd, n[i], t);
   return count;
 }
 
-static inline void board_count_side_hits(Board *board, Sizei gp, ObjectType t, bool *sides_hit) {
+static inline void bd_count_border_hits(Board *bd, Sizei gp, ObjectType t, bool *sides_hit) {
   if (gp.w < 0)
     sides_hit[0] = true;
   if (gp.w > 6)
@@ -74,7 +77,7 @@ static inline void board_count_side_hits(Board *board, Sizei gp, ObjectType t, b
   if ((gp.w & 1) == 1 && gp.h < 0)
     sides_hit[2] = true;
 
-  if (!board_valid_grid(board, gp) || board->visited[gp.w][gp.h] || t != board_get_grid(board, gp))
+  if (!bd_grid_valid(bd, gp) || bd->visited[gp.w][gp.h] || t != bd_get_grid(bd, gp))
     return;
 
   const Sizei n[6] = {{gp.w + 1, gp.h},
@@ -83,28 +86,68 @@ static inline void board_count_side_hits(Board *board, Sizei gp, ObjectType t, b
                       {gp.w, gp.h - 1},
                       {gp.w + 1, gp.h + (gp.w & 1 ? 1 : -1)},
                       {gp.w - 1, gp.h + (gp.w & 1 ? 1 : -1)}};
-  board->visited[gp.w][gp.h] = true;
+  bd->visited[gp.w][gp.h] = true;
   for (int i = 0; i < 6; ++i)
-    board_count_side_hits(board, n[i], t, sides_hit);
+    bd_count_border_hits(bd, n[i], t, sides_hit);
 }
 
-static inline void board_set_allowed_to_pick(Board *board, Sizei gp, bool value) {
-  if (board_valid_grid(board, gp)) {
-    board->allowed_to_pick[gp.w][gp.h] = value;
-  }
+static inline void bd_set_allowed_to_pick(Board *bd, Sizei gp, bool value) {
+  if (bd_grid_valid(bd, gp))
+    bd->allowed_to_pick[gp.w][gp.h] = value;
 }
 
-static inline bool board_get_allowed_to_pick(const Board *board, Sizei gp) {
-  if (board_valid_grid(board, gp)) {
-    return board->allowed_to_pick[gp.w][gp.h];
-  }
-  return false;
+static inline bool bd_allowed_to_pick(const Board *bd, Sizei gp) {
+  return bd_grid_valid(bd, gp) && bd->allowed_to_pick[gp.w][gp.h];
 }
 
-static inline void board_clear_allowed_to_pick(Board *board) {
+static inline void bd_clear_allowed_to_pick(Board *bd) {
   for (int i = 0; i < 7; ++i)
     for (int j = 0; j < 7; ++j)
-      board->allowed_to_pick[i][j] = false;
+      bd->allowed_to_pick[i][j] = false;
+}
+
+static inline void bd_count_points(Board *bd, PointOverview *po) {
+  bd_clear_visited(bd);
+  po->house.g1 = po->house.g2 = po->house.points = 0;
+  po->trees.g1 = po->trees.g2 = po->trees.points = 0;
+  po->animals.g1 = po->animals.g2 = po->animals.points = 0;
+  po->flowers.g1 = po->flowers.g2 = po->flowers.points = 0;
+
+  for (int i = 0; i < 7; ++i) {
+    for (int j = 0; j < 7; ++j) {
+      if (bd->visited[i][j])
+        continue;
+
+      const ObjectType t = bd_get_grid(bd, (Sizei){i, j});
+      if (t == So_Empty || t == So_None || t == So_Water) {
+        bd->visited[i][j] = true;
+        continue;
+      }
+
+      const int c = bd_count_group_at(bd, (Sizei){i, j}, t);
+      if (t == So_House) {
+        po_group_counter_add_group(&po->house, c);
+      } else if (t == So_Trees) {
+        po_group_counter_add_group(&po->trees, c);
+      } else if (t == So_Animals) {
+        po_group_counter_add_group(&po->animals, c);
+      } else if (t == So_Flowers) {
+        po_group_counter_add_group(&po->flowers, c);
+      }
+    }
+  }
+
+  bd_clear_visited(bd);
+
+  bool sides_hit[4] = {false, false, false, false};
+  bd_count_border_hits(bd, (Sizei){3, 3}, So_Water, sides_hit);
+
+  po->water_count = 0;
+  for (int i = 0; i < 4; ++i)
+    if (sides_hit[i])
+      po->water_count++;
+
+  po->points = po->house.points + po->trees.points + po->animals.points + po->flowers.points + po->water_count * 15;
 }
 
 #endif

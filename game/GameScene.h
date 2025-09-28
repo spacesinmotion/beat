@@ -4,10 +4,10 @@
 #include "engine/Game.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
-#include "game/Board.h"
 #include "game/ObjectType.h"
 #include "game/SceneObject.h"
 
+typedef struct Board Board;
 typedef struct PointOverview PointOverview;
 typedef struct SceneObjectVec {
   SceneObject *data;
@@ -38,7 +38,7 @@ typedef struct GameScene {
   int pick_rect_count;
   int pick_under_mouse;
 
-  Board board;
+  Board *board;
   PointOverview *points;
 
   DiceRoll dice[2];

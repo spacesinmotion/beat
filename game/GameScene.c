@@ -6,6 +6,7 @@
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
 #include "extern/cjsonh/cjsonh.h"
+#include "game/Board.h"
 #include "game/ObjectType.h"
 #include "game/PointOverview.h"
 #include "game/SceneObject.h"
@@ -131,51 +132,6 @@ void gs_switch_to_second_dice(GameScene *gs, int id) {
   gs->dice[1] = d;
 }
 
-void gs_count_points(GameScene *gs) {
-  board_clear_visited(&gs->board);
-  gs->points->house.g1 = gs->points->house.g2 = gs->points->house.points = 0;
-  gs->points->trees.g1 = gs->points->trees.g2 = gs->points->trees.points = 0;
-  gs->points->animals.g1 = gs->points->animals.g2 = gs->points->animals.points = 0;
-  gs->points->flowers.g1 = gs->points->flowers.g2 = gs->points->flowers.points = 0;
-
-  for (int i = 0; i < 7; ++i) {
-    for (int j = 0; j < 7; ++j) {
-      if (gs->board.visited[i][j])
-        continue;
-
-      const ObjectType t = board_get_grid(&gs->board, (Sizei){i, j});
-      if (t == So_Empty || t == So_None || t == So_Water) {
-        gs->board.visited[i][j] = true;
-        continue;
-      }
-
-      const int c = board_count_group_at(&gs->board, (Sizei){i, j}, t);
-      if (t == So_House) {
-        po_group_counter_add_group(&gs->points->house, c);
-      } else if (t == So_Trees) {
-        po_group_counter_add_group(&gs->points->trees, c);
-      } else if (t == So_Animals) {
-        po_group_counter_add_group(&gs->points->animals, c);
-      } else if (t == So_Flowers) {
-        po_group_counter_add_group(&gs->points->flowers, c);
-      }
-    }
-  }
-
-  board_clear_visited(&gs->board);
-
-  bool sides_hit[4] = {false, false, false, false};
-  board_count_side_hits(&gs->board, (Sizei){3, 3}, So_Water, sides_hit);
-
-  gs->points->water_count = 0;
-  for (int i = 0; i < 4; ++i)
-    if (sides_hit[i])
-      gs->points->water_count++;
-
-  gs->points->points = gs->points->house.points + gs->points->trees.points + gs->points->animals.points +
-                       gs->points->flowers.points + gs->points->water_count * 15;
-}
-
 void gs_mark_empty_neighbors_pickable(GameScene *gs, Sizei gp) {
   const Sizei n[6] = {{gp.w + 1, gp.h},
                       {gp.w - 1, gp.h},
@@ -184,8 +140,8 @@ void gs_mark_empty_neighbors_pickable(GameScene *gs, Sizei gp) {
                       {gp.w + 1, gp.h + (gp.w & 1 ? 1 : -1)},
                       {gp.w - 1, gp.h + (gp.w & 1 ? 1 : -1)}};
   for (int i = 0; i < 6; ++i)
-    if (board_valid_grid(&gs->board, n[i]))
-      board_set_allowed_to_pick(&gs->board, n[i], board_empty_grid(&gs->board, n[i]));
+    if (bd_grid_valid(gs->board, n[i]))
+      bd_set_allowed_to_pick(gs->board, n[i], bd_grid_empty(gs->board, n[i]));
 }
 
 bool gs_has_pickable_neighbors(GameScene *gs, Sizei gp) {
@@ -196,7 +152,7 @@ bool gs_has_pickable_neighbors(GameScene *gs, Sizei gp) {
                       {gp.w + 1, gp.h + (gp.w & 1 ? 1 : -1)},
                       {gp.w - 1, gp.h + (gp.w & 1 ? 1 : -1)}};
   for (int i = 0; i < 6; ++i)
-    if (board_get_allowed_to_pick(&gs->board, n[i]))
+    if (bd_allowed_to_pick(gs->board, n[i]))
       return true;
   return false;
 }
@@ -204,7 +160,7 @@ bool gs_has_pickable_neighbors(GameScene *gs, Sizei gp) {
 void gs_update_allow_to_pick(GameScene *gs) {
   for (int i = 0; i < 7; ++i)
     for (int j = 0; j < 7; ++j)
-      board_set_allowed_to_pick(&gs->board, (Sizei){i, j}, false);
+      bd_set_allowed_to_pick(gs->board, (Sizei){i, j}, false);
 
   if ((gs->dice[0].o == So_Empty && gs->dice[1].o == So_Empty) ||
       (gs->dice[0].o == So_None && gs->dice[1].o == So_None))
@@ -218,7 +174,7 @@ void gs_update_allow_to_pick(GameScene *gs) {
   for (int i = 0; i < 7; ++i)
     for (int j = 0; j < 7; ++j) {
       const Sizei p = {i, j};
-      if (board_valid_grid(&gs->board, p) && !board_empty_grid(&gs->board, p))
+      if (bd_grid_valid(gs->board, p) && !bd_grid_empty(gs->board, p))
         gs_mark_empty_neighbors_pickable(gs, p);
     }
 
@@ -226,15 +182,15 @@ void gs_update_allow_to_pick(GameScene *gs) {
     for (int i = 0; i < 7; ++i)
       for (int j = 0; j < 7; ++j) {
         Sizei p = {i, j};
-        if (board_get_allowed_to_pick(&gs->board, p) && !gs_has_pickable_neighbors(gs, p))
-          board_set_allowed_to_pick(&gs->board, p, false);
+        if (bd_allowed_to_pick(gs->board, p) && !gs_has_pickable_neighbors(gs, p))
+          bd_set_allowed_to_pick(gs->board, p, false);
       }
   }
 
   gs->no_move_left = true;
   for (int i = 0; i < 7; ++i)
     for (int j = 0; j < 7; ++j)
-      if (board_get_allowed_to_pick(&gs->board, (Sizei){i, j}))
+      if (bd_allowed_to_pick(gs->board, (Sizei){i, j}))
         gs->no_move_left = false;
 }
 
@@ -243,11 +199,11 @@ void gs_revert_first_placed_dice(GameScene *gs, int id) {
   if (gs->placed_dice != 1)
     return;
   const Sizei p = gs->last_placed_dice_location;
-  board_set_grid(&gs->board, p, So_Empty);
+  bd_set_grid(gs->board, p, So_Empty);
   gs->placed_dice = 0;
   gs->last_placed_dice_location = (Sizei){-1, -1};
 
-  gs_count_points(gs);
+  bd_count_points(gs->board, gs->points);
   gs_update_allow_to_pick(gs);
 
   DiceRoll d = gs->dice[0];
@@ -275,19 +231,8 @@ void gs_reset_level(GameScene *gs, int x) {
   gs->no_move_left = false;
   gs->last_placed_dice_location = (Sizei){-1, -1};
 
-  for (int i = 0; i < 7; ++i)
-    for (int j = 0; j < 7; ++j)
-      board_set_grid(&gs->board, (Sizei){i, j}, So_Empty);
-  board_set_grid(&gs->board, (Sizei){0, 0}, So_None);
-  board_set_grid(&gs->board, (Sizei){2, 0}, So_None);
-  board_set_grid(&gs->board, (Sizei){4, 0}, So_None);
-  board_set_grid(&gs->board, (Sizei){6, 0}, So_None);
-  board_set_grid(&gs->board, (Sizei){3, 3}, So_Water);
-  board_set_grid(&gs->board, (Sizei){0, 1}, So_House);
-  board_set_grid(&gs->board, (Sizei){6, 6}, So_House);
-  board_set_grid(&gs->board, (Sizei){0, 6}, So_Trees);
-  board_set_grid(&gs->board, (Sizei){6, 1}, So_Trees);
-  gs_count_points(gs);
+  bd_reset(gs->board);
+  bd_count_points(gs->board, gs->points);
   gs_update_allow_to_pick(gs);
 }
 
@@ -298,12 +243,12 @@ void gs_draw(GameScene *gs, Game *g) {
 
   for (int i = 0; i < 7; ++i)
     for (int j = 0; j < 7; ++j) {
-      if (board_get_grid(&gs->board, (Sizei){i, j}) == So_None)
+      if (bd_get_grid(gs->board, (Sizei){i, j}) == So_None)
         continue;
 
       const float x = gs->no_move_left ? 1.0f : gs->wobble_time * gs->wobble_time;
       Sizei p = {i, j};
-      if (board_get_allowed_to_pick(&gs->board, p)) {
+      if (bd_allowed_to_pick(gs->board, p)) {
         g_color(g, (gp.w == i && gp.h == j) ? rgb(0xff, 0xda, 0x89) : white());
       } else
         g_color(g, gray(200 + x * 10 * sin(5.0f * g_time(g) + i - j)));
@@ -313,16 +258,16 @@ void gs_draw(GameScene *gs, Game *g) {
 
       const bool last = (gs->last_placed_dice_location.w == i && gs->last_placed_dice_location.h == j);
       g_color(g, last ? red() : gray(50));
-      if (board_get_grid(&gs->board, (Sizei){i, j}) != So_Empty) {
+      if (bd_get_grid(gs->board, (Sizei){i, j}) != So_Empty) {
         const float r = x * 0.04f * sin(100.0f + 40.0f * cos(g_time(g)) + i * j);
-        g_objectRS(g, g_animation_buffer(g), Img_menubar, board_get_grid(&gs->board, (Sizei){i, j}),
+        g_objectRS(g, g_animation_buffer(g), Img_menubar, bd_get_grid(gs->board, (Sizei){i, j}),
                    gs_grid_to_scene((Sizei){i, j}), r, 1.0f);
       }
     }
 
   g_color(g, red());
 
-  if (gs->selected_dice >= 0 && board_get_allowed_to_pick(&gs->board, gp)) {
+  if (gs->selected_dice >= 0 && bd_allowed_to_pick(gs->board, gp)) {
     Vec2 p = gs_grid_to_scene(gp);
     g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->dice[gs->selected_dice].o, p, 0.0f, 1.0f);
   }
@@ -402,8 +347,8 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
 
     else if (gs->selected_dice >= 0) {
       Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
-      if (board_get_allowed_to_pick(&gs->board, gp)) {
-        gs->board.grid[gp.w][gp.h] = gs->dice[gs->selected_dice].o;
+      if (bd_allowed_to_pick(gs->board, gp)) {
+        bd_set_grid(gs->board, gp, gs->dice[gs->selected_dice].o);
         Bling_init(gs, gs_grid_to_scene(gp), rgb(0xFF, 0x00, 0x00));
         gs->wobble_time = 1.0f;
 
@@ -418,7 +363,7 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
           gs->placed_dice = 2;
         }
 
-        gs_count_points(gs);
+        bd_count_points(gs->board, gs->points);
         gs_update_allow_to_pick(gs);
       }
     }
@@ -511,6 +456,7 @@ void GameScene_init(Game *g) {
       .pick_rects = {},
       .pick_rect_count = 0,
       .pick_under_mouse = -1,
+      .board = NULL,
       .points = NULL,
       .dice =
           {
@@ -519,11 +465,11 @@ void GameScene_init(Game *g) {
           },
       .selected_dice = -1,
       .placed_dice = 0,
-      .board = (Board){.allowed_to_pick = {{false}}, .visited = {{false}}, .grid = {{So_None}}},
       .last_placed_dice_location = {-1, -1},
       .can_select_dice = false,
       .wobble_time = 1.0f,
   };
+  gs->board = g_malloc(sizeof(Board));
   gs->points = PointOverview_init(g);
 
   gs_reset_level(gs, 0);
