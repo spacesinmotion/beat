@@ -369,20 +369,22 @@ void gs_draw(GameScene *gs, Game *g) {
       if (gs->grid[i][j] == So_None)
         continue;
 
+      const float x = gs->no_move_left ? 1.0f : gs->wobble_time * gs->wobble_time;
       Sizei p = {i, j};
       if (gs_pickable_gird(gs, p)) {
         g_color(g, (gp.w == i && gp.h == j) ? rgb(0xff, 0xda, 0x89) : white());
       } else
-        g_color(g, gray(200));
+        g_color(g, gray(200 + x * 10 * sin(5.0f * g_time(g) + i - j)));
 
-      float x = gs->no_move_left ? 1.0f : gs->wobble_time * gs->wobble_time;
       float s = 1.0f + x * 0.04f * sin(10.0f * g_time(g) + i + j);
       g_objectRS(g, g_animation_buffer(g), Img_menubar, 0, gs_grid_to_scene((Sizei){i, j}), 0.0, s);
 
       const bool last = (gs->last_placed_dice_location.w == i && gs->last_placed_dice_location.h == j);
       g_color(g, last ? red() : gray(50));
-      if (gs->grid[i][j] != So_Empty)
-        g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->grid[i][j], gs_grid_to_scene((Sizei){i, j}), 0.0, 1.0f);
+      if (gs->grid[i][j] != So_Empty) {
+        const float r = x * 0.04f * sin(100.0f + 40.0f * cos(g_time(g)) + i * j);
+        g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->grid[i][j], gs_grid_to_scene((Sizei){i, j}), r, 1.0f);
+      }
     }
 
   g_color(g, red());
