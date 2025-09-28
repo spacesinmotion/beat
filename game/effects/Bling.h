@@ -30,7 +30,7 @@ void bl_draw(Bling *bl, GameScene *gs, Game *g) {
 
   const int frame = (int)(bl->time * 16.0f);
   g_color(g, bl->color);
-  g_objectR(g, g_animation_buffer(g), Img_bling, frame % 10, bl->location, bl->rotation);
+  g_draw_icon(g, Img_bling, frame % 10, dt_pr(bl->location, bl->rotation));
 }
 
 static SceneObjectTable Bling_table = {

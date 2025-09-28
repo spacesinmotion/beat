@@ -1,6 +1,7 @@
 // #include <time.h>
 // #define DR_WAV_IMPLEMENTATION
 // #include "dr/dr_wav.h"
+#include "engine/DrawTransformation.h"
 #include "extern/cjsonh/cjsonh.h"
 #include <stdlib.h>
 #include <string.h>
@@ -51,6 +52,7 @@
 
 #include "extern/gc/gc.h"
 
+#define GAME_ENGINE_IMPL
 #include "engine/Game.h"
 
 #include "engine/math/Color.h"
@@ -79,23 +81,13 @@ typedef struct vertex_t {
 typedef struct vs_param_t {
   Vec2 to_screen_scale, pan;
   float rot;
-  float scale;
+  Vec2 scale;
 } vs_param_t;
 
 typedef struct fs_param_t {
   Color color;
   int color_mode;
 } fs_param_t;
-
-typedef struct Assets {
-  sg_image tilemap;
-  sg_image wearisome;
-} Assets;
-
-typedef struct TileRectBuffer {
-  G_Object buffer;
-  int w, h;
-} TileRectBuffer;
 
 typedef struct FontImage {
   stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
@@ -120,8 +112,7 @@ typedef struct Game {
   int mouse_y;
   float zoom;
 
-  TileRectBuffer tilerect_buffer[16];
-  G_Object animation_buffer_4x4;
+  DrawEntity animation_buffer_4x4;
 
   sg_image images[NB_Img];
   FontImage fonts[Nb_Font];
@@ -136,7 +127,6 @@ void g_set_background_color(Game *g, Color c) { g->render.background_color = c; 
 
 float g_animation_delta(Game *g) { return g->animation_delta; }
 float g_time(Game *g) { return g->time; }
-int g_frame(Game *g) { return (int)(g->time * 12.0f); }
 
 Sizei g_viewport(Game *g) {
   return (Sizei){sapp_width() / g->render.overlay_scale, sapp_height() / g->render.overlay_scale};
@@ -199,8 +189,8 @@ const FontImage *g_font(Game *g, G_Font font) {
   return &g->fonts[font];
 }
 
-void g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
-  G_Object_free(o);
+void g_create_text(Game *g, TextDrawEntity *o, G_Font ff, const char *text) {
+  tde_free(o);
   const FontImage *f = g_font(g, ff);
   vertex_t vertices[1024];
   uint16_t indices[1024];
@@ -245,83 +235,53 @@ void g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
     }
   }
   if (vlen == 0ul)
-    *o = (G_Object){0};
+    *o = (TextDrawEntity){0};
   else {
-    *o = (G_Object){
-        .vertices = sg_make_buffer(&(sg_buffer_desc){
-                                       .type = SG_BUFFERTYPE_VERTEXBUFFER,
-                                       .data = (sg_range){vertices, sizeof(vertex_t) * vlen},
-                                       .label = "vertex-buffer",
-                                   })
-                        .id,
-        .indices = sg_make_buffer(&(sg_buffer_desc){
-                                      .type = SG_BUFFERTYPE_INDEXBUFFER,
-                                      .data = (sg_range){indices, sizeof(uint16_t) * ilen},
-                                      .label = "index-buffer",
-                                  })
-                       .id,
-        .num_elements = ilen,
+    *o = (TextDrawEntity){
+        {
+            .color_mode = 1,
+            .vertices = sg_make_buffer(&(sg_buffer_desc){
+                                           .type = SG_BUFFERTYPE_VERTEXBUFFER,
+                                           .data = (sg_range){vertices, sizeof(vertex_t) * vlen},
+                                           .label = "vertex-buffer",
+                                       })
+                            .id,
+            .indices = sg_make_buffer(&(sg_buffer_desc){
+                                          .type = SG_BUFFERTYPE_INDEXBUFFER,
+                                          .data = (sg_range){indices, sizeof(uint16_t) * ilen},
+                                          .label = "index-buffer",
+                                      })
+                           .id,
+            .num_elements = ilen,
+        },
+        .texture_id = f->texture.id,
     };
   }
 }
 
-void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {
-  g->render.fs_param.color_mode = 0;
-  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
-  g->render.vs_param.rot = 0.0f;
-  g->render.vs_param.scale = 1.0f;
+static inline void g_buffer(Game *g, const DrawEntity *buffer, uint32_t texture_id, const DrawTransformation dt) {
+  g->render.fs_param.color_mode = buffer->color_mode;
+  g->render.vs_param.pan = v_add(g->render.camera_pan, dt.pan);
+  g->render.vs_param.rot = dt.rot;
+  g->render.vs_param.scale = dt.scale;
 
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
   sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {g_image(g, tex)}, .samplers = {g->render.texture_sampler}},
-      .vertex_buffers = {{buffer.vertices}},
-      .index_buffer = {buffer.indices},
+      .fs = {.images = {{texture_id}}, .samplers = {g->render.texture_sampler}},
+      .vertex_buffers = {{buffer->vertices}},
+      .index_buffer = {buffer->indices},
   });
-  sg_draw(0, buffer.num_elements, 1);
 }
 
-void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
-  g->render.fs_param.color_mode = 1;
-  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
-  g->render.vs_param.rot = 0.0f;
-  g->render.vs_param.scale = 1.0f;
-
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
-  sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {g_font(g, f)->texture}, .samplers = {g->render.texture_sampler}},
-      .vertex_buffers = {{buffer.vertices}},
-      .index_buffer = {buffer.indices},
-  });
-  sg_draw(0, buffer.num_elements, 1);
+void g_draw_text(Game *g, const TextDrawEntity *tde, Vec2 pan) {
+  g_buffer(g, &tde->draw_entity, tde->texture_id, dt_p(pan));
+  sg_draw(0, tde->draw_entity.num_elements, 1);
 }
 
-void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, float scale) {
-  g->render.fs_param.color_mode = 0;
-  g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
-  g->render.vs_param.rot = rot;
-  g->render.vs_param.scale = scale;
-
-  sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
-  sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
-  sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {g_image(g, tex)}, .samplers = {g->render.texture_sampler}},
-      .vertex_buffers = {{buffer.vertices}},
-      .index_buffer = {buffer.indices},
-  });
-
+void g_draw_icon(Game *g, Image tex, int frame, const DrawTransformation dt) {
+  g_buffer(g, &g->animation_buffer_4x4, g_image(g, tex).id, dt);
   sg_draw(6 * frame, 6, 1);
-}
-
-void g_objectR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot) {
-  g_objectRS(g, buffer, tex, frame, pan, rot, 1.0f);
-}
-void g_objectS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float scale) {
-  g_objectRS(g, buffer, tex, frame, pan, 0.0, scale);
-}
-void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan) {
-  g_objectRS(g, buffer, tex, frame, pan, 0.0f, 1.0f);
 }
 
 static Vec2 to_scene(Game *g, float x, float y) {
@@ -372,7 +332,7 @@ void add_quad(vertex_t *vertices, Rect r, SubImage img) {
   vertices[3] = (vertex_t){(Vec2){r.pos.x + 0, r.pos.y + r.size.y}, (i + 0) * oi, (j + 0) * oj};
 }
 
-G_Object quad_animation_buffer(float x, float y, float w, float h, int ni, int nj) {
+DrawEntity quad_animation_buffer(float x, float y, float w, float h, int ni, int nj) {
   vertex_t vertices[4 * ni * nj];
   uint16_t indices[6 * ni * nj];
   int ov = 0;
@@ -391,7 +351,8 @@ G_Object quad_animation_buffer(float x, float y, float w, float h, int ni, int n
     }
   }
 
-  return (G_Object){
+  return (DrawEntity){
+      .color_mode = 0,
       .vertices = sg_make_buffer(&(sg_buffer_desc){
                                      .type = SG_BUFFERTYPE_VERTEXBUFFER,
                                      .data = (sg_range){vertices, sizeof(vertex_t) * 4 * ni * nj},
@@ -407,6 +368,9 @@ G_Object quad_animation_buffer(float x, float y, float w, float h, int ni, int n
       .num_elements = 6 * 2,
   };
 }
+
+typedef bool (*IsSetCB)(void *data, int i, int j);
+
 uint8_t tile_code(int i, int j, IsSetCB is_set, void *data) {
   uint8_t code = 0;
   code += is_set(data, i + 0, j + 0) * 1;
@@ -415,7 +379,8 @@ uint8_t tile_code(int i, int j, IsSetCB is_set, void *data) {
   code += is_set(data, i + 0, j + 1) * 8;
   return code;
 }
-G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
+
+DrawEntity create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
   static int lu[16][2] = {
       {0, 3}, {0, 0}, {1, 3}, {3, 0}, {0, 2}, {2, 3}, {1, 0}, {1, 1},
       {3, 3}, {3, 2}, {0, 1}, {2, 0}, {1, 2}, {3, 1}, {2, 2}, {2, 1},
@@ -441,7 +406,8 @@ G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
       ov += 4;
     }
   }
-  return (G_Object){
+  return (DrawEntity){
+      .color_mode = 0,
       .vertices = sg_make_buffer(&(sg_buffer_desc){
                                      .type = SG_BUFFERTYPE_VERTEXBUFFER,
                                      .data = (sg_range){vertices, sizeof(vertex_t) * 4 * (ni + 1) * (nj + 1)},
@@ -458,40 +424,13 @@ G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
   };
 }
 
-bool G_Object_valid(const G_Object *b) { return b->vertices > 0 && b->indices > 0 && b->num_elements > 0; }
-
-void G_Object_free(G_Object *b) {
-  sg_destroy_buffer((sg_buffer){b->vertices});
-  sg_destroy_buffer((sg_buffer){b->indices});
-  b->vertices = b->indices = b->num_elements = 0;
-}
-
 bool rect_is_set(Recti *r, int i, int j) {
   if (i < 0 || j < 0 || i >= r->w || j >= r->h)
     return false;
   return true;
 }
 
-G_Object g_tilerect_buffer(Game *g, int w, int h) {
-  TileRectBuffer *tb = NULL;
-  for (int i = 0; i < 16; ++i) {
-    if (g->tilerect_buffer[i].w == w && g->tilerect_buffer[i].h == h)
-      return g->tilerect_buffer[i].buffer;
-    if (g->tilerect_buffer[i].w == 0 && g->tilerect_buffer[i].h == 0) {
-      tb = &g->tilerect_buffer[i];
-      break;
-    }
-  }
-  if (tb) {
-    tb->buffer = create_tile_rect_buffer(w, h, (IsSetCB)rect_is_set, &(Recti){0, 0, w, h});
-    tb->w = w;
-    tb->h = h;
-  }
-
-  return tb ? tb->buffer : (G_Object){0, 0, 0};
-}
-
-G_Object g_animation_buffer(Game *g) { return g->animation_buffer_4x4; }
+const DrawEntity *g_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
 
 static void g_init(Game *g) {
   srand(time(0));
@@ -529,7 +468,7 @@ static void g_init(Game *g) {
                    "uniform vec2 to_screen_scale;\n"
                    "uniform vec2 pan;\n"
                    "uniform float rot;\n"
-                   "uniform float scale;\n"
+                   "uniform vec2 scale;\n"
                    "\n"
                    "layout(location=0) in vec4 position;\n"
                    "layout(location=1) in vec2 texcoord;\n"
@@ -584,7 +523,7 @@ static void g_init(Game *g) {
                          {"to_screen_scale", SG_UNIFORMTYPE_FLOAT2, 1},
                          {"pan", SG_UNIFORMTYPE_FLOAT2, 1},
                          {"rot", SG_UNIFORMTYPE_FLOAT, 1},
-                         {"scale", SG_UNIFORMTYPE_FLOAT, 1},
+                         {"scale", SG_UNIFORMTYPE_FLOAT2, 1},
                      },
              }}},
       .fs =
@@ -637,7 +576,6 @@ static void g_init(Game *g) {
           },
   });
 
-  memset(g->tilerect_buffer, 0, sizeof(g->tilerect_buffer));
   g->animation_buffer_4x4 = quad_animation_buffer(-8, -8, 16, 16, 4, 4);
 
   g->render.texture_sampler = sg_make_sampler(&(sg_sampler_desc){
@@ -683,7 +621,6 @@ Vec2 scale_for_screen(const float factor) {
 }
 
 void g_draw_scene(Game *g) {
-  g->render.fs_param.color_mode = 0;
   if (g->scene.table->draw) {
     g->render.vs_param.to_screen_scale = scale_for_screen(g->render.camera_scale);
     g->scene.table->draw(g->scene.context, g);

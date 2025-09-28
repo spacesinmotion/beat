@@ -1,11 +1,12 @@
 #ifndef POINTOVERVIEW_H
 #define POINTOVERVIEW_H
 
+#include "engine/DrawTransformation.h"
 #include "engine/Game.h"
 #include "game/ObjectType.h"
 
 typedef struct GroupCounter {
-  G_Object text_3to5, text_6, text_g1, text_g2, text_points;
+  TextDrawEntity text_3to5, text_6, text_g1, text_g2, text_points;
   int g1, g1_cache, g2, g2_cache, points, points_cache;
 } GroupCounter;
 
@@ -15,11 +16,10 @@ typedef struct PointOverview {
   GroupCounter animals;
   GroupCounter flowers;
 
-  G_Object text_water_points;
-  G_Object text_water_count;
+  TextDrawEntity text_water_points, text_water_count;
   int water_count, water_count_cache;
 
-  G_Object text_points;
+  TextDrawEntity text_points;
   int points, points_cache;
 } PointOverview;
 
@@ -46,16 +46,16 @@ void po_update_group_counter(GroupCounter *gc, Game *g) {
 
 void po_draw_group_counter(GroupCounter *gc, Game *g, Vec2 p, ObjectType icon) {
   g_color(g, gray(170));
-  g_objectRS(g, g_animation_buffer(g), Img_menubar, icon, p, 0.0, 0.7f);
-  g_text(g, gc->text_3to5, Oswald_Regular_8, v_add(p, (Vec2){5, -3}));
-  g_objectRS(g, g_animation_buffer(g), Img_menubar, icon, v_add(p, (Vec2){20, 0}), 0.0, 0.7f);
-  g_text(g, gc->text_6, Oswald_Regular_8, v_add(p, (Vec2){25, -3}));
+  g_draw_icon(g, Img_menubar, icon, dt_psf(p, 0.7f));
+  g_draw_text(g, &gc->text_3to5, v_add(p, (Vec2){5, -3}));
+  g_draw_icon(g, Img_menubar, icon, dt_psf(v_add(p, (Vec2){20, 0}), 0.7f));
+  g_draw_text(g, &gc->text_6, v_add(p, (Vec2){25, -3}));
 
-  g_text(g, gc->text_g1, Oswald_Regular_8, v_add(p, (Vec2){-4, -10}));
-  g_text(g, gc->text_g2, Oswald_Regular_8, v_add(p, (Vec2){16, -10}));
+  g_draw_text(g, &gc->text_g1, v_add(p, (Vec2){-4, -10}));
+  g_draw_text(g, &gc->text_g2, v_add(p, (Vec2){16, -10}));
 
   g_color(g, gray(220));
-  g_text(g, gc->text_points, Oswald_Regular_12, v_add(p, (Vec2){35, -6}));
+  g_draw_text(g, &gc->text_points, v_add(p, (Vec2){35, -6}));
 }
 
 void po_update(PointOverview *po, Game *g) {
@@ -88,14 +88,14 @@ void po_draw(PointOverview *po, Game *g, bool no_move_left) {
 
   Vec2 p = {l, t - (o * row++)};
   g_color(g, gray(170));
-  g_objectRS(g, g_animation_buffer(g), Img_menubar, So_Water, v_add(p, (Vec2){0, 0}), 0.0, 0.7f);
-  g_objectRS(g, g_animation_buffer(g), Img_menubar, So_None, v_add(p, (Vec2){10, 0}), 0.0, 0.7f);
-  g_text(g, po->text_water_count, Oswald_Regular_8, v_add(p, (Vec2){-4, -10}));
+  g_draw_icon(g, Img_menubar, So_Water, dt_psf(v_add(p, (Vec2){0, 0}), 0.7f));
+  g_draw_icon(g, Img_menubar, So_None, dt_psf(v_add(p, (Vec2){10, 0}), 0.7f));
+  g_draw_text(g, &po->text_water_count, v_add(p, (Vec2){-4, -10}));
   g_color(g, gray(220));
-  g_text(g, po->text_water_points, Oswald_Regular_12, v_add(p, (Vec2){35, -6}));
+  g_draw_text(g, &po->text_water_points, v_add(p, (Vec2){35, -6}));
 
   g_color(g, no_move_left ? red() : white());
-  g_text(g, po->text_points, Oswald_Regular_12, (Vec2){l + 35, t - 10 - (o * row++)});
+  g_draw_text(g, &po->text_points, (Vec2){l + 35, t - 10 - (o * row++)});
 }
 
 void po_group_counter_add_group(GroupCounter *gc, int c) {

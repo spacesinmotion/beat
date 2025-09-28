@@ -1,5 +1,6 @@
 
 #include "game/GameScene.h"
+#include "engine/DrawTransformation.h"
 #include "engine/Game.h"
 #include "engine/Scene.h"
 #include "engine/math/Color.h"
@@ -91,11 +92,11 @@ Sizei gs_scene_to_grid(Vec2 p) {
 void gs_draw_button(Game *g, Vec2 p, int icon, Color c, float s) {
   g_color(g, c);
   s = s + 0.01f * sin(8.0f * g_time(g));
-  g_objectRS(g, g_animation_buffer(g), Img_menubar, 7, p, 0.0, s);
+  g_draw_icon(g, Img_menubar, 7, dt_psf(p, s));
   if (icon == So_Empty)
     return;
   g_color(g, gray(50));
-  g_objectRS(g, g_animation_buffer(g), Img_menubar, icon, p, 0.0, s);
+  g_draw_icon(g, Img_menubar, icon, dt_psf(p, s));
 }
 
 void gs_update_allow_to_pick(GameScene *gs);
@@ -254,14 +255,14 @@ void gs_draw(GameScene *gs, Game *g) {
         g_color(g, gray(200 + x * 10 * sin(5.0f * g_time(g) + i - j)));
 
       float s = 1.0f + x * 0.04f * sin(10.0f * g_time(g) + i + j);
-      g_objectRS(g, g_animation_buffer(g), Img_menubar, 0, gs_grid_to_scene((Sizei){i, j}), 0.0, s);
+      g_draw_icon(g, Img_menubar, 0, dt_psf(gs_grid_to_scene((Sizei){i, j}), s));
 
       const bool last = (gs->last_placed_dice_location.w == i && gs->last_placed_dice_location.h == j);
       g_color(g, last ? red() : gray(50));
       if (bd_get_grid(gs->board, (Sizei){i, j}) != So_Empty) {
         const float r = x * 0.04f * sin(100.0f + 40.0f * cos(g_time(g)) + i * j);
-        g_objectRS(g, g_animation_buffer(g), Img_menubar, bd_get_grid(gs->board, (Sizei){i, j}),
-                   gs_grid_to_scene((Sizei){i, j}), r, 1.0f);
+        g_draw_icon(g, Img_menubar, bd_get_grid(gs->board, (Sizei){i, j}),
+                    dt_prsf(gs_grid_to_scene((Sizei){i, j}), r, 1.0f));
       }
     }
 
@@ -269,7 +270,7 @@ void gs_draw(GameScene *gs, Game *g) {
 
   if (gs->selected_dice >= 0 && bd_allowed_to_pick(gs->board, gp)) {
     Vec2 p = gs_grid_to_scene(gp);
-    g_objectRS(g, g_animation_buffer(g), Img_menubar, gs->dice[gs->selected_dice].o, p, 0.0f, 1.0f);
+    g_draw_icon(g, Img_menubar, gs->dice[gs->selected_dice].o, dt_p(p));
   }
 
   po_draw(gs->points, g, gs->no_move_left);
@@ -300,30 +301,13 @@ void gs_draw(GameScene *gs, Game *g) {
       gs_draw_button(g, gs->dice[0].p, gs->dice[0].o, rgb(0xff, 0xda, 0x89), gs->dice[0].s);
   }
 
-  // Draw all scene objects (effects, etc.) on top
   for (int i = 0; i < gs->scene_objects.len; ++i)
     so_draw(&gs->scene_objects.data[i], gs, g);
 }
 
-void gs_draw_menu_overlay(GameScene *gs, Game *g) {
-  (void)g, (void)gs;
-  // const Color cn = false ? gray(25) : gray(225);
-  // const Color ch = false ? gray(75) : gray(175);
-  // for (int i = 1; i < So_None; ++i) {
-  //   const Vec2 p = (Vec2){8 + 4 + i * 16, 8 + 4};
-  //   const bool hover = gs_pick(gs, gs_select_bottom_menu, i, p, 1.0f);
-  //   g_color(g, hover ? gray(100) : (gs->menu_selected == i ? cn : ch));
-  //   g_object(g, g_animation_buffer(g), Img_menubar, i % 16, p);
-  //   g_color(g, hover ? red() : (gs->menu_selected == i ? green() : blue()));
-  //   g_object(g, g_animation_buffer(g), Img_marker, hover ? g_frame(g) % 4 : i % 4, p);
-  // }
-}
+void gs_draw_menu_overlay(GameScene *gs, Game *g) { (void)g, (void)gs; }
 
-void gs_draw_overlay(GameScene *gs, Game *g) {
-  (void)g, (void)gs;
-  // gs->pick_rect_count = 0;
-  // gs_draw_menu_overlay(gs, g);
-}
+void gs_draw_overlay(GameScene *gs, Game *g) { (void)g, (void)gs; }
 
 void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   (void)g, (void)mp, (void)op;
