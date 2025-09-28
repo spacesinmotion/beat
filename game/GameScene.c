@@ -266,6 +266,12 @@ void gs_draw(GameScene *gs, Game *g) {
       }
     }
 
+  g_color(g, white());
+  const float d = 3.0f / 2.0f * 8.0f * 6.0f;
+  g_draw_rect(g, dt_ps((Vec2){-1, -11}, (Vec2){d + 2, 4 + 2}));
+  g_color(g, rgb(0xff, 0xda, 0x89));
+  g_draw_rect(g, dt_ps((Vec2){0, -10}, (Vec2){d * bd_fill_ratio(gs->board), 4}));
+
   g_color(g, red());
 
   if (gs->selected_dice >= 0 && bd_allowed_to_pick(gs->board, gp)) {

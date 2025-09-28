@@ -150,4 +150,13 @@ static inline void bd_count_points(Board *bd, PointOverview *po) {
   po->points = po->house.points + po->trees.points + po->animals.points + po->flowers.points + po->water_count * 15;
 }
 
+static inline float bd_fill_ratio(const Board *bd) {
+  int filled = 0;
+  for (int i = 0; i < 7; ++i)
+    for (int j = 0; j < 7; ++j)
+      if (bd->grid[i][j] != So_None && bd->grid[i][j] != So_Empty)
+        filled++;
+  return (float)filled / (49.0f - 4.0f);
+}
+
 #endif

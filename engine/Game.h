@@ -31,6 +31,8 @@ Vec2 g_mouse_on_overlay(Game *g);
 void g_create_text(Game *g, TextDrawEntity *o, G_Font ff, const char *text);
 void g_draw_text(Game *g, const TextDrawEntity *tdeTextDrawEntity, Vec2 pan);
 
+void g_draw_rect(Game *g, const DrawTransformation dt);
+
 void g_draw_icon(Game *g, Image tex, int frame, const DrawTransformation dt);
 
 void g_color(Game *game, Color c);

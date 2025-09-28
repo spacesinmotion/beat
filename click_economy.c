@@ -112,7 +112,7 @@ typedef struct Game {
   int mouse_y;
   float zoom;
 
-  DrawEntity animation_buffer_4x4;
+  DrawEntity quad_buffer, animation_buffer_4x4;
 
   sg_image images[NB_Img];
   FontImage fonts[Nb_Font];
@@ -279,6 +279,11 @@ void g_draw_text(Game *g, const TextDrawEntity *tde, Vec2 pan) {
   sg_draw(0, tde->draw_entity.num_elements, 1);
 }
 
+void g_draw_rect(Game *g, const DrawTransformation dt) {
+  g_buffer(g, &g->quad_buffer, g_image(g, Img_bling).id, dt);
+  sg_draw(0, g->quad_buffer.num_elements, 1);
+}
+
 void g_draw_icon(Game *g, Image tex, int frame, const DrawTransformation dt) {
   g_buffer(g, &g->animation_buffer_4x4, g_image(g, tex).id, dt);
   sg_draw(6 * frame, 6, 1);
@@ -330,6 +335,39 @@ void add_quad(vertex_t *vertices, Rect r, SubImage img) {
   vertices[1] = (vertex_t){(Vec2){r.pos.x + r.size.x, r.pos.y + 0}, (i + 1) * oi, (j + 1) * oj};
   vertices[2] = (vertex_t){(Vec2){r.pos.x + r.size.x, r.pos.y + r.size.y}, (i + 1) * oi, (j + 0) * oj};
   vertices[3] = (vertex_t){(Vec2){r.pos.x + 0, r.pos.y + r.size.y}, (i + 0) * oi, (j + 0) * oj};
+}
+
+DrawEntity quad_buffer(float x, float y, float w, float h) {
+  vertex_t vertices[4];
+  uint16_t indices[6];
+  int ov = 0;
+  int oi = 0;
+  add_quad(&vertices[ov], (Rect){{x, y}, {w, h}}, (SubImage){0, 0, 1, 1});
+  indices[oi + 0] = ov + 0;
+  indices[oi + 1] = ov + 2;
+  indices[oi + 2] = ov + 1;
+  indices[oi + 3] = ov + 0;
+  indices[oi + 4] = ov + 3;
+  indices[oi + 5] = ov + 2;
+  ov += 4;
+  oi += 6;
+
+  return (DrawEntity){
+      .color_mode = 2,
+      .vertices = sg_make_buffer(&(sg_buffer_desc){
+                                     .type = SG_BUFFERTYPE_VERTEXBUFFER,
+                                     .data = (sg_range){vertices, sizeof(vertices)},
+                                     .label = "vertex-buffer",
+                                 })
+                      .id,
+      .indices = sg_make_buffer(&(sg_buffer_desc){
+                                    .type = SG_BUFFERTYPE_INDEXBUFFER,
+                                    .data = (sg_range){indices, sizeof(indices)},
+                                    .label = "index-buffer",
+                                })
+                     .id,
+      .num_elements = 6 * 2,
+  };
 }
 
 DrawEntity quad_animation_buffer(float x, float y, float w, float h, int ni, int nj) {
@@ -430,8 +468,6 @@ bool rect_is_set(Recti *r, int i, int j) {
   return true;
 }
 
-const DrawEntity *g_animation_buffer(Game *g) { return &g->animation_buffer_4x4; }
-
 static void g_init(Game *g) {
   srand(time(0));
   g->render.camera_pan = (Vec2){54.0f, 20.0f};
@@ -441,7 +477,7 @@ static void g_init(Game *g) {
       {2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale},
       {1.0f, 1.0f},
       0.0f,
-      1.0f,
+      {1.0f, 1.0f},
   };
   g->zoom = 0.8f;
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0};
@@ -506,10 +542,12 @@ static void g_init(Game *g) {
                    "  if (color_mode == 0) {\n"
                    "    vec4 c = texture(tex, uv);\n"
                    "    frag_color = vec4(vec3(color) * vec3(c), color.a * c.a);\n"
-                   "  } else {\n"
+                   "  } else if (color_mode == 1) {\n"
                    "    float a = texture(tex, uv).r * color.a;\n"
                    "    frag_color = vec4(vec3(color), a);\n"
-                   "  }\n"
+                   "  } else {\n"
+                   "    frag_color = color;\n"
+                   "  } \n"
                    "}\n";
 
   sg_shader shader = sg_make_shader(&(sg_shader_desc){
@@ -576,6 +614,7 @@ static void g_init(Game *g) {
           },
   });
 
+  g->quad_buffer = quad_buffer(0, 0, 1, 1);
   g->animation_buffer_4x4 = quad_animation_buffer(-8, -8, 16, 16, 4, 4);
 
   g->render.texture_sampler = sg_make_sampler(&(sg_sampler_desc){
