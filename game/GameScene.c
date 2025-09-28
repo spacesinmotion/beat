@@ -129,7 +129,6 @@ void gs_roll_dice(GameScene *gs, int id) {
     gs->dice[0] = (DiceRoll){(ObjectType)(rand() % 6), (Vec2){-30, 45}, 2.0f, false};
     gs->dice[1] = (DiceRoll){(ObjectType)(rand() % 6), (Vec2){-30, 45}, 2.0f, false};
   }
-  printf("gs_roll_dice %d %d\n", gs->dice[0].o, gs->dice[1].o);
 
   if (gs->dice[0].o == So_Empty && gs->dice[1].o == So_Empty) {
     gs->can_select_dice = true;
@@ -272,7 +271,6 @@ bool gs_has_pickable_neighbors(GameScene *gs, Sizei gp) {
 }
 
 void gs_update_allow_to_pick(GameScene *gs) {
-  printf("gs_update_allow_to_pick\n");
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
     for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
       gs->allowed_to_pick[i][j] = false;
@@ -293,9 +291,7 @@ void gs_update_allow_to_pick(GameScene *gs) {
         gs_mark_empty_neighbors_pickable(gs, p);
     }
 
-  printf("ok %d %d\n", gs->dice[0].o, gs->dice[1].o);
   if (gs->dice[1].o != So_Empty && gs->dice[1].o != So_None) {
-    printf("here\n");
     for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
       for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
         if (gs->allowed_to_pick[i][j] && !gs_has_pickable_neighbors(gs, (Sizei){i, j}))
@@ -339,8 +335,6 @@ void gs_custom_dice_select(GameScene *gs, int id) {
 typedef void (*OnClickCB)(GameScene *, int id);
 
 void gs_reset_level(GameScene *gs, int x) {
-  printf("gs_reset_level\n");
-
   (void)x;
   gs->dice[0] = gs->dice[1] = (DiceRoll){So_None, {0, 0}, 1.0f, false};
   gs->selected_dice = -1;
