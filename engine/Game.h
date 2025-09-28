@@ -10,7 +10,7 @@
 #include "engine/math/Vec2.h"
 #include "game/assets.h"
 
-#include "Scene.h"
+#include "engine/Scene.h"
 
 const char *str(const char *fmt, ...);
 
