@@ -122,12 +122,19 @@ void gs_update_allow_to_pick(GameScene *gs);
 void gs_roll_dice(GameScene *gs, int id) {
   (void)id;
   gs->placed_dice = 0;
-  gs->dice[0] = (DiceRoll){(ObjectType)(rand() % 6), (Vec2){-30, 45}, 2.0f, false};
-  gs->dice[1] = (DiceRoll){(ObjectType)(rand() % 6), (Vec2){-30, 45}, 2.0f, false};
-  if (gs->dice[0].o == So_Empty && gs->dice[0].o == So_Empty) {
+  if (id == 42) {
+    gs->dice[0] = (DiceRoll){So_Empty, (Vec2){-30, 45}, 2.0f, false};
+    gs->dice[1] = (DiceRoll){So_Empty, (Vec2){-30, 45}, 2.0f, false};
+  } else {
+    gs->dice[0] = (DiceRoll){(ObjectType)(rand() % 6), (Vec2){-30, 45}, 2.0f, false};
+    gs->dice[1] = (DiceRoll){(ObjectType)(rand() % 6), (Vec2){-30, 45}, 2.0f, false};
+  }
+  printf("gs_roll_dice %d %d\n", gs->dice[0].o, gs->dice[1].o);
+
+  if (gs->dice[0].o == So_Empty && gs->dice[1].o == So_Empty) {
     gs->can_select_dice = true;
   } else if (gs->dice[0].o == So_Empty) {
-    ObjectType ot = gs->dice[0].o;
+    ObjectType ot = gs->dice[1].o;
     gs->dice[1].o = gs->dice[0].o;
     gs->dice[0].o = ot;
   }
@@ -265,11 +272,13 @@ bool gs_has_pickable_neighbors(GameScene *gs, Sizei gp) {
 }
 
 void gs_update_allow_to_pick(GameScene *gs) {
+  printf("gs_update_allow_to_pick\n");
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
     for (int j = 0; j < (int)(sizeof(gs->grid[0]) / sizeof(gs->grid[0][0])); ++j)
       gs->allowed_to_pick[i][j] = false;
 
-  if (gs->dice[0].o == So_None && gs->dice[1].o == So_None)
+  if ((gs->dice[0].o == So_Empty && gs->dice[1].o == So_Empty) ||
+      (gs->dice[0].o == So_None && gs->dice[1].o == So_None))
     return;
 
   if (gs->placed_dice == 1) {
@@ -324,15 +333,19 @@ void gs_custom_dice_select(GameScene *gs, int id) {
   gs->selected_dice = 0;
   gs->last_placed_dice_location = (Sizei){-1, -1};
   gs->can_select_dice = false;
+  gs_update_allow_to_pick(gs);
 }
 
 typedef void (*OnClickCB)(GameScene *, int id);
 
 void gs_reset_level(GameScene *gs, int x) {
+  printf("gs_reset_level\n");
+
   (void)x;
   gs->dice[0] = gs->dice[1] = (DiceRoll){So_None, {0, 0}, 1.0f, false};
   gs->selected_dice = -1;
   gs->placed_dice = 0;
+  gs->no_move_left = false;
   gs->last_placed_dice_location = (Sizei){-1, -1};
 
   for (int i = 0; i < (int)(sizeof(gs->grid) / sizeof(gs->grid[0])); ++i)
@@ -382,8 +395,8 @@ void gs_draw(GameScene *gs, Game *g) {
   po_draw(gs->points, g, gs->no_move_left);
 
   if (gs->no_move_left) {
-    bool h = gs_pick(gs, gs_reset_level, 0, (Vec2){0, -50}, 2);
-    gs_draw_button(g, (Vec2){0, -50}, 7, h ? rgb(0xff, 0xda, 0x89) : gray(220), 2.0f);
+    bool h = gs_pick(gs, gs_reset_level, 0, (Vec2){-30, 45}, 2.0f);
+    gs_draw_button(g, (Vec2){-30, 45}, 9, h ? rgb(0xff, 0xda, 0x89) : gray(220), 2.0f);
     return;
   }
 
@@ -480,16 +493,19 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
   }
 }
 
-typedef enum GameKeys {
-  PAUSE_KEY = 32,
-  SPEED_1_KEY = 49,
-  SPEED_2_KEY = 50,
-  SPEED_4_KEY = 51,
-  SPEED_8_KEY = 52,
-} GameKeys;
+// typedef enum GameKeys {
+//   PAUSE_KEY = 32,
+//   SPEED_1_KEY = 49,
+//   SPEED_2_KEY = 50,
+//   SPEED_4_KEY = 51,
+//   SPEED_8_KEY = 52,
+// } GameKeys;
 
 void gs_key_up(GameScene *gs, Game *g, int key) {
   (void)g, (void)gs;
+
+  // if (key == 80)
+  //   gs_roll_dice(gs, 42);
 
   printf("KEY UP (%d)\n", key);
 }
@@ -531,6 +547,7 @@ void GameScene_init(Game *g) {
   gs->points = PointOverview_init(g);
 
   gs_reset_level(gs, 0);
+  gs->no_move_left = true;
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }
