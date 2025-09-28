@@ -4,6 +4,7 @@
 #include "engine/Game.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
+#include "game/Board.h"
 #include "game/ObjectType.h"
 #include "game/SceneObject.h"
 
@@ -12,10 +13,6 @@ typedef struct SceneObjectVec {
   SceneObject *data;
   int len, cap;
 } SceneObjectVec;
-
-typedef struct Stuff {
-  int water, food, construction_material;
-} Stuff;
 
 typedef struct GameScene GameScene;
 typedef void (*OnClickCB)(GameScene *, int id);
@@ -41,10 +38,7 @@ typedef struct GameScene {
   int pick_rect_count;
   int pick_under_mouse;
 
-  ObjectType grid[7][7];
-  bool visited[7][7];
-  bool allowed_to_pick[7][7];
-
+  Board board;
   PointOverview *points;
 
   DiceRoll dice[2];
