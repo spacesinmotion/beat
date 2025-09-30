@@ -315,8 +315,8 @@ void gs_draw_menu_overlay(GameScene *gs, Game *g) { (void)g, (void)gs; }
 
 void gs_draw_overlay(GameScene *gs, Game *g) { (void)g, (void)gs; }
 
-void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
-  (void)g, (void)mp, (void)op;
+void gs_mouse_move(GameScene *gs, Game *g) {
+  (void)g;
   gs->mouse_pos = g_mouse_in_scene(g);
 
   gs->pick_under_mouse = -1;
@@ -328,8 +328,8 @@ void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
   }
 }
 
-void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
-  (void)g, (void)op, (void)mp;
+void gs_mouse_down(GameScene *gs, Game *g, int button) {
+  (void)g;
 
   if (button == 0) {
     if (gs->pick_under_mouse >= 0)

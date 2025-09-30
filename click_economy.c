@@ -104,13 +104,20 @@ typedef struct Game {
     fs_param_t fs_param;
     sg_sampler texture_sampler;
     Color background_color;
-    Vec2 camera_pan;
-    float camera_scale;
-    float overlay_scale;
   } render;
+
+  struct {
+    Vec2 pan;
+    float scale;
+    float zoom;
+  } camera;
+
+  struct {
+    float scale;
+  } overlay;
+
   int mouse_x;
   int mouse_y;
-  float zoom;
 
   DrawEntity quad_buffer, animation_buffer_4x4;
 
@@ -128,9 +135,7 @@ void g_set_background_color(Game *g, Color c) { g->render.background_color = c; 
 float g_animation_delta(Game *g) { return g->animation_delta; }
 float g_time(Game *g) { return g->time; }
 
-Sizei g_viewport(Game *g) {
-  return (Sizei){sapp_width() / g->render.overlay_scale, sapp_height() / g->render.overlay_scale};
-}
+Sizei g_viewport(Game *g) { return (Sizei){sapp_width() / g->overlay.scale, sapp_height() / g->overlay.scale}; }
 
 void g_color(Game *game, Color c) { game->render.fs_param.color = c; }
 
@@ -261,7 +266,7 @@ void g_create_text(Game *g, TextDrawEntity *o, G_Font ff, const char *text) {
 
 static inline void g_buffer(Game *g, const DrawEntity *buffer, uint32_t texture_id, const DrawTransformation dt) {
   g->render.fs_param.color_mode = buffer->color_mode;
-  g->render.vs_param.pan = v_add(g->render.camera_pan, dt.pan);
+  g->render.vs_param.pan = v_add(g->camera.pan, dt.pan);
   g->render.vs_param.rot = dt.rot;
   g->render.vs_param.scale = dt.scale;
 
@@ -290,11 +295,9 @@ void g_draw_icon(Game *g, Image tex, int frame, const DrawTransformation dt) {
 }
 
 static Vec2 to_scene(Game *g, float x, float y) {
-  return v_sub(v_diff((Vec2){x, sapp_height() - y}, g->render.camera_scale), g->render.camera_pan);
+  return v_sub(v_diff((Vec2){x, sapp_height() - y}, g->camera.scale), g->camera.pan);
 }
-static Vec2 to_overlay(Game *g, float x, float y) {
-  return v_diff((Vec2){x, sapp_height() - y}, g->render.overlay_scale);
-}
+static Vec2 to_overlay(Game *g, float x, float y) { return v_diff((Vec2){x, sapp_height() - y}, g->overlay.scale); }
 
 Vec2 g_mouse_in_scene(Game *g) { return to_scene(g, (float)g->mouse_x, (float)g->mouse_y); }
 Vec2 g_mouse_on_overlay(Game *g) { return to_overlay(g, (float)g->mouse_x, (float)g->mouse_y); }
@@ -303,11 +306,11 @@ void g_update_state(Game *g, double dt) {
   g->animation_delta = dt;
   g->time += dt;
 
-  float cs = 0.1f + g->zoom * g->zoom * 8.0f;
-  Vec2 mp_b = to_scene(g, g->mouse_x, g->mouse_y);
-  g->render.camera_scale = g->render.camera_scale * 0.9f + cs * 0.1f;
-  Vec2 mp_a = to_scene(g, g->mouse_x, g->mouse_y);
-  g->render.camera_pan = v_add(g->render.camera_pan, v_sub(mp_a, mp_b));
+  float cs = 0.1f + g->camera.zoom * g->camera.zoom * 8.0f;
+  Vec2 mp_b = g_mouse_in_scene(g);
+  g->camera.scale = g->camera.scale * 0.9f + cs * 0.1f;
+  Vec2 mp_a = g_mouse_in_scene(g);
+  g->camera.pan = v_add(g->camera.pan, v_sub(mp_a, mp_b));
 
   if (g->scene.table->update)
     g->scene.table->update(g->scene.context, g, dt);
@@ -470,16 +473,16 @@ bool rect_is_set(Recti *r, int i, int j) {
 
 static void g_init(Game *g) {
   srand(time(0));
-  g->render.camera_pan = (Vec2){54.0f, 20.0f};
-  g->render.camera_scale = 5.2f;
-  g->render.overlay_scale = 2.0f;
+  g->camera.pan = (Vec2){54.0f, 20.0f};
+  g->camera.scale = 5.2f;
+  g->overlay.scale = 2.0f;
   g->render.vs_param = (vs_param_t){
-      {2.0f / sapp_width() * g->render.camera_scale, 2.0f / sapp_height() * g->render.camera_scale},
+      {2.0f / sapp_width() * g->camera.scale, 2.0f / sapp_height() * g->camera.scale},
       {1.0f, 1.0f},
       0.0f,
       {1.0f, 1.0f},
   };
-  g->zoom = 0.8f;
+  g->camera.zoom = 0.8f;
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0};
 
   sg_setup(&(sg_desc){
@@ -661,16 +664,16 @@ Vec2 scale_for_screen(const float factor) {
 
 void g_draw_scene(Game *g) {
   if (g->scene.table->draw) {
-    g->render.vs_param.to_screen_scale = scale_for_screen(g->render.camera_scale);
+    g->render.vs_param.to_screen_scale = scale_for_screen(g->camera.scale);
     g->scene.table->draw(g->scene.context, g);
   }
 
   if (g->scene.table->draw_overlay) {
-    Vec2 pan = g->render.camera_pan;
-    g->render.vs_param.to_screen_scale = scale_for_screen(g->render.overlay_scale);
-    g->render.camera_pan = (Vec2){0.0f, 0.0};
+    Vec2 pan = g->camera.pan;
+    g->render.vs_param.to_screen_scale = scale_for_screen(g->overlay.scale);
+    g->camera.pan = (Vec2){0.0f, 0.0};
     g->scene.table->draw_overlay(g->scene.context, g);
-    g->render.camera_pan = pan;
+    g->camera.pan = pan;
   }
 }
 
@@ -679,7 +682,7 @@ static void g_draw(Game *g) {
 
   g_update_console(g);
 
-  Color b = g->render.background_color;
+  const Color b = g->render.background_color;
   sg_begin_pass(&(sg_pass){
       .action = {.colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {b.r, b.g, b.b, b.a}}},
       .swapchain = sglue_swapchain(),
@@ -688,9 +691,9 @@ static void g_draw(Game *g) {
   sg_apply_pipeline(g->pipeline);
   g_draw_scene(g);
 
-  c_printf(g, " %10s: %f %f\n", "pan", g->render.camera_pan.x, g->render.camera_pan.y);
-  c_printf(g, " %10s: %f\n", "scale", g->render.camera_scale);
-  c_printf(g, " %10s: %f\n", "zoom", g->zoom);
+  c_printf(g, " %10s: %f %f\n", "pan", g->camera.pan.x, g->camera.pan.y);
+  c_printf(g, " %10s: %f\n", "scale", g->camera.scale);
+  c_printf(g, " %10s: %f\n", "zoom", g->camera.zoom);
 
   sdtx_draw();
 
@@ -708,22 +711,22 @@ static void g_cleanup(Game *g) {
 
 void g_camera_to_json(CJHObject *o, void *ud) {
   Game *g = (Game *)ud;
-  cjh_o_add_array(o, "pan", (CJHWriteArrayCB)v_to_json, &g->render.camera_pan);
-  cjh_o_add_number(o, "scale", g->render.camera_scale);
-  cjh_o_add_number(o, "zoom", g->zoom);
-  cjh_o_add_number(o, "overlay_scale", g->render.overlay_scale);
+  cjh_o_add_array(o, "pan", (CJHWriteArrayCB)v_to_json, &g->camera.pan);
+  cjh_o_add_number(o, "scale", g->camera.scale);
+  cjh_o_add_number(o, "zoom", g->camera.zoom);
+  cjh_o_add_number(o, "overlay_scale", g->overlay.scale);
 }
 
 void g_camera_from_json(CJHObjectR *o, const char *key, void *ud) {
   Game *g = (Game *)ud;
   if (streq(key, "scale")) {
-    g->render.camera_scale = cjh_o_read_number(o);
+    g->camera.scale = cjh_o_read_number(o);
   } else if (streq(key, "zoom")) {
-    g->zoom = cjh_o_read_number(o);
+    g->camera.zoom = cjh_o_read_number(o);
   } else if (streq(key, "overlay_scale")) {
-    g->render.overlay_scale = cjh_o_read_number(o);
+    g->overlay.scale = cjh_o_read_number(o);
   } else if (streq(key, "pan")) {
-    cjh_o_read_array(o, (CJHReadArrayCB)v_from_json, &g->render.camera_pan);
+    cjh_o_read_array(o, (CJHReadArrayCB)v_from_json, &g->camera.pan);
 
   } else {
     printf("%.*s%s: SKIP\n", indent, space, key);
@@ -764,30 +767,26 @@ void g_from_json(CJHObjectR *o, const char *key, void *ud) {
 bool mid_down = false;
 static void g_handel_events(const sapp_event *e, Game *g) {
   if (e->type == SAPP_EVENTTYPE_MOUSE_SCROLL) {
-    g->zoom = f_min(f_max(0.0f, g->zoom + e->scroll_y * 0.01f), 1.0f);
+    g->camera.zoom = f_min(f_max(0.0f, g->camera.zoom + e->scroll_y * 0.01f), 1.0f);
 
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_DOWN) {
     if (e->mouse_button == 2)
       mid_down = true;
 
     if (g->scene.table->mouse_down)
-      g->scene.table->mouse_down(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y),
-                                 to_overlay(g, e->mouse_x, e->mouse_y), e->mouse_button);
+      g->scene.table->mouse_down(g->scene.context, g, e->mouse_button);
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_UP) {
     if (e->mouse_button == 2)
       mid_down = false;
     if (g->scene.table->mouse_up)
-      g->scene.table->mouse_up(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y),
-                               to_overlay(g, e->mouse_x, e->mouse_y), e->mouse_button);
+      g->scene.table->mouse_up(g->scene.context, g, e->mouse_button);
   } else if (e->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
     g->mouse_x = e->mouse_x;
     g->mouse_y = e->mouse_y;
     if (mid_down)
-      g->render.camera_pan =
-          v_add(g->render.camera_pan, v_diff((Vec2){e->mouse_dx, -e->mouse_dy}, g->render.camera_scale));
+      g->camera.pan = v_add(g->camera.pan, v_diff((Vec2){e->mouse_dx, -e->mouse_dy}, g->camera.scale));
     if (g->scene.table->mouse_move)
-      g->scene.table->mouse_move(g->scene.context, g, to_scene(g, e->mouse_x, e->mouse_y),
-                                 to_overlay(g, e->mouse_x, e->mouse_y));
+      g->scene.table->mouse_move(g->scene.context, g);
   } else if ((e->type == SAPP_EVENTTYPE_KEY_DOWN)) {
     if (g->scene.table->key_down)
       g->scene.table->key_down(g->scene.context, g, e->key_code);

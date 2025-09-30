@@ -9,8 +9,8 @@ typedef struct CJHObjectR CJHObjectR;
 
 typedef void (*SceneUpdateCB)(void *, Game *, float);
 typedef void (*SceneDrawCB)(void *, Game *);
-typedef void (*SceneMouseMoveCB)(void *, Game *, Vec2, Vec2);
-typedef void (*SceneMouseCB)(void *, Game *, Vec2, Vec2, int);
+typedef void (*SceneMouseMoveCB)(void *, Game *);
+typedef void (*SceneMouseCB)(void *, Game *, int);
 typedef void (*SceneKeyCB)(void *, Game *, int);
 
 typedef void (*SceneSaveCB)(CJHObject *, void *);
