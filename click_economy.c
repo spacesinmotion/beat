@@ -1,8 +1,7 @@
 // #include <time.h>
 // #define DR_WAV_IMPLEMENTATION
 // #include "dr/dr_wav.h"
-#include "engine/DrawTransformation.h"
-#include "extern/cjsonh/cjsonh.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -21,7 +20,6 @@
 #include <dirent.h>
 #endif
 
-#include "game/assets.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
