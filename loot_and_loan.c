@@ -7,7 +7,7 @@
 int main(int argc, char *argv[]) {
   gc_start(&gc, &argc);
 
-  int result = g_main(DungeonScen_create());
+  int result = g_main(DungeonScene_create());
 
   gc_stop(&gc);
 
