@@ -1,7 +1,7 @@
 #ifndef GAME_SCENE
 #define GAME_SCENE
 
-#include "engine/Game.h"
+#include "engine/Scene.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
 #include "game/ObjectType.h"
@@ -50,8 +50,7 @@ typedef struct GameScene {
   float wobble_time;
 } GameScene;
 
-typedef struct GameScene GameScene;
-void GameScene_init(Game *g);
+Scene GameScene_create();
 
 void gs_add_object(GameScene *gs, SceneObject so);
 

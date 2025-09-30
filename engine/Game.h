@@ -13,9 +13,11 @@
 #include "engine/math/Vec2.h"
 #include "game/assets.h"
 
+const char *str(const char *fmt, ...);
+
 typedef struct Game Game;
 
-const char *str(const char *fmt, ...);
+int g_main(Scene scene);
 
 void g_set_scene(Game *g, Scene scene);
 void g_set_background_color(Game *g, Color c);

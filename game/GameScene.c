@@ -429,7 +429,16 @@ void gs_from_json(CJHObjectR *o, const char *key, GameScene *gs) {
   }
 }
 
+void GameScene_init(GameScene *gs, Game *g) {
+  gs->board = g_malloc(sizeof(Board));
+  gs->points = PointOverview_init(g);
+
+  gs_reset_level(gs, 0);
+  gs->no_move_left = true;
+}
+
 SceneTable GameScene_table = {
+    .init = (SceneInitCB)GameScene_init,
     .update = (SceneUpdateCB)gs_update,
     .draw = (SceneDrawCB)gs_draw,
     .draw_overlay = (SceneDrawCB)gs_draw_overlay,
@@ -439,7 +448,8 @@ SceneTable GameScene_table = {
     .save = (SceneSaveCB)gs_to_json,
     .load = (SceneLoadCB)gs_from_json,
 };
-void GameScene_init(Game *g) {
+
+Scene GameScene_create() {
   GameScene *gs = g_malloc(sizeof(GameScene));
   *gs = (GameScene){
       .scene_objects = (SceneObjectVec){NULL, 0, 0},
@@ -459,11 +469,6 @@ void GameScene_init(Game *g) {
       .can_select_dice = false,
       .wobble_time = 1.0f,
   };
-  gs->board = g_malloc(sizeof(Board));
-  gs->points = PointOverview_init(g);
 
-  gs_reset_level(gs, 0);
-  gs->no_move_left = true;
-
-  g_set_scene(g, (Scene){gs, &GameScene_table});
+  return (Scene){gs, &GameScene_table};
 }

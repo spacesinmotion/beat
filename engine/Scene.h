@@ -1,11 +1,11 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "engine/math/Vec2.h"
-
 typedef struct Game Game;
 typedef struct CJHObject CJHObject;
 typedef struct CJHObjectR CJHObjectR;
+
+typedef void (*SceneInitCB)(void *, Game *);
 
 typedef void (*SceneUpdateCB)(void *, Game *, float);
 typedef void (*SceneDrawCB)(void *, Game *);
@@ -17,6 +17,8 @@ typedef void (*SceneSaveCB)(CJHObject *, void *);
 typedef void (*SceneLoadCB)(CJHObjectR *, const char *, void *);
 
 typedef struct SceneTable {
+  SceneInitCB init;
+
   SceneUpdateCB update;
   SceneDrawCB draw;
   SceneDrawCB draw_overlay;
