@@ -3,10 +3,11 @@
 
 #include <stdbool.h>
 
+typedef struct Game Game;
 typedef struct DrawEntity DrawEntity;
 
 bool de_valid(const DrawEntity *);
-void de_free(DrawEntity *);
+void de_free(Game *g, DrawEntity *);
 
 #ifdef GAME_ENGINE_IMPL
 
@@ -19,10 +20,16 @@ typedef struct DrawEntity {
 
 static inline bool de_valid(const DrawEntity *b) { return b->vertices > 0 && b->indices > 0 && b->num_elements > 0; }
 
-static inline void de_free(DrawEntity *b) {
+static inline void de_clear(DrawEntity *b) {
   sg_destroy_buffer((sg_buffer){b->vertices});
   sg_destroy_buffer((sg_buffer){b->indices});
   b->vertices = b->indices = b->num_elements = 0;
+}
+
+void g_free(Game *g, void *ptr);
+static inline void de_free(Game *g, DrawEntity *b) {
+  de_clear(b);
+  g_free(g, b);
 }
 
 #endif

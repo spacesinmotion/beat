@@ -5,7 +5,6 @@
 // #define DR_WAV_IMPLEMENTATION
 // #include "dr/dr_wav.h"
 
-#include "engine/Scene.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -200,6 +199,37 @@ sg_image g_image(Game *g, Image img) {
   return g->images[img];
 }
 
+uint16_t img_to_uv(int x, int w) { return ((float)(x) / w) * 65535; }
+DrawEntity *g_sub_image(Game *g, Sizei s, Point c, Point sub[4]) {
+  Vec2 cp = (Vec2){(float)c.x, (float)(s.h - c.y)};
+  vertex_t vertices[4] = {
+      {v_sub((Vec2){sub[0].x, s.h - sub[0].y}, cp), img_to_uv(sub[0].x, s.w), img_to_uv(sub[0].y, s.h)},
+      {v_sub((Vec2){sub[1].x, s.h - sub[1].y}, cp), img_to_uv(sub[1].x, s.w), img_to_uv(sub[1].y, s.h)},
+      {v_sub((Vec2){sub[2].x, s.h - sub[2].y}, cp), img_to_uv(sub[2].x, s.w), img_to_uv(sub[2].y, s.h)},
+      {v_sub((Vec2){sub[3].x, s.h - sub[3].y}, cp), img_to_uv(sub[3].x, s.w), img_to_uv(sub[3].y, s.h)},
+  };
+  uint16_t indices[6] = {0, 1, 2, 0, 2, 3};
+
+  DrawEntity *de = g_malloc(g, sizeof(DrawEntity));
+  *de = (DrawEntity){
+      .color_mode = 0,
+      .vertices = sg_make_buffer(&(sg_buffer_desc){
+                                     .type = SG_BUFFERTYPE_VERTEXBUFFER,
+                                     .data = (sg_range){vertices, sizeof(vertices)},
+                                     .label = "vertex-buffer",
+                                 })
+                      .id,
+      .indices = sg_make_buffer(&(sg_buffer_desc){
+                                    .type = SG_BUFFERTYPE_INDEXBUFFER,
+                                    .data = (sg_range){indices, sizeof(indices)},
+                                    .label = "index-buffer",
+                                })
+                     .id,
+      .num_elements = 6,
+  };
+  return de;
+}
+
 const FontImage *g_font(Game *g, G_Font font) {
   if (g->fonts[font].texture.id == 0)
     g->fonts[font] = load_font(font_paths[font], font_size[font]);
@@ -216,7 +246,7 @@ TextDrawEntity *g_text(Game *g, G_Font ff) {
 
 void tde_set_text(TextDrawEntity *o, const char *text) {
   assert(o && o->font);
-  de_free(&o->draw_entity);
+  de_clear(&o->draw_entity);
   const FontImage *f = o->font;
   vertex_t vertices[1024];
   uint16_t indices[1024];
@@ -299,6 +329,12 @@ void g_draw_text(Game *g, const TextDrawEntity *tde, Vec2 pan) {
   assert(de_valid(&tde->draw_entity));
   g_buffer(g, &tde->draw_entity, tde->font->texture.id, dt_p(pan));
   sg_draw(0, tde->draw_entity.num_elements, 1);
+}
+
+void g_draw_entity(Game *g, const DrawEntity *de, Image tex, const DrawTransformation dt) {
+  assert(de_valid(de));
+  g_buffer(g, de, g_image(g, tex).id, dt);
+  sg_draw(0, de->num_elements, 1);
 }
 
 void g_draw_rect(Game *g, const DrawTransformation dt) {

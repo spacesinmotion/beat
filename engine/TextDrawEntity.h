@@ -22,10 +22,11 @@ typedef struct TextDrawEntity {
 } TextDrawEntity;
 
 bool tde_valid(const TextDrawEntity *tde) { return de_valid(&tde->draw_entity) && tde->font != NULL; }
+
+void g_free(Game *g, void *ptr);
 void tde_free(Game *g, TextDrawEntity *tde) {
-  (void)g;
-  de_free(&tde->draw_entity);
-  free(tde);
+  de_clear(&tde->draw_entity);
+  g_free(g, tde);
 }
 
 #endif

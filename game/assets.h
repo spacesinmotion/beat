@@ -4,6 +4,7 @@
 typedef enum Image {
   Img_menubar = 0,
   Img_bling,
+  Img_emo,
 
   NB_Img,
 } Image;
@@ -11,6 +12,7 @@ typedef enum Image {
 static const char *image_paths[NB_Img] = {
     "assets/menubar.png", //
     "assets/bling.png",   //
+    "assets/emo.png",     //
 };
 
 typedef enum G_Font {
