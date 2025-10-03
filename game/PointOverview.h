@@ -6,9 +6,17 @@
 #include "game/ObjectType.h"
 
 typedef struct GroupCounter {
-  TextDrawEntity text_3to5, text_6, text_g1, text_g2, text_points;
+  TextDrawEntity *text_3to5, *text_6, *text_g1, *text_g2, *text_points;
   int g1, g1_cache, g2, g2_cache, points, points_cache;
 } GroupCounter;
+
+void po_gc_free(GroupCounter *gc) {
+  tde_free(gc->text_3to5);
+  tde_free(gc->text_6);
+  tde_free(gc->text_g1);
+  tde_free(gc->text_g2);
+  tde_free(gc->text_points);
+}
 
 typedef struct PointOverview {
   GroupCounter house;
@@ -16,30 +24,35 @@ typedef struct PointOverview {
   GroupCounter animals;
   GroupCounter flowers;
 
-  TextDrawEntity text_water_points, text_water_count;
+  TextDrawEntity *text_water_points, *text_water_count;
   int water_count, water_count_cache;
 
-  TextDrawEntity text_points;
+  TextDrawEntity *text_points;
   int points, points_cache;
 } PointOverview;
 
 void po_init_group_counter(GroupCounter *gc, Game *g) {
-  g_create_text(g, &gc->text_3to5, Oswald_Regular_8, "3-5");
-  g_create_text(g, &gc->text_6, Oswald_Regular_8, "6+");
+  gc->text_3to5 = g_text(g, Oswald_Regular_8);
+  tde_set_text(gc->text_3to5, "3-5");
+  gc->text_6 = g_text(g, Oswald_Regular_8);
+  tde_set_text(gc->text_6, "6+");
+  gc->text_g1 = g_text(g, Oswald_Regular_8);
+  gc->text_g2 = g_text(g, Oswald_Regular_8);
+  gc->text_points = g_text(g, Oswald_Regular_12);
   gc->g1_cache = gc->g2_cache = gc->points_cache = -1;
 }
 
-void po_update_group_counter(GroupCounter *gc, Game *g) {
+void po_update_group_counter(GroupCounter *gc) {
   if (gc->g1 != gc->g1_cache) {
-    g_create_text(g, &gc->text_g1, Oswald_Regular_8, str("10x%d", gc->g1));
+    tde_set_text(gc->text_g1, str("10x%d", gc->g1));
     gc->g1_cache = gc->g1;
   }
   if (gc->g2 != gc->g2_cache) {
-    g_create_text(g, &gc->text_g2, Oswald_Regular_8, str("25x%d", gc->g2));
+    tde_set_text(gc->text_g2, str("25x%d", gc->g2));
     gc->g2_cache = gc->g2;
   }
   if (gc->points != gc->points_cache) {
-    g_create_text(g, &gc->text_points, Oswald_Regular_12, str("%d", gc->points));
+    tde_set_text(gc->text_points, str("%d", gc->points));
     gc->points_cache = gc->points;
   }
 }
@@ -47,30 +60,32 @@ void po_update_group_counter(GroupCounter *gc, Game *g) {
 void po_draw_group_counter(GroupCounter *gc, Game *g, Vec2 p, ObjectType icon) {
   g_color(g, gray(170));
   g_draw_icon(g, Img_menubar, icon, dt_psf(p, 0.7f));
-  g_draw_text(g, &gc->text_3to5, v_add(p, (Vec2){5, -3}));
+  g_draw_text(g, gc->text_3to5, v_add(p, (Vec2){5, -3}));
   g_draw_icon(g, Img_menubar, icon, dt_psf(v_add(p, (Vec2){20, 0}), 0.7f));
-  g_draw_text(g, &gc->text_6, v_add(p, (Vec2){25, -3}));
+  g_draw_text(g, gc->text_6, v_add(p, (Vec2){25, -3}));
 
-  g_draw_text(g, &gc->text_g1, v_add(p, (Vec2){-4, -10}));
-  g_draw_text(g, &gc->text_g2, v_add(p, (Vec2){16, -10}));
+  g_draw_text(g, gc->text_g1, v_add(p, (Vec2){-4, -10}));
+  g_draw_text(g, gc->text_g2, v_add(p, (Vec2){16, -10}));
 
   g_color(g, gray(220));
-  g_draw_text(g, &gc->text_points, v_add(p, (Vec2){35, -6}));
+  g_draw_text(g, gc->text_points, v_add(p, (Vec2){35, -6}));
 }
 
 void po_update(PointOverview *po, Game *g) {
-  po_update_group_counter(&po->house, g);
-  po_update_group_counter(&po->trees, g);
-  po_update_group_counter(&po->animals, g);
-  po_update_group_counter(&po->flowers, g);
+  (void)g;
+
+  po_update_group_counter(&po->house);
+  po_update_group_counter(&po->trees);
+  po_update_group_counter(&po->animals);
+  po_update_group_counter(&po->flowers);
 
   if (po->water_count != po->water_count_cache) {
-    g_create_text(g, &po->text_water_count, Oswald_Regular_8, str("15x%d", po->water_count));
-    g_create_text(g, &po->text_water_points, Oswald_Regular_12, str("%d", 15 * po->water_count));
+    tde_set_text(po->text_water_count, str("15x%d", po->water_count));
+    tde_set_text(po->text_water_points, str("%d", 15 * po->water_count));
     po->water_count_cache = po->water_count;
   }
   if (po->points != po->points_cache) {
-    g_create_text(g, &po->text_points, Oswald_Regular_12, str("%d", po->points));
+    tde_set_text(po->text_points, str("%d", po->points));
     po->points_cache = po->points;
   }
 }
@@ -90,12 +105,12 @@ void po_draw(PointOverview *po, Game *g, bool no_move_left) {
   g_color(g, gray(170));
   g_draw_icon(g, Img_menubar, So_Water, dt_psf(v_add(p, (Vec2){0, 0}), 0.7f));
   g_draw_icon(g, Img_menubar, So_None, dt_psf(v_add(p, (Vec2){10, 0}), 0.7f));
-  g_draw_text(g, &po->text_water_count, v_add(p, (Vec2){-4, -10}));
+  g_draw_text(g, po->text_water_count, v_add(p, (Vec2){-4, -10}));
   g_color(g, gray(220));
-  g_draw_text(g, &po->text_water_points, v_add(p, (Vec2){35, -6}));
+  g_draw_text(g, po->text_water_points, v_add(p, (Vec2){35, -6}));
 
   g_color(g, no_move_left ? red() : white());
-  g_draw_text(g, &po->text_points, (Vec2){l + 35, t - 10 - (o * row++)});
+  g_draw_text(g, po->text_points, (Vec2){l + 35, t - 10 - (o * row++)});
 }
 
 void po_group_counter_add_group(GroupCounter *gc, int c) {
@@ -118,9 +133,22 @@ void po_count_points(PointOverview *po) {
   po->points = po->house.points + po->trees.points + po->animals.points + po->flowers.points + po->water_count * 15;
 }
 
+void po_free(PointOverview *po) {
+  po_gc_free(&po->house);
+  po_gc_free(&po->trees);
+  po_gc_free(&po->animals);
+  po_gc_free(&po->flowers);
+
+  tde_free(po->text_water_count);
+  tde_free(po->text_water_points);
+  tde_free(po->text_points);
+}
+
 PointOverview *PointOverview_init(Game *g) {
   PointOverview *po = g_malloc(sizeof(PointOverview));
-  *po = (PointOverview){0};
+  *po = (PointOverview){.text_water_count = g_text(g, Oswald_Regular_8),
+                        .text_water_points = g_text(g, Oswald_Regular_12),
+                        .text_points = g_text(g, Oswald_Regular_12)};
 
   po_init_group_counter(&po->house, g);
   po_init_group_counter(&po->trees, g);

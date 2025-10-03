@@ -2,18 +2,20 @@
 #define DRAWENTITY_H
 
 #include <stdbool.h>
-#include <stdint.h>
 
-typedef struct Game Game;
-
-typedef struct DrawEntity {
-  uint32_t color_mode, vertices, indices, num_elements;
-} DrawEntity;
+typedef struct DrawEntity DrawEntity;
 
 bool de_valid(const DrawEntity *);
 void de_free(DrawEntity *);
 
 #ifdef GAME_ENGINE_IMPL
+
+#include <stdint.h>
+
+typedef struct Game Game;
+typedef struct DrawEntity {
+  uint32_t color_mode, vertices, indices, num_elements;
+} DrawEntity;
 
 static inline bool de_valid(const DrawEntity *b) { return b->vertices > 0 && b->indices > 0 && b->num_elements > 0; }
 

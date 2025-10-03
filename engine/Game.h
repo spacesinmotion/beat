@@ -29,7 +29,7 @@ Sizei g_viewport(Game *g);
 Vec2 g_mouse_in_scene(Game *g);
 Vec2 g_mouse_on_overlay(Game *g);
 
-void g_create_text(Game *g, TextDrawEntity *o, G_Font ff, const char *text);
+TextDrawEntity *g_text(Game *g, G_Font ff);
 void g_draw_text(Game *g, const TextDrawEntity *tde, Vec2 pan);
 
 void g_draw_rect(Game *g, const DrawTransformation dt);

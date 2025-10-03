@@ -5,6 +5,7 @@
 // #define DR_WAV_IMPLEMENTATION
 // #include "dr/dr_wav.h"
 
+#include "engine/Scene.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -127,7 +128,12 @@ typedef struct Game {
   double time, animation_delta;
 } Game;
 
-void g_set_scene(Game *g, Scene scene) { g->scene = scene; }
+void g_set_scene(Game *g, Scene scene) {
+  sc_free(&g->scene, g);
+  g->scene = scene;
+  if (g->pipeline.id != 0)
+    sc_init(&g->scene, g);
+}
 void g_set_background_color(Game *g, Color c) { g->render.background_color = c; }
 
 float g_animation_delta(Game *g) { return g->animation_delta; }
@@ -192,9 +198,17 @@ const FontImage *g_font(Game *g, G_Font font) {
   return &g->fonts[font];
 }
 
-void g_create_text(Game *g, TextDrawEntity *o, G_Font ff, const char *text) {
-  tde_free(o);
-  const FontImage *f = g_font(g, ff);
+TextDrawEntity *g_text(Game *g, G_Font ff) {
+  TextDrawEntity *tde = g_malloc(sizeof(TextDrawEntity));
+  tde->draw_entity = (DrawEntity){0};
+  tde->font = g_font(g, ff);
+  return tde;
+}
+
+void tde_set_text(TextDrawEntity *o, const char *text) {
+  assert(o && o->font);
+  de_free(&o->draw_entity);
+  const FontImage *f = o->font;
   vertex_t vertices[1024];
   uint16_t indices[1024];
   size_t vlen = 0, ilen = 0;
@@ -238,28 +252,23 @@ void g_create_text(Game *g, TextDrawEntity *o, G_Font ff, const char *text) {
     }
   }
   if (vlen == 0ul)
-    *o = (TextDrawEntity){0};
-  else {
-    *o = (TextDrawEntity){
-        {
-            .color_mode = 1,
-            .vertices = sg_make_buffer(&(sg_buffer_desc){
-                                           .type = SG_BUFFERTYPE_VERTEXBUFFER,
-                                           .data = (sg_range){vertices, sizeof(vertex_t) * vlen},
-                                           .label = "vertex-buffer",
-                                       })
-                            .id,
-            .indices = sg_make_buffer(&(sg_buffer_desc){
-                                          .type = SG_BUFFERTYPE_INDEXBUFFER,
-                                          .data = (sg_range){indices, sizeof(uint16_t) * ilen},
-                                          .label = "index-buffer",
-                                      })
-                           .id,
-            .num_elements = ilen,
-        },
-        .texture_id = f->texture.id,
-    };
-  }
+    return;
+  o->draw_entity = (DrawEntity){
+      .color_mode = 1,
+      .vertices = sg_make_buffer(&(sg_buffer_desc){
+                                     .type = SG_BUFFERTYPE_VERTEXBUFFER,
+                                     .data = (sg_range){vertices, sizeof(vertex_t) * vlen},
+                                     .label = "vertex-buffer",
+                                 })
+                      .id,
+      .indices = sg_make_buffer(&(sg_buffer_desc){
+                                    .type = SG_BUFFERTYPE_INDEXBUFFER,
+                                    .data = (sg_range){indices, sizeof(uint16_t) * ilen},
+                                    .label = "index-buffer",
+                                })
+                     .id,
+      .num_elements = ilen,
+  };
 }
 
 static inline void g_buffer(Game *g, const DrawEntity *buffer, uint32_t texture_id, const DrawTransformation dt) {
@@ -278,7 +287,8 @@ static inline void g_buffer(Game *g, const DrawEntity *buffer, uint32_t texture_
 }
 
 void g_draw_text(Game *g, const TextDrawEntity *tde, Vec2 pan) {
-  g_buffer(g, &tde->draw_entity, tde->texture_id, dt_p(pan));
+  assert(de_valid(&tde->draw_entity));
+  g_buffer(g, &tde->draw_entity, tde->font->texture.id, dt_p(pan));
   sg_draw(0, tde->draw_entity.num_elements, 1);
 }
 
@@ -627,8 +637,7 @@ static void g_init(Game *g) {
       .label = "texture_sampler",
   });
 
-  assert(g->scene.table && g->scene.table->init);
-  g->scene.table->init(g->scene.context, g);
+  g_set_scene(g, g->scene);
 }
 
 void c_color(Game *g, Color c) {
@@ -701,7 +710,7 @@ static void g_draw(Game *g) {
 }
 
 static void g_cleanup(Game *g) {
-  (void)g;
+  sc_free(&g->scene, g);
 
   sdtx_shutdown();
   saudio_shutdown();
