@@ -16,7 +16,7 @@ const char *str(const char *fmt, ...);
 
 typedef struct Game Game;
 
-int g_main(Scene scene);
+int g_main(const char *name, Scene scene);
 
 void g_set_scene(Game *g, Scene scene);
 void g_set_background_color(Game *g, Color c);

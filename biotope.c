@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
       return 0;
     }
 
-  int result = g_main(GameScene_create());
+  int result = g_main("biotope", GameScene_create());
 
   gc_stop(&gc);
 

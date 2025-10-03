@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 
   gc_start(&gc, &argc);
 
-  int result = g_main(DungeonScene_create());
+  int result = g_main("Loot & Loan", DungeonScene_create());
 
   gc_stop(&gc);
 

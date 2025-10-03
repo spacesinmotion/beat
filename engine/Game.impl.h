@@ -801,7 +801,7 @@ static void g_handel_events(const sapp_event *e, Game *g) {
   }
 }
 
-int g_main(Scene scene) {
+int g_main(const char *name, Scene scene) {
 
   Game g = {0};
   g_set_scene(&g, scene);
@@ -813,7 +813,7 @@ int g_main(Scene scene) {
       .user_data = &g,
       .width = 1024,
       .height = 690,
-      .window_title = "Biotope",
+      .window_title = name,
       .icon.sokol_default = true,
       .logger.func = slog_func,
       .sample_count = 8,
