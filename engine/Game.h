@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "engine/DrawEntity.h"
 #include "engine/DrawTransformation.h"
 #include "engine/Scene.h"
 #include "engine/TextDrawEntity.h"
@@ -31,7 +30,7 @@ Vec2 g_mouse_in_scene(Game *g);
 Vec2 g_mouse_on_overlay(Game *g);
 
 void g_create_text(Game *g, TextDrawEntity *o, G_Font ff, const char *text);
-void g_draw_text(Game *g, const TextDrawEntity *tdeTextDrawEntity, Vec2 pan);
+void g_draw_text(Game *g, const TextDrawEntity *tde, Vec2 pan);
 
 void g_draw_rect(Game *g, const DrawTransformation dt);
 
