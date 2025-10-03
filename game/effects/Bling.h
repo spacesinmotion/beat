@@ -14,7 +14,13 @@ typedef struct Bling {
   float time;
 } Bling;
 
-bool bl_dead(Bling *bl) { return bl->time * 16.0f > 10.0f; }
+bool bl_die(Bling *bl, Game *g) {
+  if (bl->time * 16.0f > 10.0f) {
+    g_free(g, bl);
+    return true;
+  }
+  return false;
+}
 
 void bl_update(Bling *bl, GameScene *gs, Game *g, float dt) {
   (void)gs;
@@ -35,14 +41,14 @@ void bl_draw(Bling *bl, GameScene *gs, Game *g) {
 
 static SceneObjectTable Bling_table = {
     .type = "Bling",
-    .dead = (SceneObjectDeadCB)bl_dead,
+    .die = (SceneObjectDieCB)bl_die,
     .render_order = (SceneObjectRenderOrderCB)bl_render_order,
     .update = (SceneObjectUpdateCB)bl_update,
     .draw = (SceneObjectDrawCB)bl_draw,
 };
 
-Bling *Bling_init(GameScene *gs, Vec2 l, Color c) {
-  Bling *h = g_malloc(sizeof(Bling));
+Bling *Bling_init(GameScene *gs, Game *g, Vec2 l, Color c) {
+  Bling *h = g_malloc(g, sizeof(Bling));
   *h = (Bling){
       .color = c,
       .location = l,
@@ -50,7 +56,7 @@ Bling *Bling_init(GameScene *gs, Vec2 l, Color c) {
       .time = 0.0f,
   };
 
-  gs_add_object(gs, (SceneObject){h, &Bling_table});
+  gs_add_object(gs, g, (SceneObject){h, &Bling_table});
 
   return h;
 }

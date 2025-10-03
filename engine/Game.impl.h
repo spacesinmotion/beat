@@ -51,8 +51,6 @@
 
 #include "extern/sokol/util/sokol_debugtext.h"
 
-#include "extern/gc/gc.h"
-
 #define GAME_ENGINE_IMPL
 #include "engine/Game.h"
 
@@ -60,8 +58,18 @@
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
 
-void *g_malloc(size_t size) { return gc_malloc(&gc, size); }
-void *g_realloc(void *ptr, size_t size) { return gc_realloc(&gc, ptr, size); }
+void *g_malloc(Game *g, size_t size) {
+  (void)g;
+  return malloc(size);
+}
+void *g_realloc(Game *g, void *ptr, size_t size) {
+  (void)g;
+  return realloc(ptr, size);
+}
+void g_free(Game *g, void *ptr) {
+  (void)g;
+  free(ptr);
+}
 
 const char *str(const char *format, ...) {
   static char b[256] = {0};
@@ -96,6 +104,8 @@ typedef struct FontImage {
 } FontImage;
 
 typedef struct Game {
+  GameInitCB init;
+
   sg_pipeline pipeline;
 
   struct {
@@ -131,8 +141,7 @@ typedef struct Game {
 void g_set_scene(Game *g, Scene scene) {
   sc_free(&g->scene, g);
   g->scene = scene;
-  if (g->pipeline.id != 0)
-    sc_init(&g->scene, g);
+  sc_init(&g->scene, g);
 }
 void g_set_background_color(Game *g, Color c) { g->render.background_color = c; }
 
@@ -199,7 +208,7 @@ const FontImage *g_font(Game *g, G_Font font) {
 }
 
 TextDrawEntity *g_text(Game *g, G_Font ff) {
-  TextDrawEntity *tde = g_malloc(sizeof(TextDrawEntity));
+  TextDrawEntity *tde = g_malloc(g, sizeof(TextDrawEntity));
   tde->draw_entity = (DrawEntity){0};
   tde->font = g_font(g, ff);
   return tde;
@@ -637,7 +646,7 @@ static void g_init(Game *g) {
       .label = "texture_sampler",
   });
 
-  g_set_scene(g, g->scene);
+  g->init(g);
 }
 
 void c_color(Game *g, Color c) {
@@ -810,10 +819,9 @@ static void g_handel_events(const sapp_event *e, Game *g) {
   }
 }
 
-int g_main(const char *name, Scene scene) {
+int g_main(const char *name, GameInitCB init) {
 
-  Game g = {0};
-  g_set_scene(&g, scene);
+  Game g = {.init = init};
   sapp_run(&(sapp_desc){
       .init_userdata_cb = (void (*)(void *))g_init,
       .frame_userdata_cb = (void (*)(void *))g_draw,

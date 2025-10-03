@@ -4,14 +4,10 @@
 
 #include "LootAndLoan/DungeonScene.h"
 
+void init_loot_and_loan(Game *g) { g_set_scene(g, DungeonScene_create(g)); }
+
 int main(int argc, char *argv[]) {
-  (void)argv;
+  (void)argc, (void)argv;
 
-  gc_start(&gc, &argc);
-
-  int result = g_main("Loot & Loan", DungeonScene_create());
-
-  gc_stop(&gc);
-
-  return result;
+  return g_main("Loot & Loan", init_loot_and_loan);
 }

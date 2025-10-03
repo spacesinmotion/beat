@@ -16,7 +16,8 @@ const char *str(const char *fmt, ...);
 
 typedef struct Game Game;
 
-int g_main(const char *name, Scene scene);
+typedef void (*GameInitCB)(Game *g);
+int g_main(const char *name, GameInitCB init);
 
 void g_set_scene(Game *g, Scene scene);
 void g_set_background_color(Game *g, Color c);
@@ -36,10 +37,11 @@ void g_draw_rect(Game *g, const DrawTransformation dt);
 
 void g_draw_icon(Game *g, Image tex, int frame, const DrawTransformation dt);
 
-void g_color(Game *game, Color c);
+void g_color(Game *g, Color c);
 
-void *g_malloc(size_t size);
-void *g_realloc(void *ptr, size_t size);
+void *g_malloc(Game *g, size_t size);
+void *g_realloc(Game *g, void *ptr, size_t size);
+void g_free(Game *g, void *ptr);
 
 void c_color(Game *g, Color c);
 void c_printf(Game *g, const char *fmt, ...);

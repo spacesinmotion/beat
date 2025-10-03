@@ -10,7 +10,7 @@ typedef struct GameScene GameScene;
 typedef struct Game Game;
 typedef struct CJHObject CJHObject;
 
-typedef bool (*SceneObjectDeadCB)(const SceneObject *);
+typedef bool (*SceneObjectDieCB)(SceneObject *, Game *g);
 typedef float (*SceneObjectRenderOrderCB)(const SceneObject *);
 typedef void (*SceneObjectUpdateCB)(SceneObject *, GameScene *, Game *, float);
 typedef void (*SceneObjectDrawCB)(const SceneObject *, GameScene *gs, Game *);
@@ -18,7 +18,7 @@ typedef void (*SceneObjectSaveCB)(CJHObject *o, const SceneObject *);
 
 typedef struct SceneObjectTable {
   const char *type;
-  SceneObjectDeadCB dead;
+  SceneObjectDieCB die;
   SceneObjectRenderOrderCB render_order;
   SceneObjectUpdateCB update;
   SceneObjectDrawCB draw;
@@ -34,8 +34,8 @@ static inline bool so_eq(const SceneObject *so1, const SceneObject *so2) {
   return so1 && so2 && so1->context == so2->context;
 }
 
-static inline bool so_dead(const SceneObject *so) {
-  return !so->context || (so->table->dead && so->table->dead(so->context));
+static inline bool so_die(SceneObject *so, Game *g) {
+  return !so->context || (so->table->die && so->table->die(so->context, g));
 }
 
 static inline float so_render_order(const SceneObject *so) {

@@ -14,6 +14,7 @@
 #include "game/assets.h"
 #include "game/effects/Bling.h"
 #include "stdbool.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -21,18 +22,18 @@
 #define M_PI 3.1457
 #endif
 
-void so_vec_push(SceneObjectVec *vec, SceneObject so) {
+void so_vec_push(SceneObjectVec *vec, Game *g, SceneObject so) {
   if (vec->len + 1 > vec->cap) {
     vec->cap += 16;
-    vec->data = (SceneObject *)g_realloc(vec->data, vec->cap * sizeof(SceneObject));
+    vec->data = (SceneObject *)g_realloc(g, vec->data, vec->cap * sizeof(SceneObject));
   }
   vec->data[vec->len] = so;
   vec->len++;
 }
 
-void so_vec_filter_dead(SceneObjectVec *vec) {
+void so_vec_filter_dead(SceneObjectVec *vec, Game *g) {
   for (int i = vec->len - 1; i >= 0; --i) {
-    if (!vec->data[i].table->dead(vec->data[i].context))
+    if (!vec->data[i].table->die(vec->data[i].context, g))
       continue;
     vec->data[i] = vec->data[vec->len - 1];
     vec->data[vec->len - 1] = (SceneObject){NULL, NULL};
@@ -64,7 +65,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
   for (int i = 0; i < gs->scene_objects.len; ++i)
     so_update(&gs->scene_objects.data[i], gs, g, dt);
 
-  so_vec_filter_dead(&gs->scene_objects);
+  so_vec_filter_dead(&gs->scene_objects, g);
 
   qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
 
@@ -339,7 +340,7 @@ void gs_mouse_down(GameScene *gs, Game *g, int button) {
       Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
       if (bd_allowed_to_pick(gs->board, gp)) {
         bd_set_grid(gs->board, gp, gs->dice[gs->selected_dice].o);
-        Bling_init(gs, gs_grid_to_scene(gp), rgb(0xFF, 0x00, 0x00));
+        Bling_init(gs, g, gs_grid_to_scene(gp), rgb(0xFF, 0x00, 0x00));
         gs->wobble_time = 1.0f;
 
         if (gs->placed_dice == 0 && gs->dice[1].o != So_Empty) {
@@ -380,7 +381,7 @@ void gs_key_up(GameScene *gs, Game *g, int key) {
   printf("KEY UP (%d)\n", key);
 }
 
-void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
+void gs_add_object(GameScene *gs, Game *g, SceneObject so) { so_vec_push(&gs->scene_objects, g, so); }
 
 void gs_sceneobjects_to_json(CJHArray *a, void *ud) {
   SceneObjectVec *s = (SceneObjectVec *)ud;
@@ -403,42 +404,49 @@ void gs_SceneObject_from_json(CJHObjectR *o, const char *key, void *ud) {
   }
 }
 
-void gs_sceneobjects_from_json(CJHArrayR *a, int index, void *ud) {
-  (void)index;
+// void gs_sceneobjects_from_json(CJHArrayR *a, int index, void *ud) {
+//   (void)index;
 
-  GameScene *gs = (GameScene *)ud;
+//   GameScene *gs = (GameScene *)ud;
 
-  SceneObject so = {NULL, NULL};
-  cjh_a_read_object(a, (CJHReadObjectCB)gs_SceneObject_from_json, &so);
+//   SceneObject so = {NULL, NULL};
+//   cjh_a_read_object(a, (CJHReadObjectCB)gs_SceneObject_from_json, &so);
 
-  if (so.context && so.table)
-    gs_add_object(gs, so);
-}
+//   if (so.context && so.table)
+//     gs_add_object(gs, so);
+// }
 
 void gs_from_json(CJHObjectR *o, const char *key, GameScene *gs) {
-  if (streq(key, "scene_objects")) {
-    printf("%s:\n", key);
-    indent += 2;
-    cjh_o_read_array(o, gs_sceneobjects_from_json, gs);
-    indent -= 2;
-  }
+  (void)gs;
+  // if (streq(key, "scene_objects")) {
+  //   printf("%s:\n", key);
+  //   indent += 2;
+  //   cjh_o_read_array(o, gs_sceneobjects_from_json, gs);
+  //   indent -= 2;
+  // }
 
-  else {
-    printf("%s: SKIP\n", key);
-    cjh_o_skip(o);
-  }
+  // else {
+  printf("%s: SKIP\n", key);
+  cjh_o_skip(o);
+  // }
 }
 
-void GameScene_init(GameScene *gs, Game *g) {
-  gs->board = g_malloc(sizeof(Board));
+void gs_init(GameScene *gs, Game *g) {
+  gs->board = g_malloc(g, sizeof(Board));
   gs->points = PointOverview_init(g);
 
   gs_reset_level(gs, 0);
   gs->no_move_left = true;
 }
 
+void gs_free(GameScene *gs, Game *g) {
+  po_free(g, gs->points);
+  gs->points = NULL;
+  free(gs);
+}
 SceneTable GameScene_table = {
-    .init = (SceneInitCB)GameScene_init,
+    .init = (SceneInitCB)gs_init,
+    .free = (SceneFreeCB)gs_free,
     .update = (SceneUpdateCB)gs_update,
     .draw = (SceneDrawCB)gs_draw,
     .draw_overlay = (SceneDrawCB)gs_draw_overlay,
@@ -449,8 +457,8 @@ SceneTable GameScene_table = {
     .load = (SceneLoadCB)gs_from_json,
 };
 
-Scene GameScene_create() {
-  GameScene *gs = g_malloc(sizeof(GameScene));
+void GameScene_start(Game *g) {
+  GameScene *gs = g_malloc(g, sizeof(GameScene));
   *gs = (GameScene){
       .scene_objects = (SceneObjectVec){NULL, 0, 0},
       .pick_rects = {},
@@ -470,5 +478,5 @@ Scene GameScene_create() {
       .wobble_time = 1.0f,
   };
 
-  return (Scene){gs, &GameScene_table};
+  g_set_scene(g, (Scene){gs, &GameScene_table});
 }

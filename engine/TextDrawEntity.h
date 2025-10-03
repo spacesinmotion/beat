@@ -3,10 +3,11 @@
 
 #include <stdbool.h>
 
+typedef struct Game Game;
 typedef struct TextDrawEntity TextDrawEntity;
 
 bool tde_valid(const TextDrawEntity *tde);
-void tde_free(TextDrawEntity *tde);
+void tde_free(Game *g, TextDrawEntity *tde);
 
 void tde_set_text(TextDrawEntity *o, const char *text);
 
@@ -21,7 +22,11 @@ typedef struct TextDrawEntity {
 } TextDrawEntity;
 
 bool tde_valid(const TextDrawEntity *tde) { return de_valid(&tde->draw_entity) && tde->font != NULL; }
-void tde_free(TextDrawEntity *tde) { return de_free(&tde->draw_entity); }
+void tde_free(Game *g, TextDrawEntity *tde) {
+  (void)g;
+  de_free(&tde->draw_entity);
+  free(tde);
+}
 
 #endif
 

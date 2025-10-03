@@ -39,14 +39,16 @@ void ds_draw(DungeonScene *ds, Game *g) {
 }
 
 void ds_init(DungeonScene *ds, Game *g) { (void)ds, (void)g; }
+void ds_free(DungeonScene *ds, Game *g) { (void)ds, (void)g; }
 
 SceneTable DungeonScenetable = {
     .init = (SceneInitCB)ds_init,
+    .free = (SceneFreeCB)ds_free,
     .update = (SceneUpdateCB)ds_update,
     .draw = (SceneDrawCB)ds_draw,
 };
-Scene DungeonScene_create() {
-  DungeonScene *ds = g_malloc(sizeof(DungeonScene));
+Scene DungeonScene_create(Game *g) {
+  DungeonScene *ds = g_malloc(g, sizeof(DungeonScene));
   *ds = (DungeonScene){};
 
   return (Scene){ds, &DungeonScenetable};

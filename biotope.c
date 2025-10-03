@@ -77,17 +77,11 @@ void export_svg__with_inkscape(const char *fp, void *ud) {
 }
 
 int main(int argc, char *argv[]) {
-  gc_start(&gc, &argc);
-
   for (int i = 0; i < argc - 1; ++i)
     if (strcmp(argv[i], "--export-svg") == 0) {
       eachFileIn("assets", export_svg__with_inkscape, argv[i + 1]);
       return 0;
     }
 
-  int result = g_main("biotope", GameScene_create());
-
-  gc_stop(&gc);
-
-  return result;
+  return g_main("biotope", GameScene_start);
 }

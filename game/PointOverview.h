@@ -10,12 +10,12 @@ typedef struct GroupCounter {
   int g1, g1_cache, g2, g2_cache, points, points_cache;
 } GroupCounter;
 
-void po_gc_free(GroupCounter *gc) {
-  tde_free(gc->text_3to5);
-  tde_free(gc->text_6);
-  tde_free(gc->text_g1);
-  tde_free(gc->text_g2);
-  tde_free(gc->text_points);
+void po_gc_free(Game *g, GroupCounter *gc) {
+  tde_free(g, gc->text_3to5);
+  tde_free(g, gc->text_6);
+  tde_free(g, gc->text_g1);
+  tde_free(g, gc->text_g2);
+  tde_free(g, gc->text_points);
 }
 
 typedef struct PointOverview {
@@ -133,19 +133,21 @@ void po_count_points(PointOverview *po) {
   po->points = po->house.points + po->trees.points + po->animals.points + po->flowers.points + po->water_count * 15;
 }
 
-void po_free(PointOverview *po) {
-  po_gc_free(&po->house);
-  po_gc_free(&po->trees);
-  po_gc_free(&po->animals);
-  po_gc_free(&po->flowers);
+void po_free(Game *g, PointOverview *po) {
+  po_gc_free(g, &po->house);
+  po_gc_free(g, &po->trees);
+  po_gc_free(g, &po->animals);
+  po_gc_free(g, &po->flowers);
 
-  tde_free(po->text_water_count);
-  tde_free(po->text_water_points);
-  tde_free(po->text_points);
+  tde_free(g, po->text_water_count);
+  tde_free(g, po->text_water_points);
+  tde_free(g, po->text_points);
+
+  free(po);
 }
 
 PointOverview *PointOverview_init(Game *g) {
-  PointOverview *po = g_malloc(sizeof(PointOverview));
+  PointOverview *po = g_malloc(g, sizeof(PointOverview));
   *po = (PointOverview){.text_water_count = g_text(g, Oswald_Regular_8),
                         .text_water_points = g_text(g, Oswald_Regular_12),
                         .text_points = g_text(g, Oswald_Regular_12)};
