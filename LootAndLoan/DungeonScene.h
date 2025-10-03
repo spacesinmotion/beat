@@ -16,10 +16,13 @@ Sizei ds_to_grid(Vec2 p) { return (Sizei){(int)((p.x + 4) / 8), (int)((p.y + 4) 
 Vec2 ds_from_grid(Sizei s) { return (Vec2){s.w * 8.0f, s.h * 8.0f}; }
 
 void ds_update(DungeonScene *ds, Game *g, float dt) {
+  (void)ds, (void)dt;
+
   g_set_background_color(g, rgb(64 + fabs(30 * sin(g_time(g))), 64, 78));
 }
 
 void ds_draw(DungeonScene *ds, Game *g) {
+  (void)ds;
 
   Sizei gp = ds_to_grid(g_mouse_in_scene(g));
   for (int i = 0; i < 8; ++i)
@@ -35,7 +38,7 @@ void ds_draw(DungeonScene *ds, Game *g) {
   g_draw_icon(g, Img_menubar, 9, dt_psf(p, 0.5f));
 }
 
-void ds_init(DungeonScene *ds, Game *g) {}
+void ds_init(DungeonScene *ds, Game *g) { (void)ds, (void)g; }
 
 SceneTable DungeonScenetable = {
     .init = (SceneInitCB)ds_init,

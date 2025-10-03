@@ -5,6 +5,8 @@
 #include "LootAndLoan/DungeonScene.h"
 
 int main(int argc, char *argv[]) {
+  (void)argv;
+
   gc_start(&gc, &argc);
 
   int result = g_main(DungeonScene_create());
