@@ -12,8 +12,8 @@ typedef struct DungeonScene {
   DrawEntity *emo;
 } DungeonScene;
 
-Sizei ds_to_grid(Vec2 p) { return (Sizei){(int)((p.x + 8) / 16), (int)((p.y + 8) / 16)}; }
-Vec2 ds_from_grid(Sizei s) { return (Vec2){s.w * 16.0f, s.h * 16.0f}; }
+Point ds_to_grid(Vec2 p) { return (Point){(int)((p.x + 8) / 16), (int)((p.y + 8) / 16)}; }
+Vec2 ds_from_grid(Point s) { return (Vec2){s.x * 16.0f, s.y * 16.0f}; }
 
 void ds_update(DungeonScene *ds, Game *g, float dt) {
   (void)ds, (void)dt;
@@ -24,14 +24,14 @@ void ds_update(DungeonScene *ds, Game *g, float dt) {
 void ds_draw(DungeonScene *ds, Game *g) {
   (void)ds;
 
-  Sizei gp = ds_to_grid(g_mouse_in_scene(g));
+  Point gp = ds_to_grid(g_mouse_in_scene(g));
   for (int i = 0; i < 8; ++i)
     for (int j = 0; j < 8; ++j) {
-      g_color(g, alphaf((gp.w == i && gp.h == j) ? gray(200) : gray(100), 0.15f));
-      g_draw_rect(g, dt_psf(v_sub(ds_from_grid((Sizei){i, j}), (Vec2){7.9f, 7.9f}), 15.8f));
+      g_color(g, alphaf((gp.x == i && gp.y == j) ? gray(200) : gray(100), 0.15f));
+      g_draw_rect(g, dt_psf(v_sub(ds_from_grid((Point){i, j}), (Vec2){7.9f, 7.9f}), 15.8f));
     }
 
-  Vec2 p = ds_from_grid((Sizei){2, 1});
+  Vec2 p = ds_from_grid((Point){2, 1});
   g_color(g, white());
   Vec2 s = {1.0 + 0.025 * sin(4 * g_time(g)), 1.0 - 0.015 * sin(4 * g_time(g))};
   g_draw_entity(g, ds->emo, Img_emo, dt_prs(p, 0.02 * sin(g_time(g)), s));
