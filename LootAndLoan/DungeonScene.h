@@ -2,10 +2,10 @@
 #define DUNGEONSCENE_H
 
 #include "engine/Game.h"
-#include "engine/Scene.h"
 #include "engine/math/Color.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
+#include "engine/scene/Scene.h"
 #include "game/assets.h"
 
 typedef struct DungeonScene {

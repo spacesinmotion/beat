@@ -1,18 +1,14 @@
 #ifndef GAME_SCENE
 #define GAME_SCENE
 
-#include "engine/Scene.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
+#include "engine/scene/Scene.h"
+#include "engine/scene/SceneObjectVec.h"
 #include "game/ObjectType.h"
-#include "game/SceneObject.h"
 
 typedef struct Board Board;
 typedef struct PointOverview PointOverview;
-typedef struct SceneObjectVec {
-  SceneObject *data;
-  int len, cap;
-} SceneObjectVec;
 
 typedef struct GameScene GameScene;
 typedef void (*OnClickCB)(GameScene *, int id);

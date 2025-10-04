@@ -2,15 +2,14 @@
 #include "game/GameScene.h"
 #include "engine/DrawTransformation.h"
 #include "engine/Game.h"
-#include "engine/Scene.h"
 #include "engine/math/Color.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
+#include "engine/scene/SceneObjectVec.h"
 #include "extern/cjsonh/cjsonh.h"
 #include "game/Board.h"
 #include "game/ObjectType.h"
 #include "game/PointOverview.h"
-#include "game/SceneObject.h"
 #include "game/assets.h"
 #include "game/effects/Bling.h"
 #include "stdbool.h"
@@ -21,31 +20,6 @@
 #ifndef M_PI
 #define M_PI 3.1457
 #endif
-
-void so_vec_push(SceneObjectVec *vec, Game *g, SceneObject so) {
-  if (vec->len + 1 > vec->cap) {
-    vec->cap += 16;
-    vec->data = (SceneObject *)g_realloc(g, vec->data, vec->cap * sizeof(SceneObject));
-  }
-  vec->data[vec->len] = so;
-  vec->len++;
-}
-
-void so_vec_filter_dead(SceneObjectVec *vec, Game *g) {
-  for (int i = vec->len - 1; i >= 0; --i) {
-    if (!vec->data[i].table->die(vec->data[i].context, g))
-      continue;
-    vec->data[i] = vec->data[vec->len - 1];
-    vec->data[vec->len - 1] = (SceneObject){NULL, NULL};
-    --vec->len;
-  }
-}
-
-int so_render_order_compare(const void *va, const void *vb) {
-  const float a = so_render_order((SceneObject *)va);
-  const float b = so_render_order((SceneObject *)vb);
-  return a < b ? -1 : (a > b ? 1 : 0);
-}
 
 bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
   assert(gs->pick_rect_count < (int)(sizeof(gs->pick_rects) / sizeof(PickRect)));
@@ -66,8 +40,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     so_update(&gs->scene_objects.data[i], gs, g, dt);
 
   so_vec_filter_dead(&gs->scene_objects, g);
-
-  qsort(gs->scene_objects.data, gs->scene_objects.len, sizeof(SceneObject), so_render_order_compare);
+  so_vec_sort_by_render_order(&gs->scene_objects);
 
   po_update(gs->points, g);
 
@@ -460,7 +433,7 @@ SceneTable GameScene_table = {
 void GameScene_start(Game *g) {
   GameScene *gs = g_malloc(g, sizeof(GameScene));
   *gs = (GameScene){
-      .scene_objects = (SceneObjectVec){NULL, 0, 0},
+      .scene_objects = so_vec_empty(),
       .pick_rects = {},
       .pick_rect_count = 0,
       .pick_under_mouse = -1,
