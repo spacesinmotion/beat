@@ -2,19 +2,33 @@
 #define MOVE_MARKER_H
 
 #include "engine/Game.h"
+#include "engine/interaction/Selectable.h"
+#include "engine/math/Rect.h"
+#include "engine/math/Vec2.h"
 #include "engine/scene/SceneObject.h"
 
 typedef struct DungeonScene DungeonScene;
 
 void ds_add_object(DungeonScene *ds, Game *g, SceneObject so);
+void ds_set_selectable(DungeonScene *ds, Selectable sl);
+Rect ds_rect_from_grid(Point s);
+Vec2 ds_from_grid(Point s);
+int ds_turn(const DungeonScene *ds);
+void ds_move_player(DungeonScene *ds, Game *g, Point p);
 
 typedef struct MoveMarker {
-  Vec2 position;
-  int distance;
+  DungeonScene *parent;
+  Point position;
+  float focus;
+  int turn;
 } MoveMarker;
 
+void sl_mouse_click(MoveMarker *mm, Game *g) { ds_move_player(mm->parent, g, mm->position); }
+
+static SelectableTable MoveMarger_selectable = {.click = (SelectableMouseClick)sl_mouse_click};
+
 static bool mm_die(MoveMarker *mm, Game *g, bool force) {
-  if (force) {
+  if (force || mm->focus < -1.0f) {
     g_free(g, mm);
     return true;
   }
@@ -24,14 +38,24 @@ static bool mm_die(MoveMarker *mm, Game *g, bool force) {
 static float mm_render_order(const MoveMarker *mm) { return -mm->position.y; }
 
 static void mm_update(MoveMarker *mm, Game *g) {
-  (void)mm;
-  (void)g;
-  // TODO: Implement update logic
+  const float dt = g_animation_delta(g);
+  if (ds_turn(mm->parent) != mm->turn) {
+    mm->focus -= 2.0f * dt;
+    return;
+  }
+
+  const bool hovered = r_contains(ds_rect_from_grid(mm->position), g_mouse_in_scene(g));
+  if (hovered)
+    ds_set_selectable(mm->parent, (Selectable){mm, &MoveMarger_selectable});
+  mm->focus += 4.0f * (hovered ? dt : -dt);
+  mm->focus = f_clamp(mm->focus, 0.0f, 1.0f);
 }
 
 static void mm_draw(const MoveMarker *mm, Game *g) {
-  const Vec2 p = mm->position;
-  g_color(g, rgba(0x88, 0x97, 0xbd, 75 + 10 * sin(8 * g_time(g))));
+  const float m = mm->focus * 50;
+  const float x = mm->focus < 0.0 ? 1.0 + mm->focus : 1.0;
+  g_color(g, rgba(0x88, 0x97, 0xbd, 40 + m + x * 10 * sin(8 * g_time(g))));
+  const Vec2 p = ds_from_grid(mm->position);
   g_draw_icon(g, Img_menubar, 7, dt_p(p));
 }
 
@@ -50,9 +74,14 @@ static SceneObjectTable MoveMarker_table = {
     .save = (SceneObjectSaveCB)mm_save,
 };
 
-MoveMarker *MoveMarker_create(DungeonScene *ds, Game *g, Vec2 pos, int distance) {
+MoveMarker *MoveMarker_create(DungeonScene *ds, Game *g, Point p, int turn) {
   MoveMarker *mm = g_malloc(g, sizeof(MoveMarker));
-  *mm = (MoveMarker){.position = pos, .distance = distance};
+  *mm = (MoveMarker){
+      .parent = ds,
+      .position = p,
+      .turn = turn,
+      .focus = 0.0f,
+  };
 
   ds_add_object(ds, g, (SceneObject){mm, &MoveMarker_table});
 
