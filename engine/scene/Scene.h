@@ -7,7 +7,6 @@ typedef struct Game Game;
 typedef struct CJHObject CJHObject;
 typedef struct CJHObjectR CJHObjectR;
 
-typedef void (*SceneInitCB)(void *, Game *);
 typedef void (*SceneFreeCB)(void *, Game *);
 
 typedef void (*SceneUpdateCB)(void *, Game *, float);
@@ -20,7 +19,6 @@ typedef void (*SceneSaveCB)(CJHObject *, void *);
 typedef void (*SceneLoadCB)(CJHObjectR *, const char *, void *);
 
 typedef struct SceneTable {
-  SceneInitCB init;
   SceneFreeCB free;
 
   SceneUpdateCB update;
@@ -39,11 +37,6 @@ typedef struct Scene {
   void *context;
   const SceneTable *table;
 } Scene;
-
-static inline void sc_init(Scene *s, Game *g) {
-  if (s->table && s->table->init)
-    s->table->init(s->context, g);
-}
 
 static inline void sc_free(Scene *s, Game *g) {
   if (s->table && s->table->free)

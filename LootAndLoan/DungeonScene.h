@@ -12,6 +12,8 @@
 
 typedef struct DungeonScene {
   SceneObjectVec scene_objects;
+
+  Kirc *kirc;
 } DungeonScene;
 
 Point ds_to_grid(Vec2 p) { return (Point){(int)((p.x + 8) / 16), (int)((p.y + 8) / 16)}; }
@@ -43,23 +45,21 @@ void ds_draw(DungeonScene *ds, Game *g) {
   g_draw_icon(g, Img_menubar, 9, dt_p(p));
 }
 
-void ds_init(DungeonScene *ds, Game *g) {
-  so_vec_push(&ds->scene_objects, g, Kirc_init(g, ds_from_grid((Point){2, 1})));
-}
-
 void ds_free(DungeonScene *ds, Game *g) { so_vec_clear(&ds->scene_objects, g); }
 
 SceneTable DungeonScenetable = {
-    .init = (SceneInitCB)ds_init,
     .free = (SceneFreeCB)ds_free,
     .update = (SceneUpdateCB)ds_update,
     .draw = (SceneDrawCB)ds_draw,
 };
-Scene DungeonScene_create(Game *g) {
+void DungeonScene_create(Game *g) {
   DungeonScene *ds = g_malloc(g, sizeof(DungeonScene));
-  *ds = (DungeonScene){};
+  *ds = (DungeonScene){0};
 
-  return (Scene){ds, &DungeonScenetable};
+  ds->kirc = Kirc_init(g, ds_from_grid((Point){2, 1}));
+  so_vec_push(&ds->scene_objects, g, kc_to_SceneObject(ds->kirc));
+
+  g_set_scene(g, (Scene){ds, &DungeonScenetable});
 }
 
 #endif

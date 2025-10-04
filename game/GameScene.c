@@ -402,21 +402,12 @@ void gs_from_json(CJHObjectR *o, const char *key, GameScene *gs) {
   // }
 }
 
-void gs_init(GameScene *gs, Game *g) {
-  gs->board = g_malloc(g, sizeof(Board));
-  gs->points = PointOverview_init(g);
-
-  gs_reset_level(gs, 0);
-  gs->no_move_left = true;
-}
-
 void gs_free(GameScene *gs, Game *g) {
   po_free(g, gs->points);
   gs->points = NULL;
   free(gs);
 }
 SceneTable GameScene_table = {
-    .init = (SceneInitCB)gs_init,
     .free = (SceneFreeCB)gs_free,
     .update = (SceneUpdateCB)gs_update,
     .draw = (SceneDrawCB)gs_draw,
@@ -448,6 +439,12 @@ void GameScene_start(Game *g) {
       .can_select_dice = false,
       .wobble_time = 1.0f,
   };
+
+  gs->board = g_malloc(g, sizeof(Board));
+  gs->points = PointOverview_init(g);
+
+  gs_reset_level(gs, 0);
+  gs->no_move_left = true;
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }

@@ -140,7 +140,6 @@ typedef struct Game {
 void g_set_scene(Game *g, Scene scene) {
   sc_free(&g->scene, g);
   g->scene = scene;
-  sc_init(&g->scene, g);
 }
 void g_set_background_color(Game *g, Color c) { g->render.background_color = c; }
 

@@ -22,18 +22,9 @@ static bool kc_die(Kirc *kc, Game *g, bool force) {
 
 static float kc_render_order(const Kirc *kc) { return kc->position.y; }
 
-static void kc_update(Kirc *kc, Game *g) {
-  (void)kc;
-  (void)g;
-
-  kc->position.x += 0.1f * sin(g_time(g));
-  // TODO: Implement update logic
-}
+static void kc_update(Kirc *kc, Game *g) { kc->position.x += 0.1f * sin(g_time(g)); }
 
 static void kc_draw(const Kirc *kc, Game *g) {
-  (void)kc;
-  (void)g;
-
   const Vec2 p = kc->position;
   g_color(g, white());
   Vec2 s = {1.0 + 0.025 * sin(4 * g_time(g)), 1.0 - 0.015 * sin(4 * g_time(g))};
@@ -52,8 +43,9 @@ static SceneObjectTable Kirc_table = {.type = "Kirc",
                                       .update = (SceneObjectUpdateCB)kc_update,
                                       .draw = (SceneObjectDrawCB)kc_draw,
                                       .save = (SceneObjectSaveCB)kc_save};
+SceneObject kc_to_SceneObject(Kirc *kc) { return (SceneObject){kc, &Kirc_table}; }
 
-SceneObject Kirc_init(Game *g, Vec2 pos) {
+Kirc *Kirc_init(Game *g, Vec2 pos) {
   Kirc *kc = g_malloc(g, sizeof(Kirc));
 
   *kc = (Kirc){
@@ -62,7 +54,7 @@ SceneObject Kirc_init(Game *g, Vec2 pos) {
       .health = 100.0f,
   };
 
-  return (SceneObject){kc, &Kirc_table};
+  return kc;
 }
 
 #endif // KIRC_H
