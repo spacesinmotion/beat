@@ -20,6 +20,8 @@ void so_vec_draw_all(SceneObjectVec *vec, Game *g);
 void so_vec_filter_dead(SceneObjectVec *vec, Game *g);
 void so_vec_sort_by_render_order(SceneObjectVec *vec);
 
+void so_vec_clear(SceneObjectVec *vec, Game *g);
+
 #ifdef GAME_ENGINE_IMPL
 
 SceneObjectVec so_vec_empty() { return (SceneObjectVec){NULL, 0, 0}; }
@@ -36,7 +38,7 @@ void so_vec_push(SceneObjectVec *vec, Game *g, SceneObject so) {
 
 void so_vec_filter_dead(SceneObjectVec *vec, Game *g) {
   for (int i = vec->len - 1; i >= 0; --i) {
-    if (!vec->data[i].table->die(vec->data[i].context, g))
+    if (!vec->data[i].table->die(vec->data[i].context, g, false))
       continue;
     vec->data[i] = vec->data[vec->len - 1];
     vec->data[vec->len - 1] = (SceneObject){NULL, NULL};
@@ -64,6 +66,10 @@ void so_vec_sort_by_render_order(SceneObjectVec *vec) {
   qsort(vec->data, vec->len, sizeof(SceneObject), so_render_order_compare);
 }
 
+void so_vec_clear(SceneObjectVec *vec, Game *g) {
+  for (int i = 0; i < vec->len; ++i)
+    so_die(&vec->data[i], g, true);
+}
 #endif
 
 #endif

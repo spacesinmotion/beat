@@ -14,8 +14,8 @@ typedef struct Bling {
   float time;
 } Bling;
 
-bool bl_die(Bling *bl, Game *g) {
-  if (bl->time * 16.0f > 10.0f) {
+bool bl_die(Bling *bl, Game *g, bool force) {
+  if (force || bl->time * 16.0f > 10.0f) {
     g_free(g, bl);
     return true;
   }
