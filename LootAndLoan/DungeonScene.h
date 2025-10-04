@@ -52,6 +52,7 @@ void ds_mouse_down(DungeonScene *ds, Game *g, int b) {
   if (b == 0) {
     Point p = ds_to_grid(g_mouse_in_scene(g));
     ds->kirc->position = ds_from_grid(p);
+    ks_add_possible_actions(ds->kirc, ds, g);
   }
 }
 

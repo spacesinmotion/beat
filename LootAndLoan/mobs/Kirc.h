@@ -1,8 +1,12 @@
 #ifndef KIRC_H
 #define KIRC_H
 
+#include "LootAndLoan/mobs/MoveMarker.h"
 #include "engine/Game.h"
 #include "engine/scene/SceneObject.h"
+
+Point ds_to_grid(Vec2 p);
+Vec2 ds_from_grid(Point s);
 
 typedef struct DungeonScene DungeonScene;
 void ds_add_object(DungeonScene *ds, Game *g, SceneObject so);
@@ -23,9 +27,9 @@ static bool kc_die(Kirc *kc, Game *g, bool force) {
   return false;
 }
 
-static float kc_render_order(const Kirc *kc) { return kc->position.y; }
+static float kc_render_order(const Kirc *kc) { return -kc->position.y; }
 
-static void kc_update(Kirc *kc, Game *g) { kc->position.x += 0.1f * sin(g_time(g)); }
+static void kc_update(Kirc *kc, Game *g) { (void)kc, (void)g; }
 
 static void kc_draw(const Kirc *kc, Game *g) {
   const Vec2 p = kc->position;
@@ -38,6 +42,14 @@ static void kc_save(CJHObject *o, const Kirc *kc) {
   (void)o;
   (void)kc;
   // TODO: Implement save logic
+}
+
+void ks_add_possible_actions(Kirc *kc, DungeonScene *ds, Game *g) {
+  Point p = ds_to_grid(kc->position);
+  for (int i = -1; i <= 1; ++i)
+    for (int j = -1; j <= 1; ++j)
+      if (i != 0 || j != 0)
+        MoveMarker_create(ds, g, ds_from_grid((Point){p.x + i, p.y + j}), 1);
 }
 
 static SceneObjectTable Kirc_table = {
