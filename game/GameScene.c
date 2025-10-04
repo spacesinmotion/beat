@@ -21,6 +21,8 @@
 #define M_PI 3.1457
 #endif
 
+void gs_add_object(GameScene *gs, Game *g, SceneObject so) { so_vec_push(&gs->scene_objects, g, so); }
+
 bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
   assert(gs->pick_rect_count < (int)(sizeof(gs->pick_rects) / sizeof(PickRect)));
   Rect r = (Rect){{p.x - 8 * s, p.y - 8 * s}, {16 * s, 16 * s}};
@@ -36,9 +38,7 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 
   g_set_background_color(g, rgb(66, 64, 78));
 
-  for (int i = 0; i < gs->scene_objects.len; ++i)
-    so_update(&gs->scene_objects.data[i], gs, g, dt);
-
+  so_vec_update_all(&gs->scene_objects, g);
   so_vec_filter_dead(&gs->scene_objects, g);
   so_vec_sort_by_render_order(&gs->scene_objects);
 
@@ -281,8 +281,7 @@ void gs_draw(GameScene *gs, Game *g) {
       gs_draw_button(g, gs->dice[0].p, gs->dice[0].o, rgb(0xff, 0xda, 0x89), gs->dice[0].s);
   }
 
-  for (int i = 0; i < gs->scene_objects.len; ++i)
-    so_draw(&gs->scene_objects.data[i], gs, g);
+  so_vec_draw_all(&gs->scene_objects, g);
 }
 
 void gs_draw_menu_overlay(GameScene *gs, Game *g) { (void)g, (void)gs; }
@@ -313,7 +312,8 @@ void gs_mouse_down(GameScene *gs, Game *g, int button) {
       Sizei gp = gs_scene_to_grid(g_mouse_in_scene(g));
       if (bd_allowed_to_pick(gs->board, gp)) {
         bd_set_grid(gs->board, gp, gs->dice[gs->selected_dice].o);
-        Bling_init(gs, g, gs_grid_to_scene(gp), rgb(0xFF, 0x00, 0x00));
+        Bling *h = Bling_create(g, gs_grid_to_scene(gp), rgb(0xda, 0xa5, 0x20));
+        gs_add_object(gs, g, (SceneObject){h, &Bling_table});
         gs->wobble_time = 1.0f;
 
         if (gs->placed_dice == 0 && gs->dice[1].o != So_Empty) {
@@ -353,8 +353,6 @@ void gs_key_up(GameScene *gs, Game *g, int key) {
 
   printf("KEY UP (%d)\n", key);
 }
-
-void gs_add_object(GameScene *gs, Game *g, SceneObject so) { so_vec_push(&gs->scene_objects, g, so); }
 
 void gs_sceneobjects_to_json(CJHArray *a, void *ud) {
   SceneObjectVec *s = (SceneObjectVec *)ud;

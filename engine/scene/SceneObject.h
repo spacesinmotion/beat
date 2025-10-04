@@ -6,14 +6,13 @@
 #include <stdbool.h>
 
 typedef struct SceneObject SceneObject;
-typedef struct GameScene GameScene;
 typedef struct Game Game;
 typedef struct CJHObject CJHObject;
 
 typedef bool (*SceneObjectDieCB)(SceneObject *, Game *g);
 typedef float (*SceneObjectRenderOrderCB)(const SceneObject *);
-typedef void (*SceneObjectUpdateCB)(SceneObject *, GameScene *, Game *, float);
-typedef void (*SceneObjectDrawCB)(const SceneObject *, GameScene *gs, Game *);
+typedef void (*SceneObjectUpdateCB)(SceneObject *, Game *);
+typedef void (*SceneObjectDrawCB)(const SceneObject *, Game *);
 typedef void (*SceneObjectSaveCB)(CJHObject *o, const SceneObject *);
 
 typedef struct SceneObjectTable {
@@ -42,14 +41,14 @@ static inline float so_render_order(const SceneObject *so) {
   return so->table->render_order ? so->table->render_order(so->context) : FLT_MAX;
 }
 
-static inline void so_update(SceneObject *so, GameScene *gs, Game *g, float dt) {
+static inline void so_update(SceneObject *so, Game *g) {
   if (so->context && so->table->update)
-    so->table->update(so->context, gs, g, dt);
+    so->table->update(so->context, g);
 }
 
-static inline void so_draw(const SceneObject *so, GameScene *gs, Game *g) {
+static inline void so_draw(const SceneObject *so, Game *g) {
   if (so->context && so->table->draw)
-    so->table->draw(so->context, gs, g);
+    so->table->draw(so->context, g);
 }
 
 static inline bool so_can_be_stored(const SceneObject *so) { return so->table->save && so->context; }

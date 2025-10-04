@@ -4,7 +4,7 @@
 #include "engine/Game.h"
 #include "engine/math/Vec2.h"
 #include "engine/math/random.h"
-#include "game/GameScene.h"
+#include "engine/scene/SceneObject.h"
 #include "game/assets.h"
 
 typedef struct Bling {
@@ -22,17 +22,11 @@ bool bl_die(Bling *bl, Game *g) {
   return false;
 }
 
-void bl_update(Bling *bl, GameScene *gs, Game *g, float dt) {
-  (void)gs;
-  (void)dt;
-
-  bl->time += g_animation_delta(g);
-}
+void bl_update(Bling *bl, Game *g) { bl->time += g_animation_delta(g); }
 
 float bl_render_order(Bling *bl) { return bl->location.y + 1000.0; }
 
-void bl_draw(Bling *bl, GameScene *gs, Game *g) {
-  (void)gs;
+void bl_draw(Bling *bl, Game *g) {
 
   const int frame = (int)(bl->time * 16.0f);
   g_color(g, bl->color);
@@ -47,7 +41,7 @@ static SceneObjectTable Bling_table = {
     .draw = (SceneObjectDrawCB)bl_draw,
 };
 
-Bling *Bling_init(GameScene *gs, Game *g, Vec2 l, Color c) {
+Bling *Bling_create(Game *g, Vec2 l, Color c) {
   Bling *h = g_malloc(g, sizeof(Bling));
   *h = (Bling){
       .color = c,
@@ -55,9 +49,6 @@ Bling *Bling_init(GameScene *gs, Game *g, Vec2 l, Color c) {
       .rotation = r_float_r(0, M_PI * 2.0f),
       .time = 0.0f,
   };
-
-  gs_add_object(gs, g, (SceneObject){h, &Bling_table});
-
   return h;
 }
 #endif

@@ -46,8 +46,6 @@ typedef struct GameScene {
   float wobble_time;
 } GameScene;
 
-void gs_add_object(GameScene *gs, Game *g, SceneObject so);
-
 void GameScene_start(Game *g);
 
 #endif

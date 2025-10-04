@@ -13,6 +13,10 @@ typedef struct SceneObjectVec {
 SceneObjectVec so_vec_empty();
 
 void so_vec_push(SceneObjectVec *vec, Game *g, SceneObject so);
+
+void so_vec_update_all(SceneObjectVec *vec, Game *g);
+void so_vec_draw_all(SceneObjectVec *vec, Game *g);
+
 void so_vec_filter_dead(SceneObjectVec *vec, Game *g);
 void so_vec_sort_by_render_order(SceneObjectVec *vec);
 
@@ -38,6 +42,16 @@ void so_vec_filter_dead(SceneObjectVec *vec, Game *g) {
     vec->data[vec->len - 1] = (SceneObject){NULL, NULL};
     --vec->len;
   }
+}
+
+void so_vec_update_all(SceneObjectVec *vec, Game *g) {
+  for (int i = 0; i < vec->len; ++i)
+    so_update(&vec->data[i], g);
+}
+
+void so_vec_draw_all(SceneObjectVec *vec, Game *g) {
+  for (int i = 0; i < vec->len; ++i)
+    so_draw(&vec->data[i], g);
 }
 
 int so_render_order_compare(const void *va, const void *vb) {
