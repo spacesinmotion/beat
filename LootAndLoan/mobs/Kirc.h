@@ -4,6 +4,9 @@
 #include "engine/Game.h"
 #include "engine/scene/SceneObject.h"
 
+typedef struct DungeonScene DungeonScene;
+void ds_add_object(DungeonScene *ds, Game *g, SceneObject so);
+
 typedef struct Kirc {
   DrawEntity *emo;
 
@@ -37,15 +40,16 @@ static void kc_save(CJHObject *o, const Kirc *kc) {
   // TODO: Implement save logic
 }
 
-static SceneObjectTable Kirc_table = {.type = "Kirc",
-                                      .die = (SceneObjectDieCB)kc_die,
-                                      .render_order = (SceneObjectRenderOrderCB)kc_render_order,
-                                      .update = (SceneObjectUpdateCB)kc_update,
-                                      .draw = (SceneObjectDrawCB)kc_draw,
-                                      .save = (SceneObjectSaveCB)kc_save};
-SceneObject kc_to_SceneObject(Kirc *kc) { return (SceneObject){kc, &Kirc_table}; }
+static SceneObjectTable Kirc_table = {
+    .type = "Kirc",
+    .die = (SceneObjectDieCB)kc_die,
+    .render_order = (SceneObjectRenderOrderCB)kc_render_order,
+    .update = (SceneObjectUpdateCB)kc_update,
+    .draw = (SceneObjectDrawCB)kc_draw,
+    .save = (SceneObjectSaveCB)kc_save,
+};
 
-Kirc *Kirc_init(Game *g, Vec2 pos) {
+Kirc *Kirc_create(DungeonScene *ds, Game *g, Vec2 pos) {
   Kirc *kc = g_malloc(g, sizeof(Kirc));
 
   *kc = (Kirc){
@@ -53,6 +57,8 @@ Kirc *Kirc_init(Game *g, Vec2 pos) {
       .position = pos,
       .health = 100.0f,
   };
+
+  ds_add_object(ds, g, (SceneObject){kc, &Kirc_table});
 
   return kc;
 }

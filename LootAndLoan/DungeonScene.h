@@ -7,6 +7,7 @@
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
 #include "engine/scene/Scene.h"
+#include "engine/scene/SceneObject.h"
 #include "engine/scene/SceneObjectVec.h"
 #include "game/assets.h"
 
@@ -18,6 +19,8 @@ typedef struct DungeonScene {
 
 Point ds_to_grid(Vec2 p) { return (Point){(int)((p.x + 8) / 16), (int)((p.y + 8) / 16)}; }
 Vec2 ds_from_grid(Point s) { return (Vec2){s.x * 16.0f, s.y * 16.0f}; }
+
+void ds_add_object(DungeonScene *ds, Game *g, SceneObject so) { so_vec_push(&ds->scene_objects, g, so); }
 
 void ds_update(DungeonScene *ds, Game *g, float dt) {
   (void)ds, (void)dt;
@@ -45,19 +48,26 @@ void ds_draw(DungeonScene *ds, Game *g) {
   g_draw_icon(g, Img_menubar, 9, dt_p(p));
 }
 
+void ds_mouse_down(DungeonScene *ds, Game *g, int b) {
+  if (b == 0) {
+    Point p = ds_to_grid(g_mouse_in_scene(g));
+    ds->kirc->position = ds_from_grid(p);
+  }
+}
+
 void ds_free(DungeonScene *ds, Game *g) { so_vec_clear(&ds->scene_objects, g); }
 
 SceneTable DungeonScenetable = {
     .free = (SceneFreeCB)ds_free,
     .update = (SceneUpdateCB)ds_update,
     .draw = (SceneDrawCB)ds_draw,
+    .mouse_down = (SceneMouseCB)ds_mouse_down,
 };
 void DungeonScene_create(Game *g) {
   DungeonScene *ds = g_malloc(g, sizeof(DungeonScene));
   *ds = (DungeonScene){0};
 
-  ds->kirc = Kirc_init(g, ds_from_grid((Point){2, 1}));
-  so_vec_push(&ds->scene_objects, g, kc_to_SceneObject(ds->kirc));
+  ds->kirc = Kirc_create(ds, g, ds_from_grid((Point){2, 1}));
 
   g_set_scene(g, (Scene){ds, &DungeonScenetable});
 }
