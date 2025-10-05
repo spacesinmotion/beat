@@ -1,19 +1,12 @@
 #ifndef MOVE_MARKER_H
 #define MOVE_MARKER_H
 
+#include "LootAndLoan/DungeonScene.h"
 #include "engine/Game.h"
 #include "engine/interaction/Selectable.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
-#include "engine/scene/SceneObject.h"
 
-typedef struct DungeonScene DungeonScene;
-
-void ds_add_object(DungeonScene *ds, Game *g, SceneObject so);
-void ds_set_selectable(DungeonScene *ds, Selectable sl);
-Rect ds_rect_from_grid(Point s);
-Vec2 ds_from_grid(Point s);
-int ds_turn(const DungeonScene *ds);
 void ds_move_player(DungeonScene *ds, Game *g, Point p);
 
 typedef struct MoveMarker {

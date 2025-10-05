@@ -1,15 +1,10 @@
 #ifndef KIRC_H
 #define KIRC_H
 
+#include "LootAndLoan/DungeonScene.h"
 #include "LootAndLoan/mobs/MoveMarker.h"
 #include "engine/Game.h"
 #include "engine/scene/SceneObject.h"
-
-Point ds_to_grid(Vec2 p);
-Vec2 ds_from_grid(Point s);
-
-typedef struct DungeonScene DungeonScene;
-void ds_add_object(DungeonScene *ds, Game *g, SceneObject so);
 
 typedef struct Kirc {
   DrawEntity *emo;
