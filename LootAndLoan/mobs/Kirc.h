@@ -23,7 +23,7 @@ static bool kc_die(Kirc *kc, Game *g, bool force) {
   return false;
 }
 
-static float kc_render_order(const Kirc *kc) { return -kc->position.y; }
+static float kc_render_order(const Kirc *kc) { return kc->position.y; }
 
 void ks_add_possible_actions(Kirc *kc, DungeonScene *ds, Game *g) {
   Point p = ds_to_grid(kc->position);
