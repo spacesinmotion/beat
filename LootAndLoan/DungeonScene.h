@@ -32,6 +32,6 @@ void ds_set_map(DungeonScene *ds, Point p, Maptile mt);
 typedef void (*DungeonTileCB)(void *ud, Point p, Game *g);
 void ds_map_each_empty(Game *g, Point p, int distance, DungeonTileCB cb, void *ud);
 
-// Point ds_map_step_to_player(Game *g, Point p, int radius);
+Point ds_map_step_to_player(Game *g, Point p, int radius);
 
 #endif

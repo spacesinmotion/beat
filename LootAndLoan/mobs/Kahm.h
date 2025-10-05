@@ -48,14 +48,16 @@ static void kh_save(CJHObject *o, const Kahm *kh) {
 }
 
 void kh_start_turn(Kahm *kh, Game *g, Point d) {
-  kh->turn_finished = false;
 
   ds_set_map(ds_get(g), ds_to_grid(kh->destination), MT_Empty);
 
   const Point p = ds_to_grid(kh->position);
-  const Point m = {p.x == d.x ? 0 : (p.x > d.x) ? -1 : 1, p.y == d.y ? 0 : (p.y > d.y) ? -1 : 1};
-  kh->destination = v_add(kh->position, ds_from_grid(m));
+  Point dest = ds_map_step_to_player(g, p, 9);
+  if (dest.x >= 0 && dest.y >= 0)
+    kh->destination = ds_from_grid(dest);
+
   ds_set_map(ds_get(g), ds_to_grid(kh->destination), MT_Mob);
+  kh->turn_finished = v_eq(kh->position, kh->destination);
 }
 
 static SceneObjectTable Kahm_table = {
