@@ -1,6 +1,8 @@
 #ifndef DUNGEONSCENE_IMPL_H
 #define DUNGEONSCENE_IMPL_H
 
+#include "LootAndLoan/DungeonScene.h"
+#include "LootAndLoan/mobs/Kahm.h"
 #include "LootAndLoan/mobs/Kirc.h"
 #include "LootAndLoan/mobs/MoveMarker.h"
 #include "engine/Game.h"
@@ -16,13 +18,23 @@ typedef struct DungeonScene {
   Selectable mouse_hander;
 
   int turn;
+  bool player_turn;
 
   Kirc *kirc;
+  Kahm *mobs[3];
+
 } DungeonScene;
 
 void ds_add_object(DungeonScene *ds, Game *g, SceneObject so) { so_vec_push(&ds->scene_objects, g, so); }
 
 int ds_turn(const DungeonScene *ds) { return ds->turn; }
+
+void ds_payer_turn_finished(DungeonScene *ds, Game *g) {
+  ds->player_turn = false;
+  for (int i = 0; i < 3; ++i)
+    kh_start_turn(ds->mobs[i], g, ds_to_grid(ds->kirc->destination));
+  // kc_add_possible_actions(ds->kirc, ds, g);
+}
 
 void ds_move_player(DungeonScene *ds, Game *g, Point p) {
   ds->turn++;
@@ -39,6 +51,11 @@ void ds_update(DungeonScene *ds, Game *g, float dt) {
   so_vec_update_all(&ds->scene_objects, g);
   so_vec_filter_dead(&ds->scene_objects, g);
   so_vec_sort_by_render_order(&ds->scene_objects);
+
+  if (!ds->player_turn && ds->mobs[0]->turn_finished && ds->mobs[1]->turn_finished && ds->mobs[2]->turn_finished) {
+    ds->player_turn = true;
+    kc_add_possible_actions(ds->kirc, ds, g);
+  }
 }
 
 void ds_draw(DungeonScene *ds, Game *g) {
@@ -69,9 +86,16 @@ SceneTable DungeonScenetable = {
 };
 void DungeonScene_create(Game *g) {
   DungeonScene *ds = g_malloc(g, sizeof(DungeonScene));
-  *ds = (DungeonScene){0};
+  *ds = (DungeonScene){
+      .scene_objects = so_vec_empty(),
+      .turn = 0,
+      .player_turn = true,
+  };
 
-  ds->kirc = Kirc_create(ds, g, ds_from_grid((Point){2, 1}));
+  ds->kirc = Kirc_create(ds, g, ds_from_grid((Point){2, 1})),
+  ds->mobs[0] = Kahm_create(ds, g, ds_from_grid((Point){7, 2}));
+  ds->mobs[1] = Kahm_create(ds, g, ds_from_grid((Point){6, 7}));
+  ds->mobs[2] = Kahm_create(ds, g, ds_from_grid((Point){1, 8}));
 
   g_set_scene(g, (Scene){ds, &DungeonScenetable});
   g_set_background_color(g, rgb(226, 226, 214));

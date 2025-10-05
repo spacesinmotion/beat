@@ -25,7 +25,7 @@ static bool kc_die(Kirc *kc, Game *g, bool force) {
 
 static float kc_render_order(const Kirc *kc) { return kc->position.y; }
 
-void ks_add_possible_actions(Kirc *kc, DungeonScene *ds, Game *g) {
+void kc_add_possible_actions(Kirc *kc, DungeonScene *ds, Game *g) {
   Point p = ds_to_grid(kc->position);
   for (int i = -1; i <= 1; ++i)
     for (int j = -1; j <= 1; ++j)
@@ -38,7 +38,7 @@ static void kc_update(Kirc *kc, Game *g) {
   if (!v_eq(kc->position, kc->destination)) {
     kc->position = v_lerp_about(kc->position, kc->destination, 16 * 8.0f * g_animation_delta(g));
     if (v_eq(kc->position, kc->destination))
-      ks_add_possible_actions(kc, ds_get(g), g);
+      ds_payer_turn_finished(ds_get(g), g);
   }
 }
 
@@ -75,7 +75,7 @@ Kirc *Kirc_create(DungeonScene *ds, Game *g, Vec2 pos) {
   };
 
   ds_add_object(ds, g, (SceneObject){kc, &Kirc_table});
-  ks_add_possible_actions(kc, ds, g);
+  kc_add_possible_actions(kc, ds, g);
 
   return kc;
 }

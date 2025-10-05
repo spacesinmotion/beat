@@ -15,6 +15,8 @@ DungeonScene *ds_get(Game *g);
 
 int ds_turn(const DungeonScene *ds);
 
+void ds_payer_turn_finished(DungeonScene *ds, Game *g);
+
 void ds_add_object(DungeonScene *ds, Game *g, SceneObject so);
 void ds_set_selectable(DungeonScene *ds, Selectable sl);
 
