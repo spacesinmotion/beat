@@ -10,13 +10,12 @@
 void ds_move_player(DungeonScene *ds, Game *g, Point p);
 
 typedef struct MoveMarker {
-  DungeonScene *parent;
   Point position;
   float focus;
   int turn;
 } MoveMarker;
 
-void sl_mouse_click(MoveMarker *mm, Game *g) { ds_move_player(mm->parent, g, mm->position); }
+void sl_mouse_click(MoveMarker *mm, Game *g) { ds_move_player(ds_get(g), g, mm->position); }
 
 static SelectableTable MoveMarger_selectable = {.click = (SelectableMouseClick)sl_mouse_click};
 
@@ -32,14 +31,14 @@ static float mm_render_order(const MoveMarker *mm) { return -mm->position.y; }
 
 static void mm_update(MoveMarker *mm, Game *g) {
   const float dt = g_animation_delta(g);
-  if (ds_turn(mm->parent) != mm->turn) {
+  if (ds_turn(ds_get(g)) != mm->turn) {
     mm->focus -= 2.0f * dt;
     return;
   }
 
   const bool hovered = r_contains(ds_rect_from_grid(mm->position), g_mouse_in_scene(g));
   if (hovered)
-    ds_set_selectable(mm->parent, (Selectable){mm, &MoveMarger_selectable});
+    ds_set_selectable(ds_get(g), (Selectable){mm, &MoveMarger_selectable});
   mm->focus += 4.0f * (hovered ? dt : -dt);
   mm->focus = f_clamp(mm->focus, 0.0f, 1.0f);
 }
@@ -70,7 +69,6 @@ static SceneObjectTable MoveMarker_table = {
 MoveMarker *MoveMarker_create(DungeonScene *ds, Game *g, Point p, int turn) {
   MoveMarker *mm = g_malloc(g, sizeof(MoveMarker));
   *mm = (MoveMarker){
-      .parent = ds,
       .position = p,
       .turn = turn,
       .focus = 0.0f,

@@ -79,4 +79,9 @@ void DungeonScene_create(Game *g) {
   g_set_background_color(g, rgb(226, 226, 214));
 }
 
+DungeonScene *ds_get(Game *g) {
+  assert(g_scene(g).table == &DungeonScenetable);
+  return (DungeonScene *)g_scene(g).context;
+}
+
 #endif

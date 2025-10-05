@@ -21,6 +21,8 @@ typedef void (*GameInitCB)(Game *g);
 int g_main(const char *name, GameInitCB init);
 
 void g_set_scene(Game *g, Scene scene);
+Scene g_scene(Game *g);
+
 void g_set_background_color(Game *g, Color c);
 
 float g_animation_delta(Game *g);

@@ -11,6 +11,8 @@ Rect ds_rect_from_grid(Point s) { return (Rect){{s.x * 16 - 8, s.y * 16 - 8}, {1
 
 typedef struct DungeonScene DungeonScene;
 
+DungeonScene *ds_get(Game *g);
+
 int ds_turn(const DungeonScene *ds);
 
 void ds_add_object(DungeonScene *ds, Game *g, SceneObject so);

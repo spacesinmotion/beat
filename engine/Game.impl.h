@@ -141,6 +141,8 @@ void g_set_scene(Game *g, Scene scene) {
   sc_free(&g->scene, g);
   g->scene = scene;
 }
+Scene g_scene(Game *g) { return g->scene; }
+
 void g_set_background_color(Game *g, Color c) { g->render.background_color = c; }
 
 float g_animation_delta(Game *g) { return g->animation_delta; }
