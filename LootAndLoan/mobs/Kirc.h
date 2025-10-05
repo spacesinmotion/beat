@@ -25,18 +25,23 @@ static bool kc_die(Kirc *kc, Game *g, bool force) {
 
 static float kc_render_order(const Kirc *kc) { return kc->position.y; }
 
-void kc_add_possible_actions(Kirc *kc, DungeonScene *ds, Game *g) {
+void add_move_marker_at(void *ud, Point p, Game *g) {
+  (void)ud;
+  DungeonScene *ds = ds_get(g);
+  MoveMarker_create(ds, g, p, ds_turn(ds));
+}
+
+void kc_add_possible_actions(Kirc *kc, Game *g) {
   Point p = ds_to_grid(kc->position);
-  for (int i = -1; i <= 1; ++i)
-    for (int j = -1; j <= 1; ++j)
-      if (i != 0 || j != 0)
-        MoveMarker_create(ds, g, (Point){p.x + i, p.y + j}, ds_turn(ds));
+  ds_map_each_empty(g, p, 2, add_move_marker_at, kc);
 }
 
 static void kc_update(Kirc *kc, Game *g) {
-  (void)kc, (void)g;
+
   if (!v_eq(kc->position, kc->destination)) {
+    ds_set_map(ds_get(g), ds_to_grid(kc->position), MT_Empty);
     kc->position = v_lerp_about(kc->position, kc->destination, 16 * 8.0f * g_animation_delta(g));
+    ds_set_map(ds_get(g), ds_to_grid(kc->destination), MT_Player);
     if (v_eq(kc->position, kc->destination))
       ds_payer_turn_finished(ds_get(g), g);
   }
@@ -75,7 +80,8 @@ Kirc *Kirc_create(DungeonScene *ds, Game *g, Vec2 pos) {
   };
 
   ds_add_object(ds, g, (SceneObject){kc, &Kirc_table});
-  kc_add_possible_actions(kc, ds, g);
+  ds_set_map(ds, ds_to_grid(kc->destination), MT_Player);
+  kc_add_possible_actions(kc, g);
 
   return kc;
 }

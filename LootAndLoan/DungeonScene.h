@@ -20,4 +20,18 @@ void ds_payer_turn_finished(DungeonScene *ds, Game *g);
 void ds_add_object(DungeonScene *ds, Game *g, SceneObject so);
 void ds_set_selectable(DungeonScene *ds, Selectable sl);
 
+typedef enum Maptile {
+  MT_Empty,
+  MT_Player,
+  MT_Mob,
+  MT_Wall,
+} Maptile;
+
+void ds_set_map(DungeonScene *ds, Point p, Maptile mt);
+
+typedef void (*DungeonTileCB)(void *ud, Point p, Game *g);
+void ds_map_each_empty(Game *g, Point p, int distance, DungeonTileCB cb, void *ud);
+
+// Point ds_map_step_to_player(Game *g, Point p, int radius);
+
 #endif
