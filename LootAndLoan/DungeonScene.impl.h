@@ -26,8 +26,7 @@ int ds_turn(const DungeonScene *ds) { return ds->turn; }
 
 void ds_move_player(DungeonScene *ds, Game *g, Point p) {
   ds->turn++;
-  ds->kirc->position = ds_from_grid(p);
-  ks_add_possible_actions(ds->kirc, ds, g);
+  ds->kirc->destination = ds_from_grid(p);
 }
 
 void ds_set_selectable(DungeonScene *ds, Selectable sl) { ds->mouse_hander = sl; }
@@ -73,7 +72,6 @@ void DungeonScene_create(Game *g) {
   *ds = (DungeonScene){0};
 
   ds->kirc = Kirc_create(ds, g, ds_from_grid((Point){2, 1}));
-  ks_add_possible_actions(ds->kirc, ds, g);
 
   g_set_scene(g, (Scene){ds, &DungeonScenetable});
   g_set_background_color(g, rgb(226, 226, 214));

@@ -4,12 +4,13 @@
 #include "LootAndLoan/DungeonScene.h"
 #include "LootAndLoan/mobs/MoveMarker.h"
 #include "engine/Game.h"
+#include "engine/math/Vec2.h"
 #include "engine/scene/SceneObject.h"
 
 typedef struct Kirc {
   DrawEntity *emo;
 
-  Vec2 position;
+  Vec2 position, destination;
   float health;
 } Kirc;
 
@@ -24,7 +25,22 @@ static bool kc_die(Kirc *kc, Game *g, bool force) {
 
 static float kc_render_order(const Kirc *kc) { return -kc->position.y; }
 
-static void kc_update(Kirc *kc, Game *g) { (void)kc, (void)g; }
+void ks_add_possible_actions(Kirc *kc, DungeonScene *ds, Game *g) {
+  Point p = ds_to_grid(kc->position);
+  for (int i = -1; i <= 1; ++i)
+    for (int j = -1; j <= 1; ++j)
+      if (i != 0 || j != 0)
+        MoveMarker_create(ds, g, (Point){p.x + i, p.y + j}, ds_turn(ds));
+}
+
+static void kc_update(Kirc *kc, Game *g) {
+  (void)kc, (void)g;
+  if (!v_eq(kc->position, kc->destination)) {
+    kc->position = v_lerp_about(kc->position, kc->destination, 16 * 8.0f * g_animation_delta(g));
+    if (v_eq(kc->position, kc->destination))
+      ks_add_possible_actions(kc, ds_get(g), g);
+  }
+}
 
 static void kc_draw(const Kirc *kc, Game *g) {
   const Vec2 p = kc->position;
@@ -37,14 +53,6 @@ static void kc_save(CJHObject *o, const Kirc *kc) {
   (void)o;
   (void)kc;
   // TODO: Implement save logic
-}
-
-void ks_add_possible_actions(Kirc *kc, DungeonScene *ds, Game *g) {
-  Point p = ds_to_grid(kc->position);
-  for (int i = -1; i <= 1; ++i)
-    for (int j = -1; j <= 1; ++j)
-      if (i != 0 || j != 0)
-        MoveMarker_create(ds, g, (Point){p.x + i, p.y + j}, ds_turn(ds));
 }
 
 static SceneObjectTable Kirc_table = {
@@ -62,10 +70,12 @@ Kirc *Kirc_create(DungeonScene *ds, Game *g, Vec2 pos) {
   *kc = (Kirc){
       .emo = g_sub_image(g, (Sizei){512, 512}, (Point){23, 25}, (Point[4]){{14, 4}, {33, 4}, {33, 31}, {14, 31}}),
       .position = pos,
+      .destination = pos,
       .health = 100.0f,
   };
 
   ds_add_object(ds, g, (SceneObject){kc, &Kirc_table});
+  ks_add_possible_actions(kc, ds, g);
 
   return kc;
 }
