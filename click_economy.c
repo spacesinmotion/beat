@@ -36,6 +36,9 @@
 
 #define SOKOL_NO_ENTRY
 #define SOKOL_GLCORE
+#ifndef _WIN32
+#define SOKOL_IMPL
+#endif
 #define SOKOL_DEBUGTEXT_IMPL
 
 #include "sokol_gfx.h"
