@@ -12,6 +12,7 @@
 #include "math/Vec2.h"
 
 typedef struct WordBubble {
+  LineObject lines;
   Vec2 pos, connect, offset;
   Word *word;
 } WordBubble;
@@ -33,6 +34,19 @@ void wb_update(WordBubble *wb, GameScene *gs, Game *g, float dt) {
   Vec2 b = v_add(gs->spaceship->pos, wb->offset);
   wb->pos = v_lerp(wb->pos, b, 0.25f * dt);
   wb->word->pos = gs->health <= 0 ? (Vec2){-1000, -1000} : v_add(wb->pos, (Vec2){-45, -3});
+
+  Vec2 a = gs->spaceship->pos;
+  b = v_add(wb->pos, (Vec2){48.0, 10.0});
+  Vec2 coords[10];
+  for (int i = 0; i < 10; ++i) {
+    float t = (float)i / 9.0f;
+    t *= t;
+    coords[i].y = a.y + t * (b.y - a.y);
+    t *= t;
+    coords[i].x = a.x + t * (b.x - a.x);
+  }
+
+  g_update_line_strip(g, &wb->lines, coords, 10);
 }
 
 void wb_draw(WordBubble *wb, GameScene *gs, Game *g) {
@@ -44,7 +58,7 @@ void wb_draw(WordBubble *wb, GameScene *gs, Game *g) {
   Vec2 a = v_add(gs->spaceship->pos, wb->connect);
   Vec2 b = wb->pos;
   Vec2 p = a;
-  for (int i = 0; i <= 9; ++i) {
+  for (int i = 0; i < 10; ++i) {
     float t = (float)i / 9.0f;
     t *= t;
     p.y = a.y + t * (b.y - a.y);
@@ -53,6 +67,9 @@ void wb_draw(WordBubble *wb, GameScene *gs, Game *g) {
     // p = v_lerp(a, b, t);
     d_animation(g, Img_starship, 4, t_PS(p, vec2f(0.25f + t * 7.0)));
   }
+
+  d_color(g, red());
+  d_lines(g, &wb->lines, t_P((Vec2){0, -8.0f}));
 }
 
 SceneObjectTable WordBubble_SceneObject_Table = {
@@ -73,6 +90,8 @@ WordBubble *WordBubble_init(GameScene *gs, Game *g) {
   gs_add_object(gs, (SceneObject){wb, &WordBubble_SceneObject_Table});
 
   wb->word = Word_init(gs, g, NULL);
+
+  g_create_line_strip(g, &wb->lines, 10);
 
   return wb;
 }

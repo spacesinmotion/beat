@@ -1,4 +1,5 @@
 
+#include <X11/X.h>
 #ifdef _WIN32
 #ifndef CLANGD_ANALYSIS
 #include <windows.h>
@@ -91,6 +92,7 @@ typedef struct FontImage {
 
 typedef struct Game {
   sg_pipeline pipeline;
+  sg_pipeline lines;
 
   struct {
     vs_param_t vs_param;
@@ -262,6 +264,7 @@ void d_object(Game *g, RenderObject buffer, const sg_image texture, const Transf
   g->render.vs_param.rot = t->rotation;
   g->render.vs_param.scale = t->scale;
 
+  sg_apply_pipeline((sg_pipeline){buffer.pipeline});
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
   sg_apply_bindings(&(sg_bindings){
@@ -273,9 +276,44 @@ void d_object(Game *g, RenderObject buffer, const sg_image texture, const Transf
   sg_draw(buffer.off_elements, buffer.num_elements, 1);
 }
 
+void g_create_line_strip(Game *g, LineObject *lo, int nb_vertices) {
+  RenderObject *o = &lo->render_object;
+  RenderObject_free(o);
+
+  sg_buffer v = sg_make_buffer(&(sg_buffer_desc){
+      .type = SG_BUFFERTYPE_VERTEXBUFFER,
+      .size = sizeof(vertex_t) * nb_vertices,
+      .usage = SG_USAGE_STREAM,
+      .label = "vertex-buffer",
+  });
+
+  lo->render_object = (RenderObject){
+      .pipeline = g->lines.id,
+      .vertices = v.id,
+      .off_elements = 0,
+      .num_elements = nb_vertices,
+  };
+}
+
+void g_update_line_strip(Game *g, LineObject *lo, const Vec2 *coords, int nb_vertices) {
+  vertex_t *vertices = malloc(sizeof(vertex_t) * nb_vertices);
+
+  for (int i = 0; i < nb_vertices; ++i)
+    vertices[i] = (vertex_t){coords[i], 0, 0};
+  sg_update_buffer((sg_buffer){lo->render_object.vertices}, &(sg_range){vertices, sizeof(vertex_t) * nb_vertices});
+  free(vertices);
+}
+bool LineObject_valid(const LineObject *lo) { return RenderObject_valid(&lo->render_object); }
+void LineObject_free(LineObject *lo) { return RenderObject_free(&lo->render_object); }
+
 void d_text(Game *g, const TextObject *to, Vec2 pan) {
   g->render.fs_param.color_mode = 1;
   d_object(g, to->render_object, g_font(g, to->font)->texture, t_P(pan));
+}
+
+void d_lines(Game *g, const LineObject *lo, const Transformation *t) {
+  g->render.fs_param.color_mode = 1;
+  d_object(g, lo->render_object, g_image(g, Img_starship), t);
 }
 
 static inline RenderObject g_rect_buffer(Game *g) {
@@ -316,10 +354,11 @@ void g_update_state(Game *g, double dt) {
   g->time += dt;
 
   float cs = 0.1f + g->zoom * g->zoom * 8.0f;
-  Vec2 mp_b = to_scene(g, g->mouse_x, g->mouse_y);
+  //  Vec2 mp_b = to_scene(g, g->mouse_x, g->mouse_y);
   g->render.camera_scale = g->render.camera_scale * 0.9f + cs * 0.1f;
-  Vec2 mp_a = to_scene(g, g->mouse_x, g->mouse_y);
-  g->render.camera_pan = v_add(g->render.camera_pan, v_sub(mp_a, mp_b));
+  // Vec2 mp_a = to_scene(g, g->mouse_x, g->mouse_y);
+  // g->render.camera_pan = v_add(g->render.camera_pan, v_sub(mp_a, mp_b));
+  // g->render.camera_pan.y = 0.99f * g->render.camera_pan.y + 0.01f * to_overlay(g, 0, 0).y;
 
   if (g->scene.table->update)
     g->scene.table->update(g->scene.context, g, dt);
@@ -405,7 +444,7 @@ bool rect_is_set(Recti *r, int i, int j) { return !(i < 0 || j < 0 || i >= r->w 
 
 static void g_init(Game *g) {
   srand(1);
-  g->render.camera_pan = (Vec2){32.0f, 32.0f};
+  g->render.camera_pan = (Vec2){0.0f, -32.0f};
   g->render.camera_scale = 2.0f;
   g->render.overlay_scale = 2.0f;
   g->render.vs_param = (vs_param_t){
@@ -415,6 +454,8 @@ static void g_init(Game *g) {
       0.0f,
   };
   g->zoom = 0.55f;
+  g->render.camera_scale = 0.1f + g->zoom * g->zoom * 8.0f;
+
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0};
 
   sg_setup(&(sg_desc){
@@ -525,7 +566,41 @@ static void g_init(Game *g) {
                       {.offset = (int)offsetof(vertex_t, u), .format = SG_VERTEXFORMAT_USHORT2N},
                   },
           },
+      .primitive_type = SG_PRIMITIVETYPE_TRIANGLES,
       .index_type = SG_INDEXTYPE_UINT16,
+      .cull_mode = SG_CULLMODE_BACK,
+      .color_count = 1,
+      .colors = {{
+          .pixel_format = SG_PIXELFORMAT_RGBA8,
+          .write_mask = SG_COLORMASK_RGBA,
+          .blend =
+              {
+                  .enabled = true,
+                  .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
+                  .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                  .src_factor_alpha = SG_BLENDFACTOR_SRC_ALPHA,
+                  .dst_factor_alpha = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+              },
+      }},
+      .depth =
+          {
+              .compare = SG_COMPAREFUNC_LESS_EQUAL,
+              .write_enabled = true,
+          },
+  });
+  g->lines = sg_make_pipeline(&(sg_pipeline_desc){
+      .shader = shader,
+      .layout =
+          (sg_vertex_layout_state){
+              .buffers = {{.stride = (int)sizeof(vertex_t)}},
+              .attrs =
+                  {
+                      {.offset = (int)offsetof(vertex_t, p), .format = SG_VERTEXFORMAT_FLOAT2},
+                      {.offset = (int)offsetof(vertex_t, u), .format = SG_VERTEXFORMAT_USHORT2N},
+                  },
+          },
+      .primitive_type = SG_PRIMITIVETYPE_LINE_STRIP,
+      .index_type = SG_INDEXTYPE_NONE,
       .cull_mode = SG_CULLMODE_BACK,
       .color_count = 1,
       .colors = {{
@@ -619,7 +694,6 @@ static void g_draw_callback(Game *g) {
       .swapchain = sglue_swapchain(),
   });
 
-  sg_apply_pipeline(g->pipeline);
   g_draw_scene(g);
 
   sdtx_draw();

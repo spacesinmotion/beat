@@ -96,7 +96,6 @@ bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
 #define LEVEL_RANGE_FACTOR 50.0f
 
 void gs_update(GameScene *gs, Game *g, float dt) {
-
   g_set_background_color(g, bg_color());
 
   for (int i = 0; i < gs->scene_objects.len; ++i)

@@ -35,6 +35,14 @@ void g_create_text(Game *g, TextObject *o, G_Font ff, const char *text);
 bool TextObject_valid(const TextObject *to);
 void TextObject_free(TextObject *);
 
+typedef struct LineObject {
+  RenderObject render_object;
+} LineObject;
+void g_create_line_strip(Game *g, LineObject *o, int np_vertices);
+void g_update_line_strip(Game *g, LineObject *o, const Vec2 *coords, int nb_vertices);
+bool LineObject_valid(const LineObject *to);
+void LineObject_free(LineObject *);
+
 void g_set_scene(Game *g, Scene scene);
 void g_set_background_color(Game *g, Color c);
 
@@ -48,6 +56,7 @@ void d_color(Game *game, Color c);
 
 void d_object(Game *g, RenderObject buffer, const sg_image texture, const Transformation *t);
 void d_text(Game *g, const TextObject *to, Vec2 pan);
+void d_lines(Game *g, const LineObject *lo, const Transformation *t);
 void d_rect(Game *g, Color c, const Transformation *t);
 void d_image(Game *g, Image tex, const Transformation *t);
 void d_animation(Game *g, Image tex, int frame, const Transformation *t);
