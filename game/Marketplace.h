@@ -38,10 +38,8 @@ float mp_render_order(Marketplace *mp) { return l_to_y(mp->display.location.y); 
 void mp_update(Marketplace *mp, GameScene *gs, Game *g, float dt) {
   (void)dt;
 
-  if (gs->a_new_day_just_started) {
+  if (gs->a_new_day_just_started)
     mp->manager_click_counter = 0;
-    wp_reduce_clicks(&mp->work_provider, mp->work_provider.clicks_done);
-  }
   bd_update(&mp->display, g);
 }
 
@@ -159,6 +157,7 @@ bool mp_deliver_resource_done(void *context, Wearisome *w, GameScene *gs) {
 
   Marketplace *mp = (Marketplace *)context;
   wp_done(&mp->work_provider, w);
+  wp_reduce_clicks(&mp->work_provider, 1);
   return false;
 }
 
