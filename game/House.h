@@ -24,6 +24,8 @@ typedef struct House {
   Resources resources;
   Resources resources_maximum;
 
+  int rent_to_be_payed;
+
   G_Object clicks_text;
   int clicks_cache;
 
@@ -107,6 +109,9 @@ void h_update(House *h, GameScene *gs, Game *g, float dt) {
     g_create_text(g, &h->clicks_text, Oswald_Regular_12, str("%4.d", h->resources.clicks));
     h->clicks_cache = h->resources.clicks;
   }
+
+  if (gs->a_new_day_just_started)
+    h->rent_to_be_payed++;
 }
 
 void h_draw(House *h, GameScene *gs, Game *g) {
@@ -119,6 +124,8 @@ void h_draw(House *h, GameScene *gs, Game *g) {
     c_printf(g, " %10s: %d\n", "max clicks", h->resources_maximum.clicks);
     c_printf(g, " %10s: %f\n", "water", h->resources.water);
     c_printf(g, " %10s: %f\n", "food", h->resources.food);
+    c_printf(g, "----------------------\n\n");
+    c_printf(g, " %10s: %d\n", "rent", h->rent_to_be_payed);
     c_printf(g, "----------------------\n\n");
   }
 
@@ -151,7 +158,7 @@ void h_draw(House *h, GameScene *gs, Game *g) {
 Recti find_resource_building_rect(GameScene *gs, Recti start, Resource r);
 bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
   if (h->resources_maximum.clicks <= 0)
-    return NULL;
+    return false;
 
   bool need_water = h->resources_maximum.water - h->resources.water >= 1.0f;
   bool need_food = h->resources_maximum.food - h->resources.food >= 1.0f;
@@ -171,6 +178,14 @@ bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
       return true;
     }
   }
+
+  if (h->rent_to_be_payed > 0 && h->resources_maximum.clicks > 0) {
+    h->rent_to_be_payed--;
+    h->resources_maximum.clicks--;
+    h->resources.clicks--;
+    gs->clicks++;
+  }
+
   return false;
 }
 
@@ -251,6 +266,7 @@ House *House_init(Game *g, GameScene *gs, Point p) {
       .id = unique_id(h),
       .resources = {.food = 0.0f, .water = 0.0f, .clicks = 0},
       .resources_maximum = {.food = 2.0f, .water = 2.0f, .clicks = 0},
+      .rent_to_be_payed = 0,
       .clicks_cache = -1,
       .highlight = false,
       .wearisome_at_home = true,

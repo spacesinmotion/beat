@@ -129,9 +129,11 @@ void gs_update(GameScene *gs, Game *g, float dt) {
 
   gs->daytime_step = dt / 60.0f;
   gs->daytime += gs->daytime_step;
+  gs->a_new_day_just_started = false;
   if (gs->daytime > 1.0f) {
     gs->daytime -= 1.0f;
     gs->day++;
+    gs->a_new_day_just_started = true;
   }
 
   float t = gs->daytime;
@@ -445,6 +447,7 @@ void GameScene_init(Game *g) {
       .game_paused = false,
       .menu_selected = -1,
       .day = 1,
+      .a_new_day_just_started = false,
       .daytime = 0.0f,
       .clicks = 4,
       .clicks_in_houses = 0,

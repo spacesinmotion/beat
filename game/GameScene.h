@@ -34,6 +34,7 @@ typedef struct GameScene {
 
   float daytime_step, daytime;
   int day;
+  bool a_new_day_just_started;
 
   int clicks, clicks_produced, clicks_lost, clicks_in_houses;
   int wearisome_count;
