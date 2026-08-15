@@ -23,7 +23,9 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 
