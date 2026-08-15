@@ -535,6 +535,7 @@ void gs_to_json(CJHObject *o, void *ud) {
 }
 
 void gs_stuff_from_json(CJHObjectR *o, const char *key, void *ud) {
+  (void)ud;
   if (streq(key, "water"))
     printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
   else if (streq(key, "food"))
@@ -548,7 +549,7 @@ void gs_stuff_from_json(CJHObjectR *o, const char *key, void *ud) {
 }
 
 void gs_SceneObject_from_json(CJHObjectR *o, const char *key, void *ud) {
-
+  (void)ud;
   if (streq(key, Marketplace_table.type)) {
     printf("%.*s%s:\n", indent, space, key);
     indent += 2;
@@ -634,6 +635,8 @@ void gs_SceneObject_from_json(CJHObjectR *o, const char *key, void *ud) {
 }
 
 void gs_sceneobjects_from_json(CJHArrayR *a, int index, void *ud) {
+  (void)index;
+
   GameScene *gs = (GameScene *)ud;
 
   SceneObject so = {NULL, NULL};

@@ -13,7 +13,6 @@ typedef struct ConstructionMaterialFactory {
 
   int id;
 
-  int last_day_delivered;
   int manager_click_counter;
 } ConstructionMaterialFactory;
 
@@ -31,10 +30,8 @@ void cmf_update(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g, float 
   (void)dt;
   bd_update(&cmf->display, g);
 
-  if (gs->day > cmf->last_day_delivered) {
-    cmf->last_day_delivered = gs->day;
+  if (gs->a_new_day_just_started)
     cmf->manager_click_counter = 0;
-  }
 }
 
 void cmf_draw(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g) {
@@ -55,7 +52,6 @@ void cmf_to_json(CJHObject *o, ConstructionMaterialFactory *cmf) {
   cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &cmf->work_provider);
   cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &cmf->display);
   cjh_o_add_number(o, "id", cmf->id);
-  cjh_o_add_number(o, "last_day_delivered", cmf->last_day_delivered);
   cjh_o_add_number(o, "manager_click_counter", cmf->manager_click_counter);
 }
 
@@ -153,7 +149,6 @@ ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene
   *cmf = (ConstructionMaterialFactory){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(cmf),
-      .last_day_delivered = gs->day,
       .manager_click_counter = 0,
   };
   assert((void *)cmf == (void *)&cmf->work_provider);

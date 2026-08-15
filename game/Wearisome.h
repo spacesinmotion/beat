@@ -450,6 +450,8 @@ void w_to_json(CJHObject *o, Wearisome *w) {
 }
 
 void w_needs_from_json(CJHObjectR *o, const char *key, Needs *np) {
+  (void)np;
+
   if (streq(key, "food"))
     printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
   else if (streq(key, "water"))
@@ -464,6 +466,8 @@ void w_needs_from_json(CJHObjectR *o, const char *key, Needs *np) {
 }
 
 void h_from_json_ref(CJHObjectR *o, const char *key, Wearisome *w) {
+  (void)w;
+
   if (streq(key, House_table.type))
     printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
 

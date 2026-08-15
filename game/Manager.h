@@ -19,7 +19,6 @@ typedef struct Manager {
 
   int id;
 
-  int last_day_delivered;
   int click_used;
   Resource used_manager_counter;
 
@@ -41,8 +40,7 @@ void mg_update(Manager *mg, GameScene *gs, Game *g, float dt) {
   (void)dt;
   bd_update(&mg->display, g);
 
-  if (gs->day > mg->last_day_delivered) {
-    mg->last_day_delivered = gs->day;
+  if (gs->a_new_day_just_started) {
     if (mg->work_provider.clicks_done > 0) {
       wp_reduce_clicks(&mg->work_provider, mg->work_provider.clicks_done);
       bd_flash(&mg->display);
@@ -75,7 +73,6 @@ void mg_draw(Manager *mg, GameScene *gs, Game *g) {
 void mg_to_json(CJHObject *o, Manager *mg) {
   cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &mg->work_provider);
   cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &mg->display);
-  cjh_o_add_number(o, "last_day_delivered", mg->last_day_delivered);
   cjh_o_add_number(o, "click_used", mg->click_used);
   cjh_o_add_number(o, "used_manager_counter", mg->used_manager_counter - R_ManagerWork1 + 1);
 }
@@ -196,7 +193,6 @@ Manager *Manager_init(Game *g, GameScene *gs, Point p) {
   *mg = (Manager){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(mg),
-      .last_day_delivered = gs->day,
       .click_used = 0,
       .used_manager_counter = R_None,
       .click_used_cache = -1,

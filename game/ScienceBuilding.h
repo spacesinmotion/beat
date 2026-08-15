@@ -14,8 +14,6 @@ typedef struct ScienceBuilding {
   BuildingDisplay display;
 
   int id;
-
-  int last_day_delivered;
 } ScienceBuilding;
 
 static inline Color scb_color() { return rgb(102, 51, 153); }
@@ -32,8 +30,7 @@ void scb_update(ScienceBuilding *scb, GameScene *gs, Game *g, float dt) {
   (void)dt;
   bd_update(&scb->display, g);
 
-  if (gs->day > scb->last_day_delivered) {
-    scb->last_day_delivered = gs->day;
+  if (gs->a_new_day_just_started) {
     if (scb->work_provider.clicks_done > 0) {
       gs->research_level += scb->work_provider.clicks_done;
       if (gs->research_level >= gs->reasearch_needed)
@@ -68,7 +65,6 @@ void scb_to_json(CJHObject *o, ScienceBuilding *scb) {
   cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &scb->work_provider);
   cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &scb->display);
   cjh_o_add_number(o, "id", scb->id);
-  cjh_o_add_number(o, "last_day_delivered", scb->last_day_delivered);
 }
 
 void scb_from_json(CJHObjectR *o, const char *key, ScienceBuilding *scb) {
@@ -147,7 +143,6 @@ ScienceBuilding *ScienceBuilding_init(Game *g, GameScene *gs, Point p) {
   *scb = (ScienceBuilding){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(scb),
-      .last_day_delivered = gs->day,
   };
   assert((void *)scb == (void *)&scb->work_provider);
   wp_init(&scb->work_provider, s.w - 1, s.h - 1);

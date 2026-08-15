@@ -15,8 +15,6 @@ typedef struct ClickFactory {
   BuildingDisplay display;
 
   int id;
-
-  int last_day_delivered;
   int missing_blings;
 } ClickFactory;
 
@@ -34,8 +32,7 @@ void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
   (void)dt;
   bd_update(&cf->display, g);
 
-  if (gs->day > cf->last_day_delivered) {
-    cf->last_day_delivered = gs->day;
+  if (gs->a_new_day_just_started) {
     if (cf->work_provider.clicks_done > 0) {
       while (cf->work_provider.clicks_done > 0) {
         gs_produce_click(gs);
@@ -72,7 +69,6 @@ void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
 void cf_to_json(CJHObject *o, ClickFactory *cf) {
   cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &cf->work_provider);
   cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &cf->display);
-  cjh_o_add_number(o, "last_day_delivered", cf->last_day_delivered);
   cjh_o_add_number(o, "missing_blings", cf->missing_blings);
 }
 
@@ -146,7 +142,6 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
   *cf = (ClickFactory){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(cf),
-      .last_day_delivered = gs->day,
       .missing_blings = 15,
   };
   assert((void *)cf == (void *)&cf->work_provider);

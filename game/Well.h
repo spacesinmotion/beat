@@ -15,7 +15,6 @@ typedef struct Well {
 
   int id;
 
-  int last_day_delivered;
   int manager_click_counter;
 } Well;
 
@@ -33,10 +32,8 @@ void wl_update(Well *wl, GameScene *gs, Game *g, float dt) {
   (void)dt;
   bd_update(&wl->display, g);
 
-  if (gs->day > wl->last_day_delivered) {
-    wl->last_day_delivered = gs->day;
+  if (gs->a_new_day_just_started)
     wl->manager_click_counter = 0;
-  }
 }
 
 void wl_draw(Well *wl, GameScene *gs, Game *g) {
@@ -55,7 +52,6 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
 void wl_to_json(CJHObject *o, Well *wl) {
   cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &wl->work_provider);
   cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &wl->display);
-  cjh_o_add_number(o, "last_day_delivered", wl->last_day_delivered);
   cjh_o_add_number(o, "manager_click_counter", wl->manager_click_counter);
 }
 
@@ -151,7 +147,6 @@ Well *Well_init(Game *g, GameScene *gs, Point p) {
   *wl = (Well){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(wl),
-      .last_day_delivered = gs->day,
       .manager_click_counter = 0,
   };
   assert((void *)wl == (void *)&wl->work_provider);

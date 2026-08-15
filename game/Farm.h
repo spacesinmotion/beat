@@ -13,7 +13,6 @@ typedef struct Farm {
 
   int id;
 
-  int last_day_delivered;
   int manager_click_counter;
 } Farm;
 
@@ -31,10 +30,8 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
   (void)dt;
   bd_update(&fa->display, g);
 
-  if (gs->day > fa->last_day_delivered) {
-    fa->last_day_delivered = gs->day;
+  if (gs->a_new_day_just_started)
     fa->manager_click_counter = 0;
-  }
 }
 
 void fa_draw(Farm *fa, GameScene *gs, Game *g) {
@@ -53,7 +50,6 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
 void fa_to_json(CJHObject *o, Farm *fa) {
   cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &fa->work_provider);
   cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &fa->display);
-  cjh_o_add_number(o, "last_day_delivered", fa->last_day_delivered);
   cjh_o_add_number(o, "manager_click_counter", fa->manager_click_counter);
 }
 
@@ -151,7 +147,6 @@ Farm *Farm_init(Game *g, GameScene *gs, Point p) {
   *fa = (Farm){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(fa),
-      .last_day_delivered = gs->day,
       .manager_click_counter = 0,
   };
   assert((void *)fa == (void *)&fa->work_provider);

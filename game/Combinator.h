@@ -20,7 +20,6 @@ typedef struct Combinator {
 
   int id;
 
-  int last_day_delivered;
   int manager_click_counter;
   Connection *sources[2];
 } Combinator;
@@ -39,10 +38,9 @@ void cb_update(Combinator *cb, GameScene *gs, Game *g, float dt) {
   (void)dt;
   bd_update(&cb->display, g);
 
-  if (gs->day > cb->last_day_delivered) {
-    cb->last_day_delivered = gs->day;
+  if (gs->a_new_day_just_started)
     cb->manager_click_counter = 0;
-  }
+
   for (int i = 0; i < 2; ++i)
     if (cb->sources[i] && cb->sources[i]->state == CS_Defining)
       cb->sources[i]->start = l_to_vec(gs->r.x, gs->r.y);
@@ -68,7 +66,6 @@ void cb_sources_to_json(CJHArray *a, Combinator *cb) {
 void cb_to_json(CJHObject *o, Combinator *cb) {
   cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &cb->work_provider);
   cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &cb->display);
-  cjh_o_add_number(o, "last_day_delivered", cb->last_day_delivered);
   cjh_o_add_number(o, "manager_click_counter", cb->manager_click_counter);
   cjh_o_add_array(o, "source", (CJHWriteArrayCB)cb_sources_to_json, cb);
 }
@@ -223,7 +220,6 @@ Combinator *Combinator_init(Game *g, GameScene *gs, Point p) {
   *cb = (Combinator){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(cb),
-      .last_day_delivered = gs->day,
       .manager_click_counter = 0,
       .sources = {NULL, NULL},
   };

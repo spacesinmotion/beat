@@ -9,7 +9,6 @@
 #include "game/TileContent.h"
 #include "game/assets.h"
 #include "game/jobs/QueueItem.h"
-#include <string.h>
 
 typedef struct Resources {
   float food, water;
@@ -203,6 +202,8 @@ void h_to_json(CJHObject *o, House *h) {
 }
 
 void h_resource_from_json(CJHObjectR *o, const char *key, House *h) {
+  (void)h;
+
   if (streq(key, "food"))
     printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
   else if (streq(key, "wateer"))

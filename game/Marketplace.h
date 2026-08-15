@@ -22,7 +22,6 @@ typedef struct Marketplace {
 
   int id;
 
-  int last_day_delivered;
   int manager_click_counter;
   int missing_blings;
 } Marketplace;
@@ -40,8 +39,7 @@ float mp_render_order(Marketplace *mp) { return l_to_y(mp->display.location.y); 
 void mp_update(Marketplace *mp, GameScene *gs, Game *g, float dt) {
   (void)dt;
 
-  if (gs->day > mp->last_day_delivered) {
-    mp->last_day_delivered = gs->day;
+  if (gs->a_new_day_just_started) {
     mp->manager_click_counter = 0;
     wp_reduce_clicks(&mp->work_provider, mp->work_provider.clicks_done);
   }
@@ -73,7 +71,6 @@ void mp_to_json(CJHObject *o, Marketplace *mp) {
   cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &mp->work_provider);
   cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &mp->display);
   cjh_o_add_number(o, "id", mp->id);
-  cjh_o_add_number(o, "last_day_delivered", mp->last_day_delivered);
   cjh_o_add_number(o, "manager_click_counter", mp->manager_click_counter);
   cjh_o_add_number(o, "missing_blings", mp->missing_blings);
 }
@@ -215,7 +212,6 @@ Marketplace *Marketplace_init(Game *g, GameScene *gs, Point p) {
   *mp = (Marketplace){
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(mp),
-      .last_day_delivered = gs->day,
       .manager_click_counter = 0,
       .missing_blings = 0,
   };
