@@ -32,18 +32,6 @@ void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
   (void)dt;
   bd_update(&cf->display, g);
 
-  if (gs->a_new_day_just_started) {
-    if (cf->work_provider.clicks_done > 0) {
-      while (cf->work_provider.clicks_done > 0) {
-        gs_produce_click(gs);
-        wp_reduce_clicks(&cf->work_provider, 1);
-        cf->missing_blings += 5;
-      }
-      bd_flash(&cf->display);
-      CoinAnimation_init(gs, bd_gain_something_location(&cf->display));
-    }
-  }
-
   if (cf->missing_blings > 0 && r_float() > 0.9f) {
     Bling_init(gs, bd_random_point_inside(&cf->display), red());
     cf->missing_blings--;
@@ -113,6 +101,13 @@ bool cf_done_work(void *context, Wearisome *w, GameScene *gs) {
 
   ClickFactory *cf = (ClickFactory *)context;
   wp_done(&cf->work_provider, w);
+
+  cf->missing_blings += 5;
+  gs_produce_click(gs);
+  wp_reduce_clicks(&cf->work_provider, 1);
+  bd_flash(&cf->display);
+  CoinAnimation_init(gs, bd_gain_something_location(&cf->display));
+
   return false;
 }
 bool cf_start_work(void *context, Wearisome *w, GameScene *gs) {
