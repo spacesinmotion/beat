@@ -8,7 +8,9 @@
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/assets.h"
+#include "game/effects/Bling.h"
 #include "game/jobs/QueueItem.h"
+#include "math/random.h"
 
 typedef struct Resources {
   float food, water;
@@ -31,6 +33,8 @@ typedef struct House {
   bool highlight;
   bool wearisome_at_home;
   bool wearisome_dead;
+
+  int missing_blings;
 } House;
 
 static inline Color h_color() { return rgb(87, 163, 106); }
@@ -111,6 +115,14 @@ void h_update(House *h, GameScene *gs, Game *g, float dt) {
 
   if (gs->a_new_day_just_started)
     h->rent_to_be_payed++;
+
+  if (h->missing_blings > 0 && r_float() > 0.9f) {
+    Vec2 p = l_to_vecP(ri_bottom_right(h->display.location));
+    Vec2 s = l_to_vec(h->display.location.w - 1, h->display.location.h - 1);
+    p = v_add(p, (Vec2){r_float() * s.x, r_float() * s.y});
+    Bling_init(gs, p, red());
+    h->missing_blings--;
+  }
 }
 
 void h_draw(House *h, GameScene *gs, Game *g) {
@@ -183,6 +195,8 @@ bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
     h->resources_maximum.clicks--;
     h->resources.clicks--;
     gs->clicks++;
+    bd_flash(&h->display);
+    h->missing_blings += 5;
   }
 
   return false;
@@ -272,6 +286,7 @@ House *House_init(Game *g, GameScene *gs, Point p) {
       .highlight = false,
       .wearisome_at_home = true,
       .wearisome_dead = false,
+      .missing_blings = 0,
   };
 
   l_set_tile_contentR(gs->level, h->display.location, to_TileContent(h, &House_TileContent_Table));
