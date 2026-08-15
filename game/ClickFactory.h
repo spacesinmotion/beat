@@ -40,14 +40,12 @@ void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
         cf->missing_blings += 5;
       }
       bd_flash(&cf->display);
+      CoinAnimation_init(gs, bd_gain_something_location(&cf->display));
     }
   }
 
   if (cf->missing_blings > 0 && r_float() > 0.9f) {
-    Vec2 p = l_to_vecP(ri_bottom_right(cf->display.location));
-    Vec2 s = l_to_vec(cf->display.location.w - 1, cf->display.location.h - 1);
-    p = v_add(p, (Vec2){r_float() * s.x, r_float() * s.y});
-    Bling_init(gs, p, red());
+    Bling_init(gs, bd_random_point_inside(&cf->display), red());
     cf->missing_blings--;
   }
 }

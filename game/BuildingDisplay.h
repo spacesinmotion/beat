@@ -5,6 +5,8 @@
 #include "game/Game.h"
 #include "game/Level.h"
 #include "math/Rect.h"
+#include "math/Vec2.h"
+#include "math/random.h"
 #include <math.h>
 
 typedef struct BuildingDisplay {
@@ -52,4 +54,16 @@ static inline void bd_from_json(CJHObjectR *o, const char *key, BuildingDisplay 
     cjh_o_skip(o);
   }
 }
+
+Vec2 bd_random_point_inside(const BuildingDisplay *bd) {
+  Vec2 p = l_to_vecP(ri_bottom_right(bd->location));
+  Vec2 s = l_to_vec(bd->location.w - 1, bd->location.h - 1);
+  return v_add(p, (Vec2){r_float() * s.x, r_float() * s.y});
+}
+
+Vec2 bd_gain_something_location(const BuildingDisplay *bd) {
+  Vec2 p = l_to_vecP(ri_bottom_right(bd->location));
+  return v_add(p, (Vec2){F * 0.0f, 0.5f * F});
+}
+
 #endif

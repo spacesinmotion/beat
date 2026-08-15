@@ -9,6 +9,7 @@
 #include "game/TileContent.h"
 #include "game/assets.h"
 #include "game/effects/Bling.h"
+#include "game/effects/CoinAninmation.h"
 #include "game/jobs/QueueItem.h"
 #include "math/random.h"
 
@@ -117,10 +118,7 @@ void h_update(House *h, GameScene *gs, Game *g, float dt) {
     h->rent_to_be_payed++;
 
   if (h->missing_blings > 0 && r_float() > 0.9f) {
-    Vec2 p = l_to_vecP(ri_bottom_right(h->display.location));
-    Vec2 s = l_to_vec(h->display.location.w - 1, h->display.location.h - 1);
-    p = v_add(p, (Vec2){r_float() * s.x, r_float() * s.y});
-    Bling_init(gs, p, red());
+    Bling_init(gs, bd_random_point_inside(&h->display), red());
     h->missing_blings--;
   }
 }
@@ -197,6 +195,7 @@ bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
     gs->clicks++;
     bd_flash(&h->display);
     h->missing_blings += 5;
+    CoinAnimation_init(gs, bd_gain_something_location(&h->display));
   }
 
   return false;
