@@ -119,7 +119,7 @@ Recti mg_location(const Manager *mg) { return mg->display.location; }
 bool mg_provides(Manager *mg, GameScene *gs, Resource r) {
   if (r == R_Work)
     return wp_provides(&mg->work_provider, gs, r);
-  return r == R_Deliver && wp_has_something_to_deliver(&mg->work_provider);
+  return false;
 }
 
 bool mg_find_manager_work(void *context, Wearisome *w, GameScene *gs);
