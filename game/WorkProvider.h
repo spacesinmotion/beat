@@ -56,7 +56,7 @@ static inline void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p,
       else if (c < wp->clicks_work) {
         working_color(g);
         r += 0.05f * sin(26.0 * g_time(g) + i * j);
-        s += 0.01f * sin(17.0 * g_time(g) + i * j);
+        s += 0.02f * sin(17.0 * g_time(g) + i * j);
       } else if (c < wp->clicks_claimed)
         work_claimed_color(g);
       else if (c < wp->clicks)

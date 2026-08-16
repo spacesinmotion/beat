@@ -2,10 +2,13 @@
 #define CLICKFACTORY_H
 
 #include "game/BuildingDisplay.h"
+#include "game/Game.h"
+#include "game/Level.h"
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
+#include "game/assets.h"
 #include "game/effects/Bling.h"
 #include "math/Rect.h"
 #include "math/random.h"
@@ -16,9 +19,12 @@ typedef struct ClickFactory {
 
   int id;
   int missing_blings;
+
+  Resource currently_selling;
+  float switch_selling_flash;
 } ClickFactory;
 
-static inline Color cf_color() { return rgb(255, 215, 0); }
+static inline Color cf_color() { return rgb(156, 154, 107); }
 static inline Sizei cf_size() { return (Sizei){3, 2}; }
 
 bool cf_dead(ClickFactory *cf) {
@@ -36,6 +42,20 @@ void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
     Bling_init(gs, bd_random_point_inside(&cf->display), red());
     cf->missing_blings--;
   }
+
+  cf->switch_selling_flash = f_max(0.0f, cf->switch_selling_flash - g_animation_delta(g));
+}
+
+int icon_for_resource(Resource r) {
+  if (r == R_Food)
+    return MI_Food;
+  if (r == R_Water)
+    return MI_Water;
+  if (r == R_ConstructionMaterial)
+    return MI_ConstructionMaterial;
+
+  assert(false);
+  return MI_Street;
 }
 
 void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
@@ -45,10 +65,10 @@ void cf_draw(ClickFactory *cf, GameScene *gs, Game *g) {
     c_printf(g, "----------------------\n");
   }
 
-  Vec2 p = l_to_vecP(ri_bottom_right(cf->display.location));
-
   bd_draw(&cf->display, g, cf_color(), MI_Click);
 
+  Vec2 p = l_to_vecP(ri_bottom_right(cf->display.location));
+  bd_draw_icon(g, v_add(p, l_to_vec(1, 0)), icon_for_resource(cf->currently_selling), cf->switch_selling_flash);
   wp_draw_click_fields(&cf->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
@@ -112,21 +132,72 @@ bool cf_done_work(void *context, Wearisome *w, GameScene *gs) {
 }
 bool cf_start_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
+
   ClickFactory *cf = (ClickFactory *)context;
   wp_start(&cf->work_provider, w);
+  w_deliver_clear(w);
   return w_queue_wait_for(w, 9.0f, QI(cf, cf_done_work));
 }
+
+bool cf_work_collect_construction_material(void *context, Wearisome *w, GameScene *gs) {
+  ClickFactory *cf = (ClickFactory *)context;
+  gs->resource_pool.construction_material--;
+  gs->resource_pool_claimed.construction_material--;
+  w_deliver(w, MI_ConstructionMaterial, cf_color());
+  return w_queue_move_to(w, gs, cf->display.location, QI(cf, cf_start_work));
+}
+bool cf_work_collect_water(void *context, Wearisome *w, GameScene *gs) {
+  ClickFactory *cf = (ClickFactory *)context;
+  gs->resource_pool.water--;
+  gs->resource_pool_claimed.water--;
+  w_deliver(w, MI_Water, cf_color());
+  return w_queue_move_to(w, gs, cf->display.location, QI(cf, cf_start_work));
+}
+bool cf_work_collect_food(void *context, Wearisome *w, GameScene *gs) {
+  ClickFactory *cf = (ClickFactory *)context;
+  gs->resource_pool.food--;
+  gs->resource_pool_claimed.food--;
+  w_deliver(w, MI_Food, cf_color());
+  return w_queue_move_to(w, gs, cf->display.location, QI(cf, cf_start_work));
+}
+
 void cf_claim(ClickFactory *cf, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
-  if (w_queue_move_to(w, gs, cf->display.location, QI(cf, cf_start_work)))
-    wp_claim(&cf->work_provider);
+
+  Recti marketplace = find_resource_building_rect(gs, cf->display.location, cf->currently_selling);
+  if (marketplace.w > 0) {
+    QueueItem qi = {0};
+    if (cf->currently_selling == R_ConstructionMaterial) {
+      gs->resource_pool_claimed.construction_material++;
+      qi = QI(cf, cf_work_collect_construction_material);
+    } else if (cf->currently_selling == R_Water) {
+      gs->resource_pool_claimed.water++;
+      qi = QI(cf, cf_work_collect_water);
+    } else if (cf->currently_selling == R_Food) {
+      gs->resource_pool_claimed.food++;
+      qi = QI(cf, cf_work_collect_food);
+    }
+    if (qi.context && w_queue_move_to(w, gs, marketplace, qi))
+      wp_claim(&cf->work_provider);
+  }
+}
+
+void cf_click(ClickFactory *cf, Point p, GameScene *gs) {
+  Point lp = {p.x - cf->display.location.x, p.y - cf->display.location.y};
+  if (lp.x == 1 && lp.y == 0) {
+    cf->currently_selling = cf->currently_selling == R_ConstructionMaterial
+                                ? R_Water
+                                : (cf->currently_selling == R_Water ? R_Food : R_ConstructionMaterial);
+    cf->switch_selling_flash = 1.0f;
+  } else
+    wp_click(&cf->work_provider, p, gs);
 }
 
 static TileContentTable ClickFactory_TileContent_Table = {
     .location = (LocationCb)cf_location,
     .provides = (ProvidesCB)wp_provides,
     .claim = (ClaimCB)cf_claim,
-    .click = (ClickCBx)wp_click,
+    .click = (ClickCBx)cf_click,
 };
 
 ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
@@ -136,6 +207,8 @@ ClickFactory *ClickFactory_init(Game *g, GameScene *gs, Point p) {
       .display = bd_create(g, (Recti){p.x, p.y, s.w, s.h}),
       .id = unique_id(cf),
       .missing_blings = 15,
+      .currently_selling = R_ConstructionMaterial,
+      .switch_selling_flash = 1.0,
   };
   assert((void *)cf == (void *)&cf->work_provider);
   wp_init(&cf->work_provider, s.w - 1, s.h - 1);
