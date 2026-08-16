@@ -199,6 +199,7 @@ bool gs_construction_available(GameScene *gs) {
 }
 
 void gs_draw(GameScene *gs, Game *g) {
+  c_color(g, gray(gs->daytime > 0.75 ? 210 : 45));
   c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
   c_printf(g, "\n\n\n\n\n\n\n\n\n\n");
   c_printf(g, "----------------------\n");
