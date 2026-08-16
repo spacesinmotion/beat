@@ -17,12 +17,15 @@ static inline Color yellow() { return rgb(255, 255, 0); }
 static inline Color green() { return rgb(0, 255, 0); }
 static inline Color blue() { return rgb(0, 0, 255); }
 
+static inline Color warn_color() { return rgb(148, 116, 29); }
+static inline Color critical_color() { return rgb(177, 53, 30); }
+
 static inline Color warn(float t) {
   if (t > 0.5)
     return rgb(77, 213, 30);
   if (t > 0.25)
-    return rgb(216, 170, 43);
-  return rgb(177, 53, 30);
+    return warn_color();
+  return critical_color();
 }
 
 static inline Color lighter(Color c, float t) {

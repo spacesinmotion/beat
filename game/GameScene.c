@@ -288,29 +288,53 @@ void gs_draw_clock_overlay(GameScene *gs, Game *g) {
   g_object(g, g_animation_buffer(g), Img_overlay_images, 4 + i, p);
 }
 
-void gs_draw_storage_overlay(GameScene *gs, Game *g) {
-  g_color(g, rgb(137, 197, 184));
-  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){5, g_viewport(g).h - 12}, 3.5f);
-  g_color(g, rgb(182, 205, 70));
-  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){15, g_viewport(g).h - 1}, 3.0f);
-  g_color(g, gray(75));
-  g_object(g, g_animation_buffer(g), Img_menubar, MI_Click, (Vec2){9, g_viewport(g).h - 9});
-  g_text(g, gs->click_counter_text, Oswald_Regular_12, (Vec2){15, g_viewport(g).h - 13});
+Color warn_color_for(int v) { return v <= 0 ? critical_color() : (v <= 5 ? warn_color() : gray(75)); }
+float warn_scale_for(int v, float t) {
+  if (v > 5)
+    return 1.0f;
+  return exp((v / 5.0f - 1.0f) * (v / 5.0f - 1.0f) * sin(12.0f * t) * sin(30.0 * t / 16.0));
+}
 
-  g_color(g, rgb(85, 154, 139));
-  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){5, g_viewport(g).h - 53}, 2.75f);
+void gs_draw_storage_overlay(GameScene *gs, Game *g) {
+  const float t = g_time(g);
 
   const float o = 12;
-  float h = g_viewport(g).h - 30;
+  float h = g_viewport(g).h - 29;
+
+  // background
+  g_color(g, rgb(200, 210, 220));
+  for (int i = 0; i < 3; ++i)
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){7, g_viewport(g).h - 24 - i * o}, 3.0f);
+  g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){15, g_viewport(g).h}, 3.0f);
+
+  g_color(g, warn_color_for(gs->clicks));
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Click, (Vec2){10, g_viewport(g).h - 9},
+            warn_scale_for(gs->clicks, t));
+  g_text(g, gs->click_counter_text, Oswald_Regular_12, (Vec2){17, g_viewport(g).h - 13});
+
   g_color(g, gray(45));
-  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_WareHouse, (Vec2){5, h - 0 * o + 2}, 0.75f);
-  g_text(g, gs->free_storage_text, Oswald_Regular_8, (Vec2){10, h - 0 * o});
-  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Water, (Vec2){5, h - 1 * o + 2}, 0.75f);
-  g_text(g, gs->water_counter_text, Oswald_Regular_8, (Vec2){10, h - 1 * o});
-  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Food, (Vec2){5, h - 2 * o + 2}, 0.75f);
-  g_text(g, gs->food_counter_text, Oswald_Regular_8, (Vec2){10, h - 2 * o});
-  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_ConstructionMaterial, (Vec2){5, h - 3 * o + 2}, 0.75f);
-  g_text(g, gs->construction_material_counter_text, Oswald_Regular_8, (Vec2){10, h - 3 * o});
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_WareHouse, (Vec2){6, h - 0 * o + 2}, 0.75f);
+  g_text(g, gs->free_storage_text, Oswald_Regular_8, (Vec2){11, h - 0 * o});
+
+  for (int i = 0; i < 3; ++i) {
+    g_objectS(g, g_animation_buffer(g), Img_marker, 5, (Vec2){7 + i * 6, h - 0 * o - 4}, 0.75f);
+    g_objectS(g, g_animation_buffer(g), Img_marker, 5, (Vec2){7 + i * 6, h + 1 * o - 4}, 0.75f);
+  }
+
+  g_color(g, warn_color_for(gs->resource_pool.water));
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Water, (Vec2){6, h - 1 * o + 2},
+            0.75f * warn_scale_for(gs->resource_pool.water, t));
+  g_text(g, gs->water_counter_text, Oswald_Regular_8, (Vec2){11, h - 1 * o});
+
+  g_color(g, warn_color_for(gs->resource_pool.food));
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Food, (Vec2){6, h - 2 * o + 2},
+            0.75f * warn_scale_for(gs->resource_pool.food, t));
+  g_text(g, gs->food_counter_text, Oswald_Regular_8, (Vec2){11, h - 2 * o});
+
+  g_color(g, warn_color_for(gs->resource_pool.construction_material));
+  g_objectS(g, g_animation_buffer(g), Img_menubar, MI_ConstructionMaterial, (Vec2){6, h - 3 * o + 2},
+            0.75f * warn_scale_for(gs->resource_pool.construction_material, t));
+  g_text(g, gs->construction_material_counter_text, Oswald_Regular_8, (Vec2){11, h - 3 * o});
 }
 
 void gs_draw_overlay(GameScene *gs, Game *g) {

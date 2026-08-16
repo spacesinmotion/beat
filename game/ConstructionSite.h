@@ -164,10 +164,9 @@ ConstructionSite *ConstructionSite_init(GameScene *gs, Recti r, int key) {
 
   l_set_tile_contentR(gs->level, cs->location, to_TileContent(cs, &ConstructionSite_TileContent_Table));
 
-  if (key == MI_Street && gs->resource_pool.construction_material > 0 && gs->clicks > 0)
+  gs_loose_click(gs);
+  if (key == MI_Street)
     cs_click(cs, (Point){}, gs);
-  else
-    gs_loose_click(gs);
 
   gs_add_object(gs, (SceneObject){.context = cs, &ConstructionSite_table});
   return cs;
