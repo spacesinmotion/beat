@@ -295,6 +295,8 @@ float warn_scale_for(int v, float t) {
   return exp((v / 5.0f - 1.0f) * (v / 5.0f - 1.0f) * sin(12.0f * t) * sin(30.0 * t / 16.0));
 }
 
+static inline Color background_color() { return rgb(200, 210, 220); }
+
 void gs_draw_storage_overlay(GameScene *gs, Game *g) {
   const float t = g_time(g);
 
@@ -302,7 +304,7 @@ void gs_draw_storage_overlay(GameScene *gs, Game *g) {
   float h = g_viewport(g).h - 29;
 
   // background
-  g_color(g, rgb(200, 210, 220));
+  g_color(g, background_color());
   for (int i = 0; i < 3; ++i)
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){7, g_viewport(g).h - 24 - i * o}, 3.0f);
   g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, (Vec2){15, g_viewport(g).h}, 3.0f);
@@ -344,10 +346,27 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
   gs_draw_storage_overlay(gs, g);
 
   if (tc_can_click(l_content(gs->level, gs->r.x, gs->r.y))) {
-    g_color(g, gray(45));
-    g_object(g, g_animation_buffer(g), Img_wearisome, 12, v_add(gs->mouse_overlay_position, (Vec2){13, -9}));
-    g_color(g, gray(200));
-    g_text(g, gs->click_counter_text, Oswald_Regular_12, v_add(gs->mouse_overlay_position, (Vec2){10, -12}));
+    const bool needs_material = l_content(gs->level, gs->r.x, gs->r.y)->table == &ConstructionSite_TileContent_Table;
+
+    g_color(g, background_color());
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < (needs_material ? 3 : 1); ++j)
+        g_object(g, g_animation_buffer(g), Img_wearisome, 12,
+                 v_add(gs->mouse_overlay_position, (Vec2){13 + i * 8, -9 - j * 8}));
+
+    g_color(g, warn_color_for(gs->clicks));
+    g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Click, v_add(gs->mouse_overlay_position, (Vec2){14, -9}),
+              warn_scale_for(gs->clicks, g_time(g)));
+    g_text(g, gs->click_counter_text, Oswald_Regular_12, v_add(gs->mouse_overlay_position, (Vec2){22, -12}));
+
+    if (needs_material) {
+      g_color(g, warn_color_for(gs->resource_pool.construction_material));
+      g_objectS(g, g_animation_buffer(g), Img_menubar, MI_ConstructionMaterial,
+                v_add(gs->mouse_overlay_position, (Vec2){14, -9 - 15}),
+                0.75 * warn_scale_for(gs->resource_pool.construction_material, g_time(g)));
+      g_text(g, gs->construction_material_counter_text, Oswald_Regular_8,
+             v_add(gs->mouse_overlay_position, (Vec2){20, -12 - 14}));
+    }
   }
 }
 

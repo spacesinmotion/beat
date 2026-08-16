@@ -13,7 +13,7 @@ typedef struct StreetMap {
   G_Object street_tile_map;
 } StreetMap;
 
-Color Street_color() { return rgb(204, 204, 204); }
+Color Street_color() { return rgb(151, 151, 151); }
 
 bool StreetMap_dead(StreetMap *sm) {
   (void)sm;
