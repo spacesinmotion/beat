@@ -18,7 +18,6 @@ typedef struct Entertainment {
   int id;
 
   int claimed, started;
-  bool some_one_is_done;
 } Entertainment;
 
 static inline Color em_color() { return rgb(245, 99, 72); }
@@ -35,10 +34,6 @@ void em_update(Entertainment *em, GameScene *gs, Game *g, float dt) {
   (void)gs;
   (void)dt;
 
-  if (em->some_one_is_done) {
-    em->some_one_is_done = false;
-    bd_flash(&em->display);
-  }
   bd_update(&em->display, g);
 }
 
@@ -79,7 +74,6 @@ void em_to_json(CJHObject *o, Entertainment *em) {
   cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &em->display);
   cjh_o_add_number(o, "claimed", em->claimed);
   cjh_o_add_number(o, "started", em->started);
-  cjh_o_add_bool(o, "some_one_is_done", em->some_one_is_done);
 }
 
 void em_from_json(CJHObjectR *o, const char *key, Entertainment *fa) {
@@ -89,8 +83,6 @@ void em_from_json(CJHObjectR *o, const char *key, Entertainment *fa) {
     printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
   else if (streq(key, "started"))
     printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "some_one_is_done"))
-    printf("%.*s%s: %s\n", indent, space, key, (cjh_o_read_bool(o) ? "true" : "false"));
 
   else if (streq(key, "display")) {
     printf("%.*s%s:\n", indent, space, key);
@@ -133,8 +125,12 @@ bool em_done_entainment(void *context, Wearisome *w, GameScene *gs) {
 bool em_start_entainment(void *context, Wearisome *w, GameScene *gs) {
   Entertainment *em = (Entertainment *)context;
   em->started++;
+
   w_earn_clicks(w, -1);
   gs->clicks++;
+  bd_flash(&em->display);
+  CoinAnimation_init(gs, bd_gain_something_location(&em->display));
+
   w->need_mode = W_GetEntertainment;
   return w_queue_wait_for(w, 15.0, QI(em, em_done_entainment));
 }
@@ -157,7 +153,6 @@ Entertainment *Entertainment_init(Game *g, GameScene *gs, Point p) {
       .id = unique_id(em),
       .started = 0,
       .claimed = 0,
-      .some_one_is_done = false,
   };
 
   l_set_tile_contentR(gs->level, em->display.location, to_TileContent(em, &Entertainment_TileContent_Table));
