@@ -30,8 +30,10 @@ void cmf_update(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g, float 
   (void)dt;
   bd_update(&cmf->display, g);
 
-  if (gs->a_new_day_just_started)
+  if (gs->a_new_day_just_started) {
     cmf->manager_click_counter = 0;
+    wp_clear_done_work(&cmf->work_provider);
+  }
 }
 
 void cmf_draw(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g) {
@@ -40,12 +42,16 @@ void cmf_draw(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g) {
     c_printf(g, "  ConstructionMaterialFactory (%d,%d,%d,%d)\n", cmf->display.location.x, cmf->display.location.y, 4,
              3);
     c_printf(g, "----------------------\n");
+    c_printf(g, " %10s: %d\n", "storage", cmf->work_provider.local_storage);
+    c_printf(g, " %10s: %d\n", "taken", wp_storage_taken(&cmf->work_provider));
+    c_printf(g, "----------------------\n");
   }
 
   bd_draw(&cmf->display, g, cmf_color(), MI_ConstructionMaterial);
 
   const Vec2 p = l_to_vecP(ri_bottom_right(cmf->display.location));
   wp_draw_click_fields(&cmf->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
+  wp_draw_storage(&cmf->work_provider, g, v_add(p, l_to_vec(0, 1)));
 }
 
 void cmf_to_json(CJHObject *o, ConstructionMaterialFactory *cmf) {
@@ -105,7 +111,7 @@ bool cmf_done_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
 
   ConstructionMaterialFactory *cmf = (ConstructionMaterialFactory *)context;
-  wp_done(&cmf->work_provider, w);
+  wp_done_and_store(&cmf->work_provider, w);
   return false;
 }
 bool cmf_start_work(void *context, Wearisome *w, GameScene *gs) {
@@ -140,7 +146,7 @@ static TileContentTable ConstructionMaterialFactory_TileContent_Table = {
     .location = (LocationCb)cmf_location,
     .provides = (ProvidesCB)cmf_provides,
     .claim = (ClaimCB)cmf_claim,
-    .click = (ClickCBx)wp_click,
+    .click = (ClickCBx)wp_click_with_storage,
 };
 
 ConstructionMaterialFactory *ConstructionMaterialFactory_init(Game *g, GameScene *gs, Point p) {

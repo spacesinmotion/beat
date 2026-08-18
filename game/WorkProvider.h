@@ -7,7 +7,8 @@
 
 typedef struct WorkProvider {
   int colums, rows;
-  int clicks, clicks_claimed, clicks_work, clicks_done, clicks_claimed_for_deliver;
+  int clicks, clicks_claimed, clicks_work, clicks_done;
+  int local_storage, local_storage_claimed;
 } WorkProvider;
 
 static inline void wp_init(WorkProvider *wp, int c, int r) { *wp = (WorkProvider){c, r, 0, 0, 0, 0, 0}; }
@@ -17,8 +18,12 @@ static inline void wp_reduce_clicks(WorkProvider *wp, int count) {
   wp->clicks_work -= count;
   wp->clicks_done -= count;
 }
+static inline void wp_clear_done_work(WorkProvider *wp) { wp_reduce_clicks(wp, wp->clicks_done); }
 static inline int wp_fields(const WorkProvider *wp) { return wp->colums * wp->rows; }
 static inline bool wp_is_done(const WorkProvider *wp) { return wp->clicks_done == wp_fields(wp); }
+
+int wp_max_storage(const WorkProvider *wp) { return 4 * wp->rows; }
+int wp_storage_taken(const WorkProvider *wp) { return wp->local_storage + wp->clicks - wp->clicks_done; }
 
 bool wp_provides(WorkProvider *wp, GameScene *gs, Resource r) {
   (void)gs;
@@ -28,6 +33,13 @@ static inline bool wp_has_work(WorkProvider *wp) { return wp->clicks < wp_fields
 void wp_click(WorkProvider *wp, Point p, GameScene *gs) {
   (void)p;
   if (gs->clicks > 0 && wp_has_work(wp)) {
+    wp->clicks++;
+    gs->clicks--;
+  }
+}
+void wp_click_with_storage(WorkProvider *wp, Point p, GameScene *gs) {
+  (void)p;
+  if (gs->clicks > 0 && wp_has_work(wp) && wp_storage_taken(wp) < wp_max_storage(wp)) {
     wp->clicks++;
     gs->clicks--;
   }
@@ -42,6 +54,10 @@ void wp_done(WorkProvider *wp, Wearisome *w) {
   wp->clicks_done++;
   w_earn_clicks(w, 1);
   w->need_mode = W_Normal;
+}
+void wp_done_and_store(WorkProvider *wp, Wearisome *w) {
+  wp_done(wp, w);
+  wp->local_storage++;
 }
 
 static inline void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p, bool ignore_empty) {
@@ -73,18 +89,25 @@ static inline void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p,
   }
 }
 
-static inline bool wp_has_something_stored(const WorkProvider *wp) { return wp->clicks_done > 0; }
+static inline void wp_draw_storage(const WorkProvider *wp, Game *g, Vec2 p) {
+  g_color(g, white());
+  for (int i = 0; i < wp->local_storage; i += 4)
+    g_objectS(g, g_animation_buffer(g), Img_wearisome, 8 + i_min(wp->local_storage - i, 4) - 1,
+              v_add(p, l_to_vec(0, i / 4)), 0.75);
+}
+
 static inline bool wp_has_something_to_deliver(const WorkProvider *wp) {
-  return wp->clicks_done - wp->clicks_claimed_for_deliver > 0;
+  return wp->local_storage - wp->local_storage_claimed > 0;
 }
 
 static inline void wp_claim_deliver(WorkProvider *wp, GameScene *gs) {
-  wp->clicks_claimed_for_deliver++;
+  wp->local_storage_claimed++;
   gs->storage_claimed++;
 }
 static inline bool wp_deliver_taken(WorkProvider *wp) {
-  wp->clicks_claimed_for_deliver--;
-  wp_reduce_clicks(wp, 1);
+  wp->local_storage_claimed--;
+  wp->local_storage--;
+  // wp_reduce_clicks(wp, 1);
   return true;
 }
 
@@ -95,7 +118,8 @@ static inline void wp_to_json(CJHObject *o, WorkProvider *wp) {
   cjh_o_add_number_if(o, "clicks_claimed", wp->clicks_claimed, 0);
   cjh_o_add_number_if(o, "clicks_work", wp->clicks_work, 0);
   cjh_o_add_number_if(o, "clicks_done", wp->clicks_done, 0);
-  cjh_o_add_number_if(o, "clicks_claimed_for_deliver", wp->clicks_claimed_for_deliver, 0);
+  cjh_o_add_number_if(o, "local_storage", wp->local_storage, 0);
+  cjh_o_add_number_if(o, "local_storage_claimed", wp->local_storage_claimed, 0);
 }
 
 static inline void wp_from_json(CJHObjectR *o, const char *key, WorkProvider *wp) {

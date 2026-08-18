@@ -30,8 +30,10 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
   (void)dt;
   bd_update(&fa->display, g);
 
-  if (gs->a_new_day_just_started)
+  if (gs->a_new_day_just_started) {
     fa->manager_click_counter = 0;
+    wp_clear_done_work(&fa->work_provider);
+  }
 }
 
 void fa_draw(Farm *fa, GameScene *gs, Game *g) {
@@ -39,12 +41,16 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
     c_printf(g, "----------------------\n");
     c_printf(g, "  Farm (%d,%d,%d,%d)\n", fa->display.location.x, fa->display.location.y, 4, 3);
     c_printf(g, "----------------------\n");
+    c_printf(g, " %10s: %d\n", "storage", fa->work_provider.local_storage);
+    c_printf(g, " %10s: %d\n", "taken", wp_storage_taken(&fa->work_provider));
+    c_printf(g, "----------------------\n");
   }
 
   bd_draw(&fa->display, g, fa_color(), MI_Food);
 
   Vec2 p = l_to_vecP(ri_bottom_right(fa->display.location));
   wp_draw_click_fields(&fa->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
+  wp_draw_storage(&fa->work_provider, g, v_add(p, l_to_vec(0, 1)));
 }
 
 void fa_to_json(CJHObject *o, Farm *fa) {
@@ -74,8 +80,9 @@ bool fa_provides(Farm *fa, GameScene *gs, Resource r) {
 
 bool fa_done_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
+
   Farm *fa = (Farm *)context;
-  wp_done(&fa->work_provider, w);
+  wp_done_and_store(&fa->work_provider, w);
   return false;
 }
 bool fa_start_work(void *context, Wearisome *w, GameScene *gs) {
@@ -138,7 +145,7 @@ static TileContentTable Farm_TileContent_Table = {
     .location = (LocationCb)fa_location,
     .provides = (ProvidesCB)fa_provides,
     .claim = (ClaimCB)fa_claim,
-    .click = (ClickCBx)wp_click,
+    .click = (ClickCBx)wp_click_with_storage,
 };
 
 Farm *Farm_init(Game *g, GameScene *gs, Point p) {

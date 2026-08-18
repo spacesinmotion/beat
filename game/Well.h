@@ -2,6 +2,8 @@
 #define WELL_H
 
 #include "game/BuildingDisplay.h"
+#include "game/Game.h"
+#include "game/Level.h"
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
@@ -32,8 +34,10 @@ void wl_update(Well *wl, GameScene *gs, Game *g, float dt) {
   (void)dt;
   bd_update(&wl->display, g);
 
-  if (gs->a_new_day_just_started)
+  if (gs->a_new_day_just_started) {
     wl->manager_click_counter = 0;
+    wp_clear_done_work(&wl->work_provider);
+  }
 }
 
 void wl_draw(Well *wl, GameScene *gs, Game *g) {
@@ -41,12 +45,16 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
     c_printf(g, "----------------------\n");
     c_printf(g, "  Well (%d,%d,%d,%d)\n", wl->display.location.x, wl->display.location.y, 4, 3);
     c_printf(g, "----------------------\n");
+    c_printf(g, " %10s: %d\n", "storage", wl->work_provider.local_storage);
+    c_printf(g, " %10s: %d\n", "taken", wp_storage_taken(&wl->work_provider));
+    c_printf(g, "----------------------\n");
   }
 
   Vec2 p = l_to_vecP(ri_bottom_right(wl->display.location));
   bd_draw(&wl->display, g, wl_color(), MI_Water);
 
   wp_draw_click_fields(&wl->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
+  wp_draw_storage(&wl->work_provider, g, v_add(p, l_to_vec(0, 1)));
 }
 
 void wl_to_json(CJHObject *o, Well *wl) {
@@ -104,7 +112,7 @@ bool wl_done_work(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
 
   Well *wl = (Well *)context;
-  wp_done(&wl->work_provider, w);
+  wp_done_and_store(&wl->work_provider, w);
   return false;
 }
 bool wl_start_work(void *context, Wearisome *w, GameScene *gs) {
@@ -138,7 +146,7 @@ static TileContentTable Well_TileContent_Table = {
     .location = (LocationCb)wl_location,
     .provides = (ProvidesCB)wl_provides,
     .claim = (ClaimCB)wl_claim,
-    .click = (ClickCBx)wp_click,
+    .click = (ClickCBx)wp_click_with_storage,
 };
 
 Well *Well_init(Game *g, GameScene *gs, Point p) {
