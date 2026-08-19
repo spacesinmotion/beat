@@ -17,7 +17,7 @@ typedef struct Entertainment {
 
   int id;
 
-  int claimed, started;
+  int claimed, started, done;
 } Entertainment;
 
 static inline Color em_color() { return rgb(245, 99, 72); }
@@ -35,6 +35,12 @@ void em_update(Entertainment *em, GameScene *gs, Game *g, float dt) {
   (void)dt;
 
   bd_update(&em->display, g);
+
+  if (gs->a_new_day_just_started) {
+    em->claimed -= em->done;
+    em->started -= em->done;
+    em->done -= em->done;
+  }
 }
 
 void em_draw(Entertainment *em, GameScene *gs, Game *g) {
@@ -54,13 +60,15 @@ void em_draw(Entertainment *em, GameScene *gs, Game *g) {
       float r = 0.0f;
       float s = 0.75f;
       int img = 14;
-      if (c < em->started) {
+      if (c < em->done) {
+        done_color(g);
+      } else if (c < em->started) {
         r += 0.05f * sin(26.0 * g_time(g) + i * j);
         s += 0.01f * sin(17.0 * g_time(g) + i * j);
         working_color(g);
-      } else if (c < em->claimed)
+      } else if (c < em->claimed) {
         work_claimed_color(g);
-      else {
+      } else {
         g_color(g, rgb(255, 255, 255));
         img = 15;
       }
@@ -117,8 +125,7 @@ bool em_provides(Entertainment *em, GameScene *gs, Resource r) {
 bool em_done_entainment(void *context, Wearisome *w, GameScene *gs) {
   (void)gs;
   Entertainment *em = (Entertainment *)context;
-  em->started--;
-  em->claimed--;
+  em->done++;
   w->need_mode = W_Normal;
   return false;
 }
@@ -153,6 +160,7 @@ Entertainment *Entertainment_init(Game *g, GameScene *gs, Point p) {
       .id = unique_id(em),
       .started = 0,
       .claimed = 0,
+      .done = 0,
   };
 
   l_set_tile_contentR(gs->level, em->display.location, to_TileContent(em, &Entertainment_TileContent_Table));

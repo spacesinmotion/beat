@@ -43,6 +43,9 @@ void cf_update(ClickFactory *cf, GameScene *gs, Game *g, float dt) {
     cf->missing_blings--;
   }
 
+  if (gs->a_new_day_just_started)
+    wp_clear_done_work(&cf->work_provider);
+
   cf->switch_selling_flash = f_max(0.0f, cf->switch_selling_flash - g_animation_delta(g));
 }
 
@@ -124,7 +127,7 @@ bool cf_done_work(void *context, Wearisome *w, GameScene *gs) {
 
   cf->missing_blings += 5;
   gs_produce_click(gs);
-  wp_reduce_clicks(&cf->work_provider, 1);
+  // wp_reduce_clicks(&cf->work_provider, 1);
   bd_flash(&cf->display);
   CoinAnimation_init(gs, bd_gain_something_location(&cf->display));
 
