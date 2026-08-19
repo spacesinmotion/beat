@@ -32,9 +32,6 @@ void scb_update(ScienceBuilding *scb, GameScene *gs, Game *g, float dt) {
 
   if (gs->a_new_day_just_started) {
     if (scb->work_provider.clicks_done > 0) {
-      gs->research_level += scb->work_provider.clicks_done;
-      if (gs->research_level >= gs->reasearch_needed)
-        gs->research_level -= gs->reasearch_needed;
       wp_reduce_clicks(&scb->work_provider, scb->work_provider.clicks_done);
       bd_flash(&scb->display);
     }
@@ -52,13 +49,9 @@ void scb_draw(ScienceBuilding *scb, GameScene *gs, Game *g) {
   bd_draw(&scb->display, g, scb_color(), MI_Science);
   wp_draw_click_fields(&scb->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 
-  float x = gs->research_level / gs->reasearch_needed;
-  g_color(g, green());
-  for (int i = 0; i < 6; ++i) {
-    if (i / 6.0f >= x)
-      break;
-    g_objectS(g, g_animation_buffer(g), Img_wearisome, 12, v_add(p, (Vec2){-2, 8 + 2 * i}), 0.25);
-  }
+  scb->work_provider.local_storage = gs->research_level;
+  g_color(g, rgb(102, 64, 101));
+  wp_draw_storage(&scb->work_provider, g, v_add(p, l_to_vec(0, 1)));
 }
 
 void scb_to_json(CJHObject *o, ScienceBuilding *scb) {
@@ -112,6 +105,11 @@ bool scb_done_work(void *context, Wearisome *w, GameScene *gs) {
 
   ScienceBuilding *scb = (ScienceBuilding *)context;
   wp_done(&scb->work_provider, w);
+
+  gs->research_level++;
+  if (gs->research_level >= gs->reasearch_needed)
+    gs->research_level -= gs->reasearch_needed;
+
   return false;
 }
 
