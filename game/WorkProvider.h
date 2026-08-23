@@ -4,6 +4,7 @@
 #include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/Wearisome.h"
+#include "math/Color.h"
 
 typedef struct WorkProvider {
   int colums, rows;
@@ -90,10 +91,12 @@ static inline void wp_draw_click_fields(const WorkProvider *wp, Game *g, Vec2 p,
 }
 
 static inline void wp_draw_storage(const WorkProvider *wp, Game *g, Vec2 p) {
-  g_color(g, white());
+  const int ms = wp_max_storage(wp);
+  const float h = wp->local_storage >= ms ? 1.0f : (wp->local_storage > ms - 4 ? 0.4f : 0.0f);
+  g_color(g, wp->local_storage >= ms ? critical_color() : (wp->local_storage > ms - 4 ? warn_color() : white()));
   for (int i = 0; i < wp->local_storage; i += 4)
     g_objectS(g, g_animation_buffer(g), Img_wearisome, 8 + i_min(wp->local_storage - i, 4) - 1,
-              v_add(p, l_to_vec(0, i / 4)), 0.75);
+              v_add(p, l_to_vec(0, i / 4)), 0.75 + h * 0.02f * sin(17.0 * g_time(g) + i));
 }
 
 static inline bool wp_has_something_to_deliver(const WorkProvider *wp) {
