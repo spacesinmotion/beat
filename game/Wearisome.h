@@ -104,8 +104,9 @@ bool w_dead(Wearisome *w) { return w->health <= 0.0f; }
 
 float w_render_order(Wearisome *w) { return 10000.0f + w->position.y; }
 
-static inline Recti w_current_rect(Wearisome *w) {
-  Point p = l_to_point(w->destination);
+static inline Point w_current_point(const Wearisome *w) { return l_to_point(w->destination); }
+static inline Recti w_current_rect(const Wearisome *w) {
+  Point p = w_current_point(w);
   return (Recti){p.x, p.y, 1, 1};
 }
 

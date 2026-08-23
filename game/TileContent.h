@@ -32,12 +32,14 @@ typedef struct Wearisome Wearisome;
 typedef Recti (*LocationCb)(const void *);
 typedef bool (*ProvidesCB)(void *, GameScene *gs, Resource r);
 typedef void (*ClaimCB)(void *, GameScene *gs, Wearisome *w, Resource r);
+typedef void (*TakeCB)(void *, GameScene *gs, Resource r, bool pay);
 typedef void (*ClickCBx)(const void *, Point p, GameScene *gs);
 
 typedef struct TileContentTable {
   LocationCb location;
   ProvidesCB provides;
   ClaimCB claim;
+  TakeCB take;
   ClickCBx click;
 } TileContentTable;
 typedef struct TileContent {
@@ -52,6 +54,10 @@ static inline bool tc_provides(const TileContent *tc, GameScene *gs, Resource r)
 static inline void tc_claim(const TileContent *tc, GameScene *gs, Wearisome *w, Resource r) {
   if (tc && tc->table->claim)
     tc->table->claim(tc->context, gs, w, r);
+}
+static inline void tc_take(const TileContent *tc, GameScene *gs, Resource r, bool pay) {
+  if (tc && tc->table->take)
+    tc->table->take(tc->context, gs, r, pay);
 }
 
 inline static bool tc_can_click(const TileContent *tc) { return (tc && tc->table->click); }

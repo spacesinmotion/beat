@@ -12,7 +12,7 @@ typedef struct WorkProvider {
   int local_storage, local_storage_claimed;
 } WorkProvider;
 
-static inline void wp_init(WorkProvider *wp, int c, int r) { *wp = (WorkProvider){c, r, 0, 0, 0, 0, 0}; }
+static inline void wp_init(WorkProvider *wp, int c, int r) { *wp = (WorkProvider){c, r, 0, 0, 0, 0, 0, 0}; }
 static inline void wp_reduce_clicks(WorkProvider *wp, int count) {
   wp->clicks -= count;
   wp->clicks_claimed -= count;
@@ -126,6 +126,7 @@ static inline void wp_to_json(CJHObject *o, WorkProvider *wp) {
 }
 
 static inline void wp_from_json(CJHObjectR *o, const char *key, WorkProvider *wp) {
+  (void)wp;
 
   if (streq(key, "colums"))
     printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));

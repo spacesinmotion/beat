@@ -32,6 +32,8 @@ void qi_to_json(CJHObject *o, QueueItem *qi) {
 }
 
 void qi_from_json(CJHObjectR *o, const char *key, QueueItem *qi) {
+  (void)qi;
+
   if (streq(key, "id"))
     printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
   else if (streq(key, "cb")) {

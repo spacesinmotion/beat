@@ -40,6 +40,7 @@ typedef struct GameScene {
   int wearisome_count;
   Stuff resource_pool;
   Stuff resource_pool_claimed;
+  Stuff resource_pool_spread;
   int storage_size, storage_claimed;
 
   Color preview;
@@ -94,6 +95,16 @@ static inline void gs_loose_click(GameScene *gs) {
 static inline int gs_free_storage(GameScene *gs) {
   return gs->storage_size - gs->storage_claimed - gs->resource_pool.water - gs->resource_pool.food -
          gs->resource_pool.construction_material;
+}
+
+static inline int gs_resource(const GameScene *gs, Resource r) {
+  if (r == R_Water)
+    return gs->resource_pool.water + gs->resource_pool_spread.water;
+  if (r == R_Food)
+    return gs->resource_pool.food + gs->resource_pool_spread.food;
+  if (r == R_ConstructionMaterial)
+    return gs->resource_pool.construction_material + gs->resource_pool_spread.construction_material;
+  return 0;
 }
 
 #endif

@@ -30,6 +30,8 @@ void cmf_update(ConstructionMaterialFactory *cmf, GameScene *gs, Game *g, float 
   (void)dt;
   bd_update(&cmf->display, g);
 
+  gs->resource_pool_spread.construction_material += cmf->work_provider.local_storage;
+
   if (gs->a_new_day_just_started) {
     cmf->manager_click_counter = 0;
     wp_clear_done_work(&cmf->work_provider);
@@ -100,6 +102,8 @@ static SceneObjectTable ConstructionMaterialFactory_table = {
 Recti cmf_location(const ConstructionMaterialFactory *cmf) { return cmf->display.location; }
 
 bool cmf_provides(ConstructionMaterialFactory *cmf, GameScene *gs, Resource r) {
+  if (r == R_ConstructionMaterial)
+    return wp_has_something_to_deliver(&cmf->work_provider);
   if (r == R_Work)
     return wp_provides(&cmf->work_provider, gs, r);
   if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
@@ -133,7 +137,9 @@ bool cmf_collect_storage(void *context, Wearisome *w, GameScene *gs) {
 }
 
 void cmf_claim(ConstructionMaterialFactory *cmf, GameScene *gs, Wearisome *w, Resource r) {
-  if (r == R_Work) {
+  if (r == R_ConstructionMaterial) {
+    cmf->work_provider.local_storage_claimed++;
+  } else if (r == R_Work) {
     if (w_queue_move_to(w, gs, cmf->display.location, QI(cmf, cmf_start_work)))
       wp_claim(&cmf->work_provider);
   } else if (r == R_Deliver) {
@@ -142,10 +148,23 @@ void cmf_claim(ConstructionMaterialFactory *cmf, GameScene *gs, Wearisome *w, Re
   } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
     cmf->manager_click_counter = r;
 }
+
+void cmf_take(ConstructionMaterialFactory *cmf, GameScene *gs, Resource r, bool pay) {
+  (void)gs;
+  assert(!pay);
+
+  assert(r == R_ConstructionMaterial);
+  if (r == R_ConstructionMaterial) {
+    cmf->work_provider.local_storage--;
+    cmf->work_provider.local_storage_claimed--;
+  }
+}
+
 static TileContentTable ConstructionMaterialFactory_TileContent_Table = {
     .location = (LocationCb)cmf_location,
     .provides = (ProvidesCB)cmf_provides,
     .claim = (ClaimCB)cmf_claim,
+    .take = (TakeCB)cmf_take,
     .click = (ClickCBx)wp_click_with_storage,
 };
 

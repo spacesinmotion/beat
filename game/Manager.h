@@ -145,21 +145,21 @@ bool mg_find_manager_work(void *context, Wearisome *w, GameScene *gs) {
   }
 
   mg->used_manager_counter = R_ManagerWork1;
-  Recti r = find_resource_building_rect(gs, mg->display.location, mg->used_manager_counter);
-  if (r.w <= 0) {
+  TileContent *provider = find_resource_building(gs, mg->display.location, mg->used_manager_counter);
+  if (provider) {
     mg->used_manager_counter = R_ManagerWork2;
-    r = find_resource_building_rect(gs, mg->display.location, mg->used_manager_counter);
+    provider = find_resource_building(gs, mg->display.location, mg->used_manager_counter);
   }
-  if (r.w <= 0) {
+  if (provider) {
     mg->used_manager_counter = R_ManagerWork3;
-    r = find_resource_building_rect(gs, mg->display.location, mg->used_manager_counter);
+    provider = find_resource_building(gs, mg->display.location, mg->used_manager_counter);
   }
-  if (r.w <= 0) {
+  if (provider) {
     mg->used_manager_counter = R_ManagerWork4;
-    r = find_resource_building_rect(gs, mg->display.location, mg->used_manager_counter);
+    provider = find_resource_building(gs, mg->display.location, mg->used_manager_counter);
   }
 
-  if (r.w > 0 && w_queue_move_to(w, gs, r, QI(mg, mg_click_building)))
+  if (provider && w_queue_move_to(w, gs, tc_location(provider), QI(mg, mg_click_building)))
     return true;
   return w_queue_wait_for(w, 0.25f, QI(mg, mg_find_manager_work));
 }

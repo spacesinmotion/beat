@@ -75,11 +75,12 @@ bool h_get_water_done(void *context, Wearisome *w, GameScene *gs) {
 Color wl_color();
 void w_deliver(Wearisome *w, MenuIcon mi, Color c);
 bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi);
+Point w_current_point(const Wearisome *w);
 bool h_pay_water(void *context, Wearisome *w, GameScene *gs) {
   House *h = (House *)context;
-  gs->resource_pool.water--;
-  gs->resource_pool_claimed.water--;
-  gs->clicks++;
+  TileContent *tc = l_contentP(gs->level, w_current_point(w));
+  assert(tc && tc->table->take);
+  tc_take(tc, gs, R_Water, true);
   h->resources.clicks--;
   w_deliver(w, MI_Water, wl_color());
   return w_queue_move_to(w, gs, h->display.location, QI(h, h_get_water_done));
@@ -92,11 +93,12 @@ bool h_get_food_done(void *context, Wearisome *w, GameScene *gs) {
   return false;
 }
 Color fa_color();
+
 bool h_pay_food(void *context, Wearisome *w, GameScene *gs) {
   House *h = (House *)context;
-  gs->resource_pool.food--;
-  gs->resource_pool_claimed.food--;
-  gs->clicks++;
+  TileContent *tc = l_contentP(gs->level, w_current_point(w));
+  assert(tc && tc->table->take);
+  tc_take(tc, gs, R_Food, true);
   h->resources.clicks--;
   w_deliver(w, MI_Food, fa_color());
   return w_queue_move_to(w, gs, h->display.location, QI(h, h_get_food_done));
@@ -164,7 +166,7 @@ void h_draw(House *h, GameScene *gs, Game *g) {
   g_text(g, h->clicks_text, Oswald_Regular_12, v_add(p, (Vec2){12, -5}));
 }
 
-Recti find_resource_building_rect(GameScene *gs, Recti start, Resource r);
+TileContent *find_resource_building(GameScene *gs, Recti start, Resource r);
 bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
   if (h->resources_maximum.clicks <= 0)
     return false;
@@ -172,17 +174,16 @@ bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
   bool need_water = h->resources_maximum.water - h->resources.water >= 1.0f;
   bool need_food = h->resources_maximum.food - h->resources.food >= 1.0f;
   bool food_is_more_urgent = need_water && need_food && h->resources.water > h->resources.food;
-  if (!food_is_more_urgent && need_water && (gs->resource_pool.water - gs->resource_pool_claimed.water > 0)) {
-    Recti waterProvider = find_resource_building_rect(gs, h->display.location, R_Water);
-    if (waterProvider.w > 0 && w_queue_move_to(w, gs, waterProvider, QI(h, h_pay_water))) {
-      tc_claim(l_content(gs->level, waterProvider.x, waterProvider.y), gs, w, R_Water);
+  TileContent *provider = NULL;
+  if (!food_is_more_urgent && need_water && (provider = find_resource_building(gs, h->display.location, R_Water))) {
+    if (w_queue_move_to(w, gs, tc_location(provider), QI(h, h_pay_water))) {
+      tc_claim(provider, gs, w, R_Water);
       h->resources_maximum.clicks--;
       return true;
     }
-  } else if (need_food && (gs->resource_pool.food - gs->resource_pool_claimed.food > 0)) {
-    Recti foodProvider = find_resource_building_rect(gs, h->display.location, R_Food);
-    if (foodProvider.w > 0 && w_queue_move_to(w, gs, foodProvider, QI(h, h_pay_food))) {
-      tc_claim(l_content(gs->level, foodProvider.x, foodProvider.y), gs, w, R_Food);
+  } else if (need_food && (provider = find_resource_building(gs, h->display.location, R_Food))) {
+    if (w_queue_move_to(w, gs, tc_location(provider), QI(h, h_pay_food))) {
+      tc_claim(provider, gs, w, R_Food);
       h->resources_maximum.clicks--;
       return true;
     }

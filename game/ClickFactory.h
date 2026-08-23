@@ -144,22 +144,25 @@ bool cf_start_work(void *context, Wearisome *w, GameScene *gs) {
 
 bool cf_work_collect_construction_material(void *context, Wearisome *w, GameScene *gs) {
   ClickFactory *cf = (ClickFactory *)context;
-  gs->resource_pool.construction_material--;
-  gs->resource_pool_claimed.construction_material--;
+  TileContent *tc = l_contentP(gs->level, w_current_point(w));
+  assert(tc && tc->table->take);
+  tc_take(tc, gs, R_ConstructionMaterial, false);
   w_deliver(w, MI_ConstructionMaterial, cf_color());
   return w_queue_move_to(w, gs, cf->display.location, QI(cf, cf_start_work));
 }
 bool cf_work_collect_water(void *context, Wearisome *w, GameScene *gs) {
   ClickFactory *cf = (ClickFactory *)context;
-  gs->resource_pool.water--;
-  gs->resource_pool_claimed.water--;
+  TileContent *tc = l_contentP(gs->level, w_current_point(w));
+  assert(tc && tc->table->take);
+  tc_take(tc, gs, R_Water, false);
   w_deliver(w, MI_Water, cf_color());
   return w_queue_move_to(w, gs, cf->display.location, QI(cf, cf_start_work));
 }
 bool cf_work_collect_food(void *context, Wearisome *w, GameScene *gs) {
   ClickFactory *cf = (ClickFactory *)context;
-  gs->resource_pool.food--;
-  gs->resource_pool_claimed.food--;
+  TileContent *tc = l_contentP(gs->level, w_current_point(w));
+  assert(tc && tc->table->take);
+  tc_take(tc, gs, R_Food, false);
   w_deliver(w, MI_Food, cf_color());
   return w_queue_move_to(w, gs, cf->display.location, QI(cf, cf_start_work));
 }
@@ -167,20 +170,18 @@ bool cf_work_collect_food(void *context, Wearisome *w, GameScene *gs) {
 void cf_claim(ClickFactory *cf, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
 
-  Recti marketplace = find_resource_building_rect(gs, cf->display.location, cf->currently_selling);
-  if (marketplace.w > 0) {
+  TileContent *provider = find_resource_building(gs, cf->display.location, cf->currently_selling);
+  if (provider) {
     QueueItem qi = {0};
+    tc_claim(provider, gs, w, cf->currently_selling);
     if (cf->currently_selling == R_ConstructionMaterial) {
-      gs->resource_pool_claimed.construction_material++;
       qi = QI(cf, cf_work_collect_construction_material);
     } else if (cf->currently_selling == R_Water) {
-      gs->resource_pool_claimed.water++;
       qi = QI(cf, cf_work_collect_water);
     } else if (cf->currently_selling == R_Food) {
-      gs->resource_pool_claimed.food++;
       qi = QI(cf, cf_work_collect_food);
     }
-    if (qi.context && w_queue_move_to(w, gs, marketplace, qi))
+    if (qi.context && w_queue_move_to(w, gs, tc_location(provider), qi))
       wp_claim(&cf->work_provider);
   }
 }

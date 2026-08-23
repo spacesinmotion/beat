@@ -30,6 +30,8 @@ void fa_update(Farm *fa, GameScene *gs, Game *g, float dt) {
   (void)dt;
   bd_update(&fa->display, g);
 
+  gs->resource_pool_spread.food += fa->work_provider.local_storage;
+
   if (gs->a_new_day_just_started) {
     fa->manager_click_counter = 0;
     wp_clear_done_work(&fa->work_provider);
@@ -71,6 +73,8 @@ static SceneObjectTable Farm_table = {
 Recti fa_location(const Farm *fa) { return fa->display.location; }
 
 bool fa_provides(Farm *fa, GameScene *gs, Resource r) {
+  if (r == R_Food)
+    return wp_has_something_to_deliver(&fa->work_provider);
   if (r == R_Work)
     return wp_provides(&fa->work_provider, gs, r);
   if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
@@ -104,7 +108,9 @@ bool fa_collect_storage(void *context, Wearisome *w, GameScene *gs) {
 }
 
 void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
-  if (r == R_Work) {
+  if (r == R_Food) {
+    fa->work_provider.local_storage_claimed++;
+  } else if (r == R_Work) {
     if (w_queue_move_to(w, gs, fa->display.location, QI(fa, fa_start_work)))
       wp_claim(&fa->work_provider);
   } else if (r == R_Deliver) {
@@ -112,6 +118,21 @@ void fa_claim(Farm *fa, GameScene *gs, Wearisome *w, Resource r) {
       wp_claim_deliver(&fa->work_provider, gs);
   } else if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
     fa->manager_click_counter = r;
+}
+
+void fa_take(Farm *fa, GameScene *gs, Resource r, bool pay) {
+  assert(r == R_Food);
+
+  if (r == R_Food) {
+    fa->work_provider.local_storage--;
+    fa->work_provider.local_storage_claimed--;
+
+    if (pay) {
+      gs->clicks++;
+      bd_flash(&fa->display);
+      CoinAnimation_init(gs, bd_gain_something_location(&fa->display));
+    }
+  }
 }
 
 void fa_from_json(CJHObjectR *o, const char *key, Farm *fa) {
@@ -145,6 +166,7 @@ static TileContentTable Farm_TileContent_Table = {
     .location = (LocationCb)fa_location,
     .provides = (ProvidesCB)fa_provides,
     .claim = (ClaimCB)fa_claim,
+    .take = (TakeCB)fa_take,
     .click = (ClickCBx)wp_click_with_storage,
 };
 

@@ -45,36 +45,4 @@ TileContent *find_resource_building(GameScene *gs, Recti start, Resource r) {
   return l_contentP(gs->level, search_data.found);
 }
 
-Recti find_resource_building_rect(GameScene *gs, Recti start, Resource r) {
-  ResourceProviderSearch search_data = {gs, start, r, {-1, -1}, NULL};
-  l_bright_first(gs->level, start.x, start.y,
-                 (SearchHandle){
-                     &search_data,
-                     (CanMoveCB)rps_moveable,
-                     (GoalReachedCB)rps_reached_goal,
-                     (PathCB)rps_build_path,
-                 });
-
-  TileContent *c = l_contentP(gs->level, search_data.found);
-  if (!c)
-    return (Recti){0, 0, 0, 0};
-  Recti d = {search_data.found.x, search_data.found.y, 1, 1};
-  for (int i = 1; i < 10; ++i) {
-    if (c == l_content(gs->level, search_data.found.x - i, search_data.found.y)) {
-      d.x--;
-      d.w++;
-    }
-    if (c == l_content(gs->level, search_data.found.x + i, search_data.found.y)) {
-      d.w++;
-    }
-    if (c == l_content(gs->level, search_data.found.x, search_data.found.y - i)) {
-      d.y--;
-      d.h++;
-    }
-    if (c == l_content(gs->level, search_data.found.x, search_data.found.y + i)) {
-      d.h++;
-    }
-  }
-  return d;
-}
 #endif

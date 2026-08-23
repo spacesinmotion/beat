@@ -177,13 +177,10 @@ void mp_animate_add_coin(Marketplace *mp, GameScene *gs) {
 void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
   if (r == R_Water) {
     gs->resource_pool_claimed.water++;
-    mp_animate_add_coin(mp, gs);
   } else if (r == R_Food) {
     gs->resource_pool_claimed.food++;
-    mp_animate_add_coin(mp, gs);
   } else if (r == R_ConstructionMaterial) {
     gs->resource_pool_claimed.construction_material++;
-    mp_animate_add_coin(mp, gs);
   } else if (r == R_Work) {
     TileContent *tc = find_resource_building(gs, mp->display.location, R_Deliver);
     if (tc) {
@@ -195,10 +192,35 @@ void mp_claim(Marketplace *mp, GameScene *gs, Wearisome *w, Resource r) {
     mp->manager_click_counter = r;
 }
 
+void mp_take(Marketplace *mp, GameScene *gs, Resource r, bool pay) {
+  (void)mp;
+
+  if (r == R_Water) {
+    gs->resource_pool.water--;
+    gs->resource_pool_claimed.water--;
+    if (pay) {
+      gs->clicks++;
+      mp_animate_add_coin(mp, gs);
+    }
+  } else if (r == R_Food) {
+    gs->resource_pool.food--;
+    gs->resource_pool_claimed.food--;
+    if (pay) {
+      mp_animate_add_coin(mp, gs);
+      gs->clicks++;
+    }
+  } else if (r == R_ConstructionMaterial) {
+    gs->resource_pool.construction_material--;
+    gs->resource_pool_claimed.construction_material--;
+    assert(!pay);
+  }
+}
+
 static TileContentTable Marketplace_TileContent_Table = {
     .location = (LocationCb)mp_location,
     .provides = (ProvidesCB)mp_provides,
     .claim = (ClaimCB)mp_claim,
+    .take = (TakeCB)mp_take,
     .click = (ClickCBx)wp_click,
 };
 

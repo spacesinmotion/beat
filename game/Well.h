@@ -34,6 +34,8 @@ void wl_update(Well *wl, GameScene *gs, Game *g, float dt) {
   (void)dt;
   bd_update(&wl->display, g);
 
+  gs->resource_pool_spread.water += wl->work_provider.local_storage;
+
   if (gs->a_new_day_just_started) {
     wl->manager_click_counter = 0;
     wp_clear_done_work(&wl->work_provider);
@@ -101,6 +103,8 @@ static SceneObjectTable Well_table = {
 
 Recti wl_location(const Well *wl) { return wl->display.location; }
 bool wl_provides(Well *wl, GameScene *gs, Resource r) {
+  if (r == R_Water)
+    return wp_has_something_to_deliver(&wl->work_provider);
   if (r == R_Work)
     return wp_provides(&wl->work_provider, gs, r);
   if (r >= R_ManagerWork1 && r <= R_ManagerWork4)
@@ -132,7 +136,9 @@ bool wl_collect_storage(void *context, Wearisome *w, GameScene *gs) {
   return false;
 }
 void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
-  if (r == R_Work) {
+  if (r == R_Water) {
+    wl->work_provider.local_storage_claimed++;
+  } else if (r == R_Work) {
     if (w_queue_move_to(w, gs, wl->display.location, QI(wl, wl_start_work)))
       wp_claim(&wl->work_provider);
   } else if (r == R_Deliver) {
@@ -142,10 +148,24 @@ void wl_claim(Well *wl, GameScene *gs, Wearisome *w, Resource r) {
     wl->manager_click_counter = r;
 }
 
+void wl_take(Well *wl, GameScene *gs, Resource r) {
+  assert(r == R_Water);
+
+  if (r == R_Water) {
+    wl->work_provider.local_storage--;
+    wl->work_provider.local_storage_claimed--;
+    gs->clicks++;
+
+    bd_flash(&wl->display);
+    CoinAnimation_init(gs, bd_gain_something_location(&wl->display));
+  }
+}
+
 static TileContentTable Well_TileContent_Table = {
     .location = (LocationCb)wl_location,
     .provides = (ProvidesCB)wl_provides,
     .claim = (ClaimCB)wl_claim,
+    .take = (TakeCB)wl_take,
     .click = (ClickCBx)wp_click_with_storage,
 };
 

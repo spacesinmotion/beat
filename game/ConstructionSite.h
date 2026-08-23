@@ -3,6 +3,8 @@
 
 #include "extern/cjsonh/cjsonh.h"
 #include "game/GameScene.h"
+#include "game/House.h"
+#include "game/Level.h"
 #include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
@@ -101,11 +103,10 @@ Recti cs_location(const ConstructionSite *cs) { return cs->location; }
 
 void cs_click(ConstructionSite *cs, Point p, GameScene *gs) {
   (void)p;
-  if (gs->resource_pool.construction_material > 0 && gs->clicks > 0) {
-    if (cs->work_provider.clicks < wp_fields(&cs->work_provider) && gs->clicks > 0) {
-      cs->work_provider.clicks++;
-      gs->clicks--;
-    }
+
+  if (cs->work_provider.clicks < wp_fields(&cs->work_provider) && gs->clicks > 0) {
+    cs->work_provider.clicks++;
+    gs->clicks--;
   }
 }
 
@@ -127,20 +128,21 @@ bool cs_work_start_construction(void *context, Wearisome *w, GameScene *gs) {
 }
 Color cmf_color();
 bool cs_work_collect_construction_material(void *context, Wearisome *w, GameScene *gs) {
-  ConstructionSite *cs = (ConstructionSite *)context;
-  gs->resource_pool.construction_material--;
-  gs->resource_pool_claimed.construction_material--;
+  TileContent *tc = l_contentP(gs->level, w_current_point(w));
+  assert(tc && tc->table->take);
+  tc_take(tc, gs, R_ConstructionMaterial, false);
   w_deliver(w, MI_ConstructionMaterial, cmf_color());
+  ConstructionSite *cs = (ConstructionSite *)context;
   return w_queue_move_to(w, gs, cs->location, QI(cs, cs_work_start_construction));
 }
 
 void cs_claim(ConstructionSite *cs, GameScene *gs, Wearisome *w, Resource r) {
   assert(r == R_Work);
 
-  Recti marketplace = find_resource_building_rect(gs, cs->location, R_ConstructionMaterial);
-  if (marketplace.w > 0) {
-    gs->resource_pool_claimed.construction_material++;
-    if (w_queue_move_to(w, gs, marketplace, QI(cs, cs_work_collect_construction_material)))
+  TileContent *provider = find_resource_building(gs, cs->location, R_ConstructionMaterial);
+  if (provider) {
+    tc_claim(provider, gs, w, R_ConstructionMaterial);
+    if (w_queue_move_to(w, gs, tc_location(provider), QI(cs, cs_work_collect_construction_material)))
       wp_claim(&cs->work_provider);
   }
 }
