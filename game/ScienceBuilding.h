@@ -54,44 +54,12 @@ void scb_draw(ScienceBuilding *scb, GameScene *gs, Game *g) {
   wp_draw_storage(&scb->work_provider, g, v_add(p, l_to_vec(0, 1)));
 }
 
-void scb_to_json(CJHObject *o, ScienceBuilding *scb) {
-  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &scb->work_provider);
-  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &scb->display);
-  cjh_o_add_number(o, "id", scb->id);
-}
-
-void scb_from_json(CJHObjectR *o, const char *key, ScienceBuilding *scb) {
-
-  if (streq(key, "last_day_delivered"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "id"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-
-  else if (streq(key, "work_provider")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)wp_from_json, &scb->work_provider);
-    indent -= 2;
-  } else if (streq(key, "display")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &scb->display);
-    indent -= 2;
-  }
-
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
 static SceneObjectTable ScienceBuilding_table = {
     .type = "ScienceBuilding",
     .dead = (SceneObjectDeadCB)scb_dead,
     .render_order = (SceneObjectRenderOrderCB)scb_render_order,
     .update = (SceneObjectUpdateCB)scb_update,
     .draw = (SceneObjectDrawCB)scb_draw,
-    .save = (SceneObjectSaveCB)scb_to_json,
 };
 
 Recti scb_location(const ScienceBuilding *scb) { return scb->display.location; }

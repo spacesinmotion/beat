@@ -2,7 +2,6 @@
 #define CONNECTION_H
 
 #include "engine/Game.h"
-#include "engine/extern/cjsonh/cjsonh.h"
 #include "engine/math/Vec2.h"
 #include "game/GameScene.h"
 #include "game/assets.h"
@@ -39,54 +38,14 @@ void co_draw(Connection *co, GameScene *gs, Game *g) {
   g_object(g, g_animation_buffer(g), Img_connections, 0, co->start);
 }
 
-void co_to_json(CJHObject *o, Connection *co) {
-  cjh_o_add_number(o, "id", co->id);
-  cjh_o_add_array(o, "start", (CJHWriteArrayCB)v_to_json, &co->start);
-  cjh_o_add_array(o, "stop", (CJHWriteArrayCB)v_to_json, &co->stop);
-  const char *state_test = "Defining";
-  if (co->state == CS_Running)
-    state_test = "Running";
-  else if (co->state == CS_Dead)
-    state_test = "Dead";
-  cjh_o_add_string(o, "state", state_test);
-}
-
-void co_from_json(CJHObjectR *o, const char *key, Connection *co) {
-
-  if (streq(key, "id"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-
-  else if (streq(key, "start")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_array(o, (CJHReadArrayCB)v_from_json, &co->start);
-    indent -= 2;
-  } else if (streq(key, "stop")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_array(o, (CJHReadArrayCB)v_from_json, &co->stop);
-    indent -= 2;
-  } else if (streq(key, "state")) {
-    StrView s = cjh_o_read_string(o);
-    printf("%.*s%s: %.*s\n", indent, space, key, s.len, s.s);
-  }
-
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
 static SceneObjectTable Connection_table = {
     .type = "Connection",
     .dead = (SceneObjectDeadCB)co_dead,
     .render_order = (SceneObjectRenderOrderCB)co_render_order,
     .update = (SceneObjectUpdateCB)co_update,
     .draw = (SceneObjectDrawCB)co_draw,
-    .save = (SceneObjectSaveCB)co_to_json,
-};
 
-void co_to_json_ref(CJHObject *o, Connection *co) { cjh_o_add_number(o, Connection_table.type, co ? co->id : 0); }
+};
 
 Connection *Connection_init(GameScene *gs, Vec2 s, Vec2 e) {
   Connection *h = g_malloc(sizeof(Connection));

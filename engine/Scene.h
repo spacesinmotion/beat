@@ -4,17 +4,12 @@
 #include "engine/math/Vec2.h"
 
 typedef struct Game Game;
-typedef struct CJHObject CJHObject;
-typedef struct CJHObjectR CJHObjectR;
 
 typedef void (*SceneUpdateCB)(void *, Game *, float);
 typedef void (*SceneDrawCB)(void *, Game *);
 typedef void (*SceneMouseMoveCB)(void *, Game *, Vec2, Vec2);
 typedef void (*SceneMouseCB)(void *, Game *, Vec2, Vec2, int);
 typedef void (*SceneKeyCB)(void *, Game *, int);
-
-typedef void (*SceneSaveCB)(CJHObject *, void *);
-typedef void (*SceneLoadCB)(CJHObjectR *, const char *, void *);
 
 typedef struct SceneTable {
   SceneUpdateCB update;
@@ -25,9 +20,6 @@ typedef struct SceneTable {
   SceneMouseCB mouse_up;
   SceneKeyCB key_down;
   SceneKeyCB key_up;
-
-  SceneSaveCB save;
-  SceneLoadCB load;
 } SceneTable;
 typedef struct Scene {
   void *context;

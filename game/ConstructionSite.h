@@ -2,7 +2,6 @@
 #define CONSTRUCTIONSITE_H
 
 #include "engine/SceneObject.h"
-#include "engine/extern/cjsonh/cjsonh.h"
 #include "engine/math/Rect.h"
 #include "game/GameScene.h"
 #include "game/House.h"
@@ -56,47 +55,12 @@ void cs_draw(ConstructionSite *cs, GameScene *gs, Game *g) {
   g_object(g, g_animation_buffer(g), Img_menubar, cs->key, p);
 }
 
-void cs_to_json(CJHObject *o, ConstructionSite *cs) {
-  cjh_o_add_number(o, "id", cs->id);
-  cjh_o_add_number(o, "key", cs->key);
-  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &cs->work_provider);
-  cjh_o_add_array(o, "location", (CJHWriteArrayCB)ri_to_json, &cs->location);
-}
-
-void cs_from_json(CJHObjectR *o, const char *key, ConstructionSite *cs) {
-
-  if (streq(key, "last_day_delivered"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "id"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "manager_click_counter"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-
-  else if (streq(key, "work_provider")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)wp_from_json, &cs->work_provider);
-    indent -= 2;
-  } else if (streq(key, "location")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_array(o, (CJHReadArrayCB)ri_from_json, &cs->location);
-    indent -= 2;
-  }
-
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
 static SceneObjectTable ConstructionSite_table = {
     .type = "ConstructionSite",
     .dead = (SceneObjectDeadCB)cs_dead,
     .render_order = (SceneObjectRenderOrderCB)cs_render_order,
     .update = (SceneObjectUpdateCB)cs_update,
     .draw = (SceneObjectDrawCB)cs_draw,
-    .save = (SceneObjectSaveCB)cs_to_json,
 };
 
 Recti cs_location(const ConstructionSite *cs) { return cs->location; }

@@ -78,40 +78,12 @@ void em_draw(Entertainment *em, GameScene *gs, Game *g) {
   }
 }
 
-void em_to_json(CJHObject *o, Entertainment *em) {
-  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &em->display);
-  cjh_o_add_number(o, "claimed", em->claimed);
-  cjh_o_add_number(o, "started", em->started);
-}
-
-void em_from_json(CJHObjectR *o, const char *key, Entertainment *fa) {
-  if (streq(key, "id"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "claimed"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "started"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-
-  else if (streq(key, "display")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &fa->display);
-    indent -= 2;
-  }
-
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
 static SceneObjectTable Entertainment_table = {
     .type = "Entertainment",
     .dead = (SceneObjectDeadCB)em_dead,
     .render_order = (SceneObjectRenderOrderCB)em_render_order,
     .draw = (SceneObjectDrawCB)em_draw,
     .update = (SceneObjectUpdateCB)em_update,
-    .save = (SceneObjectSaveCB)em_to_json,
 };
 
 Recti em_location(const Entertainment *em) { return em->display.location; }

@@ -2,7 +2,6 @@
 #include "game/GameScene.h"
 #include "engine/Game.h"
 #include "engine/SceneObject.h"
-#include "engine/extern/cjsonh/cjsonh.h"
 #include "engine/math/Color.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
@@ -28,10 +27,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
-#ifndef M_PI
-#define M_PI 3.1457
-#endif
 
 const char *str(const char *format, ...) {
   static char b[256] = {0};
@@ -470,9 +465,6 @@ void gs_construction_done(GameScene *gs, Game *g, Recti r, int key) {
   }
 }
 
-void gs_to_json(CJHObject *o, void *ud);
-void gs_from_json(CJHObjectR *o, const char *key, void *ud);
-
 SceneTable GameScene_table = {
     .update = (SceneUpdateCB)gs_update,
     .draw = (SceneDrawCB)gs_draw,
@@ -480,8 +472,6 @@ SceneTable GameScene_table = {
     .mouse_move = (SceneMouseMoveCB)gs_mouse_move,
     .mouse_down = (SceneMouseCB)gs_mouse_down,
     .key_up = (SceneKeyCB)gs_key_up,
-    .save = gs_to_json,
-    .load = gs_from_json,
 };
 void GameScene_init(Game *g) {
   GameScene *gs = g_malloc(sizeof(GameScene));
@@ -540,222 +530,4 @@ void GameScene_init(Game *g) {
   gs->street_map = StreetMap_init(gs);
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
-}
-
-void gs_stuff_to_json(CJHObject *o, void *ud) {
-  const Stuff *s = (Stuff *)ud;
-  cjh_o_add_number(o, "water", s->water);
-  cjh_o_add_number(o, "food", s->food);
-  cjh_o_add_number(o, "construction_material", s->construction_material);
-}
-
-void gs_sceneobjects_to_json(CJHArray *a, void *ud) {
-  SceneObjectVec *s = (SceneObjectVec *)ud;
-  for (int i = 0; i < s->len; ++i)
-    if (so_can_be_stored(&s->data[i]))
-      cjh_a_add_object(a, (CJHWriteObjectCB)so_to_json, &s->data[i]);
-}
-
-void gs_to_json(CJHObject *o, void *ud) {
-  GameScene *gs = (GameScene *)ud;
-  cjh_o_add_array(o, "scene_objects", gs_sceneobjects_to_json, &gs->scene_objects);
-  cjh_o_add_number(o, "game_speed", gs->game_speed);
-  cjh_o_add_bool(o, "game_paused", gs->game_paused);
-  cjh_o_add_number(o, "daytime_step", gs->daytime_step);
-  cjh_o_add_number(o, "daytime", gs->daytime);
-  cjh_o_add_number(o, "day", gs->day);
-  cjh_o_add_number_if(o, "clicks", gs->clicks, 0);
-  cjh_o_add_number_if(o, "clicks_produced", gs->clicks_produced, 0);
-  cjh_o_add_number_if(o, "clicks_lost", gs->clicks_lost, 0);
-  cjh_o_add_number_if(o, "clicks_in_houses", gs->clicks_in_houses, 0);
-  cjh_o_add_number(o, "wearisome_count", gs->wearisome_count);
-  cjh_o_add_object(o, "resource_pool", gs_stuff_to_json, &gs->resource_pool);
-  cjh_o_add_object(o, "resource_pool_claimed", gs_stuff_to_json, &gs->resource_pool_claimed);
-  cjh_o_add_number_if(o, "storage_size", gs->storage_size, 0);
-  cjh_o_add_number_if(o, "storage_claimed", gs->storage_claimed, 0);
-  cjh_o_add_number_if(o, "research_level", gs->research_level, 0);
-  cjh_o_add_number_if(o, "reasearch_needed", gs->reasearch_needed, 0);
-  cjh_o_add_object(o, "level", (CJHWriteObjectCB)l_to_json, gs->level);
-  // StreetMap *street_map;
-}
-
-void gs_stuff_from_json(CJHObjectR *o, const char *key, void *ud) {
-  (void)ud;
-  if (streq(key, "water"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "food"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "construction_material"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
-void gs_SceneObject_from_json(CJHObjectR *o, const char *key, void *ud) {
-  (void)ud;
-  if (streq(key, Marketplace_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    Marketplace mp;
-    cjh_o_read_object(o, (CJHReadObjectCB)mp_from_json, &mp);
-    indent -= 2;
-  } else if (streq(key, House_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    House h;
-    cjh_o_read_object(o, (CJHReadObjectCB)h_from_json, &h);
-    indent -= 2;
-  } else if (streq(key, Wearisome_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    Wearisome w;
-    cjh_o_read_object(o, (CJHReadObjectCB)w_from_json, &w);
-    indent -= 2;
-  } else if (streq(key, ClickFactory_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    ClickFactory cf;
-    cjh_o_read_object(o, (CJHReadObjectCB)cf_from_json, &cf);
-    indent -= 2;
-  } else if (streq(key, Combinator_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    Combinator cb;
-    cjh_o_read_object(o, (CJHReadObjectCB)cb_from_json, &cb);
-    indent -= 2;
-  } else if (streq(key, Manager_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    Manager mg;
-    cjh_o_read_object(o, (CJHReadObjectCB)mg_from_json, &mg);
-    indent -= 2;
-  } else if (streq(key, Well_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    Well wl;
-    cjh_o_read_object(o, (CJHReadObjectCB)wl_from_json, &wl);
-    indent -= 2;
-  } else if (streq(key, Farm_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    Farm fa;
-    cjh_o_read_object(o, (CJHReadObjectCB)fa_from_json, &fa);
-    indent -= 2;
-  } else if (streq(key, Connection_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    Connection co;
-    cjh_o_read_object(o, (CJHReadObjectCB)co_from_json, &co);
-    indent -= 2;
-  } else if (streq(key, Entertainment_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    Entertainment em;
-    cjh_o_read_object(o, (CJHReadObjectCB)em_from_json, &em);
-    indent -= 2;
-  } else if (streq(key, ConstructionMaterialFactory_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    ConstructionMaterialFactory cmf;
-    cjh_o_read_object(o, (CJHReadObjectCB)cmf_from_json, &cmf);
-    indent -= 2;
-  } else if (streq(key, ConstructionSite_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    ConstructionSite cs;
-    cjh_o_read_object(o, (CJHReadObjectCB)cs_from_json, &cs);
-    indent -= 2;
-  } else if (streq(key, ScienceBuilding_table.type)) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    ScienceBuilding scb;
-    cjh_o_read_object(o, (CJHReadObjectCB)scb_from_json, &scb);
-    indent -= 2;
-  } else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
-void gs_sceneobjects_from_json(CJHArrayR *a, int index, void *ud) {
-  (void)index;
-
-  GameScene *gs = (GameScene *)ud;
-
-  SceneObject so = {NULL, NULL};
-  cjh_a_read_object(a, (CJHReadObjectCB)gs_SceneObject_from_json, &so);
-
-  if (so.context && so.table)
-    gs_add_object(gs, so);
-}
-
-void gs_from_json(CJHObjectR *o, const char *key, void *ud) {
-  GameScene *gs = (GameScene *)ud;
-
-  if (streq(key, "scene_objects")) {
-    printf("%s:\n", key);
-    indent += 2;
-    cjh_o_read_array(o, gs_sceneobjects_from_json, gs);
-    indent -= 2;
-  }
-
-  else if (streq(key, "game_speed"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "game_paused"))
-    printf("%s: %s\n", key, (cjh_o_read_bool(o) ? "true" : "false"));
-
-  else if (streq(key, "daytime_step"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "daytime"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "day"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "clicks"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-  else if (streq(key, "clicks_produced"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-  else if (streq(key, "clicks_lost"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "clicks_in_houses"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "wearisome_count"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "storage_size"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-  else if (streq(key, "storage_claimed"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "reasearch_needed"))
-    printf("%s: %g\n", key, cjh_o_read_number(o));
-
-  else if (streq(key, "resource_pool")) {
-    printf("%s:\n", key);
-    indent += 2;
-    cjh_o_read_object(o, gs_stuff_from_json, &gs->resource_pool);
-    indent -= 2;
-  } else if (streq(key, "resource_pool_claimed")) {
-    printf("%s:\n", key);
-    indent += 2;
-    cjh_o_read_object(o, gs_stuff_from_json, &gs->resource_pool_claimed);
-    indent -= 2;
-  } else if (streq(key, "level")) {
-    printf("%s:\n", key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)l_from_json, gs->level);
-    indent -= 2;
-  }
-
-  else {
-    printf("%s: SKIP\n", key);
-    cjh_o_skip(o);
-  }
 }

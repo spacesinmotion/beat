@@ -70,48 +70,12 @@ void mg_draw(Manager *mg, GameScene *gs, Game *g) {
   g_text(g, mg->click_used_text, Oswald_Regular_12, v_add(p, (Vec2){12, -5}));
 }
 
-void mg_to_json(CJHObject *o, Manager *mg) {
-  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &mg->work_provider);
-  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &mg->display);
-  cjh_o_add_number(o, "click_used", mg->click_used);
-  cjh_o_add_number(o, "used_manager_counter", mg->used_manager_counter - R_ManagerWork1 + 1);
-}
-
-void mg_from_json(CJHObjectR *o, const char *key, Manager *mg) {
-  if (streq(key, "last_day_delivered"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "id"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "click_used"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "used_manager_counter"))
-    printf("%.*s%s: %d\n", indent, space, key, (int)cjh_o_read_number(o) + R_ManagerWork1 - 1);
-
-  else if (streq(key, "work_provider")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)wp_from_json, &mg->work_provider);
-    indent -= 2;
-  } else if (streq(key, "display")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &mg->display);
-    indent -= 2;
-  }
-
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
 static SceneObjectTable Manager_table = {
     .type = "Manager",
     .dead = (SceneObjectDeadCB)mg_dead,
     .render_order = (SceneObjectRenderOrderCB)mg_render_order,
     .update = (SceneObjectUpdateCB)mg_update,
     .draw = (SceneObjectDrawCB)mg_draw,
-    .save = (SceneObjectSaveCB)mg_to_json,
 };
 
 Recti mg_location(const Manager *mg) { return mg->display.location; }

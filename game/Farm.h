@@ -55,19 +55,12 @@ void fa_draw(Farm *fa, GameScene *gs, Game *g) {
   wp_draw_storage(&fa->work_provider, g, v_add(p, l_to_vec(0, 1)));
 }
 
-void fa_to_json(CJHObject *o, Farm *fa) {
-  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &fa->work_provider);
-  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &fa->display);
-  cjh_o_add_number(o, "manager_click_counter", fa->manager_click_counter);
-}
-
 static SceneObjectTable Farm_table = {
     .type = "Farm",
     .dead = (SceneObjectDeadCB)fa_dead,
     .render_order = (SceneObjectRenderOrderCB)fa_render_order,
     .update = (SceneObjectUpdateCB)fa_update,
     .draw = (SceneObjectDrawCB)fa_draw,
-    .save = (SceneObjectSaveCB)fa_to_json,
 };
 
 Recti fa_location(const Farm *fa) { return fa->display.location; }
@@ -132,33 +125,6 @@ void fa_take(Farm *fa, GameScene *gs, Resource r, bool pay) {
       bd_flash(&fa->display);
       CoinAnimation_init(gs, bd_gain_something_location(&fa->display));
     }
-  }
-}
-
-void fa_from_json(CJHObjectR *o, const char *key, Farm *fa) {
-
-  if (streq(key, "last_day_delivered"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "id"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "manager_click_counter"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-
-  else if (streq(key, "work_provider")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)wp_from_json, &fa->work_provider);
-    indent -= 2;
-  } else if (streq(key, "display")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &fa->display);
-    indent -= 2;
-  }
-
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
   }
 }
 

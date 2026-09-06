@@ -2,7 +2,6 @@
 #define BUILDINGDISPLAY_H
 
 #include "engine/Game.h"
-#include "engine/extern/cjsonh/cjsonh.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
 #include "engine/math/random.h"
@@ -40,23 +39,6 @@ void bd_draw(BuildingDisplay *bd, Game *g, Color c, MenuIcon icon) {
 }
 
 void bd_flash(BuildingDisplay *bd) { bd->flash = 1.0f; }
-
-static inline void bd_to_json(CJHObject *o, BuildingDisplay *bd) {
-  cjh_o_add_array(o, "location", (CJHWriteArrayCB)ri_to_json, &bd->location);
-}
-
-static inline void bd_from_json(CJHObjectR *o, const char *key, BuildingDisplay *bd) {
-  if (streq(key, "location")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_array(o, (CJHReadArrayCB)ri_from_json, &bd->location);
-    indent -= 2;
-
-  } else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
 
 Vec2 bd_random_point_inside(const BuildingDisplay *bd) {
   Vec2 p = l_to_vecP(ri_bottom_right(bd->location));

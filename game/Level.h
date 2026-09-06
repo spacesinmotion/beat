@@ -1,8 +1,6 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
-#include "engine/extern/cjsonh/Z85.h"
-#include "engine/extern/cjsonh/cjsonh.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
 #include "game/TileContent.h"
@@ -140,82 +138,6 @@ bool l_bright_first(Level *level, int start_x, int start_y, SearchHandle handle)
   }
 
   return false;
-}
-
-void l_movable_to_json(CJHObject *o, Level *l) {
-  unsigned short points[2 * LEVEL_WIDTH * LEVEL_HEIGHT];
-  unsigned nb_entries = 0;
-
-  const unsigned short sep = LEVEL_WIDTH;
-  points[nb_entries++] = sep;
-  for (int i = 0; i < LEVEL_WIDTH; ++i) {
-    bool need_line = true;
-    for (int j = 0; j < LEVEL_HEIGHT; ++j) {
-      if (l_movable(l, i, j)) {
-        if (need_line) {
-          points[nb_entries++] = (unsigned short)i;
-          need_line = false;
-        }
-        points[nb_entries++] = (unsigned short)j;
-      }
-    }
-    if (!need_line)
-      points[nb_entries++] = sep;
-  }
-  if ((nb_entries * sizeof(short)) % 4 != 0)
-    points[nb_entries++] = sep;
-
-  char *z85 = Z85_encode((unsigned char *)points, nb_entries * sizeof(short));
-  cjh_o_add_string(o, "movable", z85);
-  // printf("shorts: %u, data: %llu, z85: %llu\n", nb_entries, nb_entries * sizeof(short), strlen(z85));
-  free(z85);
-}
-
-void l_to_json(CJHObject *o, Level *l) {
-  cjh_o_add_number_if(o, "width", LEVEL_WIDTH, 0);
-  cjh_o_add_number_if(o, "height", LEVEL_HEIGHT, 0);
-  l_movable_to_json(o, l);
-}
-
-void l_movable_from_json(CJHObjectR *o, Level *l) {
-  StrView str = cjh_o_read_string(o);
-  // printf("%.*smovable: %.*s\n", indent, space, str.len, str.s);
-
-  char *tmp = (char *)str.s;
-  tmp[str.len] = '\0';
-  size_t nb_entries = 0;
-  unsigned short *points = (unsigned short *)Z85_decode(tmp, &nb_entries);
-  nb_entries /= sizeof(unsigned short);
-  tmp[str.len] = '"';
-
-  assert(points);
-  const unsigned short sep = points[0];
-  for (size_t i = 1; i < nb_entries; ++i) {
-    if (points[i] == sep)
-      printf("\n");
-    else if (points[i - 1] == sep)
-      printf("%.*sline %d: ", indent, space, points[i]);
-    else
-      printf(" %d", points[i]);
-  }
-
-  free(points);
-}
-
-void l_from_json(CJHObjectR *o, const char *key, Level *l) {
-  if (streq(key, "width"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "height"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "movable")) {
-    indent += 2;
-    l_movable_from_json(o, l);
-    indent -= 2;
-  } else {
-    assert(false);
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
 }
 
 #endif // LEVEL_H

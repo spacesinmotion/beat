@@ -2,7 +2,6 @@
 #define RECT
 
 #include "Vec2.h"
-#include "engine/extern/cjsonh/cjsonh.h"
 #include <stdbool.h>
 
 typedef struct Rect {
@@ -16,11 +15,6 @@ static inline bool r_contains(Rect r, Vec2 p) {
 typedef struct Point {
   int x, y;
 } Point;
-
-static inline void pi_to_json(CJHArray *a, Point *pi) {
-  cjh_a_add_number(a, pi->x);
-  cjh_a_add_number(a, pi->y);
-}
 
 static inline bool p_eq(Point a, Point b) { return a.x == b.x && a.y == b.y; }
 
@@ -39,28 +33,6 @@ static inline bool ri_contains(Recti r, int x, int y) { return r.x <= x && r.y <
 static inline void ri_set_size(Recti *r, Sizei s) {
   r->w = s.w;
   r->h = s.h;
-}
-
-static inline void ri_to_json(CJHArray *a, Recti *ri) {
-  cjh_a_add_number(a, ri->x);
-  cjh_a_add_number(a, ri->y);
-  cjh_a_add_number(a, ri->w);
-  cjh_a_add_number(a, ri->h);
-}
-
-static inline void ri_from_json(CJHArrayR *a, int index, Recti *ri) {
-  if (index == 0)
-    // ri->x = cjh_a_read_number(a);
-    printf("%.*s%d: %g\n", indent, space, index, cjh_a_read_number(a));
-  else if (index == 1)
-    // ri->y = cjh_a_read_number(a);
-    printf("%.*s%d: %g\n", indent, space, index, cjh_a_read_number(a));
-  else if (index == 2)
-    // ri->w = cjh_a_read_number(a);
-    printf("%.*s%d: %g\n", indent, space, index, cjh_a_read_number(a));
-  else if (index == 3)
-    // ri->h = cjh_a_read_number(a);
-    printf("%.*s%d: %g\n", indent, space, index, cjh_a_read_number(a));
 }
 
 #endif

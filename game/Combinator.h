@@ -2,7 +2,6 @@
 #define COMBINATOR_H
 
 #include "engine/SceneObject.h"
-#include "engine/extern/cjsonh/cjsonh.h"
 #include "engine/math/Rect.h"
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
@@ -59,79 +58,12 @@ void cb_draw(Combinator *cb, GameScene *gs, Game *g) {
   wp_draw_click_fields(&cb->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 }
 
-void cb_sources_to_json(CJHArray *a, Combinator *cb) {
-  for (int i = 0; i < 2; ++i)
-    cjh_a_add_object(a, (CJHWriteObjectCB)co_to_json_ref, cb->sources[i]);
-}
-void cb_to_json(CJHObject *o, Combinator *cb) {
-  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &cb->work_provider);
-  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &cb->display);
-  cjh_o_add_number(o, "manager_click_counter", cb->manager_click_counter);
-  cjh_o_add_array(o, "source", (CJHWriteArrayCB)cb_sources_to_json, cb);
-}
-
-void cb_source_from_json_ref(CJHObjectR *o, const char *key, Connection *c) {
-  if (streq(key, Connection_table.type))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
-void cb_source_from_json(CJHArrayR *a, int index, Combinator *cb) {
-  if (index >= 0 && index < 2) {
-    printf("%.*s%d:\n", indent, space, index);
-    indent += 2;
-    cjh_a_read_object(a, (CJHReadObjectCB)cb_source_from_json_ref, cb->sources[index]);
-    indent -= 2;
-
-  } else {
-    printf("%.*s%d: SKIP\n", indent, space, index);
-    cjh_a_skip(a);
-  }
-}
-
-void cb_from_json(CJHObjectR *o, const char *key, Combinator *cb) {
-
-  if (streq(key, "last_day_delivered"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "id"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "manager_click_counter"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-
-  else if (streq(key, "work_provider")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)wp_from_json, &cb->work_provider);
-    indent -= 2;
-  } else if (streq(key, "display")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &cb->display);
-    indent -= 2;
-  } else if (streq(key, "source")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_array(o, (CJHReadArrayCB)cb_source_from_json, cb);
-    indent -= 2;
-  }
-
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
 static SceneObjectTable Combinator_table = {
     .type = "Combinator",
     .dead = (SceneObjectDeadCB)cb_dead,
     .render_order = (SceneObjectRenderOrderCB)cb_render_order,
     .update = (SceneObjectUpdateCB)cb_update,
     .draw = (SceneObjectDrawCB)cb_draw,
-    .save = (SceneObjectSaveCB)cb_to_json,
 };
 
 Recti cb_location(const Combinator *cb) { return cb->display.location; }

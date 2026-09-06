@@ -114,39 +114,4 @@ static inline bool wp_deliver_taken(WorkProvider *wp) {
   return true;
 }
 
-static inline void wp_to_json(CJHObject *o, WorkProvider *wp) {
-  cjh_o_add_number(o, "colums", wp->colums);
-  cjh_o_add_number(o, "rows", wp->rows);
-  cjh_o_add_number_if(o, "clicks", wp->clicks, 0);
-  cjh_o_add_number_if(o, "clicks_claimed", wp->clicks_claimed, 0);
-  cjh_o_add_number_if(o, "clicks_work", wp->clicks_work, 0);
-  cjh_o_add_number_if(o, "clicks_done", wp->clicks_done, 0);
-  cjh_o_add_number_if(o, "local_storage", wp->local_storage, 0);
-  cjh_o_add_number_if(o, "local_storage_claimed", wp->local_storage_claimed, 0);
-}
-
-static inline void wp_from_json(CJHObjectR *o, const char *key, WorkProvider *wp) {
-  (void)wp;
-
-  if (streq(key, "colums"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "rows"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "clicks"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "clicks_claimed"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "clicks_work"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "clicks_done"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "clicks_claimed_for_deliver"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
 #endif

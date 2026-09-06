@@ -59,46 +59,12 @@ void wl_draw(Well *wl, GameScene *gs, Game *g) {
   wp_draw_storage(&wl->work_provider, g, v_add(p, l_to_vec(0, 1)));
 }
 
-void wl_to_json(CJHObject *o, Well *wl) {
-  cjh_o_add_object(o, "work_provider", (CJHWriteObjectCB)wp_to_json, &wl->work_provider);
-  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &wl->display);
-  cjh_o_add_number(o, "manager_click_counter", wl->manager_click_counter);
-}
-
-void wl_from_json(CJHObjectR *o, const char *key, Well *wl) {
-
-  if (streq(key, "last_day_delivered"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "id"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "manager_click_counter"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-
-  else if (streq(key, "work_provider")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)wp_from_json, &wl->work_provider);
-    indent -= 2;
-  } else if (streq(key, "display")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &wl->display);
-    indent -= 2;
-  }
-
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
 static SceneObjectTable Well_table = {
     .type = "Well",
     .dead = (SceneObjectDeadCB)wl_dead,
     .render_order = (SceneObjectRenderOrderCB)wl_render_order,
     .update = (SceneObjectUpdateCB)wl_update,
     .draw = (SceneObjectDrawCB)wl_draw,
-    .save = (SceneObjectSaveCB)wl_to_json,
 };
 
 Recti wl_location(const Well *wl) { return wl->display.location; }

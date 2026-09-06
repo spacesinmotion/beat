@@ -2,7 +2,6 @@
 #define HOUSE_H
 
 #include "engine/SceneObject.h"
-#include "engine/extern/cjsonh/cjsonh.h"
 #include "engine/math/random.h"
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
@@ -202,72 +201,13 @@ bool h_check_needs(House *h, GameScene *gs, Wearisome *w) {
   return false;
 }
 
-void h_resources_to_json(CJHObject *o, void *ud) {
-  Resources *r = (Resources *)ud;
-  cjh_o_add_number_if(o, "food", r->food, 0.0);
-  cjh_o_add_number_if(o, "wateer", r->water, 0.0);
-  cjh_o_add_number_if(o, "clicks", r->clicks, 0.0);
-}
-void h_to_json(CJHObject *o, House *h) {
-  cjh_o_add_object(o, "display", (CJHWriteObjectCB)bd_to_json, &h->display);
-  cjh_o_add_number(o, "id", h->id);
-  cjh_o_add_object(o, "resources", h_resources_to_json, &h->resources);
-  cjh_o_add_object(o, "resources_maximum", h_resources_to_json, &h->resources_maximum);
-}
-
-void h_resource_from_json(CJHObjectR *o, const char *key, House *h) {
-  (void)h;
-
-  if (streq(key, "food"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "wateer"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else if (streq(key, "clicks"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
-void h_from_json(CJHObjectR *o, const char *key, House *h) {
-
-  if (streq(key, "id"))
-    printf("%.*s%s: %g\n", indent, space, key, cjh_o_read_number(o));
-
-  else if (streq(key, "resources")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)h_resource_from_json, &h->resources);
-    indent -= 2;
-  } else if (streq(key, "resources_maximum")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)h_resource_from_json, &h->resources_maximum);
-    indent -= 2;
-  } else if (streq(key, "display")) {
-    printf("%.*s%s:\n", indent, space, key);
-    indent += 2;
-    cjh_o_read_object(o, (CJHReadObjectCB)bd_from_json, &h->display);
-    indent -= 2;
-  }
-
-  else {
-    printf("%.*s%s: SKIP\n", indent, space, key);
-    cjh_o_skip(o);
-  }
-}
-
 static SceneObjectTable House_table = {
     .type = "House",
     .dead = (SceneObjectDeadCB)h_dead,
     .render_order = (SceneObjectRenderOrderCB)h_render_order,
     .update = (SceneObjectUpdateCB)h_update,
     .draw = (SceneObjectDrawCB)h_draw,
-    .save = (SceneObjectSaveCB)h_to_json,
 };
-
-void h_to_json_ref(CJHObject *o, House *h) { cjh_o_add_number(o, House_table.type, h ? h->id : 0); }
 
 Recti h_location(const House *mp) { return mp->display.location; }
 
