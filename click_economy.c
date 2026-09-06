@@ -18,7 +18,6 @@
 #include <dirent.h>
 #endif
 
-#include "game/assets.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -87,14 +86,19 @@ typedef struct TileRectBuffer {
   int w, h;
 } TileRectBuffer;
 
-typedef struct FontImage {
+typedef struct Texture {
+  TextureDesc desc;
+  sg_image img;
+} Texture;
+
+typedef struct Fontint {
   FontDesc desc;
 
   stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
   sg_image texture;
   float size;
   int tw, th;
-} FontImage;
+} Fontint;
 
 typedef struct Game {
   sg_pipeline pipeline;
@@ -115,10 +119,13 @@ typedef struct Game {
   TileRectBuffer tilerect_buffer[16];
   G_Object animation_buffer_4x4;
 
-  sg_image images[NB_Img];
+  struct {
+    Texture *ints;
+    int count;
+  } textures;
 
   struct {
-    FontImage *list;
+    Fontint *list;
     int count;
   } fonts;
 
@@ -158,9 +165,9 @@ sg_image img_load(const char *path) {
   return (sg_image){};
 }
 
-FontImage load_font(const FontDesc desc) {
+Fontint load_font(const FontDesc desc) {
   uint8_t *ttf_buffer = (uint8_t *)malloc(1048576);
-  FontImage f = {.desc = desc, .desc.size = 8 * desc.size, .tw = 512, .th = 512};
+  Fontint f = {.desc = desc, .desc.size = 8 * desc.size, .tw = 512, .th = 512};
   uint8_t *temp_bitmap = (uint8_t *)calloc(f.tw * f.th, 4);
 
   fread(ttf_buffer, 1ul, 1048576ul, fopen(desc.file, "rb"));
@@ -182,20 +189,28 @@ FontImage load_font(const FontDesc desc) {
   return f;
 }
 
-sg_image g_image(Game *g, Image img) {
-  if (g->images[img].id == 0)
-    g->images[img].id = img_load(image_paths[img]).id;
-  return g->images[img];
+sg_image g_image(Game *g, int img_index) {
+  if (g->textures.ints[img_index].img.id == 0)
+    g->textures.ints[img_index].img = img_load(g->textures.ints[img_index].desc.file);
+  return g->textures.ints[img_index].img;
+}
+
+void g_create_texture_list(Game *g, const TextureDesc *textures, int n) {
+  g->textures.ints = (Texture *)g_malloc(sizeof(Texture) * n);
+  for (int i = 0; i < n; ++i) {
+    g->textures.ints[i] = (Texture){.img = (sg_image){0}, .desc = textures[i]};
+  }
+  g->textures.count = n;
 }
 
 void g_create_font_list(Game *g, const FontDesc *fonts, int n) {
-  g->fonts.list = (FontImage *)g_malloc(sizeof(FontImage) * n);
+  g->fonts.list = (Fontint *)g_malloc(sizeof(Fontint) * n);
   g->fonts.count = n;
   for (int i = 0; i < n; ++i) {
     g->fonts.list[i].desc = fonts[i];
   }
 }
-const FontImage *g_font(Game *g, int font_index) {
+const Fontint *g_font(Game *g, int font_index) {
   if (g->fonts.list[font_index].texture.id == 0)
     g->fonts.list[font_index] = load_font(g->fonts.list[font_index].desc);
 
@@ -205,7 +220,7 @@ const FontImage *g_font(Game *g, int font_index) {
 void g_create_text(Game *g, G_Text *to, int font_index, const char *text) {
   G_Object_free(&to->buffer);
   to->font_index = font_index;
-  const FontImage *f = g_font(g, to->font_index);
+  const Fontint *f = g_font(g, to->font_index);
   vertex_t vertices[1024];
   uint16_t indices[1024];
   size_t vlen = 0, ilen = 0;
@@ -269,7 +284,7 @@ void g_create_text(Game *g, G_Text *to, int font_index, const char *text) {
   }
 }
 
-void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {
+void g_buffer(Game *g, G_Object buffer, int tex, Vec2 pan) {
   g->render.fs_param.color_mode = 0;
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = 0.0f;
@@ -301,7 +316,7 @@ void g_text(Game *g, const G_Text *t, Vec2 pan) {
   sg_draw(0, t->buffer.num_elements, 1);
 }
 
-void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, float scale) {
+void g_objectRS(Game *g, G_Object buffer, int tex, int frame, Vec2 pan, float rot, float scale) {
   g->render.fs_param.color_mode = 0;
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = rot;
@@ -318,13 +333,13 @@ void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float 
   sg_draw(6 * frame, 6, 1);
 }
 
-void g_objectR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot) {
+void g_objectR(Game *g, G_Object buffer, int tex, int frame, Vec2 pan, float rot) {
   g_objectRS(g, buffer, tex, frame, pan, rot, 1.0f);
 }
-void g_objectS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float scale) {
+void g_objectS(Game *g, G_Object buffer, int tex, int frame, Vec2 pan, float scale) {
   g_objectRS(g, buffer, tex, frame, pan, 0.0, scale);
 }
-void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan) {
+void g_object(Game *g, G_Object buffer, int tex, int frame, Vec2 pan) {
   g_objectRS(g, buffer, tex, frame, pan, 0.0f, 1.0f);
 }
 
@@ -358,11 +373,11 @@ static void audio_cb(float *buffer, int num_frames, int num_channels, void *ud) 
   }
 }
 
-typedef struct SubImage {
+typedef struct Subint {
   int i, j, ni, nj;
-} SubImage;
+} Subint;
 
-void add_quad(vertex_t *vertices, Rect r, SubImage img) {
+void add_quad(vertex_t *vertices, Rect r, Subint img) {
   const int i = img.i;
   const int j = img.j;
   const int oi = 65535 / img.ni;
@@ -380,7 +395,7 @@ G_Object quad_animation_buffer(float x, float y, float w, float h, int ni, int n
   int oi = 0;
   for (int i = 0; i < ni; ++i) {
     for (int j = 0; j < nj; ++j) {
-      add_quad(&vertices[ov], (Rect){{x, y}, {w, h}}, (SubImage){j, i, ni, nj});
+      add_quad(&vertices[ov], (Rect){{x, y}, {w, h}}, (Subint){j, i, ni, nj});
       indices[oi + 0] = ov + 0;
       indices[oi + 1] = ov + 2;
       indices[oi + 2] = ov + 1;
@@ -432,7 +447,7 @@ G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data) {
         continue;
       float x = i * 16.0f;
       float y = j * 16.0f;
-      add_quad(&vertices[ov], (Rect){{x, y}, {16, 16}}, (SubImage){lu[tc][0], lu[tc][1], 4, 4});
+      add_quad(&vertices[ov], (Rect){{x, y}, {16, 16}}, (Subint){lu[tc][0], lu[tc][1], 4, 4});
       indices[oi++] = ov + 0;
       indices[oi++] = ov + 2;
       indices[oi++] = ov + 1;
@@ -508,6 +523,8 @@ static void g_init(Game *g) {
   g->zoom = 0.5f;
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0};
 
+  g->textures.ints = NULL;
+  g->textures.count = 0;
   g->fonts.list = NULL;
   g->fonts.count = 0;
 
@@ -727,6 +744,10 @@ static void g_cleanup(Game *g) {
   gc_free(&gc, g->fonts.list);
   g->fonts.list = NULL;
   g->fonts.count = 0;
+
+  gc_free(&gc, g->textures.ints);
+  g->textures.ints = NULL;
+  g->textures.count = 0;
 
   sdtx_shutdown();
   saudio_shutdown();

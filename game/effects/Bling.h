@@ -5,7 +5,7 @@
 #include "engine/math/Vec2.h"
 #include "engine/math/random.h"
 #include "game/GameScene.h"
-#include "game/assets.h"
+#include "game/assets/textures.h"
 #include "math.h"
 
 typedef struct Bling {

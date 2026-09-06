@@ -4,7 +4,7 @@
 #include "engine/Game.h"
 #include "engine/math/Vec2.h"
 #include "game/GameScene.h"
-#include "game/assets.h"
+#include "game/assets/textures.h"
 
 typedef enum ConnectionState { CS_Defining, CS_Running, CS_Dead } ConnectionState;
 typedef struct Connection {

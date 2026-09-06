@@ -20,8 +20,8 @@
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/Well.h"
-#include "game/assets.h"
 #include "game/assets/fonts.h"
+#include "game/assets/textures.h"
 #include "game/effects/Connection.h"
 #include "math.h"
 #include <stdarg.h>
@@ -475,6 +475,7 @@ SceneTable GameScene_table = {
 };
 void GameScene_init(Game *g) {
 
+  g_create_texture_list(g, textures, NB_Img);
   g_create_font_list(g, fonts, Nb_Font);
 
   GameScene *gs = g_malloc(sizeof(GameScene));

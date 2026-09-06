@@ -8,9 +8,8 @@
 #include "engine/math/Color.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
-#include "game/assets.h"
 
-#include "Scene.h"
+#include "engine/Scene.h"
 
 typedef struct Game Game;
 
@@ -24,6 +23,12 @@ typedef bool (*IsSetCB)(void *data, int i, int j);
 G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data);
 bool G_Object_valid(const G_Object *);
 void G_Object_free(G_Object *);
+
+// Texture management
+typedef struct TextureDesc {
+  const char *file;
+} TextureDesc;
+void g_create_texture_list(Game *g, const TextureDesc *textures, int n);
 
 // Text rendering
 typedef struct FontDesc {
@@ -39,7 +44,9 @@ typedef struct G_Text {
 void g_create_text(Game *g, G_Text *t, int font_index, const char *text);
 void g_text(Game *g, const G_Text *t, Vec2 pan);
 
+//  scene management
 void g_set_scene(Game *g, Scene scene);
+
 void g_set_background_color(Game *g, Color c);
 
 float g_animation_delta(Game *g);
@@ -53,12 +60,12 @@ G_Object g_animation_buffer(Game *g);
 
 void g_color(Game *game, Color c);
 
-void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan);
+void g_buffer(Game *g, G_Object buffer, int tex, Vec2 pan);
 
-void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, float scale);
-void g_objectR(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot);
-void g_objectS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float scale);
-void g_object(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan);
+void g_objectRS(Game *g, G_Object buffer, int tex, int frame, Vec2 pan, float rot, float scale);
+void g_objectR(Game *g, G_Object buffer, int tex, int frame, Vec2 pan, float rot);
+void g_objectS(Game *g, G_Object buffer, int tex, int frame, Vec2 pan, float scale);
+void g_object(Game *g, G_Object buffer, int tex, int frame, Vec2 pan);
 
 void *g_malloc(size_t size);
 void *g_realloc(void *ptr, size_t size);

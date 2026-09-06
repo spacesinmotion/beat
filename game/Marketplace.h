@@ -10,7 +10,7 @@
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
-#include "game/assets.h"
+#include "game/assets/textures.h"
 #include "game/effects/CoinAninmation.h"
 #include "game/jobs/QueueItem.h"
 

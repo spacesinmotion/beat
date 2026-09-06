@@ -4,7 +4,7 @@
 #include "engine/Game.h"
 #include "engine/math/random.h"
 #include "game/House.h"
-#include "game/assets.h"
+#include "game/assets/textures.h"
 #include "game/effects/Dust.h"
 #include "game/jobs/QueueItem.h"
 #include "game/search/RectSearch.h"
