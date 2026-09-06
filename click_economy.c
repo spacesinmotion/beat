@@ -1,4 +1,12 @@
 
+#ifdef _WIN32
+#ifndef CLANGD_ANALYSIS
+#include <windows.h>
+#endif
+#else
+#include <dirent.h>
+#endif
+
 #define ENGINE_IMPLEMENTATION
 
 #include "game/assets/fonts.h"
@@ -10,14 +18,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef _WIN32
-#ifndef CLANGD_ANALYSIS
-#include <windows.h>
-#endif
-#else
-#include <dirent.h>
-#endif
 
 typedef void (*dirCB)(const char *p, void *ud);
 void eachFileIn(const char *sDir, dirCB cb, void *ud) {
