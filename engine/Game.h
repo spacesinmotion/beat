@@ -11,6 +11,13 @@
 
 #include "engine/Scene.h"
 
+#if !defined(G_FONT)
+#define G_FONT int
+#endif
+#if !defined(G_TEXTURE)
+#define G_TEXTURE int
+#endif
+
 typedef struct Game Game;
 
 const char *str(const char *fmt, ...);
@@ -24,24 +31,12 @@ G_Object create_tile_rect_buffer(int ni, int nj, IsSetCB is_set, void *data);
 bool G_Object_valid(const G_Object *);
 void G_Object_free(G_Object *);
 
-// Texture management
-typedef struct TextureDesc {
-  const char *file;
-} TextureDesc;
-void g_create_texture_list(Game *g, const TextureDesc *textures, int n);
-
 // Text rendering
-typedef struct FontDesc {
-  const char *file;
-  int size;
-} FontDesc;
-void g_create_font_list(Game *g, const FontDesc *fonts, int n);
-
 typedef struct G_Text {
   G_Object buffer;
   int font_index;
 } G_Text;
-void g_create_text(Game *g, G_Text *t, int font_index, const char *text);
+void g_create_text(Game *g, G_Text *t, G_FONT font_index, const char *text);
 void g_text(Game *g, const G_Text *t, Vec2 pan);
 
 //  scene management
@@ -72,5 +67,9 @@ void *g_realloc(void *ptr, size_t size);
 
 void c_color(Game *g, Color c);
 void c_printf(Game *g, const char *fmt, ...);
+
+#if defined(ENGINE_IMPLEMENTATION)
+#include "engine/Game_impl.h"
+#endif
 
 #endif

@@ -1,20 +1,26 @@
 #ifndef FONTS
 #define FONTS
 
-#include "engine/Game.h"
+#include "engine/FontDesc.h"
 
-typedef enum Font {
+typedef enum GFont {
   Assistant_Regular_8 = 0,
   Assistant_Regular_12,
   Oswald_Regular_8,
   Oswald_Regular_12,
   Nb_Font,
-} Font;
+} GFont;
 
-static FontDesc fonts[Nb_Font] = {
+#ifdef ENGINE_IMPLEMENTATION
+static FontDesc font_list[Nb_Font] = {
     {"assets/Assistant-Regular.ttf", 8},
     {"assets/Assistant-Regular.ttf", 12},
     {"assets/Oswald-Regular.ttf", 8},
     {"assets/Oswald-Regular.ttf", 12},
 };
+#define G_FONT GFont
+#define G_FONT_COUNT Nb_Font
+#define G_FONT_LIST font_list
+#endif
+
 #endif

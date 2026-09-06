@@ -474,10 +474,6 @@ SceneTable GameScene_table = {
     .key_up = (SceneKeyCB)gs_key_up,
 };
 void GameScene_init(Game *g) {
-
-  g_create_texture_list(g, textures, NB_Img);
-  g_create_font_list(g, fonts, Nb_Font);
-
   GameScene *gs = g_malloc(sizeof(GameScene));
   *gs = (GameScene){
       .scene_objects = (SceneObjectVec){NULL, 0, 0},

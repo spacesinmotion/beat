@@ -1,9 +1,9 @@
-#ifndef ASSETS
-#define ASSETS
+#ifndef TEXTURES_H
+#define TEXTURES_H
 
-#include "engine/Game.h"
+#include "engine/TextureDesc.h"
 
-typedef enum Image {
+typedef enum GTexture {
   Img_tilemap = 0,
   Img_house_map,
   Img_wearisome,
@@ -19,9 +19,10 @@ typedef enum Image {
   Img_connections,
 
   NB_Img,
-} Image;
+} GTexture;
 
-static const TextureDesc textures[NB_Img] = {
+#ifdef ENGINE_IMPLEMENTATION
+static const TextureDesc texture_list[NB_Img] = {
     {"assets/tilemap.png"},        //
     {"assets/house_map.png"},      //
     {"assets/wearisome.png"},      //
@@ -36,6 +37,10 @@ static const TextureDesc textures[NB_Img] = {
     {"assets/maze_pointer.png"},   //
     {"assets/connections.png"},    //
 };
+#define G_TEXTURE GTexture
+#define G_TEXTURE_COUNT NB_Img
+#define G_TEXTURE_LIST texture_list
+#endif
 
 typedef enum MenuIcon {
   MI_Street,
