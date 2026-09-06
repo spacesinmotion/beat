@@ -41,11 +41,22 @@
 
 #include "engine/extern/sokol/util/sokol_debugtext.h"
 
+#include "engine/Game.h"
+
+#include "engine/FontDesc.h"
+#include "engine/TextureDesc.h"
+
 #include "engine/extern/gc/gc.h"
+#include "engine/math/Color.h"
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
 
-// #include "game/GameScene.h"
+#if defined(CLANGD_ANALYSIS) && !defined(ENGINE_IMPLEMENTATION)
+#define G_FONT_COUNT 1
+FontDesc G_FONT_LIST[G_FONT_COUNT];
+#define G_TEXTURE_COUNT 1
+TextureDesc G_TEXTURE_LIST[1];
+#endif
 
 void *g_malloc(size_t size) { return gc_malloc(&gc, size); }
 void *g_realloc(void *ptr, size_t size) { return gc_realloc(&gc, ptr, size); }

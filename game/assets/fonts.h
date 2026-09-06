@@ -1,7 +1,9 @@
 #ifndef FONTS
 #define FONTS
 
+#ifdef ENGINE_IMPLEMENTATION
 #include "engine/FontDesc.h"
+#endif
 
 typedef enum GFont {
   Assistant_Regular_8 = 0,

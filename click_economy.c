@@ -9,8 +9,10 @@
 
 #define ENGINE_IMPLEMENTATION
 
+#if !defined(CLANGD_ANALYSIS)
 #include "game/assets/fonts.h"
 #include "game/assets/textures.h"
+#endif
 
 #include "engine/Game.h"
 

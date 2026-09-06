@@ -1,7 +1,9 @@
 #ifndef TEXTURES_H
 #define TEXTURES_H
 
+#ifdef ENGINE_IMPLEMENTATION
 #include "engine/TextureDesc.h"
+#endif
 
 typedef enum GTexture {
   Img_tilemap = 0,
