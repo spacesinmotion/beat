@@ -1,12 +1,12 @@
 #ifndef CoinAnimation_H
 #define CoinAnimation_H
 
-#include "game/Game.h"
+#include "engine/Game.h"
+#include "engine/math/Color.h"
+#include "engine/math/Vec2.h"
 #include "game/GameScene.h"
 #include "game/assets.h"
 #include "math.h"
-#include "math/Color.h"
-#include "math/Vec2.h"
 
 typedef struct CoinAnimation {
   Vec2 location;

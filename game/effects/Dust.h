@@ -1,10 +1,10 @@
 #ifndef DUST_H
 #define DUST_H
 
-#include "game/Game.h"
+#include "engine/Game.h"
+#include "engine/math/Vec2.h"
 #include "game/GameScene.h"
 #include "game/assets.h"
-#include "math/Vec2.h"
 
 typedef struct Dust {
   Vec2 location;

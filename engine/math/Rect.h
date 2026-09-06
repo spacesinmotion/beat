@@ -2,7 +2,7 @@
 #define RECT
 
 #include "Vec2.h"
-#include "extern/cjsonh/cjsonh.h"
+#include "engine/extern/cjsonh/cjsonh.h"
 #include <stdbool.h>
 
 typedef struct Rect {

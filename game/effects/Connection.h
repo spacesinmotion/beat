@@ -1,11 +1,11 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
-#include "extern/cjsonh/cjsonh.h"
-#include "game/Game.h"
+#include "engine/Game.h"
+#include "engine/extern/cjsonh/cjsonh.h"
+#include "engine/math/Vec2.h"
 #include "game/GameScene.h"
 #include "game/assets.h"
-#include "math/Vec2.h"
 
 typedef enum ConnectionState { CS_Defining, CS_Running, CS_Dead } ConnectionState;
 typedef struct Connection {

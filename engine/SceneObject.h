@@ -1,7 +1,7 @@
 #ifndef SCENEOBJECT
 #define SCENEOBJECT
 
-#include "extern/cjsonh/cjsonh.h"
+#include "engine/extern/cjsonh/cjsonh.h"
 #include <float.h>
 #include <stdbool.h>
 

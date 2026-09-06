@@ -1,15 +1,15 @@
 #ifndef CONSTRUCTIONSITE_H
 #define CONSTRUCTIONSITE_H
 
-#include "extern/cjsonh/cjsonh.h"
+#include "engine/SceneObject.h"
+#include "engine/extern/cjsonh/cjsonh.h"
+#include "engine/math/Rect.h"
 #include "game/GameScene.h"
 #include "game/House.h"
 #include "game/Level.h"
-#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
-#include "math/Rect.h"
 
 typedef struct ConstructionSite {
   WorkProvider work_provider;

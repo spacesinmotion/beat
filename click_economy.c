@@ -1,7 +1,7 @@
 // #include <time.h>
 // #define DR_WAV_IMPLEMENTATION
 // #include "dr/dr_wav.h"
-#include "extern/cjsonh/cjsonh.h"
+#include "engine/extern/cjsonh/cjsonh.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -31,10 +31,10 @@
 
 #define STBI_NO_SIMD
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
+#include "engine/extern/stb/stb_image.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "stb/stb_truetype.h"
+#include "engine/extern/stb/stb_truetype.h"
 
 #define SOKOL_NO_ENTRY
 #define SOKOL_GLCORE
@@ -43,19 +43,19 @@
 #endif
 #define SOKOL_DEBUGTEXT_IMPL
 
-#include "sokol_gfx.h"
+#include "engine/extern/sokol/sokol_gfx.h"
 
-#include "sokol_app.h"
-#include "sokol_audio.h"
+#include "engine/extern/sokol/sokol_app.h"
+#include "engine/extern/sokol/sokol_audio.h"
 
-#include "sokol_glue.h"
-#include "sokol_log.h"
+#include "engine/extern/sokol/sokol_glue.h"
+#include "engine/extern/sokol/sokol_log.h"
 
-#include "util/sokol_debugtext.h"
+#include "engine/extern/sokol/util/sokol_debugtext.h"
 
-#include "gc/gc.h"
-#include "math/Rect.h"
-#include "math/Vec2.h"
+#include "engine/extern/gc/gc.h"
+#include "engine/math/Rect.h"
+#include "engine/math/Vec2.h"
 
 #include "game/GameScene.h"
 

@@ -1,10 +1,10 @@
 #ifndef GAME_SCENE
 #define GAME_SCENE
 
-#include "Game.h"
-#include "game/SceneObject.h"
+#include "engine/Game.h"
+#include "engine/SceneObject.h"
+#include "engine/math/Rect.h"
 #include "game/TileContent.h"
-#include "math/Rect.h"
 
 typedef struct Level Level;
 typedef struct StreetMap StreetMap;

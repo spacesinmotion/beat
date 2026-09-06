@@ -2,8 +2,8 @@
 #ifndef TILECONTENT_H
 #define TILECONTENT_H
 
-#include "game/Game.h"
-#include "math/Rect.h"
+#include "engine/Game.h"
+#include "engine/math/Rect.h"
 #include <assert.h>
 #include <stdbool.h>
 

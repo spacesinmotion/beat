@@ -1,11 +1,11 @@
 #ifndef RESOURCEPROVIDERSEARCH_H
 #define RESOURCEPROVIDERSEARCH_H
 
+#include "engine/math/Rect.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
 #include "game/search/PathPoint.h"
-#include "math/Rect.h"
 
 typedef struct ResourceProviderSearch {
   GameScene *gs;

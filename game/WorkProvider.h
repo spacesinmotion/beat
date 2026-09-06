@@ -1,10 +1,10 @@
 #ifndef WORKPROVIDER_H
 #define WORKPROVIDER_H
 
+#include "engine/math/Color.h"
 #include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/Wearisome.h"
-#include "math/Color.h"
 
 typedef struct WorkProvider {
   int colums, rows;

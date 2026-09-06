@@ -1,17 +1,17 @@
 #ifndef COMBINATOR_H
 #define COMBINATOR_H
 
-#include "extern/cjsonh/cjsonh.h"
+#include "engine/SceneObject.h"
+#include "engine/extern/cjsonh/cjsonh.h"
+#include "engine/math/Rect.h"
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
-#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
 #include "game/effects/Connection.h"
-#include "math/Rect.h"
 #include "stdbool.h"
 
 typedef struct Combinator {

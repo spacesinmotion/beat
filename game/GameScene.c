@@ -1,18 +1,21 @@
 
 #include "game/GameScene.h"
-#include "extern/cjsonh/cjsonh.h"
+#include "engine/Game.h"
+#include "engine/SceneObject.h"
+#include "engine/extern/cjsonh/cjsonh.h"
+#include "engine/math/Color.h"
+#include "engine/math/Rect.h"
+#include "engine/math/Vec2.h"
 #include "game/ClickFactory.h"
 #include "game/Combinator.h"
 #include "game/ConstructionMaterialFactory.h"
 #include "game/ConstructionSite.h"
 #include "game/Entertainment.h"
 #include "game/Farm.h"
-#include "game/Game.h"
 #include "game/House.h"
 #include "game/Level.h"
 #include "game/Manager.h"
 #include "game/Marketplace.h"
-#include "game/SceneObject.h"
 #include "game/ScienceBuilding.h"
 #include "game/StreetMap.h"
 #include "game/TileContent.h"
@@ -20,11 +23,7 @@
 #include "game/Well.h"
 #include "game/assets.h"
 #include "game/effects/Connection.h"
-#include "gc/gc.h"
 #include "math.h"
-#include "math/Color.h"
-#include "math/Rect.h"
-#include "math/Vec2.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +45,7 @@ const char *str(const char *format, ...) {
 void so_vec_push(SceneObjectVec *vec, SceneObject so) {
   if (vec->len + 1 > vec->cap) {
     vec->cap += 16;
-    vec->data = (SceneObject *)gc_realloc(&gc, vec->data, vec->cap * sizeof(SceneObject));
+    vec->data = (SceneObject *)g_realloc(vec->data, vec->cap * sizeof(SceneObject));
   }
   vec->data[vec->len] = so;
   vec->len++;
@@ -164,11 +163,11 @@ void gs_update(GameScene *gs, Game *g, float dt) {
     g_create_text(g, &gs->click_counter_text, Oswald_Regular_12, str("%.2d", gs->clicks));
     gs->click_counter_text_cache = gs->clicks;
   }
-  if ( gs_resource(gs, R_Water) != gs->water_counter_text_cache) {
+  if (gs_resource(gs, R_Water) != gs->water_counter_text_cache) {
     g_create_text(g, &gs->water_counter_text, Oswald_Regular_8, str("%d", gs_resource(gs, R_Water)));
     gs->water_counter_text_cache = gs_resource(gs, R_Water);
   }
-  if ( gs_resource(gs, R_Food) != gs->food_counter_text_cache) {
+  if (gs_resource(gs, R_Food) != gs->food_counter_text_cache) {
     g_create_text(g, &gs->food_counter_text, Oswald_Regular_8, str("%d", gs_resource(gs, R_Food)));
     gs->food_counter_text_cache = gs_resource(gs, R_Food);
   }

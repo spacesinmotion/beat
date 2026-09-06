@@ -1,14 +1,14 @@
 #ifndef ENTERTAINMENT_H
 #define ENTERTAINMENT_H
 
+#include "engine/SceneObject.h"
+#include "engine/math/Rect.h"
 #include "game/BuildingDisplay.h"
 #include "game/GameColors.h"
 #include "game/GameScene.h"
 #include "game/House.h"
-#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
-#include "math/Rect.h"
 
 #include <assert.h>
 

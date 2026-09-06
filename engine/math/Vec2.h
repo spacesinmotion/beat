@@ -1,7 +1,7 @@
 #ifndef VEC2
 #define VEC2
 
-#include "extern/cjsonh/cjsonh.h"
+#include "engine/extern/cjsonh/cjsonh.h"
 #include <math.h>
 
 static inline int i_max(int a, int b) { return a < b ? b : a; }

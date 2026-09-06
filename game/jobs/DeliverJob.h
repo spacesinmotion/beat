@@ -1,10 +1,10 @@
 #ifndef DELIVERJOB_H
 #define DELIVERJOB_H
 
-#include "game/Game.h"
+#include "engine/Game.h"
+#include "engine/math/Color.h"
+#include "engine/math/Rect.h"
 #include "game/assets.h"
-#include "math/Color.h"
-#include "math/Rect.h"
 #include <stdbool.h>
 
 // typedef struct GameScene GameScene;

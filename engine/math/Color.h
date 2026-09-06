@@ -1,7 +1,7 @@
 #ifndef COLOR
 #define COLOR
 
-#include "extern/cjsonh/cjsonh.h"
+#include "engine/extern/cjsonh/cjsonh.h"
 #include <math.h>
 typedef struct Color {
   float r, g, b, a;

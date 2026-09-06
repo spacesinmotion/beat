@@ -1,10 +1,10 @@
 #ifndef RECTSEARCH_H
 #define RECTSEARCH_H
 
+#include "engine/math/Rect.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/search/PathPoint.h"
-#include "math/Rect.h"
 
 typedef struct RectSearch {
   Level *level;

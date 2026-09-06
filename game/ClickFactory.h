@@ -1,17 +1,17 @@
 #ifndef CLICKFACTORY_H
 #define CLICKFACTORY_H
 
+#include "engine/Game.h"
+#include "engine/SceneObject.h"
+#include "engine/math/Rect.h"
+#include "engine/math/random.h"
 #include "game/BuildingDisplay.h"
-#include "game/Game.h"
 #include "game/Level.h"
-#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
 #include "game/effects/Bling.h"
-#include "math/Rect.h"
-#include "math/random.h"
 
 typedef struct ClickFactory {
   WorkProvider work_provider;

@@ -1,15 +1,15 @@
 #ifndef WELL_H
 #define WELL_H
 
+#include "engine/Game.h"
+#include "engine/SceneObject.h"
+#include "engine/math/Rect.h"
 #include "game/BuildingDisplay.h"
-#include "game/Game.h"
 #include "game/Level.h"
-#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
-#include "math/Rect.h"
 
 typedef struct Well {
   WorkProvider work_provider;

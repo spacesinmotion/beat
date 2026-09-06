@@ -1,12 +1,12 @@
 #ifndef BUILDINGDISPLAY_H
 #define BUILDINGDISPLAY_H
 
-#include "extern/cjsonh/cjsonh.h"
-#include "game/Game.h"
+#include "engine/Game.h"
+#include "engine/extern/cjsonh/cjsonh.h"
+#include "engine/math/Rect.h"
+#include "engine/math/Vec2.h"
+#include "engine/math/random.h"
 #include "game/Level.h"
-#include "math/Rect.h"
-#include "math/Vec2.h"
-#include "math/random.h"
 #include <math.h>
 
 typedef struct BuildingDisplay {

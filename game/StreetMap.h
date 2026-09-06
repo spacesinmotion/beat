@@ -1,11 +1,11 @@
 #ifndef STREETMAP
 #define STREETMAP
 
+#include "engine/SceneObject.h"
+#include "engine/math/Vec2.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
-#include "game/SceneObject.h"
 #include "game/assets.h"
-#include "math/Vec2.h"
 
 typedef struct StreetMap {
   Level *level;

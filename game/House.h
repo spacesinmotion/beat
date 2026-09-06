@@ -1,17 +1,17 @@
 #ifndef HOUSE_H
 #define HOUSE_H
 
-#include "extern/cjsonh/cjsonh.h"
+#include "engine/SceneObject.h"
+#include "engine/extern/cjsonh/cjsonh.h"
+#include "engine/math/random.h"
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
-#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/assets.h"
 #include "game/effects/Bling.h"
 #include "game/effects/CoinAninmation.h"
 #include "game/jobs/QueueItem.h"
-#include "math/random.h"
 
 typedef struct Resources {
   float food, water;
@@ -75,7 +75,7 @@ bool h_get_water_done(void *context, Wearisome *w, GameScene *gs) {
 Color wl_color();
 void w_deliver(Wearisome *w, MenuIcon mi, Color c);
 bool w_queue_move_to(Wearisome *w, GameScene *gs, Recti location, QueueItem qi);
-Point w_current_point(const Wearisome *w);
+static inline Point w_current_point(const Wearisome *w);
 bool h_pay_water(void *context, Wearisome *w, GameScene *gs) {
   House *h = (House *)context;
   TileContent *tc = l_contentP(gs->level, w_current_point(w));

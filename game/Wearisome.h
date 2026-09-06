@@ -1,8 +1,9 @@
 #ifndef WEARISOME
 #define WEARISOME
 
-#include "extern/cjsonh/cjsonh.h"
-#include "game/Game.h"
+#include "engine/Game.h"
+#include "engine/extern/cjsonh/cjsonh.h"
+#include "engine/math/random.h"
 #include "game/House.h"
 #include "game/assets.h"
 #include "game/effects/Dust.h"
@@ -10,7 +11,6 @@
 #include "game/search/RectSearch.h"
 #include "game/search/ResourceProviderSearch.h"
 #include "game/search/StreetSearch.h"
-#include "math/random.h"
 
 #include <assert.h>
 

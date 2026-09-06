@@ -1,17 +1,17 @@
 #ifndef MANAGER_H
 #define MANAGER_H
 
+#include "engine/SceneObject.h"
+#include "engine/math/Color.h"
+#include "engine/math/Rect.h"
+#include "engine/math/Vec2.h"
 #include "game/BuildingDisplay.h"
 #include "game/House.h"
 #include "game/Level.h"
-#include "game/SceneObject.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"
 #include "game/WorkProvider.h"
 #include "game/assets.h"
-#include "math/Color.h"
-#include "math/Rect.h"
-#include "math/Vec2.h"
 
 typedef struct Manager {
   WorkProvider work_provider;

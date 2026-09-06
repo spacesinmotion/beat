@@ -1,11 +1,11 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
-#include "extern/cjsonh/Z85.h"
-#include "extern/cjsonh/cjsonh.h"
+#include "engine/extern/cjsonh/Z85.h"
+#include "engine/extern/cjsonh/cjsonh.h"
+#include "engine/math/Rect.h"
+#include "engine/math/Vec2.h"
 #include "game/TileContent.h"
-#include "math/Rect.h"
-#include "math/Vec2.h"
 #include <stdbool.h>
 #include <string.h>
 
