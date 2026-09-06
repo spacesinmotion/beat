@@ -68,6 +68,9 @@ void *g_realloc(void *ptr, size_t size);
 void c_color(Game *g, Color c);
 void c_printf(Game *g, const char *fmt, ...);
 
+typedef void (*GameStartCB)(Game *g);
+int Game_main(GameStartCB start_cb);
+
 #if defined(ENGINE_IMPLEMENTATION)
 #include "engine/Game_impl.h"
 #endif

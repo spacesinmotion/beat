@@ -45,7 +45,7 @@
 #include "engine/math/Rect.h"
 #include "engine/math/Vec2.h"
 
-#include "game/GameScene.h"
+// #include "game/GameScene.h"
 
 void *g_malloc(size_t size) { return gc_malloc(&gc, size); }
 void *g_realloc(void *ptr, size_t size) { return gc_realloc(&gc, ptr, size); }
@@ -115,6 +115,7 @@ typedef struct Game {
 #endif
 
   Scene scene;
+  GameStartCB start_cb;
 
   double time, animation_delta;
 } Game;
@@ -638,7 +639,7 @@ static void g_init(Game *g) {
       .label = "texture_sampler",
   });
 
-  GameScene_init(g);
+  g->start_cb(g);
 }
 
 void c_color(Game *g, Color c) {
@@ -757,9 +758,9 @@ static void g_handel_events(const sapp_event *e, Game *g) {
   }
 }
 
-int Game_main(int argc, char *argv[]) {
-  gc_start(&gc, &argc);
-  Game g = (Game){0};
+int Game_main(GameStartCB start_cb) {
+  gc_start(&gc, &start_cb);
+  Game g = (Game){.start_cb = start_cb};
   sapp_run(&(sapp_desc){
       .init_userdata_cb = (void (*)(void *))g_init,
       .frame_userdata_cb = (void (*)(void *))g_draw,

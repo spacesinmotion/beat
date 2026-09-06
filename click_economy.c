@@ -14,6 +14,8 @@
 
 #include "engine/Game.h"
 
+#include "game/GameScene.h"
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,5 +101,5 @@ int main(int argc, char *argv[]) {
       return 0;
     }
 
-  return Game_main(argc, argv);
+  return Game_main(GameScene_init);
 }
