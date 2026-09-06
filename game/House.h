@@ -7,7 +7,7 @@
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"
-#include "game/assets.h"
+#include "game/assets/fonts.h"
 #include "game/effects/Bling.h"
 #include "game/effects/CoinAninmation.h"
 #include "game/jobs/QueueItem.h"
@@ -27,7 +27,7 @@ typedef struct House {
 
   int rent_to_be_payed;
 
-  G_Object clicks_text;
+  G_Text clicks_text;
   int clicks_cache;
 
   bool highlight;
@@ -162,7 +162,7 @@ void h_draw(House *h, GameScene *gs, Game *g) {
   g_objectS(g, g_animation_buffer(g), Img_wearisome, h->wearisome_at_home ? 14 : 15, v_add(p, l_to_vec(1, 1)), 0.75f);
 
   g_color(g, rgb(255, 215, 0));
-  g_text(g, h->clicks_text, Oswald_Regular_12, v_add(p, (Vec2){12, -5}));
+  g_text(g, &h->clicks_text, v_add(p, (Vec2){12, -5}));
 }
 
 TileContent *find_resource_building(GameScene *gs, Recti start, Resource r);

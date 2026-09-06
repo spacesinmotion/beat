@@ -88,6 +88,8 @@ typedef struct TileRectBuffer {
 } TileRectBuffer;
 
 typedef struct FontImage {
+  FontDesc desc;
+
   stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
   sg_image texture;
   float size;
@@ -114,7 +116,11 @@ typedef struct Game {
   G_Object animation_buffer_4x4;
 
   sg_image images[NB_Img];
-  FontImage fonts[Nb_Font];
+
+  struct {
+    FontImage *list;
+    int count;
+  } fonts;
 
   Scene scene;
 
@@ -152,16 +158,16 @@ sg_image img_load(const char *path) {
   return (sg_image){};
 }
 
-FontImage load_font(const char *path, int size) {
+FontImage load_font(const FontDesc desc) {
   uint8_t *ttf_buffer = (uint8_t *)malloc(1048576);
-  FontImage f = {.size = 8 * size, .tw = 512, .th = 512};
+  FontImage f = {.desc = desc, .desc.size = 8 * desc.size, .tw = 512, .th = 512};
   uint8_t *temp_bitmap = (uint8_t *)calloc(f.tw * f.th, 4);
 
-  fread(ttf_buffer, 1ul, 1048576ul, fopen(path, "rb"));
+  fread(ttf_buffer, 1ul, 1048576ul, fopen(desc.file, "rb"));
 
   stbtt_fontinfo font;
   stbtt_InitFont(&font, ttf_buffer, 0);
-  const int r = stbtt_BakeFontBitmap(ttf_buffer, 0, 8 * size, temp_bitmap, f.tw, f.tw, 32, 96, f.cdata);
+  const int r = stbtt_BakeFontBitmap(ttf_buffer, 0, 8 * desc.size, temp_bitmap, f.tw, f.tw, 32, 96, f.cdata);
   assert(r < 512);
 
   f.texture = sg_alloc_image();
@@ -169,7 +175,7 @@ FontImage load_font(const char *path, int size) {
                                             .height = f.th,
                                             .pixel_format = SG_PIXELFORMAT_R8,
                                             .data = {.subimage[0][0] = {temp_bitmap, (f.tw * f.th * 1)}}});
-  printf("font: %s %d \n", path, size);
+  printf("font: %s %d \n", desc.file, desc.size);
 
   free(ttf_buffer);
   free(temp_bitmap);
@@ -182,24 +188,32 @@ sg_image g_image(Game *g, Image img) {
   return g->images[img];
 }
 
-const FontImage *g_font(Game *g, G_Font font) {
-  if (g->fonts[font].texture.id == 0)
-    g->fonts[font] = load_font(font_paths[font], font_size[font]);
+void g_create_font_list(Game *g, const FontDesc *fonts, int n) {
+  g->fonts.list = (FontImage *)g_malloc(sizeof(FontImage) * n);
+  g->fonts.count = n;
+  for (int i = 0; i < n; ++i) {
+    g->fonts.list[i].desc = fonts[i];
+  }
+}
+const FontImage *g_font(Game *g, int font_index) {
+  if (g->fonts.list[font_index].texture.id == 0)
+    g->fonts.list[font_index] = load_font(g->fonts.list[font_index].desc);
 
-  return &g->fonts[font];
+  return &g->fonts.list[font_index];
 }
 
-void g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
-  G_Object_free(o);
-  const FontImage *f = g_font(g, ff);
+void g_create_text(Game *g, G_Text *to, int font_index, const char *text) {
+  G_Object_free(&to->buffer);
+  to->font_index = font_index;
+  const FontImage *f = g_font(g, to->font_index);
   vertex_t vertices[1024];
   uint16_t indices[1024];
   size_t vlen = 0, ilen = 0;
   float x = 0.0f, y = -1.0f;
-  const char *t = &text[0];
+  const char *c = &text[0];
 
-  for (; *t; ++t) {
-    switch (*t) {
+  for (; *c; ++c) {
+    switch (*c) {
     case '\r':
       x = 0.0f;
     case '\n':
@@ -208,9 +222,9 @@ void g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
     case '\t':
       x = (x - fmodf(x, 2.0f)) + 2.0f;
     default:
-      if ((int)(*t) >= 32 && (int)(*t) < 128) {
+      if ((int)(*c) >= 32 && (int)(*c) < 128) {
         stbtt_aligned_quad q;
-        stbtt_GetBakedQuad(f->cdata, f->tw, f->th, (int)*t - 32, &x, &y, &q, 1);
+        stbtt_GetBakedQuad(f->cdata, f->tw, f->th, (int)*c - 32, &x, &y, &q, 1);
         vertex_t *vx = &vertices[vlen];
         uint16_t *ix = &indices[ilen];
         vx[0] =
@@ -235,9 +249,9 @@ void g_create_text(Game *g, G_Object *o, G_Font ff, const char *text) {
     }
   }
   if (vlen == 0ul)
-    *o = (G_Object){0};
+    to->buffer = (G_Object){0};
   else {
-    *o = (G_Object){
+    to->buffer = (G_Object){
         .vertices = sg_make_buffer(&(sg_buffer_desc){
                                        .type = SG_BUFFERTYPE_VERTEXBUFFER,
                                        .data = (sg_range){vertices, sizeof(vertex_t) * vlen},
@@ -271,7 +285,7 @@ void g_buffer(Game *g, G_Object buffer, Image tex, Vec2 pan) {
   sg_draw(0, buffer.num_elements, 1);
 }
 
-void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
+void g_text(Game *g, const G_Text *t, Vec2 pan) {
   g->render.fs_param.color_mode = 1;
   g->render.vs_param.pan = v_add(g->render.camera_pan, pan);
   g->render.vs_param.rot = 0.0f;
@@ -280,11 +294,11 @@ void g_text(Game *g, G_Object buffer, G_Font f, Vec2 pan) {
   sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(g->render.vs_param));
   sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(g->render.fs_param));
   sg_apply_bindings(&(sg_bindings){
-      .fs = {.images = {g_font(g, f)->texture}, .samplers = {g->render.texture_sampler}},
-      .vertex_buffers = {{buffer.vertices}},
-      .index_buffer = {buffer.indices},
+      .fs = {.images = {g_font(g, t->font_index)->texture}, .samplers = {g->render.texture_sampler}},
+      .vertex_buffers = {{t->buffer.vertices}},
+      .index_buffer = {t->buffer.indices},
   });
-  sg_draw(0, buffer.num_elements, 1);
+  sg_draw(0, t->buffer.num_elements, 1);
 }
 
 void g_objectRS(Game *g, G_Object buffer, Image tex, int frame, Vec2 pan, float rot, float scale) {
@@ -493,6 +507,9 @@ static void g_init(Game *g) {
   };
   g->zoom = 0.5f;
   g->render.fs_param = (fs_param_t){{1, 1, 1, 1}, 0};
+
+  g->fonts.list = NULL;
+  g->fonts.count = 0;
 
   sg_setup(&(sg_desc){
       .environment = sglue_environment(),
@@ -706,7 +723,10 @@ static void g_draw(Game *g) {
 }
 
 static void g_cleanup(Game *g) {
-  (void)g;
+
+  gc_free(&gc, g->fonts.list);
+  g->fonts.list = NULL;
+  g->fonts.count = 0;
 
   sdtx_shutdown();
   saudio_shutdown();

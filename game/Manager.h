@@ -22,7 +22,7 @@ typedef struct Manager {
   int click_used;
   Resource used_manager_counter;
 
-  G_Object click_used_text;
+  G_Text click_used_text;
   int click_used_cache;
 } Manager;
 
@@ -67,7 +67,7 @@ void mg_draw(Manager *mg, GameScene *gs, Game *g) {
   wp_draw_click_fields(&mg->work_provider, g, v_add(p, l_to_vec(1, 1)), false);
 
   g_color(g, white());
-  g_text(g, mg->click_used_text, Oswald_Regular_12, v_add(p, (Vec2){12, -5}));
+  g_text(g, &mg->click_used_text, v_add(p, (Vec2){12, -5}));
 }
 
 static SceneObjectTable Manager_table = {

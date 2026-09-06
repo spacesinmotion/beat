@@ -21,6 +21,7 @@
 #include "game/Wearisome.h"
 #include "game/Well.h"
 #include "game/assets.h"
+#include "game/assets/fonts.h"
 #include "game/effects/Connection.h"
 #include "math.h"
 #include <stdarg.h>
@@ -252,7 +253,7 @@ void gs_draw_clock_overlay(GameScene *gs, Game *g) {
   g_objectRS(g, g_animation_buffer(g), Img_overlay_images, 0, clock_pos, -gs->daytime * M_PI * 2.0f, 3.0f);
   g_objectS(g, g_animation_buffer(g), Img_overlay_images, 1, clock_pos, 3.0f);
   g_color(g, gs->daytime > 0.75 ? gray(200) : gray(45));
-  g_text(g, gs->day_counter_text, Oswald_Regular_12, v_add(clock_pos, (Vec2){center_num(gs->day), -3}));
+  g_text(g, &gs->day_counter_text, v_add(clock_pos, (Vec2){center_num(gs->day), -3}));
 
   g_color(g, rgba(255, 255, 255, 150));
   Vec2 p = v_add(clock_pos, (Vec2){-110, 21});
@@ -260,7 +261,7 @@ void gs_draw_clock_overlay(GameScene *gs, Game *g) {
   g_color(g, white());
   g_objectS(g, g_animation_buffer(g), Img_wearisome, 0, v_add(p, (Vec2){-4, -4}), 0.5f);
   g_color(g, gray(45));
-  g_text(g, gs->bot_counter_text, Oswald_Regular_12, v_add(p, (Vec2){center_num(gs->wearisome_count) + 10, -7}));
+  g_text(g, &gs->bot_counter_text, v_add(p, (Vec2){center_num(gs->wearisome_count) + 10, -7}));
 
   int i = 0;
   p = v_add(clock_pos, (Vec2){-86 + i * 16, 16});
@@ -308,11 +309,11 @@ void gs_draw_storage_overlay(GameScene *gs, Game *g) {
   g_color(g, warn_color_for(gs->clicks));
   g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Click, (Vec2){10, g_viewport(g).h - 9},
             warn_scale_for(gs->clicks, t));
-  g_text(g, gs->click_counter_text, Oswald_Regular_12, (Vec2){17, g_viewport(g).h - 13});
+  g_text(g, &gs->click_counter_text, (Vec2){17, g_viewport(g).h - 13});
 
   g_color(g, gray(45));
   g_objectS(g, g_animation_buffer(g), Img_menubar, MI_WareHouse, (Vec2){6, h - 0 * o + 2}, 0.75f);
-  g_text(g, gs->free_storage_text, Oswald_Regular_8, (Vec2){11, h - 0 * o});
+  g_text(g, &gs->free_storage_text, (Vec2){11, h - 0 * o});
 
   for (int i = 0; i < 3; ++i) {
     g_objectS(g, g_animation_buffer(g), Img_marker, 5, (Vec2){7 + i * 6, h - 0 * o - 4}, 0.75f);
@@ -322,17 +323,17 @@ void gs_draw_storage_overlay(GameScene *gs, Game *g) {
   g_color(g, warn_color_for(gs_resource(gs, R_Water)));
   g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Water, (Vec2){6, h - 1 * o + 2},
             0.75f * warn_scale_for(gs_resource(gs, R_Water), t));
-  g_text(g, gs->water_counter_text, Oswald_Regular_8, (Vec2){11, h - 1 * o});
+  g_text(g, &gs->water_counter_text, (Vec2){11, h - 1 * o});
 
   g_color(g, warn_color_for(gs_resource(gs, R_Food)));
   g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Food, (Vec2){6, h - 2 * o + 2},
             0.75f * warn_scale_for(gs_resource(gs, R_Food), t));
-  g_text(g, gs->food_counter_text, Oswald_Regular_8, (Vec2){11, h - 2 * o});
+  g_text(g, &gs->food_counter_text, (Vec2){11, h - 2 * o});
 
   g_color(g, warn_color_for(gs_resource(gs, R_ConstructionMaterial)));
   g_objectS(g, g_animation_buffer(g), Img_menubar, MI_ConstructionMaterial, (Vec2){6, h - 3 * o + 2},
             0.75f * warn_scale_for(gs_resource(gs, R_ConstructionMaterial), t));
-  g_text(g, gs->construction_material_counter_text, Oswald_Regular_8, (Vec2){11, h - 3 * o});
+  g_text(g, &gs->construction_material_counter_text, (Vec2){11, h - 3 * o});
 }
 
 void gs_draw_overlay(GameScene *gs, Game *g) {
@@ -353,15 +354,14 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
     g_color(g, warn_color_for(gs->clicks));
     g_objectS(g, g_animation_buffer(g), Img_menubar, MI_Click, v_add(gs->mouse_overlay_position, (Vec2){14, -9}),
               warn_scale_for(gs->clicks, g_time(g)));
-    g_text(g, gs->click_counter_text, Oswald_Regular_12, v_add(gs->mouse_overlay_position, (Vec2){22, -12}));
+    g_text(g, &gs->click_counter_text, v_add(gs->mouse_overlay_position, (Vec2){22, -12}));
 
     if (needs_material) {
       g_color(g, warn_color_for(gs_resource(gs, R_ConstructionMaterial)));
       g_objectS(g, g_animation_buffer(g), Img_menubar, MI_ConstructionMaterial,
                 v_add(gs->mouse_overlay_position, (Vec2){14, -9 - 15}),
                 0.75 * warn_scale_for(gs_resource(gs, R_ConstructionMaterial), g_time(g)));
-      g_text(g, gs->construction_material_counter_text, Oswald_Regular_8,
-             v_add(gs->mouse_overlay_position, (Vec2){20, -12 - 14}));
+      g_text(g, &gs->construction_material_counter_text, v_add(gs->mouse_overlay_position, (Vec2){20, -12 - 14}));
     }
   }
 }
@@ -474,6 +474,9 @@ SceneTable GameScene_table = {
     .key_up = (SceneKeyCB)gs_key_up,
 };
 void GameScene_init(Game *g) {
+
+  g_create_font_list(g, fonts, Nb_Font);
+
   GameScene *gs = g_malloc(sizeof(GameScene));
   *gs = (GameScene){
       .scene_objects = (SceneObjectVec){NULL, 0, 0},

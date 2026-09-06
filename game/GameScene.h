@@ -51,19 +51,19 @@ typedef struct GameScene {
   Level *level;
   StreetMap *street_map;
 
-  G_Object click_counter_text;
+  G_Text click_counter_text;
   int click_counter_text_cache;
-  G_Object water_counter_text;
+  G_Text water_counter_text;
   int water_counter_text_cache;
-  G_Object food_counter_text;
+  G_Text food_counter_text;
   int food_counter_text_cache;
-  G_Object construction_material_counter_text;
+  G_Text construction_material_counter_text;
   int construction_material_counter_text_cache;
-  G_Object free_storage_text;
+  G_Text free_storage_text;
   int free_storage_text_cache;
-  G_Object day_counter_text;
+  G_Text day_counter_text;
   int day_counter_text_cache;
-  G_Object bot_counter_text;
+  G_Text bot_counter_text;
   int bot_counter_text_cache;
 
   Vec2 mouse_overlay_position;
