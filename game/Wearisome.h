@@ -1,8 +1,8 @@
 #ifndef WEARISOME
 #define WEARISOME
 
-#include "engine/Game.h"
-#include "engine/math/random.h"
+#include "SokEngWrap/Game.h"
+#include "SokEngWrap/math/random.h"
 #include "game/House.h"
 #include "game/assets/textures.h"
 #include "game/effects/Dust.h"

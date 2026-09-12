@@ -1,8 +1,8 @@
 #ifndef PATHPOINT_H
 #define PATHPOINT_H
 
-#include "engine/Game.h"
-#include "engine/math/Vec2.h"
+#include "SokEngWrap/Game.h"
+#include "SokEngWrap/math/Vec2.h"
 
 typedef struct PathPoint {
   Vec2 p;

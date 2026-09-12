@@ -1,9 +1,9 @@
 #ifndef GAME_SCENE
 #define GAME_SCENE
 
-#include "engine/Game.h"
-#include "engine/SceneObject.h"
-#include "engine/math/Rect.h"
+#include "SokEngWrap/Game.h"
+#include "SokEngWrap/SceneObject.h"
+#include "SokEngWrap/math/Rect.h"
 #include "game/TileContent.h"
 
 typedef struct Level Level;
@@ -31,6 +31,8 @@ typedef struct GameScene {
 
   float game_speed;
   bool game_paused;
+
+  float zoom;
 
   float daytime_step, daytime;
   int day;

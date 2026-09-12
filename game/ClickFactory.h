@@ -1,10 +1,10 @@
 #ifndef CLICKFACTORY_H
 #define CLICKFACTORY_H
 
-#include "engine/Game.h"
-#include "engine/SceneObject.h"
-#include "engine/math/Rect.h"
-#include "engine/math/random.h"
+#include "SokEngWrap/Game.h"
+#include "SokEngWrap/SceneObject.h"
+#include "SokEngWrap/math/Rect.h"
+#include "SokEngWrap/math/random.h"
 #include "game/BuildingDisplay.h"
 #include "game/Level.h"
 #include "game/TileContent.h"

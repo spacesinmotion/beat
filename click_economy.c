@@ -14,7 +14,7 @@
 #include "game/assets/textures.h"
 #endif
 
-#include "engine/Game.h"
+#include "SokEngWrap/Game.h"
 
 #include "game/GameScene.h"
 

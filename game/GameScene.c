@@ -1,10 +1,11 @@
 
 #include "game/GameScene.h"
-#include "engine/Game.h"
-#include "engine/SceneObject.h"
-#include "engine/math/Color.h"
-#include "engine/math/Rect.h"
-#include "engine/math/Vec2.h"
+#include "SokEngWrap/Game.h"
+#include "SokEngWrap/Scene.h"
+#include "SokEngWrap/SceneObject.h"
+#include "SokEngWrap/math/Color.h"
+#include "SokEngWrap/math/Rect.h"
+#include "SokEngWrap/math/Vec2.h"
 #include "game/ClickFactory.h"
 #include "game/Combinator.h"
 #include "game/ConstructionMaterialFactory.h"
@@ -28,15 +29,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
-const char *str(const char *format, ...) {
-  static char b[256] = {0};
-  va_list args;
-  va_start(args, format);
-  vsnprintf(b, sizeof(b), format, args);
-  va_end(args);
-  return b;
-}
 
 void so_vec_push(SceneObjectVec *vec, SceneObject so) {
   if (vec->len + 1 > vec->cap) {
@@ -117,8 +109,16 @@ bool gs_pick(GameScene *gs, OnClickCB onclick, int id, Vec2 p, float s) {
   return ri_contains(r, gs->mouse_overlay_position.x, gs->mouse_overlay_position.y);
 }
 
+float gs_zoom_to_scale(float z) { return 0.1f + z * z * 8.0f; }
+
 void gs_update(GameScene *gs, Game *g, float dt) {
   (void)g;
+
+  const float cs = gs_zoom_to_scale(gs->zoom);
+  Vec2 mp_b = g_mouse_in_scene(g);
+  g_camera_set_scale(g, g_camera_scale(g) * 0.9f + cs * 0.1f);
+  Vec2 mp_a = g_mouse_in_scene(g);
+  g_camera_set_pan(g, v_add(g_camera_pan(g), v_sub(mp_a, mp_b)));
 
   dt = gs->game_paused ? 0.0f : dt * gs->game_speed;
 
@@ -226,6 +226,12 @@ void gs_draw(GameScene *gs, Game *g) {
       for (int j = gs->r.y; j < gs->r.y + gs->r.h; ++j)
         g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, l_to_vec(i, j));
   }
+
+  g_color(g, gray(10));
+  g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, v_add(l_to_vec(18, 11), (Vec2){F * 0.5f, 0.0f}));
+
+  g_color(g, gray(40));
+  g_object(g, g_animation_buffer(g), Img_marker, (g_frame(g) + 1) % 4, g_camera_scene_center(g));
 }
 
 void gs_draw_menu_overlay(GameScene *gs, Game *g) {
@@ -364,18 +370,30 @@ void gs_draw_overlay(GameScene *gs, Game *g) {
       g_text(g, &gs->construction_material_counter_text, v_add(gs->mouse_overlay_position, (Vec2){20, -12 - 14}));
     }
   }
+
+  Sizei vp = g_viewport(g);
+  g_object(g, g_animation_buffer(g), Img_marker, g_frame(g) % 4, (Vec2){vp.w / 2.0f, vp.h / 2.0f});
 }
 
-void gs_mouse_move(GameScene *gs, Game *g, Vec2 mp, Vec2 op) {
+bool mid_down = false;
+void gs_mouse_move(GameScene *gs, Game *g, Vec2 dm) {
   (void)g;
-  gs->mouse_overlay_position = op;
 
+  if (mid_down) {
+    const Vec2 pan = g_camera_pan(g);
+    const float scale = g_camera_scale(g);
+    g_camera_set_pan(g, v_add(pan, v_diff(dm, scale)));
+  }
+
+  gs->mouse_overlay_position = g_mouse_on_overlay(g);
+
+  const Vec2 mp = g_mouse_in_scene(g);
   gs->r.x = (int)((mp.x + 8) / 16.0f);
   gs->r.y = (int)((mp.y + 8) / 16.0f);
 
   gs->pick_under_mouse = -1;
   for (int i = 0; i < gs->pick_rect_count; ++i) {
-    if (ri_contains(gs->pick_rects[i].rect, op.x, op.y)) {
+    if (ri_contains(gs->pick_rects[i].rect, gs->mouse_overlay_position.x, gs->mouse_overlay_position.y)) {
       gs->pick_under_mouse = i;
       break;
     }
@@ -408,7 +426,16 @@ void gs_mouse_down(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
     gs->special_click_handler_data = NULL;
     gs->menu_selected = -1;
     gs->r.w = gs->r.h = 0;
-  }
+
+  } else if (button == 2)
+    mid_down = true;
+}
+
+void gs_mouse_up(GameScene *gs, Game *g, Vec2 mp, Vec2 op, int button) {
+  (void)gs, (void)g, (void)mp, (void)op;
+
+  if (button == 2)
+    mid_down = false;
 }
 
 typedef enum GameKeys {
@@ -434,6 +461,12 @@ void gs_key_up(GameScene *gs, Game *g, int key) {
     gs_set_game_speed(gs, 8);
   else
     printf("KEY UP (%d)\n", key);
+}
+
+void gs_mouse_wheel(GameScene *gs, Game *g, Vec2 scroll) {
+  (void)gs;
+
+  gs->zoom = f_min(f_max(0.0f, gs->zoom + scroll.y * 0.01f), 1.0f);
 }
 
 void gs_add_object(GameScene *gs, SceneObject so) { so_vec_push(&gs->scene_objects, so); }
@@ -471,15 +504,19 @@ SceneTable GameScene_table = {
     .draw_overlay = (SceneDrawCB)gs_draw_overlay,
     .mouse_move = (SceneMouseMoveCB)gs_mouse_move,
     .mouse_down = (SceneMouseCB)gs_mouse_down,
+    .mouse_up = (SceneMouseCB)gs_mouse_up,
     .key_up = (SceneKeyCB)gs_key_up,
+    .mouse_wheel = (SceneMouseWheelCB)gs_mouse_wheel,
 };
 void GameScene_init(Game *g) {
+
   GameScene *gs = g_malloc(sizeof(GameScene));
   *gs = (GameScene){
       .scene_objects = (SceneObjectVec){NULL, 0, 0},
       .game_speed = 2.0f,
       .game_paused = false,
       .menu_selected = -1,
+      .zoom = 0.4f,
       .day = 1,
       .a_new_day_just_started = false,
       .daytime = 0.0f,
@@ -528,6 +565,11 @@ void GameScene_init(Game *g) {
   }
 
   gs->street_map = StreetMap_init(gs);
+
+  g_camera_set_scale(g, gs_zoom_to_scale(gs->zoom));
+  Vec2 c = v_add(l_to_vec(18, 11), (Vec2){F * 0.5f, 0.0f});
+  // g_camera_center_on(g, c);
+  g_camera_center_on(g, c);
 
   g_set_scene(g, (Scene){gs, &GameScene_table});
 }

@@ -1,9 +1,9 @@
 #ifndef WELL_H
 #define WELL_H
 
-#include "engine/Game.h"
-#include "engine/SceneObject.h"
-#include "engine/math/Rect.h"
+#include "SokEngWrap/Game.h"
+#include "SokEngWrap/SceneObject.h"
+#include "SokEngWrap/math/Rect.h"
 #include "game/BuildingDisplay.h"
 #include "game/Level.h"
 #include "game/TileContent.h"

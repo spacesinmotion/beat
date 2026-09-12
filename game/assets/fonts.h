@@ -2,7 +2,7 @@
 #define FONTS
 
 #ifdef ENGINE_IMPLEMENTATION
-#include "engine/FontDesc.h"
+#include "SokEngWrap/FontDesc.h"
 #endif
 
 typedef enum GFont {

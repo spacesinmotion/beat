@@ -1,10 +1,10 @@
 #ifndef BUILDINGDISPLAY_H
 #define BUILDINGDISPLAY_H
 
-#include "engine/Game.h"
-#include "engine/math/Rect.h"
-#include "engine/math/Vec2.h"
-#include "engine/math/random.h"
+#include "SokEngWrap/Game.h"
+#include "SokEngWrap/math/Rect.h"
+#include "SokEngWrap/math/Vec2.h"
+#include "SokEngWrap/math/random.h"
 #include "game/Level.h"
 #include "game/assets/textures.h"
 #include <math.h>

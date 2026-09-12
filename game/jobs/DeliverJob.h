@@ -1,9 +1,9 @@
 #ifndef DELIVERJOB_H
 #define DELIVERJOB_H
 
-#include "engine/Game.h"
-#include "engine/math/Color.h"
-#include "engine/math/Rect.h"
+#include "SokEngWrap/Game.h"
+#include "SokEngWrap/math/Color.h"
+#include "SokEngWrap/math/Rect.h"
 #include "game/assets.h"
 #include <stdbool.h>
 

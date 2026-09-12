@@ -1,8 +1,8 @@
 #ifndef COMBINATOR_H
 #define COMBINATOR_H
 
-#include "engine/SceneObject.h"
-#include "engine/math/Rect.h"
+#include "SokEngWrap/SceneObject.h"
+#include "SokEngWrap/math/Rect.h"
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
 #include "game/Level.h"

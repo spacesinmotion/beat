@@ -8,6 +8,6 @@ else
   LIBS="-lXcursor -lasound -lXi -lX11 -lGL -lm -ldl -lpthread"
 fi
 
-tcc -o click_econemy -Werror click_economy.c game/*.c engine/extern/gc/*.c -I. $LIBS
+tcc -o click_econemy -Werror click_economy.c game/*.c SokEngWrap/extern/gc/*.c -I. -ISokEngWrap/ $LIBS
 
 ./click_econemy

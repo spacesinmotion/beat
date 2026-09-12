@@ -1,8 +1,8 @@
 #ifndef CONSTRUCTIONSITE_H
 #define CONSTRUCTIONSITE_H
 
-#include "engine/SceneObject.h"
-#include "engine/math/Rect.h"
+#include "SokEngWrap/SceneObject.h"
+#include "SokEngWrap/math/Rect.h"
 #include "game/GameScene.h"
 #include "game/House.h"
 #include "game/Level.h"

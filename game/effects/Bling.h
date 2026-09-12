@@ -1,9 +1,9 @@
 #ifndef BLING_H
 #define BLING_H
 
-#include "engine/Game.h"
-#include "engine/math/Vec2.h"
-#include "engine/math/random.h"
+#include "SokEngWrap/Game.h"
+#include "SokEngWrap/math/Vec2.h"
+#include "SokEngWrap/math/random.h"
 #include "game/GameScene.h"
 #include "game/assets/textures.h"
 #include "math.h"

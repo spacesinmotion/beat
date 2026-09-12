@@ -1,8 +1,8 @@
 #ifndef STREETMAP
 #define STREETMAP
 
-#include "engine/SceneObject.h"
-#include "engine/math/Vec2.h"
+#include "SokEngWrap/SceneObject.h"
+#include "SokEngWrap/math/Vec2.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/assets/textures.h"

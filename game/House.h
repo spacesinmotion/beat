@@ -1,8 +1,8 @@
 #ifndef HOUSE_H
 #define HOUSE_H
 
-#include "engine/SceneObject.h"
-#include "engine/math/random.h"
+#include "SokEngWrap/SceneObject.h"
+#include "SokEngWrap/math/random.h"
 #include "game/BuildingDisplay.h"
 #include "game/GameScene.h"
 #include "game/Level.h"

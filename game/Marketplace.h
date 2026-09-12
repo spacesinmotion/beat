@@ -1,9 +1,9 @@
 #ifndef MARKETPLACE_H
 #define MARKETPLACE_H
 
-#include "engine/SceneObject.h"
-#include "engine/math/Rect.h"
-#include "engine/math/Vec2.h"
+#include "SokEngWrap/SceneObject.h"
+#include "SokEngWrap/math/Rect.h"
+#include "SokEngWrap/math/Vec2.h"
 #include "game/BuildingDisplay.h"
 #include "game/House.h"
 #include "game/Level.h"

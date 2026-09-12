@@ -1,8 +1,8 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
-#include "engine/math/Rect.h"
-#include "engine/math/Vec2.h"
+#include "SokEngWrap/math/Rect.h"
+#include "SokEngWrap/math/Vec2.h"
 #include "game/TileContent.h"
 #include <stdbool.h>
 #include <string.h>

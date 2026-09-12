@@ -1,9 +1,9 @@
 #ifndef CoinAnimation_H
 #define CoinAnimation_H
 
-#include "engine/Game.h"
-#include "engine/math/Color.h"
-#include "engine/math/Vec2.h"
+#include "SokEngWrap/Game.h"
+#include "SokEngWrap/math/Color.h"
+#include "SokEngWrap/math/Vec2.h"
 #include "game/GameScene.h"
 #include "game/assets/textures.h"
 #include "math.h"

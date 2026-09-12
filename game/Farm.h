@@ -1,7 +1,7 @@
 #ifndef FARM_H
 #define FARM_H
 
-#include "engine/SceneObject.h"
+#include "SokEngWrap/SceneObject.h"
 #include "game/BuildingDisplay.h"
 #include "game/TileContent.h"
 #include "game/Wearisome.h"

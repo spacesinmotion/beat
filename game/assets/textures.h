@@ -2,7 +2,7 @@
 #define TEXTURES_H
 
 #ifdef ENGINE_IMPLEMENTATION
-#include "engine/TextureDesc.h"
+#include "SokEngWrap/TextureDesc.h"
 #endif
 
 typedef enum GTexture {

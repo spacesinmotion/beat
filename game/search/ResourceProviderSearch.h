@@ -1,7 +1,7 @@
 #ifndef RESOURCEPROVIDERSEARCH_H
 #define RESOURCEPROVIDERSEARCH_H
 
-#include "engine/math/Rect.h"
+#include "SokEngWrap/math/Rect.h"
 #include "game/GameScene.h"
 #include "game/Level.h"
 #include "game/TileContent.h"

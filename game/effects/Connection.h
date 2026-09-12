@@ -1,8 +1,8 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
-#include "engine/Game.h"
-#include "engine/math/Vec2.h"
+#include "SokEngWrap/Game.h"
+#include "SokEngWrap/math/Vec2.h"
 #include "game/GameScene.h"
 #include "game/assets/textures.h"
 
